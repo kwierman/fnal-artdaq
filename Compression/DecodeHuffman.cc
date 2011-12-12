@@ -20,7 +20,7 @@ void process_bit(reg_type bit, ADCCountVec& values)
 {
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char* argv[]) try
 {
 
   if(argc<4)
@@ -59,4 +59,16 @@ int main(int argc, char* argv[])
   cout << "completed decompression" << endl;
 
   return 0;
+}
+catch (const char* msg)
+{
+  cerr << "Caught const char*: " << msg << endl;
+}
+catch (std::exception& x)
+{
+  cerr << "Caught standard exception: " << x.what() << endl;
+}
+catch (...)
+{
+  cerr << "Caught unidentified exception type, no message possible.\n";
 }
