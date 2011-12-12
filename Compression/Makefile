@@ -59,7 +59,7 @@ DecodeHuffman: DecodeHuffman.o Decoder.o SymCode.o
 	$(LINK.cc) -o $@ $^
 
 cleandat:
-	/bin/rm -f samples.dat samples.dat2
+	/bin/rm -f samples.dat samples.dat2 table.txt comp.dat
 
 clean: cleandat
 	/bin/rm -f *.o *.gch EncodeHuffman DecodeHuffman BuildHuffmanTable MakeSample
