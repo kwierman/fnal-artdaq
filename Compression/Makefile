@@ -1,8 +1,23 @@
 
 CXX=g++-mp-4.6
 CXXFLAGS=-std=c++0x -g -O2
+.PHONY: clean cleandat dat
 
 all: MakeSample BuildHuffmanTable EncodeHuffman DecodeHuffman
+
+samples.dat samples.dat2: Makesample
+	./MakeSample 0 4 5000 samples.dat
+
+table.txt: BuildHuffmanTable samples.dat
+	./BuildHuffmanTable samples.dat $@
+
+comp.dat: EncodeHuffman table.txt samples.dat
+	./EncodeHuffman table.txt samples.dat $@
+
+uncomp.dat: DecodeHuffman table.txt comp.dat
+	./DecodeHuffman table.txt comp.dat $@
+
+dat: uncomp.dat
 
 SymProb.o: SymProb.cc SymProb.hh Properties.hh
 	$(COMPILE.cc) $<
@@ -43,5 +58,8 @@ EncodeHuffman: EncodeHuffman.o Encoder.o SymCode.o
 DecodeHuffman: DecodeHuffman.o Decoder.o SymCode.o
 	$(LINK.cc) -o $@ $^
 
-clean:
+cleandat:
+	/bin/rm -f samples.dat samples.dat2
+
+clean: cleandat
 	/bin/rm -f *.o *.gch EncodeHuffman DecodeHuffman BuildHuffmanTable MakeSample
