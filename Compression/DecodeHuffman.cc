@@ -16,7 +16,7 @@
 
 using namespace std;
 
-void process_bit(reg_type bit, ADCCountVec& values)
+void process_bit(reg_type /* bit */, ADCCountVec& /* values */)
 {
 }
 
@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) try
       return -1;
     }
 
-  constexpr auto neg_one = ~(0ul);
+  // constexpr auto neg_one = ~(0ul);
   SymTable syms;
 
   readTable(argv[1],syms);

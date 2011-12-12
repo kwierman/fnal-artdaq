@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
   Encoder en(t);
   size_t word_count=0;
 
-  while(word_count=br.next(in))
+  while((word_count=br.next(in)))
     {
       reg_type bit_count = en(in,out);
       data_ofs.write((const char*)&bit_count,sizeof(reg_type) );

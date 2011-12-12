@@ -29,7 +29,7 @@ public:
     It right() { return low_; }
     
     ItPair():low_(),high_() { }
-    ItPair(It higher, It lower):high_(higher),low_(lower) { }
+    ItPair(It higher, It lower):low_(lower),high_(higher) { }
   };
 
   typedef ItPair (*Algo)(HeadList&);

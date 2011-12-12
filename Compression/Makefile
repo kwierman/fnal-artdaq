@@ -1,6 +1,6 @@
 
 CXX=g++-mp-4.6
-CXXFLAGS=-std=c++0x -g -O2
+CXXFLAGS=-std=c++0x -g -O2 -Wall -Wextra
 .PHONY: clean cleandat dat
 
 all: MakeSample BuildHuffmanTable EncodeHuffman DecodeHuffman

@@ -29,7 +29,7 @@ public:
   {
     // reverse the bits in the register
     data_type reg = 0;
-    for(int i=0;i<bit_count;++i) { reg<<=1; reg|=(bit_register>>i)&0x01; }
+    for(data_type i=0;i<bit_count;++i) { reg<<=1; reg|=(bit_register>>i)&0x01; }
     store.push_back( SymCode(sym_,reg,bit_count) );
 
     // std::cout << "reverse " << (void*)reg << " " << (void*)bit_register << " " << bit_count << "\n";
