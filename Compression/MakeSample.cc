@@ -34,8 +34,6 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-  typedef vector<double> SigVec;
-  typedef vector<adc_type> ADCVec;
 
   if(argc<4)
     {
@@ -56,11 +54,11 @@ int main(int argc, char* argv[])
   mt19937 eng(seed);
   normal_distribution<> nd(mean,sd);
 
-  SigVec sig_samples;
+  SignalVec sig_samples;
   generate_n(back_inserter(sig_samples), total_samples, 
 	     [&] () {return nd(eng);} );
 
-  ADCVec adc_samples; 
+  ADCCountVec adc_samples;
   adc_samples.reserve(sig_samples.size());
   transform(sig_samples.begin(),sig_samples.end(),back_inserter(adc_samples),
 	    [&](double d) { return Properties::signalToADC(d); });
