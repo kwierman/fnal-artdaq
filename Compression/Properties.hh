@@ -17,6 +17,9 @@ typedef std::vector<adc_type> ADCCountVec;
 typedef unsigned long reg_type;
 typedef std::vector<reg_type> DataVec;
 
+typedef double signal_type;
+typedef std::vector<signal_type> SignalVec;
+
 constexpr unsigned long reg_size_bits = (sizeof(reg_type)*8);
 constexpr unsigned long chunk_size_bytes = 1<<16;
 constexpr unsigned long chunk_size_counts = chunk_size_bytes / sizeof(adc_type);
