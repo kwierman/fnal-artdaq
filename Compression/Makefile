@@ -5,7 +5,7 @@ CXXFLAGS=-std=c++0x -g -O2 -Wall -Wextra
 
 all: MakeSample BuildHuffmanTable EncodeHuffman DecodeHuffman
 
-samples.dat samples.dat2: Makesample
+samples.dat samples.dat2: MakeSample
 	./MakeSample 0 4 5000 samples.dat
 
 table.txt: BuildHuffmanTable samples.dat
