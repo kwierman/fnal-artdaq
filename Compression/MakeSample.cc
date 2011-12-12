@@ -65,9 +65,12 @@ int main(int argc, char* argv[])
 
   ofstream ost(fname,std::ios::binary);
   ofstream ost2(fname2);
-  for_each(adc_samples.begin(),adc_samples.end(),
-	   [&](ADCVec::value_type s) { ost.write((char*)&s,sizeof(s)); });
-  copy(adc_samples.begin(),adc_samples.end(),ostream_iterator<unsigned short>(ost2,"\n"));
+
+  for_each(adc_samples.cbegin(),
+           adc_samples.cend(),
+           [&](ADCCountVec::value_type s)
+            { ost.write((char*)&s, sizeof(s)); ost2 << s << '\n';}
+          );
 
   return 0;
 }
