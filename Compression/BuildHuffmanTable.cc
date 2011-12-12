@@ -10,7 +10,7 @@
 #include <limits>
 #include <map>
 
-#include "Table.hh"
+#include "HuffmanTable.hh"
 
 using namespace std;
 

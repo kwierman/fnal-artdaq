@@ -31,7 +31,7 @@ Decoder.o: Decoder.cc Decoder.hh Properties.hh SymCode.hh
 Encoder.o: Encoder.cc Encoder.hh Properties.hh SymCode.hh
 	$(COMPILE.cc) $<
 
-Table.o: Table.cc Tree.hh Properties.hh SymCode.hh SymProb.hh
+HuffmanTable.o: HuffmanTable.cc Tree.hh Properties.hh SymCode.hh SymProb.hh
 	$(COMPILE.cc) $<
 
 MakeSample.o: MakeSample.cc Properties.hh
@@ -49,7 +49,7 @@ DecodeHuffman.o: DecodeHuffman.cc Properties.hh SymCode.hh
 MakeSample: MakeSample.o 
 	$(LINK.cc) -o $@ $^
 
-BuildHuffmanTable: BuildHuffmanTable.o SymProb.o SymCode.o Table.o
+BuildHuffmanTable: BuildHuffmanTable.o SymProb.o SymCode.o HuffmanTable.o
 	$(LINK.cc) -o $@ $^
 
 EncodeHuffman: EncodeHuffman.o Encoder.o SymCode.o

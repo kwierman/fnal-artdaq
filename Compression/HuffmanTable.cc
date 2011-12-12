@@ -2,7 +2,7 @@
 #include <fstream>
 #include <algorithm>
 
-#include "Table.hh"
+#include "HuffmanTable.hh"
 #include "Properties.hh"
 #include "SymProb.hh"
 
