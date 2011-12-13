@@ -1,19 +1,24 @@
 
 CXX=g++-mp-4.6
-CXXFLAGS=-std=c++0x -g -O2 -Wall -Wextra
+# We don't want to use -D_GLIBCXX_PARALLEL until we make sure all our use
+# of standard library algorithms are parallel-safe.
+CXXFLAGS=-std=c++0x -g -O2 -Wall -Wextra -fopenmp
+
 .PHONY: clean cleandat dat
 
 all: MakeSample BuildHuffmanTable EncodeHuffman DecodeHuffman tester
 
-samples_training.dat samples.dat2: MakeSample
-	./MakeSample 0 4 5000 samples_training.dat
+samples.dat samples.dat2: MakeSample
 	./MakeSample 0 4 80 samples.dat
+
+samples_training.dat samples_training.dat2: MakeSample
+	./MakeSample 0 4 5000 samples_training.dat
 
 table.txt: BuildHuffmanTable samples_training.dat
 	./BuildHuffmanTable samples_training.dat $@
 
-comp.dat: EncodeHuffman table.txt samples.dat
-	./EncodeHuffman table.txt samples.dat $@
+comp.dat: EncodeHuffman table.txt samples_training.dat
+	./EncodeHuffman table.txt samples_training.dat $@
 
 uncomp.dat: DecodeHuffman table.txt comp.dat
 	./DecodeHuffman table.txt comp.dat $@
@@ -66,7 +71,8 @@ tester: tester.o HuffmanTable.o SymCode.o SymProb.o Decoder.o
 	$(LINK.cc) -o $@ $^
 
 cleandat:
-	/bin/rm -f samples.dat samples.dat2 table.txt comp.dat
+	/bin/rm -f samples_training.dat{,2} samples.dat{,2} table.txt comp.dat uncomp.dat
 
 clean: cleandat
-	/bin/rm -f *.o *.gch EncodeHuffman DecodeHuffman BuildHuffmanTable MakeSample
+	/bin/rm -f *.o *.gch EncodeHuffman DecodeHuffman BuildHuffmanTable
+	/bin/rm -f MakeSample tester

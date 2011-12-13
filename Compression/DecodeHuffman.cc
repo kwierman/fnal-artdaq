@@ -1,20 +1,25 @@
 #include <iostream>
-#include <vector>
-#include <list>
-#include <utility>
-#include <iterator>
+// #include <vector>
+// #include <list>
+// #include <utility>
+// #include <iterator>
 #include <fstream>
-#include <memory>
+// #include <memory>
 #include <algorithm>
-#include <limits>
-#include <map>
-#include <cmath>
+// #include <limits>
+// #include <map>
+// #include <cmath>
 
 #include "Properties.hh"
 #include "SymCode.hh"
 #include "Decoder.hh"
 
-using namespace std;
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::ifstream;
+using std::ofstream;
+using std::sort;
 
 void process_bit(reg_type /* bit */, ADCCountVec& /* values */)
 {
