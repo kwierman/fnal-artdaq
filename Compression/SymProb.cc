@@ -11,7 +11,7 @@ using namespace std;
 void calculateProbs(ADCCountVec const& d, SymsVec& out)
 {
   unsigned int symnum=0;
-  
+
   out.clear();
   out.reserve(Properties::count_max());
 
@@ -19,8 +19,12 @@ void calculateProbs(ADCCountVec const& d, SymsVec& out)
   generate_n(back_inserter(out),Properties::count_max(),
 	     [&]() { return SymProb(symnum++); });
 
-  for_each(d.begin(),d.end(), 
+  for_each(d.cbegin(),d.cend(),
 	   [&] (ADCCountVec::value_type v) { out[v].incr(); });
+
+  for_each(out.begin(), out.end(),
+          [](SymsVec::value_type& v) { if (v.count == 0) v.count = 1; });
+
 
   // must leave zero count entries in
   sort(out.begin(),out.end()); // descending

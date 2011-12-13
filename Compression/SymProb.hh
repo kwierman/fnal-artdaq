@@ -11,20 +11,20 @@
 
 struct SymProb
 {
-  SymProb():sym_(0),count_(0) { }
-  explicit SymProb(unsigned int sym):sym_(sym),count_(0) { }
+  SymProb() : sym(0), count(0) { }
+  explicit SymProb(unsigned int s, unsigned long c=0UL) : sym(s),count(c) { }
   
-  unsigned int sym_;
-  unsigned long count_;
+  unsigned int sym;
+  unsigned long count;
   
-  void incr() { ++count_; }
-  bool operator<(SymProb const& other) const { return this->count_ > other.count_; }
+  void incr() { ++count; }
+  bool operator<(SymProb const& other) const { return this->count > other.count; }
 };
 
 /* for testing */
 inline std::ostream& operator<<(std::ostream& ost, SymProb const& s)
 {
-  ost << "(" << s.sym_ << "," << s.count_ << ")";
+  ost << "(" << s.sym << "," << s.count << ")";
   return ost;
 }
 

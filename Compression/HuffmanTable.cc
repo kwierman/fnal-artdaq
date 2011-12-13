@@ -74,7 +74,7 @@ void HuffmanTable::initNodes(SymsVec const& syms)
   nodes_.clear();
   transform(syms.begin(),syms.end(),back_inserter(nodes_),
 	    [&] (SymsVec::value_type const& e) 
-	    { return Node_ptr(new Leaf(e.count_,e.sym_)); });
+	    { return Node_ptr(new Leaf(e.count,e.sym)); });
 
 }
 
