@@ -56,7 +56,7 @@ type CodeDict a = M.Map a [Bit]
 buildEncDict :: (Ord a) => HTree a -> CodeDict a
 buildEncDict = M.fromList . build 
     where build (Leaf t _)     = (t,[]) : []
-          build (Branch a b _) = mapBit O a ++ mapBit I b
+          build (Branch a b _) = mapBit I a ++ mapBit O b
            -- build up the codes in the snd of each Leaf's tuple:
           mapBit b = map (second (b:)) . build
 
@@ -67,8 +67,8 @@ decode :: HTree a -> [Bit] -> [a]
 decode t [] = []
 decode t bs = dec bs t
     where dec bs' (Leaf x _) = x : decode t bs'
-          dec (O:bs') (Branch l _ _) = dec bs' l 
-          dec (I:bs') (Branch _ r _) = dec bs' r 
+          dec (I:bs') (Branch l _ _) = dec bs' l
+          dec (O:bs') (Branch _ r _) = dec bs' r
 
 
 -- We seem to need to specify the type of *population*, so that
