@@ -32,17 +32,17 @@ inline size_t bitCountToBytes(reg_type bits)
 
 struct Properties
 {
-  static adc_type count_max() { return 1<<12; }
-  // static adc_type count_max() { return 1<<2; }
-  static adc_type count_min() { return 0; }
+  //constexpr static adc_type count_max() { return 1<<12; }
+  constexpr static adc_type count_max() { return 1<<3; }
+  constexpr static adc_type count_min() { return 0; }
 
-  static double signal_low() { return -20.; }
-  static double signal_high() { return 140.; }
-  static double adc_low() { return count_min(); }
-  static double adc_high() { return (double)(count_max()); }
+  constexpr static double signal_low() { return -20.; }
+  constexpr static double signal_high() { return 140.; }
+  constexpr static double adc_low() { return count_min(); }
+  constexpr static double adc_high() { return (double)(count_max()); }
 
-  static double m() { return (adc_high()-adc_low())/(signal_high()-signal_low()); }
-  static double b() { return -signal_low() * m(); }
+  constexpr static double m() { return (adc_high()-adc_low())/(signal_high()-signal_low()); }
+  constexpr static double b() { return -signal_low() * m(); }
 
   static adc_type signalToADC(double sig)
   { 
