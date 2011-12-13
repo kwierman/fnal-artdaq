@@ -33,7 +33,7 @@ namespace
     SymTable::value_type const& te = syms_[val];
     //cout << "curr_pos=" << curr_pos_ << " bit_count=" << te.bit_count_ << "\n";
 
-    *curr_word_ |= te.code_ << curr_pos_;
+    *curr_word_ |= (te.code_ << curr_pos_);
     curr_pos_ += te.bit_count_;
     total_ += te.bit_count_;
 

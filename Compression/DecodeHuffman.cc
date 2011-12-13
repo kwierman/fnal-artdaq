@@ -36,8 +36,12 @@ int main(int argc, char* argv[]) try
   sort(syms.begin(),syms.end(),
        [&](SymCode const& a, SymCode const & b) { return a.bit_count_ < b.bit_count_; });
 
+  cout << "sorted syms" << endl;
+
   ifstream data_ifs(argv[2],std::ios::binary);
+  reverseCodes(syms);
   Decoder dec(syms);
+  cout << "built decoder" << endl;
   ofstream data_ofs(argv[3],std::ios::binary);
   DataVec datavals;
   ADCCountVec adcvals;
@@ -49,8 +53,11 @@ int main(int argc, char* argv[]) try
       data_ifs.read((char*)&bit_count,sizeof(reg_type));
       if(data_ifs.eof()) break;
       size_t byte_count = bitCountToBytes(bit_count);
+      cout << "there are " << bit_count << " bits (" << byte_count << ")" << endl;
+      datavals.resize(byte_count);
       data_ifs.read((char*)&datavals[0],byte_count);
       if(data_ifs.eof()) break;
+      cout << "bytes are ready" << endl;
 
       dec(bit_count,datavals,adcvals);
       data_ofs.write((char*)&adcvals[0],adcvals.size()*sizeof(adc_type));

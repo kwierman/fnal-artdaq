@@ -91,12 +91,13 @@ void HuffmanTable::constructTree()
     {
       ItPair p = LowLow(heads_);
       nodes_.push_back(Node_ptr(new Branch(*(p.left()),*(p.right()))));
+      heads_.erase((p.low_));
+      heads_.erase((p.high_));
+
       // need to be put into the right sorted order spot
       auto pos = find_if(heads_.rbegin(),heads_.rend(),
-			       [&](HeadList::value_type& v){return nodes_.back()->count()<v->count();});
+			       [&](HeadList::value_type& v){return nodes_.back()->count()<=v->count();});
       heads_.insert(pos.base(),nodes_.back().get());
-      heads_.erase((p.high_));
-      heads_.erase((p.low_));
     }
 }
 

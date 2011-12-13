@@ -15,6 +15,8 @@ public:
 
   reg_type operator()(reg_type bit_count, DataVec const& in, ADCCountVec& out);
 
+  void printTable(std::ostream& ost) const;
+
 private:
 
   void buildTable();

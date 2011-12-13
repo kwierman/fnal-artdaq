@@ -27,12 +27,8 @@ public:
   virtual data_type count() const { return count_; }
   virtual void traverse(data_type bit_count, data_type bit_register, SymTable& store) const
   {
-    // reverse the bits in the register
-    data_type reg = 0;
-    for(data_type i=0;i<bit_count;++i) { reg<<=1; reg|=(bit_register>>i)&0x01; }
+    data_type reg = bit_register;
     store.push_back( SymCode(sym_,reg,bit_count) );
-
-    // std::cout << "reverse " << (void*)reg << " " << (void*)bit_register << " " << bit_count << "\n";
   }
 
   virtual void print(std::ostream& ost) const
@@ -65,7 +61,12 @@ public:
   }
 
   virtual void print(std::ostream& ost) const
-  { ost << "B " << count_; }
+  {
+    ost << "B " << count_ << "(\n"; 
+    left_->print(ost);
+    right_->print(ost);
+    ost << "\n)";
+  }
 
 private:
   data_type count_;

@@ -33,6 +33,7 @@ inline size_t bitCountToBytes(reg_type bits)
 struct Properties
 {
   static adc_type count_max() { return 1<<12; }
+  // static adc_type count_max() { return 1<<2; }
   static adc_type count_min() { return 0; }
 
   static double signal_low() { return -20.; }

@@ -39,6 +39,8 @@ public:
 
   void extractTable(SymTable& out) const;
   void writeTable(std::string const& filename) const;
+  void print(std::ostream& ost) const
+  { heads_.front()->print(ost); }
 
 private:
   void initNodes(SymsVec const&);
@@ -49,5 +51,11 @@ private:
   NodeVec nodes_;
   HeadList heads_;
 };
+
+inline std::ostream& operator<<(std::ostream& ost, HuffmanTable const& h)
+{
+  h.print(ost);
+  return ost;
+}
 
 #endif

@@ -3,13 +3,14 @@ CXX=g++-mp-4.6
 CXXFLAGS=-std=c++0x -g -O2 -Wall -Wextra
 .PHONY: clean cleandat dat
 
-all: MakeSample BuildHuffmanTable EncodeHuffman DecodeHuffman
+all: MakeSample BuildHuffmanTable EncodeHuffman DecodeHuffman tester
 
-samples.dat samples.dat2: MakeSample
-	./MakeSample 0 4 5000 samples.dat
+samples_training.dat samples.dat2: MakeSample
+	./MakeSample 0 4 5000 samples_training.dat
+	./MakeSample 0 4 80 samples.dat
 
-table.txt: BuildHuffmanTable samples.dat
-	./BuildHuffmanTable samples.dat $@
+table.txt: BuildHuffmanTable samples_training.dat
+	./BuildHuffmanTable samples_training.dat $@
 
 comp.dat: EncodeHuffman table.txt samples.dat
 	./EncodeHuffman table.txt samples.dat $@
@@ -34,6 +35,9 @@ Encoder.o: Encoder.cc Encoder.hh Properties.hh SymCode.hh
 HuffmanTable.o: HuffmanTable.cc Tree.hh Properties.hh SymCode.hh SymProb.hh
 	$(COMPILE.cc) $<
 
+tester.o: tester.cc Properties.hh HuffmanTable.hh Decoder.hh
+	$(COMPILE.cc) $<
+
 MakeSample.o: MakeSample.cc Properties.hh
 	$(COMPILE.cc) $<
 
@@ -56,6 +60,9 @@ EncodeHuffman: EncodeHuffman.o Encoder.o SymCode.o
 	$(LINK.cc) -o $@ $^
 
 DecodeHuffman: DecodeHuffman.o Decoder.o SymCode.o
+	$(LINK.cc) -o $@ $^
+
+tester: tester.o HuffmanTable.o SymCode.o SymProb.o Decoder.o
 	$(LINK.cc) -o $@ $^
 
 cleandat:

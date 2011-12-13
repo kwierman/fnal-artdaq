@@ -48,5 +48,6 @@ typedef std::vector<SymCode> SymTable;
 
 void readTable(const char* fname, SymTable& out);
 void writeTable(const char* fname, SymTable const& in);
+void reverseCodes(SymTable&);
 
 #endif

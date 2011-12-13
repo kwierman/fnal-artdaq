@@ -17,7 +17,7 @@ Decoder::Decoder(SymTable const& s):syms_(s),table_(),head_(syms_.size())
   for_each(syms_.begin(),syms_.end(),
 	   [&](SymCode const& s) { table_.push_back(s.sym_); });
 
-  last_ = table_.size()-1;
+  last_ = table_.size();
   head_ = addNode();
 
   buildTable();
@@ -25,8 +25,9 @@ Decoder::Decoder(SymTable const& s):syms_(s),table_(),head_(syms_.size())
 
 void Decoder::buildTable()
 {
-  for(size_t s=0,len=table_.size();s<len;++s)
+  for(size_t s=0,len=syms_.size();s<len;++s)
     {
+      // cout << "adding sym " << syms_[s] << endl;
       reg_type code = syms_[s].code_;
 
       size_t index = 0;
@@ -41,6 +42,7 @@ void Decoder::buildTable()
 	    {
 	      size_t newnode = addNode();
 	      table_[curr+index]=newnode;
+	      // cout << "adding new node " << newnode << " at " << (curr+index) << " last=" << last_ << "\n";
 	    }
 
 	  curr=table_[curr+index];
@@ -53,8 +55,19 @@ void Decoder::buildTable()
 	  std::cerr << "table[" << (curr) << "]=" << table_[curr] << " last=" << last_ << "\n";
 	  throw "bad run!";
 	}
+      // cout << "final = " << (curr+index) << " val=" << s << " sym=" << syms_[s] <<  "\n";
       table_[curr+index]=s;
     }
+}
+
+void Decoder::printTable(std::ostream& ost) const
+{
+  for(auto c=table_.begin()+head_,e=table_.end();c!=e;++c)
+    {
+      if(*c < head_) ost << "L" << *c << " sym=" << syms_[*c] << "\n";
+      else ost << "B" << *c << "\n";
+    }
+  ost << "table size=" << table_.size() << " last=" << last_ << endl;
 }
 
 reg_type Decoder::operator()(reg_type bit_count, DataVec const& in, ADCCountVec& out)
@@ -68,9 +81,11 @@ reg_type Decoder::operator()(reg_type bit_count, DataVec const& in, ADCCountVec&
   for(reg_type i=0;i<bit_count;++i)
     {
       auto inc = (i%65+1)/65;
+      // cout << i << " ";
 
       if(inc)
 	{
+	  // cout << "inc" << endl;
 	  ++pos;
 	  val=*pos;
 	}
