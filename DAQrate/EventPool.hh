@@ -17,6 +17,7 @@
 #include "Fragment.hh"
 
 #include <vector>
+#include <fstream>
 
 class FragmentPool
 {
@@ -35,6 +36,7 @@ private:
   int data_length_;
   Data d_;
   int range_;
+  std::ifstream ifs_;
 };
 
 #endif

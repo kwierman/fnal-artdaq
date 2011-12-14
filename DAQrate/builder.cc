@@ -130,6 +130,7 @@ void Program::sink()
   EventStore es(conf_);
   FragmentPool::Data e;
   RHandles h(conf_);
+  
 
   int total_events = conf_.total_events_ / conf_.sinks_;
   if (conf_.offset_ < (conf_.total_events_ % conf_.sinks_)) ++total_events;
@@ -144,6 +145,7 @@ void Program::sink()
   for(int i=0;i<expect;++i)
     {
       h.recvEvent(e);
+      
       es(e);
     }
 

@@ -5,9 +5,9 @@ typedef long ElementType;
 
 struct FragHeader
 {
-  ElementType dummy[2];
-  ElementType id_;
+  ElementType frag_words_;
   ElementType from_;
+  ElementType id_;
   ElementType time_ms_; // length of time to process
 };
 

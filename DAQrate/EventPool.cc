@@ -1,7 +1,8 @@
 
 #include "EventPool.hh"
 #include "Utils.hh"
-
+#include <fstream>
+#include <sstream>
 #include <algorithm>
 
 FragmentPool::FragmentPool(Config const& conf):
@@ -12,6 +13,9 @@ FragmentPool::FragmentPool(Config const& conf):
   d_(data_length_),
   range_(data_length_ - word_count_)
 {
+  std::ostringstream name;
+  name << "board" << conf.offset_ << ".out";
+  ifs_.open( name.str().c_str(), std::ifstream::in );
   generate(d_.begin(),d_.end(),LongMaker());
 }
 
@@ -23,7 +27,8 @@ void FragmentPool::operator()(Data& output)
 {
   if(output.size()<word_count_) output.resize(word_count_);
 
-  int start = (LongMaker::make()) % range_;
+  //int start = (LongMaker::make()) % range_;
+  int start = 0;
   std::copy(d_.begin()+start, d_.begin()+start+word_count_, output.begin());
 
   FragHeader* h = (FragHeader*)&output[0];
@@ -31,4 +36,5 @@ void FragmentPool::operator()(Data& output)
   h->id_=seq_++;
   h->from_=rank_;
   h->time_ms_=1;
+  h->frag_words_ = word_count_;
 }
