@@ -80,18 +80,18 @@ reg_type Decoder::operator()(reg_type bit_count, DataVec const& in, ADCCountVec&
 
   for(reg_type i=0;i<bit_count;++i)
     {
-      auto inc = (i%65+1)/65;
+      auto inc = (i%64+1)/64;
       // cout << i << " ";
 
+      curr = table_[curr+(val&0x01)];
+      val>>=1;
+      
       if(inc)
 	{
 	  // cout << "inc" << endl;
 	  ++pos;
 	  val=*pos;
 	}
-      
-      curr = table_[curr+(val&0x01)];
-      val>>=1;
 
       if(curr<head_)
 	{
