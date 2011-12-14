@@ -1,5 +1,4 @@
-
-CXX=g++-mp-4.6
+CXX=g++
 # We don't want to use -D_GLIBCXX_PARALLEL until we make sure all our use
 # of standard library algorithms are parallel-safe.
 CXXFLAGS=-std=c++0x -g -O2 -Wall -Wextra -fopenmp
