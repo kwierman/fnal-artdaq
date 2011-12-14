@@ -21,7 +21,18 @@ FragmentPool::~FragmentPool()
 
 void FragmentPool::operator()(Data& output)
 {
+  char* kab = getenv("HOSTNAME");
+  std::string jab;
+  if (kab != 0) {
+      jab = kab;
+  }
+  else {
+      jab = "unknown";
+  }
   if(output.size()<word_count_) output.resize(word_count_);
+  std::cout << "Inside FragmentPool with rank " << rank_
+            << ", word_count_ = " << word_count_
+            << ", host = " << jab << std::endl;
 
   int start = (LongMaker::make()) % range_;
   std::copy(d_.begin()+start, d_.begin()+start+word_count_, output.begin());
