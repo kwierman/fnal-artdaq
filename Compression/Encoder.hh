@@ -9,7 +9,7 @@
 class BlockReader
 {
 public:
-  BlockReader(std::istream&);
+  explicit BlockReader(std::istream&);
 
   // number of words read and placed into out is returned
   reg_type next(ADCCountVec& out);
@@ -22,7 +22,7 @@ private:
 class Encoder
 {
 public:
-  Encoder(SymTable const&);
+  explicit Encoder(SymTable const&);
 
   // returns the number of bits in the out buffer
   reg_type operator()(ADCCountVec const& in, DataVec& out);
