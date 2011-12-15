@@ -48,22 +48,22 @@ namespace {
   
 }
 
-HuffmanTable::HuffmanTable(std::istream& ifs)
+HuffmanTable::HuffmanTable(std::istream& ifs, size_t countmax)
 {
   ADCCountVec t;
   readTrainingSet(ifs,t);
-  makeTable(t);
+  makeTable(t, countmax);
 }
 
-HuffmanTable::HuffmanTable(ADCCountVec const& t)
+HuffmanTable::HuffmanTable(ADCCountVec const& t, size_t countmax)
 {
-  makeTable(t);
+  makeTable(t, countmax);
 }
 
-void HuffmanTable::makeTable(ADCCountVec const& adcs)
+void HuffmanTable::makeTable(ADCCountVec const& adcs, size_t countmax)
 {
   SymsVec sv;
-  calculateProbs(adcs,sv);
+  calculateProbs(adcs,sv, countmax);
   initNodes(sv);
   initHeads();
   constructTree();

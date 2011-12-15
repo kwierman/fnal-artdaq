@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
     return -1;
   }
   ifstream ifs(argv[1], std::ios::binary);
-  HuffmanTable h(ifs);
+  HuffmanTable h(ifs, Properties::count_max());
   h.writeTable(argv[2]);
   return 0;
 }

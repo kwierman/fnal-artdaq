@@ -8,11 +8,11 @@
 
 using namespace std;
 
-void readTable(const char* fname, SymTable& out)
+void readTable(const char* fname, SymTable& out, size_t countmax)
 {
   ifstream ifs(fname);
   out.clear();
-  out.resize(Properties::count_max());
+  out.resize(countmax);
 
   // copy(istream_iterator<TableEntry>(ifs),istream_iterator<TableEntry>(),
   //  back_inserter(from_file));

@@ -8,7 +8,7 @@
 
 using namespace std;
 
-void calculateProbs(ADCCountVec const& d, SymsVec& out)
+void calculateProbs(ADCCountVec const& d, SymsVec& out, size_t countmax)
 {
   unsigned int symnum=0;
 
@@ -16,7 +16,7 @@ void calculateProbs(ADCCountVec const& d, SymsVec& out)
   out.reserve(Properties::count_max());
 
   // generate one slot for possible symbols
-  generate_n(back_inserter(out),Properties::count_max(),
+  generate_n(back_inserter(out), countmax,
 	     [&]() { return SymProb(symnum++); });
 
   for_each(d.cbegin(),d.cend(),

@@ -29,12 +29,12 @@ int main()
   push_n(samples, 7, 9);
 
   SymsVec probs;
-  calculateProbs(samples, probs);
+  calculateProbs(samples, probs, Properties_t<3>::count_max());
   cout << "Frequency table:\n";
   copy(probs.cbegin(), probs.cend(), ostream_iterator<SymProb>(cout, "\n"));
   cout << "-----\n";
   cout << "Huffman tree:\n";
-  HuffmanTable h(samples);
+  HuffmanTable h(samples, Properties_t<3>::count_max());
   cout << h << "\n";
   cout << "-----\n";
   SymTable tab;

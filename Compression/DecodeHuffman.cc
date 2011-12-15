@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) try
   // constexpr auto neg_one = ~(0ul);
   SymTable syms;
 
-  readTable(argv[1],syms);
+  readTable(argv[1],syms,Properties::count_max());
   sort(syms.begin(),syms.end(),
        [&](SymCode const& a, SymCode const & b) { return a.bit_count_ < b.bit_count_; });
 

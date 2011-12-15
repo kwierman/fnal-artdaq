@@ -28,6 +28,7 @@ add_executable( BuildHuffmanTable BuildHuffmanTable.cc )
 add_executable( DecodeHuffman DecodeHuffman.cc )
 add_executable( EncodeHuffman EncodeHuffman.cc )
 add_executable( MakeSample MakeSample.cc )
+add_executable( tester tester.cc )
 
 # ----------------------------------------------------------------------
 # Install this project's headers, sources, library, and executables:

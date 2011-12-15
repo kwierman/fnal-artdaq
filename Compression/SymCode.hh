@@ -46,7 +46,7 @@ inline std::istream& operator>>(std::istream& ist, SymCode& t)
 
 typedef std::vector<SymCode> SymTable;
 
-void readTable(const char* fname, SymTable& out);
+void readTable(const char* fname, SymTable& out, size_t countmax);
 void writeTable(const char* fname, SymTable const& in);
 void reverseCodes(SymTable&);
 

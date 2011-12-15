@@ -30,10 +30,10 @@ inline size_t bitCountToBytes(reg_type bits)
   return ( bits/reg_size_bits + ((bits%reg_size_bits)==0 ? 0 : 1 )) * sizeof(reg_type);
 }
 
-struct Properties
+template <size_t N>
+struct Properties_t
 {
-  constexpr static adc_type count_max() { return 1<<12; }
-  //constexpr static adc_type count_max() { return 1<<3; }
+  constexpr static adc_type count_max() { return 1<<N; }
   constexpr static adc_type count_min() { return 0; }
 
   constexpr static double signal_low() { return -20.; }
@@ -54,6 +54,9 @@ struct Properties
   {
     return ((double)counts-b())/m();
   }
+
 };
+
+typedef Properties_t<12> Properties;
 
 #endif

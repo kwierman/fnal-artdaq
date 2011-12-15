@@ -32,6 +32,6 @@ inline std::ostream& operator<<(std::ostream& ost, SymProb const& s)
 
 typedef std::vector<SymProb> SymsVec;
 
-void calculateProbs(ADCCountVec const& data_in, SymsVec& prob_table_out);
+void calculateProbs(ADCCountVec const& data_in, SymsVec& prob_table_out, size_t countmax);
 
 #endif

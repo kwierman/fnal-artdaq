@@ -34,8 +34,8 @@ public:
 
   typedef ItPair (*Algo)(HeadList&);
 
-  HuffmanTable(std::istream& training_set);
-  HuffmanTable(ADCCountVec const& training_set);
+  HuffmanTable(std::istream& training_set, size_t countmax);
+  HuffmanTable(ADCCountVec const& training_set, size_t countmax);
 
   void extractTable(SymTable& out) const;
   void writeTable(std::string const& filename) const;
@@ -46,7 +46,7 @@ private:
   void initNodes(SymsVec const&);
   void initHeads();
   void constructTree();
-  void makeTable(ADCCountVec const&);
+  void makeTable(ADCCountVec const&, size_t countmax);
 
   NodeVec nodes_;
   HeadList heads_;
