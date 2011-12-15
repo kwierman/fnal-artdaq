@@ -1,3 +1,5 @@
 include(CetTest)
 
-cet_test(silly)
+link_libraries(artdaq)
+cet_test(compress_t DATAFILES thirty-two-12-bit.dat)
+
