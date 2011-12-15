@@ -38,9 +38,9 @@ inline std::ostream& operator<<(std::ostream& ost, SymCode const& st)
 
 inline std::istream& operator>>(std::istream& ist, SymCode& t)
 {
-  if(!ist.bad()) ist >> t.sym_;
-  if(!ist.bad()) ist >> t.code_;
-  if(!ist.bad()) ist >> t.bit_count_;
+  if (ist) ist >> t.sym_;
+  if (ist) ist >> t.code_;
+  if (ist) ist >> t.bit_count_;
   return ist;
 }
 
