@@ -26,7 +26,6 @@ int main(int argc, char* argv[])
 
   SymTable t;
   readTable(argv[1],t,Properties::count_max());
-  reverseCodes(t);
 
   ifstream data_ifs(argv[2],std::ios::binary);
   ofstream data_ofs(argv[3],std::ios::binary);

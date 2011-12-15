@@ -44,7 +44,6 @@ int main(int argc, char* argv[]) try
   cout << "sorted syms" << endl;
 
   ifstream data_ifs(argv[2],std::ios::binary);
-  reverseCodes(syms);
   Decoder dec(syms);
   cout << "built decoder" << endl;
   ofstream data_ofs(argv[3],std::ios::binary);
