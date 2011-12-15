@@ -28,7 +28,7 @@ public:
   reg_type operator()(ADCCountVec const& in, DataVec& out);
 
 private:
-  SymTable const& syms_;
+  SymTable syms_;
 };
 
 #endif

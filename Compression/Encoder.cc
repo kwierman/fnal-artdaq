@@ -52,6 +52,7 @@ namespace
 Encoder::Encoder(SymTable const& syms):
   syms_(syms)
 {
+  reverseCodes(syms_);
 }
 
 reg_type Encoder::operator()(ADCCountVec const& in, DataVec& out)
