@@ -114,3 +114,11 @@ void HuffmanTable::writeTable(string const& filename) const
   ::writeTable(filename.c_str(),tab);
 }
 
+void HuffmanTable::writeTableReversed(string const& filename) const
+{
+  SymTable tab;
+  extractTable(tab);
+  ::reverseCodes(tab);
+  ::writeTable(filename.c_str(),tab);
+}
+

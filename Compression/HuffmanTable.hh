@@ -39,6 +39,7 @@ public:
 
   void extractTable(SymTable& out) const;
   void writeTable(std::string const& filename) const;
+  void writeTableReversed(std::string const& filename) const;
   void print(std::ostream& ost) const
   { heads_.front()->print(ost); }
 
