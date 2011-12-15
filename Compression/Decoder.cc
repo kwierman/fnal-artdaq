@@ -12,6 +12,8 @@ namespace
 
 Decoder::Decoder(SymTable const& s):syms_(s),table_(),head_(syms_.size())
 {
+  reverseCodes(syms_);
+
   table_.reserve(syms_.size() * 10);
 
   for_each(syms_.begin(),syms_.end(),
@@ -62,9 +64,11 @@ void Decoder::buildTable()
 
 void Decoder::printTable(std::ostream& ost) const
 {
-  for(auto c=table_.begin()+head_,e=table_.end();c!=e;++c)
+  SymTable non_reversed_syms(syms_);
+  reverseCodes(non_reversed_syms);
+  for(auto c=table_.cbegin()+head_,e=table_.cend();c!=e;++c)
     {
-      if(*c < head_) ost << "L" << *c << " sym=" << syms_[*c] << "\n";
+      if(*c < head_) ost << "L" << *c << " sym=" << non_reversed_syms[*c] << "\n";
       else ost << "B" << *c << "\n";
     }
   ost << "table size=" << table_.size() << " last=" << last_ << endl;

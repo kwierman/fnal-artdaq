@@ -42,7 +42,6 @@ int main()
   cout << "(original) Symbol table\n";
   copy(tab.cbegin(), tab.cend(), ostream_iterator<SymCode>(cout, "\n"));
   cout << "-----\n";
-  reverseCodes(tab);
   Decoder d(tab);
   cout << "(recovered) Symbol table\n";
   d.printTable(cout);

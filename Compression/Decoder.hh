@@ -30,7 +30,7 @@ private:
     return rc;
   }
 
-  SymTable const& syms_;
+  SymTable syms_;
   DataVec table_;
   size_t head_;
   size_t last_;
