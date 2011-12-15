@@ -16,7 +16,7 @@
 # LIB_MPI_LOC = /usr/local/openmpi/lib/
 
 
-CFLAGS = -O2 -g # -DDEBUGME=1
+CFLAGS = -O2 -g  -DDEBUGME=1
 
 CC          = $(BIN_MPI_LOC)mpicc
 CCC         = $(BIN_MPI_LOC)mpicxx
