@@ -10,6 +10,7 @@
 set( LIB_NAME ${PROJECT_NAME} )
 
 set( LIB_SOURCES 
+     BlockReader.cc
      Decoder.cc
      Encoder.cc
      HuffmanTable.cc

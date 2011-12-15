@@ -12,6 +12,7 @@
 
 #include "Properties.hh"
 #include "SymCode.hh"
+#include "BlockReader.hh"
 #include "Encoder.hh"
 
 using namespace std;
