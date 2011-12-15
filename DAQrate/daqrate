@@ -1,0 +1,151 @@
+#!/usr/bin/env python
+
+
+import sys
+import os
+
+g_opt={'tlvlmsk':0}
+if sys.version_info[0] == 2: exec( 'trc_one=1L' )
+else:                        exec( 'trc_one=1' )
+
+
+def TRACE( lvl, fmt_s, *args ):
+    import socket,time,os
+    global g_thisnode
+    # how is g_opt working w/o "global" declaration? - must default if read
+    if g_opt['tlvlmsk'] & (trc_one<<lvl):
+        if g_thisnode == None: g_thisnode=NodeInfo()
+        fo = open( "%s.%s.trc"%(g_thisnode.hostnames_l[0],os.getenv('RGANG_MACH_ID')), "a+" )
+        fd = fo.fileno()
+        os.write( fd,'%.2f:%s:%s:%d:%s\n'%(time.time(),socket.gethostname(),
+                                           g_thisnode.mach_idx,lvl,fmt_s%args))
+        fo.close()
+    # TRACE
+
+
+###############################################################################
+# General Regular Expression class that allows for:
+#    xx = Re( re )
+#    ...
+#    if xx.search( line ):
+#        yy = xx.match_obj.group( x )
+#
+
+class Re:
+    import re
+    def __init__( self, reg_ex=None,flags=0 ):
+        if reg_ex: self.compiled = self.re.compile(reg_ex,flags)
+        self.match_obj=None
+    def search(self,arg1,string=None):
+        if string: self.match_obj = self.re.search(arg1, string)
+        else:      self.match_obj = self.compiled.search( arg1 )
+        return self.match_obj
+    # Re
+
+re_numeric = Re( r"([0-9a-f]+)-((0x{0,1}){0,1}[0-9a-f]+)" )     # the "r" prefix --> use Python's raw string notation
+re_1alpha  = Re( r"([a-zA-Z])-([a-zA-Z])" )                     # the "r" prefix --> use Python's raw string notation
+re_hex    = Re( r"^[0-9a-f]+" )
+
+
+
+def findall_expands( ss ):
+    result = []; result_idx = 0; brace_lvl = 0
+    for cc in ss:
+        if   cc == '{':
+            brace_lvl = brace_lvl + 1
+            if brace_lvl == 1: result.append('')
+        if brace_lvl > 0: result[result_idx] = result[result_idx] + cc
+        if   cc == '}':
+            brace_lvl = brace_lvl - 1
+            if brace_lvl == 0: result_idx = result_idx + 1
+    if brace_lvl != 0: result.pop()
+    return result
+    # findall_expands
+
+
+def numeric_expand( ss_l ):
+    ret = []
+    for sss in ss_l:
+        # single alpha check 1st so {a-f} is not mistaken for
+        # integer (not hex) numeric expand
+        if re_1alpha.search( sss ):
+            start = re_1alpha.match_obj.group(1)
+            end   = re_1alpha.match_obj.group(2)
+            end   = chr(ord(end)+1)
+            while start != end:
+                ret.append( start )
+                start = chr(ord(start)+1)
+        elif re_numeric.search( sss ):
+            start = re_numeric.match_obj.group(1)
+            end   = re_numeric.match_obj.group(2)
+            bb    = re_numeric.match_obj.group(3)
+            if   bb == None:
+                for num in range(int(start),eval(end)+1):
+                    ret.append( '%0*d'%(len(start),num) )
+            elif bb == '0':
+                for num in range(eval('0%s'%(start,)),eval(end)+1):
+                    ret.append( '%0*o'%(len(start),num) )
+            elif bb == '0x':
+                for num in range(eval('0x%s'%(start,)),eval(end)+1):
+                    ret.append( '%0*x'%(len(start),num) )
+        else: ret.append( sss )
+    TRACE( 17, 'numeric_expand returning %s', ret )
+    return ret
+    # numeric_expand
+
+def expand( ss ):
+    import string
+    import re
+    TRACE( 18, 'expand(%s)', ss )
+    ssIn = ss
+    try:
+        placeholder_idx = 0
+        expands = findall_expands( ss )
+        if not expands: return ss.split(',')
+        exp_result = []
+        for exp in expands:
+            ss = ss.replace( exp, '<%d>'%(placeholder_idx,), 1 )
+            placeholder_idx = placeholder_idx + 1
+        placeholder_idx = 0
+        for sss in ss.split(','):
+            TRACE( 19, 'expand sss=%s of ss=%s', sss, ss )
+            place_holders = re.findall( '<[0-9]+>', sss )
+            for idx in range(len(place_holders)):
+                p_holder = '<%d>'%(placeholder_idx+idx,)
+                expanding = expand( expands[placeholder_idx+idx][1:-1] ) #Recursive call
+                expanding = numeric_expand( expanding )
+                result = []
+                for ssss in sss.split(','):
+                    holder_idx = ssss.find(p_holder)
+                    if holder_idx != -1:
+                        pre = ssss[:holder_idx]
+                        post= ssss[holder_idx+len(p_holder):]
+                        for expanded in expanding:
+                            result.append( pre+expanded+post )
+                sss = ','.join(result)
+            exp_result = exp_result + sss.split(',')
+            placeholder_idx = placeholder_idx + len(place_holders)
+    except:  # any
+        TRACE( 10, 'except - expand' )
+        exc, value, tb = sys.exc_info()
+        sys.stderr.write('Error expanding node list "%s": %s: %s\n'%(ssIn,exc,value) )
+        sys.stderr.write('Prehaps an invalid decimal/octal/hex digit\n' )
+        sys.stderr.write('remember: in the \'{seq1-seq2}\' syntax, seq2\n' )
+        sys.stderr.write('can begin with \'0x\' to force hex or \'0\' to\n' )
+        sys.stderr.write('force octal\n' )
+        if g_opt['tlvlmsk']:
+            for ln in traceback.format_exception( exc, value, tb ):
+                sys.stderr.write(ln)
+        sys.exit(1)
+
+    return exp_result
+    # expand, numeric_expand, findall_expands
+
+
+def main():
+    
+    print( expand("grunt{1-5}") )
+    os.system("mpirun -n 8 ./builder 2 100 3 3 2 1000 30 1")
+    sys.exit()
+
+if __name__ == "__main__": main()
