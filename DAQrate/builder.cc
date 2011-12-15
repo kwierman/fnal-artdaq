@@ -21,6 +21,7 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
+#include <unistd.h>
 
 using namespace std;
 
@@ -36,6 +37,8 @@ public:
   void detector();
 
 private:
+  void printHost(const std::string& functionName) const;
+
   Config conf_;
 };
 
@@ -77,6 +80,8 @@ void Program::go()
 
 void Program::source()
 {
+  printHost("source");
+
   // needs to get data from the detectors and send it to the sinks
   FragmentPool::Data e;
   RHandles from_d(conf_);
@@ -96,6 +101,8 @@ void Program::source()
 
 void Program::detector()
 {
+  printHost("detector");
+
   FragmentPool ep(conf_);
   FragmentPool::Data e;
   SHandles h(conf_);
@@ -118,6 +125,8 @@ void Program::detector()
 
 void Program::sink()
 {
+  printHost("sink");
+
   EventStore es(conf_);
   FragmentPool::Data e;
   RHandles h(conf_);
@@ -141,6 +150,27 @@ void Program::sink()
   h.waitAll();
   Debug << "Sink done " << conf_.rank_ << flusher;
   MPI_Barrier(MPI_COMM_WORLD);
+}
+
+void Program::printHost(const std::string& functionName) const
+{
+  char* doPrint = getenv("PRINT_HOST");
+  if (doPrint == 0) {return;}
+
+  const int ARRSIZE = 80;
+  char hostname[ARRSIZE];
+
+  std::string hostString;
+  if (! gethostname(hostname, ARRSIZE)) {
+      hostString = hostname;
+  }
+  else {
+      hostString = "unknown";
+  }
+
+  std::cout << "Running " << functionName
+            << " on host " << hostString
+            << " with rank " << rank_ << "." << std::endl;
 }
 
 // ---------------
