@@ -16,6 +16,7 @@ set( LIB_SOURCES
      HuffmanTable.cc
      SymCode.cc
      SymProb.cc
+     SymTable.cc
    )
 
 add_library( ${LIB_NAME} SHARED ${LIB_SOURCES} )

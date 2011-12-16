@@ -4,7 +4,7 @@
 #include <istream>
 
 #include "Properties.hh"
-#include "SymCode.hh"
+#include "SymTable.hh"
 
 class Encoder
 {

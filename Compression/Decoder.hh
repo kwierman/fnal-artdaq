@@ -1,10 +1,8 @@
 #ifndef COMP_DECODER_H
 #define COMP_DECODER_H
 
-#include <vector>
-
 #include "Properties.hh"
-#include "SymCode.hh"
+#include "SymTable.hh"
 
 constexpr auto neg_one = ~(0ul);
 

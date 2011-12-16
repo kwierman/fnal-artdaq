@@ -4,7 +4,7 @@
 #include <cassert>
 #include <ostream>
 
-#include "SymCode.hh"
+#include "SymTable.hh"
 
 class Node
 {
