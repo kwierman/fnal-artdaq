@@ -10,9 +10,9 @@
 using namespace std;
 
 inline
-void push_n(ADCCountVec& v, ADCCountVec::value_type x, size_t n)
+void push_n(ADCCountVec & v, ADCCountVec::value_type x, size_t n)
 {
-  for (size_t i = 0; i < n; ++i) v.push_back(x);
+  for (size_t i = 0; i < n; ++i) { v.push_back(x); }
 }
 
 int main()
@@ -27,7 +27,6 @@ int main()
   push_n(samples, 5, 5);
   push_n(samples, 6, 8);
   push_n(samples, 7, 9);
-
   SymsVec probs;
   calculateProbs(samples, probs, Properties_t<3>::count_max());
   cout << "Frequency table:\n";

@@ -44,7 +44,11 @@ instance Eq (HTree a) where
 -- won't.
 combineTree t1 t2 = Branch t1 t2 (wt t1 + wt t2)
 
-buildDecTree :: [(a,Int)] -> HTree a
+-- buildDecTree constructs an 'HTree a', to be used to decompress a
+-- compressed data stream, from a frequency table.
+type FrequencyTable a = [(a, Int)]
+
+buildDecTree :: FrequencyTable a -> HTree a
 buildDecTree = build . sort . map (uncurry Leaf)
     where build (t:[])     = t
           build (t1:t2:ts) = build $ insert (t1 `combineTree` t2) ts
@@ -70,14 +74,10 @@ decode t bs = dec bs t
           dec (I:bs') (Branch l _ _) = dec bs' l
           dec (O:bs') (Branch _ r _) = dec bs' r
 
-
--- We seem to need to specify the type of *population*, so that
--- Haskell does not deduce the type to be [(Char,Integer)].
-
 -- This population is the one for our "canonical 8 symbol (3-bit)
 -- alphabet".
-population = [('1',2), ('2',3), ('3',3), ('4',3),
-              ('5',5), ('0',7), ('6',8), ('7',9)] :: [(Char,Int)]
+-- population = [('1',2), ('2',3), ('3',3), ('4',3), ('5',5), ('0',7), ('6',8), ('7',9)]
+population = [('a',10), ('b',15), ('c',30), ('d',16), ('e',29)]
 
 huffmanTree' = buildDecTree population
 

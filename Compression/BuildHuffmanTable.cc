@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
   ifstream ifs(argv[1], std::ios::binary);
   HuffmanTable h(ifs, Properties::count_max());
   h.writeTable(argv[2]);
-  h.writeTableReversed(string(argv[2])+"_reversed.txt");
+  h.writeTableReversed(string(argv[2]) + "_reversed.txt");
   return 0;
 }
 

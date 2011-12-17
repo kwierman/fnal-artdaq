@@ -1,13 +1,24 @@
 import Huffman
 
+reportEncoding s = do
+               putStr s
+               putStr ": "
+               putStrLn . show $ encodePhrase s
+
 main = do
-     putStrLn . show $ encodePhrase "0"
-     putStrLn . show $ encodePhrase "1"
-     putStrLn . show $ encodePhrase "2"
-     putStrLn . show $ encodePhrase "3"
-     putStrLn . show $ encodePhrase "4"
-     putStrLn . show $ encodePhrase "5"
-     putStrLn . show $ encodePhrase "6"
-     putStrLn . show $ encodePhrase "7"
-     putStrLn . show $ encodePhrase "55274630607402075163066705471072677564736"
-     putStrLn . show $ encodePhrase "01234567"
+     reportEncoding "a"
+     reportEncoding "b"
+     reportEncoding "c"
+     reportEncoding "d"
+     reportEncoding "e"
+     reportEncoding "abcde"
+     -- reportEncoding "0"
+     -- reportEncoding "1"
+     -- reportEncoding "2"
+     -- reportEncoding "3"
+     -- reportEncoding "4"
+     -- reportEncoding "5"
+     -- reportEncoding "6"
+     -- reportEncoding "7"
+     -- reportEncoding "55274630607402075163066705471072677564736"
+     -- reportEncoding "01234567"
