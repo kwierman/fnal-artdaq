@@ -1,8 +1,14 @@
 #!/usr/bin/env python
 
-
 import sys
 import os
+
+USAGE="\
+"
+
+
+
+
 
 g_opt={'tlvlmsk':0}
 if sys.version_info[0] == 2: exec( 'trc_one=1L' )
@@ -143,7 +149,8 @@ def expand( ss ):
 
 
 def main():
-    
+
+    if len(sys.argv) < 2: print(USAGE); sys.exit()    
     print( expand("grunt{1-5}") )
     os.system("mpirun -n 8 ./builder 2 100 3 3 2 1000 30 1")
     sys.exit()
