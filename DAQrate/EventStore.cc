@@ -33,6 +33,7 @@ void EventStore::operator()(Data const& ef)
   boost::shared_ptr<RawEvent>   resp(new RawEvent());
   resp->fragment_list_.push_back(fp);
 
+  //queue_.enqNowait( resp );
 
   if(p.second==true)
     PerfWriteEvent(EventMeas::START,event_id);

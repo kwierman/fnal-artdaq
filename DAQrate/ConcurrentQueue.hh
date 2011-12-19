@@ -14,6 +14,7 @@
 #include <boost/utility/enable_if.hpp>
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/xtime.hpp>
 
 namespace daqrate
 {
@@ -99,7 +100,7 @@ namespace daqrate
     template <typename T>
     typename boost::disable_if<hasMemoryUsed<T>, MemoryType>::type
     memoryUsage(const T& t)
-    { return sizeof(T); }
+    { return sizeof(t); }
 
   }// end namespace detail
 
@@ -162,6 +163,8 @@ namespace daqrate
     }         
   };
 
+  template<typename T>
+  typename FailIfFull<T>::QueueIsFull FailIfFull<T>::queueIsFull{};
 
   template <class T>
   struct KeepNewest
@@ -332,7 +335,7 @@ namespace daqrate
        false if the timeout has expired. This may throw any exception
        thrown by the assignment operator of T, or badAlloc.
     */
-    bool enqTimedWait(T const& p, boost::posix_time::time_duration const&);
+    bool enqTimedWait(T const& p, boost::xtime const&);
 
     /**
        Assign the value at the head of the queue to item and then
@@ -359,7 +362,7 @@ namespace daqrate
        or false if the timeout has expired. This may throw any
        exception thrown by the assignment operator of type EnqPolicy::ValueType.
     */
-    bool deqTimedWait(ValueType&, boost::posix_time::time_duration const&);
+    bool deqTimedWait(ValueType&, boost::xtime const&);
 
     /**
        Return true if the queue is empty, and false if it is not.
@@ -544,7 +547,7 @@ namespace daqrate
   ConcurrentQueue<T,EnqPolicy>::enqTimedWait
   (
    T const& item, 
-   boost::posix_time::time_duration const& waitTime
+   boost::xtime const& waitTime
    )
   {
     LockType lock(protectElements_);
@@ -577,7 +580,7 @@ namespace daqrate
   ConcurrentQueue<T,EnqPolicy>::deqTimedWait
   (
    ValueType& item,
-   boost::posix_time::time_duration const& waitTime
+   boost::xtime const& waitTime
    )
   {
     LockType lock(protectElements_);
