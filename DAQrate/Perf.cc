@@ -3,6 +3,7 @@
 
 #include "mpi.h"
 
+#include <cstring>
 #include <vector>
 #include <fstream>
 #include <sstream>
@@ -46,7 +47,7 @@ namespace {
 	data_.resize( cur + 50*1000*1000);
       }
 
-    memcpy((void*)&data_[pos_],(const void*)&w,sizeof(T));
+    std::memcpy((void*)&data_[pos_],(const void*)&w,sizeof(T));
     pos_+=sizeof(T);
   }
 

@@ -1,7 +1,7 @@
 include(CetTest)
 
 link_libraries(artdaq)
-cet_test(compress_t)
+#cet_test(compress_t)
 #cet_test(compress_t DATAFILES thirty-two-12-bit-table.txt)
 cet_test(step_1 HANDBUILT
          TEST_EXEC MakeSample
