@@ -2,7 +2,9 @@
 #include "EventStore.hh"
 #include "Fragment.hh"
 #include "Perf.hh"
+#include "RawData.hh"
 #include <utility>
+#include <cstring>		// memcpy
 
 using namespace std;
 
@@ -23,6 +25,14 @@ void EventStore::operator()(Data const& ef)
   FragHeader* fh = (FragHeader*)&ef[0];
   long event_id = fh->id_;
   pair<EventMap::iterator,bool> p = events_.insert(EventMap::value_type(event_id,0));
+
+  RawEvent::FragmentPtr fp(new RawEvent::Fragment(fh->frag_words_
+	     +sizeof(RawDataFragment)/sizeof(RawDataType)));
+  
+
+  boost::shared_ptr<RawEvent>   resp(new RawEvent());
+  resp->fragment_list_.push_back(fp);
+
 
   if(p.second==true)
     PerfWriteEvent(EventMeas::START,event_id);
