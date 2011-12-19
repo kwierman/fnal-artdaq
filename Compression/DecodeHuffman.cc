@@ -27,6 +27,11 @@ void process_bit(reg_type /* bit */, ADCCountVec & /* values */)
 
 int main(int argc, char* argv[]) try
 {
+  cerr << "reg_size_bits:     " << reg_size_bits  << '\n';
+  cerr << "chunk_size_bytes:  " << chunk_size_bytes << '\n';
+  cerr << "chunk_size_counts: " << chunk_size_counts << '\n';
+  cerr << "chunk_size_regs:   " << chunk_size_regs << '\n';
+
   if (argc < 4) {
     cerr << "Usage: " << argv[0] << " huff_table data_file_in data_file_out\n";
     return -1;
