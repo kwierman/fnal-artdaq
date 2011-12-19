@@ -5,12 +5,12 @@ link_libraries(artdaq)
 #cet_test(compress_t DATAFILES thirty-two-12-bit-table.txt)
 cet_test(step_1 HANDBUILT
          TEST_EXEC MakeSample
-         TEST_ARGS 0 4 1000 sample.training
+         TEST_ARGS 0 4 1000000 sample.training
          )
 
 cet_test(step_1b HANDBUILT
          TEST_EXEC MakeSample
-         TEST_ARGS 0 4 1000000 sample.data
+         TEST_ARGS 0 4 32769 sample.data
         )
 
 cet_test(step_2 HANDBUILT

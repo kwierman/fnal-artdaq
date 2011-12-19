@@ -13,7 +13,7 @@ namespace {
   public:
     Accum(DataVec & out, SymTable const & syms):
       syms_(syms), max_(out.size()), curr_word_(&out[0]), curr_pos_(0), total_(0)
-    { }
+    { fill(out.begin(),out.end(),0); }
 
     void put(ADCCountVec::value_type const & value);
     reg_type totalBits() const { return total_; }
