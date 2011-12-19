@@ -7,7 +7,10 @@
 # ----------------------------------------------------------------------
 # Build this project's library:
 
-#set( LIB_NAME ${PROJECT_NAME} )
+SET(MPI_CXX_COMPILER "mpicxx")
+find_package(MPI REQUIRED)
+SET(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
+
 set( LIB_NAME artdaq_DAQrate )
 
 set( LIB_SOURCES 
@@ -22,17 +25,16 @@ set( LIB_SOURCES
      Utils.cc     
    )
 
-link_libraries( mpi )
 add_library( ${LIB_NAME} SHARED ${LIB_SOURCES} )
+
 
 # ----------------------------------------------------------------------
 # Build this project's executables:
 
 link_libraries( ${LIB_NAME} )
 
-add_executable( builder builder.cc )
 add_executable( perfdump perfdump.cc )
-add_executable( rate rate.cc )
+add_executable( builder builder.cc )
 
 # ----------------------------------------------------------------------
 # Install this project's headers, sources, library, and executables:

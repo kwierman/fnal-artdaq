@@ -17,11 +17,14 @@
 # use cmake 2.8 or later
 cmake_minimum_required (VERSION 2.8)
 
+PROJECT(artdaq)
+
 # cetbuildtools contains our cmake modules
 SET ( CETBUILDTOOLS_VERSION $ENV{CETBUILDTOOLS_VERSION} )
 IF (NOT CETBUILDTOOLS_VERSION)
     MESSAGE (FATAL_ERROR "ERROR: setup cetbuildtools to get the cmake modules")
 ENDIF()
+
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Modules 
                       $ENV{CETBUILDTOOLS_DIR}/Modules 
                       $ENV{ART_DIR}/Modules 
