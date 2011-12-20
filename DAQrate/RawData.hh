@@ -7,24 +7,30 @@
 
 typedef uint32_t RawDataType;
 
+struct RawEventHeader
+{
+public:
+  RawDataType word_count_;
+  RawDataType run_id_;
+  RawDataType subrun_id_;
+  RawDataType event_id_;
+};
+
 struct RawEvent
 {
   typedef std::vector<RawDataType> Fragment;
   typedef std::shared_ptr<Fragment> FragmentPtr;
 
 public:
-  RawDataType size_;
-  RawDataType run_id_;
-  RawDataType subrun_id_;
-  RawDataType event_id_;
+  RawEventHeader header_;
 
   std::vector<FragmentPtr> fragment_list_;
 };
 
-struct RawDataFragment
+struct RawFragmentHeader
 {
 public:
-  RawDataType size_;
+  RawDataType word_count_;
   RawDataType event_id_;
   RawDataType fragment_id_;
 };
