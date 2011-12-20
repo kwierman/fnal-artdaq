@@ -1,9 +1,13 @@
 
 #include "EventPool.hh"
+#include "DAQdata/Fragment.hh"
+#include "DAQdata/RawData.hh"
 #include "Utils.hh"
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+
+using namespace artdaq;
 
 FragmentPool::FragmentPool(Config const& conf):
   seq_(),
@@ -38,21 +42,24 @@ void FragmentPool::operator()(Data& output)
     if (ifs_.eof())
       ifs_.seekg(0, std::ios::beg);
 
-    char *cp=(char*)&output[0];
+    char *cp=((char*)&output[0])+sizeof(FragHeader);
+    DarkSideHeaderOverlay *dshop = (DarkSideHeaderOverlay*)cp;
     std::cout << "output.size()="<<output.size()<<" bytes="<<output.size()*4<<'\n';
-    ifs_.read( cp, sizeof(FragHeader) );
+    ifs_.read( cp, sizeof(DarkSideHeaderOverlay) );
 
-    int size=(h->frag_words_ & 0xfffffff);
 
-    if (output.size() < size)
-    {output.resize(size);
-      cp=(char*)&output[0];
+    unsigned size=dshop->event_size_;
+
+    
+    if (output.size() < (size+sizeof(FragHeader)/sizeof(RawDataType)))
+    {output.resize(size+sizeof(FragHeader)/sizeof(RawDataType));
+      cp=((char*)&output[0])+sizeof(FragHeader);
       h = (FragHeader*)&output[0];
     }
-    size *= sizeof(int);
-    printf("frag size=%d fragwords=0x%x\n", size, h->frag_words_ );
-    size -= sizeof(FragHeader);
-    ifs_.read( cp+sizeof(FragHeader), size );
+    size *= sizeof(RawDataType);
+    printf("frag size=%d fragwords=0x%lx\n", size, h->frag_words_ );
+    size -= sizeof(DarkSideHeaderOverlay);
+    ifs_.read( cp+sizeof(DarkSideHeaderOverlay), size );
   }
 #endif
 
