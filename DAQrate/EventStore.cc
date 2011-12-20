@@ -10,6 +10,17 @@ using namespace std;
 
 EventStore::EventStore(Config const& conf):sources_(conf.sources_)
 {
+  thread_stop_requested_ = false;
+  reader_thread_ = new std::thread(std::bind(&EventStore::run, this));
+}
+
+
+EventStore::~EventStore()
+{
+  // stop and clean up the reader thread
+  thread_stop_requested_ = true;
+  reader_thread_->join();
+  delete reader_thread_;
 }
 
 
@@ -44,4 +55,14 @@ void EventStore::operator()(Data const& ef)
       PerfWriteEvent(EventMeas::END,event_id);
       events_.erase(p.first);
     }  
+}
+
+
+void EventStore::run()
+{
+  //for (int idx = 0; idx < 10; ++idx) {
+  //  if (thread_stop_requested_) {break;}
+  //  sleep(1);
+  //  std::cout << "Thread Loop " << idx << std::endl;
+  //}
 }
