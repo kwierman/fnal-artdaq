@@ -74,7 +74,18 @@ namespace artdaq
 	return false;
       }
 
-    if(inR==0) outR=9;
+    Timestamp runstart;
+
+    if(inR==0) outR=pm_.makeRunPrincipal();
+    if(inSR==0) outSR=pm_.makeSubRunPrincipal();
+
+    outE = pm_.makeEventPrincipal(inR==0?outR->run():inR->run(),
+				  inSR==0?outSR->subRun():inSR->subRun(),
+				  p->header_.event_id_,
+				  runstart);
+
+    // add all the fragments as products
+    
   }
 
   typedef art::ReaderSource<EventStoreReader> RawInput;
