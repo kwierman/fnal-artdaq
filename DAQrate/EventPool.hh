@@ -31,7 +31,7 @@ public:
 
 private:
   int seq_;
-  int word_count_; // in words, not bytes
+  unsigned word_count_; // in words, not bytes
   int rank_;
   int data_length_;
   Data d_;
