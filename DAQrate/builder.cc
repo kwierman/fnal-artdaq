@@ -127,7 +127,7 @@ void Program::sink()
 {
   printHost("sink");
 
-  EventStore es(conf_);
+  artdaq::EventStore es(conf_);
   FragmentPool::Data e;
   RHandles h(conf_);
   

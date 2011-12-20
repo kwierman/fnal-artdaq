@@ -1,0 +1,12 @@
+
+<lcgdict>
+  <class name="artdaq::RawDataType"/>
+  <class name="artdaq::Fragment"/>
+  <class name="artdaq::CompressedFragPart"/>
+  <class name="artdaq::CompressedFragParts"/>
+  <class name="artdaq::DarkSideHeader"/>
+  <class name="artdaq::CompressedBoard"/>
+  <class name="artdaq::CompressedRawEvent"/>
+  <class name="art::Wrapper<artdaq::CompressedRawEvent>"/>
+  <class name="art::Wrapper<artdaq::Fragment>"/>
+</lcgdict>

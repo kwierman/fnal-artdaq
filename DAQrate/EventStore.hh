@@ -4,7 +4,8 @@
 #include "Config.hh"
 #include "EventPool.hh"
 #include "ConcurrentQueue.hh"
-#include "RawData.hh"
+#include "DAQdata/RawData.hh"
+#include "DAQrate/GlobalQueue.hh"
 
 #include <map>
 #include <memory>
@@ -12,25 +13,28 @@
 
 // bad to get definition for Data from EventPool!
 
-class EventStore
+namespace artdaq
 {
-public:
-  typedef FragmentPool::Data Data;
-  typedef std::map<ElementType,int> EventMap;
 
-  EventStore(Config const&);
-  ~EventStore();
+  class EventStore
+  {
+  public:
+    typedef FragmentPool::Data Data;
+    typedef std::map<ElementType,int> EventMap;
 
-  void operator()(Data const&);
-  void run();
+    EventStore(Config const&);
+    ~EventStore();
 
-private:
-  int sources_;
-  EventMap events_;
-  daqrate::ConcurrentQueue< std::shared_ptr<RawEvent> >  queue_;
+    void operator()(Data const&);
+    void run();
 
-  bool thread_stop_requested_;
-  std::thread* reader_thread_;
-};
+  private:
+    int sources_;
+    EventMap events_;
+    RawEventQueue  queue_;
 
+    bool thread_stop_requested_;
+    std::thread* reader_thread_;
+  };
+}
 #endif

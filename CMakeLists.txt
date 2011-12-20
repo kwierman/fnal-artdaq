@@ -113,12 +113,13 @@ SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 message(STATUS "Project is ${product} ${version}")
 
 # macros for artdaq_dictionary and simple_plugin
-#include(ArtDictionary)
+include(ArtDictionary)
 include(BuildPlugins)
 
 # source
 add_subdirectory (Compression)
 add_subdirectory (DAQrate)
+add_subdirectory (DAQdata)
 
 # testing
 add_subdirectory(test)
