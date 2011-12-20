@@ -7,6 +7,7 @@
 #include "RawData.hh"
 
 #include <map>
+#include <memory>
 
 // bad to get definition for Data from EventPool!
 
@@ -22,7 +23,7 @@ public:
 private:
   int sources_;
   EventMap events_;
-  daqrate::ConcurrentQueue< boost::shared_ptr<RawEvent> >  queue_;
+  daqrate::ConcurrentQueue< std::shared_ptr<RawEvent> >  queue_;
 };
 
 #endif

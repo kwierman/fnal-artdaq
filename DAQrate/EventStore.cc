@@ -30,7 +30,7 @@ void EventStore::operator()(Data const& ef)
 	     +sizeof(RawDataFragment)/sizeof(RawDataType)));
   
 
-  boost::shared_ptr<RawEvent>   resp(new RawEvent());
+  std::shared_ptr<RawEvent>   resp(new RawEvent());
   resp->fragment_list_.push_back(fp);
 
   //queue_.enqNowait( resp );

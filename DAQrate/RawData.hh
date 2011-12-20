@@ -1,7 +1,7 @@
 #ifndef RAWDATA_HHH
 #define RAWDATA_HHH
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <vector>
 #include <stdint.h>
 
@@ -10,7 +10,7 @@ typedef uint32_t RawDataType;
 struct RawEvent
 {
   typedef std::vector<RawDataType> Fragment;
-  typedef boost::shared_ptr<Fragment> FragmentPtr;
+  typedef std::shared_ptr<Fragment> FragmentPtr;
 
 public:
   RawDataType size_;
