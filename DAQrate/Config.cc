@@ -25,58 +25,42 @@ static void throwUsage(char* argv0, const string& msg)
   throw msg;
 }
 
-static int getArgTotalNodes(int argc,char* argv[])
+static double getArgDetectors(int argc, char* argv[])
 {
-  if(argc<2) throwUsage(argv[0], "no total_nodes argument");
-  return atoi(argv[1]);
+  if(argc<2) throwUsage(argv[0], "no detectors_per_node argument");
+  return atof(argv[1]);
+}
+
+static double getArgSinks(int argc, char* argv[])
+{
+  if(argc<3) throwUsage(argv[0], "no sinks_per_node argument");
+  return atof(argv[2]);
 }
 
 static int getArgTotalEvents(int argc,char* argv[])
 {
-  if(argc<3) throwUsage(argv[0], "no total_events argument");
-  return atoi(argv[2]);
-}
-
-static double getArgDetectorsPerNode(int argc, char* argv[])
-{
-  if(argc<4) throwUsage(argv[0], "no detectors_per_node argument");
-  return atof(argv[3]);
-}
-
-static double getArgSourcesPerNode(int argc, char* argv[])
-{
-  if(argc<5) throwUsage(argv[0], "no sources_per_node argument");
-  return atof(argv[4]);
-}
-
-static double getArgSinksPerNode(int argc, char* argv[])
-{
-  if(argc<6) throwUsage(argv[0], "no sinks_per_node argument");
-  return atof(argv[5]);
+  if(argc<4) throwUsage(argv[0], "no total_events argument");
+  return atoi(argv[3]);
 }
 
 static int getArgEventSize(int argc, char* argv[])
 {
-  if(argc<7) throwUsage(argv[0], "no event_size argument");
-  return atoi(argv[6]);
+  if(argc<5) throwUsage(argv[0], "no event_size argument");
+  return atoi(argv[4]);
 }
 
 static int getArgQueueSize(int argc, char* argv[])
 {
-  if(argc<8) throwUsage(argv[0], "no event_queue_size argument");
-  return atoi(argv[7]);
+  if(argc<6) throwUsage(argv[0], "no event_queue_size argument");
+  return atoi(argv[5]);
 }
 
 static int getArgRun(int argc, char* argv[])
 {
-  if(argc<9) throwUsage(argv[0], "no run argument");
-  return atoi(argv[8]);
+  if(argc<7) throwUsage(argv[0], "no run argument");
+  return atoi(argv[6]);
 }
 
-static double numSourceNodes(int total_nodes, double sources_per, double dets_per)
-{
-  return (double)total_nodes / (sources_per / dets_per + 1);
-}
 
 static std::string getProcessorName()
 {
@@ -86,24 +70,6 @@ static std::string getProcessorName()
   return std::string(buf);
 }
 
-static int getWorkerCount()
-{
-  char line[250];
-  int tot=0;
-#if 0
-  fstream inp("/proc/cpuinfo");
-  if(inp.fail() || inp.bad()) return 1;
-  while(true)
-    {
-      inp.getline(line,sizeof(line));
-      if(inp.eof()) break;
-      // do regex match here for "processor" in the line
-      string strline(line);
-      if(strline.find("processor")!=string::npos) ++tot;
-    }
-#endif
-  return tot;
-}
 
 // remember rank starts at zero
 //run_time_(getArgRuntime(argc,argv)),
@@ -112,18 +78,9 @@ Config::Config(int rank, int total_procs, int argc, char* argv[]):
   rank_(rank),
   total_procs_(total_procs),
 
-  total_nodes_(getArgTotalNodes(argc,argv)),
-  detectors_per_node_(getArgDetectorsPerNode(argc,argv)),
-  sources_per_node_(getArgSourcesPerNode(argc,argv)),
-  sinks_per_node_(getArgSinksPerNode(argc,argv)),
-  workers_per_node_(getWorkerCount()),
-
-  builder_nodes_((int)numSourceNodes(total_nodes_,sources_per_node_,detectors_per_node_)),
-  detector_nodes_(total_nodes_ - builder_nodes_),
-
-  sources_(builder_nodes_ * (int)sources_per_node_),
-  sinks_(builder_nodes_ * (int)sinks_per_node_),
-  detectors_(sources_),
+  detectors_(getArgDetectors(argc,argv)),
+  sources_(getArgDetectors(argc,argv)),
+  sinks_(getArgSinks(argc,argv)),
 
   detector_start_(0),
   source_start_(detectors_),
@@ -243,12 +200,6 @@ void Config::printHeader(std::ostream& ost) const
 void Config::print(std::ostream& ost) const
 {
   ost << rank_ << " "
-      << total_nodes_ << " "
-      << detectors_per_node_ << " "
-      << sources_per_node_ << " "
-      << sinks_per_node_ << " "
-      << builder_nodes_ << " "
-      << detector_nodes_ << " "
       << sources_ << " "
       << sinks_ << " "
       << detectors_ << " "

@@ -4,10 +4,14 @@ import sys
 import os
 
 USAGE="\
-   Usage: %s [options] <num dect and src> <num sink> <events> <filebase>\n\
-      OR  %s [options] <num dect and src> <num sink> <events> <eventsz>\n\
-Examples: \
-"%(os.path.basename(sys.argv[0]),os.path.basename(sys.argv[0]))
+   Usage: %s [options] <num dect and src> <num sink> <events> <filebase> <qsize> <run#>\n\
+      OR  %s [options] <num dect and src> <num sink> <events> <eventsz>  <qsize> <run#>\n\
+Examples: %s 5 5 1000 10000\n\
+          %s 4 4 1000 $DATA --nodes=grunt{1-5} --ddnodes=1 # 1 node  sending to 4\n\
+          %s 4 4 1000 $DATA --nodes=grunt{1-5} --ddnodes=4 # 4 nodes sending to 1\n\
+          %s 5 5 1000 $DATA --nodes=grunt{1-5} --ddnodes=0 # \n\
+          %s 5 5 1000 $DATA --nodes=grunt{1-5} # same as above\
+"%((os.path.basename(sys.argv[0]),)*7)
 
 
 
@@ -154,21 +158,105 @@ def expand( ss ):
 
 def main():
     import getopt
+    long_opt_spec=["help","ddnodes=","nodes="]
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "ho:v", ["help", "output="])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "h", long_opt_spec)
     except getopt.GetoptError, err:
         # print help information and exit:
         print str(err) # will print something like "option -a not recognized"
         print(USAGE)
         sys.exit(2)
+    ddnodes=0
+    nodes=[]
+    for o, a in opts:
+        if o in ("-h", "--help"):
+            usage()
+            sys.exit()
+        elif o in ("--ddnodes",):
+            ddnodes = int(a,0)
+        elif o in ("--nodes",):
+            nodes = expand(a)
+        else:
+            assert False, "unhandled option"
 
-    if len(args) < 2: print(USAGE); sys.exit()    
-    print( expand("grunt{1-5}") )
+
+    if len(args) < 6: print(USAGE); sys.exit()    
+
+    num_det    = int( args[0],0 )
+    num_src    = int( args[0],0 )
+    num_sink   = int( args[1],0 )
+    num_events = int( args[2],0 )
+    size_or_dir=      args[3]
+    queue_size = int( args[4],0 )
+    run_number = int( args[5],0 )
+
+    data_dir=''
+    if os.path.isdir(size_or_dir):
+	fo=open( size_or_dir+"board0.out", 'r' )
+	data_dir=size_or_dir
+	event_size = 12000016/4
+	fo.close()
+    else:
+	event_size = int( size_or_dir, 0 )
+
+
+
     builder=os.popen("which builder 2>/dev/null").readline()
     if not builder:
 	print("Error: builder executable not found.")
 	sys.exit()
-    os.system("mpirun -n 8 "+builder[:-1]+" 2 100 3 3 2 1000 30 1")
+	pass
+
+    print("opts=%s args=%s nodes=%s"%(opts,args,nodes))
+    if nodes:
+	if ddnodes >= len(nodes):
+	    print("invalid configuration. ddnodes must be < nodes")
+	    sys.exit()
+	    pass
+	# create a nodes file... The number of lines should be == num_det+num_src+num_sink
+
+	nodes_file="/tmp/nodes%s.txt"%(os.getpid(),)
+	fo=open(nodes_file,'w')
+	
+	# 1st set of ranks is for "detector" nodes
+	node_idx=0
+	for xx in range(num_det):
+	    fo.write( "%s\n"%(nodes[node_idx],) ); node_idx += 1
+	    if node_idx == len(nodes) or node_idx == ddnodes: node_idx=0
+	    pass
+	if ddnodes: nodes=nodes[ddnodes:]
+
+	node_idx=0   # dect and src get paired up
+
+	# next set of ranks is for "src" nodes
+	for xx in range(num_src):
+	    fo.write( "%s\n"%(nodes[node_idx],) ); node_idx += 1
+	    if node_idx == len(nodes): node_idx=0
+	    pass
+
+	# last set of ranks is for "sink" nodes
+	for xx in range(num_sink):
+	    fo.write( "%s\n"%(nodes[node_idx],) ); node_idx += 1
+	    if node_idx == len(nodes): node_idx=0
+	    pass
+
+	fo.close()
+
+	os.system("cat %s"%(nodes_file,))
+	os.remove( nodes_file )
+
+	cmd ="mpirun_rsh -rsh -hostfile %s "%(nodes_file,)
+	cmd+="-n %d "%(num_det+num_src+num_sink,)
+	cmd+=builder[:-1]
+	cmd+=" 2 100 3 3 2 1000 30 1"
+	#os.system(cmd)
+    else:
+	cmd ="mpirun -n %d "%(num_det+num_src+num_sink,)
+	cmd+=builder[:-1]
+	cmd+=" %d %d "%(num_det,num_sink)
+	cmd+="%d %d "%(num_events, event_size)
+	cmd+="%d %d "%(queue_size, run_number)
+	os.system( cmd )
     sys.exit()
 
 if __name__ == "__main__": main()

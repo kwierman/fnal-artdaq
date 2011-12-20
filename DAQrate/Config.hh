@@ -29,18 +29,10 @@ public:
   // input parameters
   int rank_;
   int total_procs_;
-  int total_nodes_;
 
-  double detectors_per_node_;
-  double sources_per_node_;
-  double sinks_per_node_;
-  int workers_per_node_;
-
-  int builder_nodes_;
-  int detector_nodes_;
+  int detectors_;
   int sources_;
   int sinks_;
-  int detectors_;
   int detector_start_;
   int source_start_;
   int sink_start_;
