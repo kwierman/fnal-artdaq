@@ -51,6 +51,9 @@ public:
   int offset_;
   int barrier_period_;
   std::string node_name_;
+  std::string data_dir_;
+  char **art_argv_;
+  int  art_artc_;
 
   void print(std::ostream& ost) const;
   void printHeader(std::ostream& ost) const;

@@ -79,7 +79,7 @@ Config::Config(int rank, int total_procs, int argc, char* argv[]):
   total_procs_(total_procs),
 
   detectors_(getArgDetectors(argc,argv)),
-  sources_(getArgDetectors(argc,argv)),
+  sources_(detectors_),
   sinks_(getArgSinks(argc,argv)),
 
   detector_start_(0),
@@ -98,7 +98,10 @@ Config::Config(int rank, int total_procs, int argc, char* argv[]):
   type_((rank_<detectors_)?TaskDetector:((rank_<(detectors_+sources_))?TaskSource:TaskSink)),
   offset_(rank_-((type_==TaskDetector)?detector_start_:(type_==TaskSource)?source_start_:sink_start_)),
   barrier_period_(source_buffer_count_),
-  node_name_(getProcessorName())
+  node_name_(getProcessorName()),
+  data_dir_(NULL),
+  art_argv_(NULL),
+  art_artc_(0)
 {
 	int total_workers = (detectors_+sinks_+sources_);
 	if(total_procs_ != total_workers)
