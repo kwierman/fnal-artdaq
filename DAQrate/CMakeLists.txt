@@ -22,6 +22,7 @@ set( LIB_SOURCES
      Perf.cc
      RHandles.cc
      SHandles.cc
+     SimpleQueueReader.cc
      Utils.cc     
    )
 

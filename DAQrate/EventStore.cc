@@ -1,28 +1,18 @@
 
 #include "EventStore.hh"
-#include "Fragment.hh"
 #include "Perf.hh"
 #include <utility>
-#include <cstring>		// memcpy
+#include <cstring>
 
 using namespace std;
 
 namespace artdaq
 {
 
-  EventStore::EventStore(Config const& conf):sources_(conf.sources_)
+  EventStore::EventStore(Config const& conf):sources_(conf.sources_),run_(conf.run_)
   {
-    thread_stop_requested_ = false;
-    reader_thread_ = new std::thread(std::bind(&EventStore::run, this));
-  }
-
-
-  EventStore::~EventStore()
-  {
-    // stop and clean up the reader thread
-    thread_stop_requested_ = true;
-    reader_thread_->join();
-    delete reader_thread_;
+    queue_.reset(new daqrate::ConcurrentQueue< std::shared_ptr<RawEvent> >());
+    reader_.reset(new SimpleQueueReader(queue_));
   }
 
 
@@ -32,39 +22,40 @@ namespace artdaq
     // start new event if not already present
     // if the event is complete, delete it and report timing
 
-    // make a perf record for a new event
-    // make a perf record for the completion of an event
+    RawFragmentHeader* fh = (RawFragmentHeader*)&ef[0];
+    RawDataType event_id = fh->event_id_;
 
-    FragHeader* fh = (FragHeader*)&ef[0];
-    long event_id = fh->id_;
-    pair<EventMap::iterator,bool> p = events_.insert(EventMap::value_type(event_id,0));
+    RawEventPtr rawEventPtr(new RawEvent());
+    pair<EventMap::iterator,bool> p =
+      events_.insert(EventMap::value_type(event_id, rawEventPtr));
 
-    RawEvent::FragmentPtr fp(new Fragment(fh->frag_words_));
-  
-    std::shared_ptr<RawEvent>   resp(new RawEvent());
-    resp->fragment_list_.push_back(fp);
+    bool newElementInMap = p.second;
+    rawEventPtr = p.first->second;
 
-    //queue_.enqNowait( resp );
-
-    if(p.second==true)
-      PerfWriteEvent(EventMeas::START,event_id);
-
-    ++((p.first)->second);
-
-    if(p.first->second == sources_)
+    if(newElementInMap)
       {
-	PerfWriteEvent(EventMeas::END,event_id);
-	events_.erase(p.first);
+        PerfWriteEvent(EventMeas::START,event_id);
+
+        rawEventPtr->header_.word_count_ = fh->word_count_ +
+          (sizeof(RawEventHeader) / sizeof(RawDataType));
+        rawEventPtr->header_.run_id_ = run_;
+        rawEventPtr->header_.subrun_id_ = 0;
+        rawEventPtr->header_.event_id_ = event_id;
+      }
+    else
+      {
+        rawEventPtr->header_.word_count_ += fh->word_count_;
+      }
+
+    RawEvent::FragmentPtr fp(new Fragment(fh->word_count_));
+    memcpy(&(*fp)[0], &ef[0], (fh->word_count_ * sizeof(RawDataType)));
+    rawEventPtr->fragment_list_.push_back(fp);
+
+    if((int) rawEventPtr->fragment_list_.size() == sources_)
+      {
+        PerfWriteEvent(EventMeas::END,event_id);
+        events_.erase(p.first);
+        queue_->enqNowait( rawEventPtr );
       }  
-  }
-
-
-  void EventStore::run()
-  {
-    //for (int idx = 0; idx < 10; ++idx) {
-    //  if (thread_stop_requested_) {break;}
-    //  sleep(1);
-    //  std::cout << "Thread Loop " << idx << std::endl;
-    //}
   }
 }
