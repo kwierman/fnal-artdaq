@@ -4,11 +4,15 @@ import sys
 import os
 
 USAGE="\
-"
+   Usage: %s [options] <num dect and src> <num sink> <events> <filebase>\n\
+      OR  %s [options] <num dect and src> <num sink> <events> <eventsz>\n\
+Examples: \
+"%(os.path.basename(sys.argv[0]),os.path.basename(sys.argv[0]))
 
 
 
 
+###############################################################################
 
 g_opt={'tlvlmsk':0}
 if sys.version_info[0] == 2: exec( 'trc_one=1L' )
@@ -149,10 +153,22 @@ def expand( ss ):
 
 
 def main():
+    import getopt
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "ho:v", ["help", "output="])
+    except getopt.GetoptError, err:
+        # print help information and exit:
+        print str(err) # will print something like "option -a not recognized"
+        print(USAGE)
+        sys.exit(2)
 
-    if len(sys.argv) < 2: print(USAGE); sys.exit()    
+    if len(args) < 2: print(USAGE); sys.exit()    
     print( expand("grunt{1-5}") )
-    os.system("mpirun -n 8 ./builder 2 100 3 3 2 1000 30 1")
+    builder=os.popen("which builder 2>/dev/null").readline()
+    if not builder:
+	print("Error: builder executable not found.")
+	sys.exit()
+    os.system("mpirun -n 8 "+builder[:-1]+" 2 100 3 3 2 1000 30 1")
     sys.exit()
 
 if __name__ == "__main__": main()

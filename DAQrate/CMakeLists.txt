@@ -27,6 +27,8 @@ set( LIB_SOURCES
 
 add_library( ${LIB_NAME} SHARED ${LIB_SOURCES} )
 
+include(CetTest)
+cet_test(daqrate PREBUILT NO_AUTO)
 
 # ----------------------------------------------------------------------
 # Build this project's executables:

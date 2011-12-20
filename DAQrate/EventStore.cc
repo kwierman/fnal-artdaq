@@ -26,8 +26,7 @@ void EventStore::operator()(Data const& ef)
   long event_id = fh->id_;
   pair<EventMap::iterator,bool> p = events_.insert(EventMap::value_type(event_id,0));
 
-  RawEvent::FragmentPtr fp(new RawEvent::Fragment(fh->frag_words_
-	     +sizeof(RawDataFragment)/sizeof(RawDataType)));
+  RawEvent::FragmentPtr fp(new RawEvent::Fragment(fh->frag_words_));
   
 
   std::shared_ptr<RawEvent>   resp(new RawEvent());
