@@ -3,4 +3,5 @@
 setup cetpkgsupport
 setup -B cetbuildtools v1_15_00
 setup -B art v1_00_06 -q +$CETPKG_QUAL$extraqual
+setup -B mvapich2 v1_6_0
 
