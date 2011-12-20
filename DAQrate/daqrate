@@ -156,8 +156,23 @@ def expand( ss ):
     # expand, numeric_expand, findall_expands
 
 
+def build_quoted_str( args ):
+    import string                       # join
+    quoted_args=[]
+    for arg in args:
+        if repr(arg)[0] == "'": quoted_args.append( "'%s'"%(arg,) )
+        else:                   quoted_args.append( '"%s"'%(arg,) )
+    return ' '.join( quoted_args )
+    # build_quoted_str
+
+
+
 def main():
     import getopt
+    art_args=''
+    if sys.argv.count('--'):
+	art_args = build_quoted_str( sys.argv[sys.argv.index('--'):] )
+	pass
     long_opt_spec=["help","ddnodes=","nodes="]
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], "h", long_opt_spec)
@@ -248,14 +263,20 @@ def main():
 	cmd ="mpirun_rsh -rsh -hostfile %s "%(nodes_file,)
 	cmd+="-n %d "%(num_det+num_src+num_sink,)
 	cmd+=builder[:-1]
-	cmd+=" 2 100 3 3 2 1000 30 1"
+	cmd+=" %d %d "%(num_det,num_sink)
+	cmd+="%d %d "%(num_events, event_size)
+	cmd+="%d %d"%(queue_size, run_number)
+	if art_args: cmd+=" %s"%(art_args,)
+	print( "executing cmd: %s"%(cmd,) )
 	#os.system(cmd)
     else:
 	cmd ="mpirun -n %d "%(num_det+num_src+num_sink,)
 	cmd+=builder[:-1]
 	cmd+=" %d %d "%(num_det,num_sink)
 	cmd+="%d %d "%(num_events, event_size)
-	cmd+="%d %d "%(queue_size, run_number)
+	cmd+="%d %d"%(queue_size, run_number)
+	if art_args: cmd+=" %s"%(art_args,)
+	print( "executing cmd: %s"%(cmd,) )
 	os.system( cmd )
     sys.exit()
 
