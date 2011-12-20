@@ -2,24 +2,27 @@
 #define simplequeuereader_hhh
 
 #include "ConcurrentQueue.hh"
-#include "RawData.hh"
+#include "DAQdata/RawData.hh"
 #include <thread>
 
-class SimpleQueueReader
+namespace artdaq
 {
-public:
-  SimpleQueueReader(std::shared_ptr<daqrate::ConcurrentQueue< 
-                    std::shared_ptr<RawEvent> > > queue);
-  ~SimpleQueueReader();
+  class SimpleQueueReader
+  {
+  public:
+    SimpleQueueReader(std::shared_ptr<daqrate::ConcurrentQueue< 
+                      std::shared_ptr<RawEvent> > > queue);
+    ~SimpleQueueReader();
 
-  void requestStop();
-  void run();
+    void requestStop();
+    void run();
 
-private:
-  std::shared_ptr<daqrate::ConcurrentQueue< std::shared_ptr<RawEvent> > > queue_;
+  private:
+    std::shared_ptr<daqrate::ConcurrentQueue< std::shared_ptr<RawEvent> > > queue_;
 
-  bool thread_stop_requested_;
-  std::thread* reader_thread_;
-};
+    bool thread_stop_requested_;
+    std::thread* reader_thread_;
+  };
+}
 
 #endif

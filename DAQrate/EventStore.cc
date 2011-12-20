@@ -25,7 +25,7 @@ namespace artdaq
     RawFragmentHeader* fh = (RawFragmentHeader*)&ef[0];
     RawDataType event_id = fh->event_id_;
 
-    RawEventPtr rawEventPtr(new RawEvent());
+    std::shared_ptr<RawEvent> rawEventPtr(new RawEvent());
     pair<EventMap::iterator,bool> p =
       events_.insert(EventMap::value_type(event_id, rawEventPtr));
 

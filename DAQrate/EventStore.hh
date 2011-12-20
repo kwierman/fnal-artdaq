@@ -29,7 +29,7 @@ namespace artdaq
     int sources_;
     int run_;
     EventMap events_;
-    RawEventQueue  queue_;
+    std::shared_ptr<RawEventQueue> queue_;
     std::shared_ptr<SimpleQueueReader> reader_;
   };
 }
