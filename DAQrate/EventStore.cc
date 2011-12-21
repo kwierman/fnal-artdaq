@@ -9,7 +9,8 @@ using namespace std;
 namespace artdaq
 {
 
-  EventStore::EventStore(Config const& conf):sources_(conf.sources_),run_(conf.run_)
+  EventStore::EventStore(Config const& conf) :
+    sources_(conf.sources_),fragmentIdOffset_(conf.srcStart()),run_(conf.run_)
   {
     queue_.reset(new daqrate::ConcurrentQueue< std::shared_ptr<RawEvent> >());
     reader_.reset(new SimpleQueueReader(queue_));
@@ -24,6 +25,10 @@ namespace artdaq
 
     RawFragmentHeader* fh = (RawFragmentHeader*)&ef[0];
     RawDataType event_id = fh->event_id_;
+
+    // update the fragment ID (up to this point, it has been set to the
+    // detector rank or the source rank, but now we just want a simple index)
+    fh->fragment_id_ -= fragmentIdOffset_;
 
     std::shared_ptr<RawEvent> rawEventPtr(new RawEvent());
     pair<EventMap::iterator,bool> p =

@@ -27,6 +27,7 @@ namespace artdaq
 
   private:
     int sources_;
+    int fragmentIdOffset_;
     int run_;
     EventMap events_;
     std::shared_ptr<RawEventQueue> queue_;

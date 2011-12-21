@@ -1,7 +1,7 @@
 
 #include "Config.hh"
 #include "Perf.hh"
-#include "Fragment.hh"
+#include "DAQdata/RawData.hh"
 
 #include <iostream>
 #include <fstream>
@@ -92,7 +92,7 @@ Config::Config(int rank, int total_procs, int argc, char* argv[]):
   run_(getArgRun(argc,argv)),
 
   packet_size_(event_size_ / sources_),
-  fragment_words_(packet_size_ / sizeof(ElementType)),
+  fragment_words_(packet_size_ / sizeof(artdaq::RawDataType)),
   source_buffer_count_(event_queue_size_ * sinks_),
   sink_buffer_count_(event_queue_size_ * sources_),
   type_((rank_<detectors_)?TaskDetector:((rank_<(detectors_+sources_))?TaskSource:TaskSink)),

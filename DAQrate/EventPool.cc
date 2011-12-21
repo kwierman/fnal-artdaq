@@ -35,14 +35,14 @@ void FragmentPool::operator()(Data& output)
 
   int start = (LongMaker::make()) % range_;
   std::copy(d_.begin()+start, d_.begin()+start+word_count_, output.begin());
-  FragHeader* h = (FragHeader*)&output[0];
+  RawFragmentHeader* h = (RawFragmentHeader*)&output[0];
 #if 1
   if (ifs_.is_open())
   {
     if (ifs_.eof())
       ifs_.seekg(0, std::ios::beg);
 
-    char *cp=((char*)&output[0])+sizeof(FragHeader);
+    char *cp=((char*)&output[0])+sizeof(RawFragmentHeader);
     DarkSideHeaderOverlay *dshop = (DarkSideHeaderOverlay*)cp;
     std::cout << "output.size()="<<output.size()<<" bytes="<<output.size()*4<<'\n';
     ifs_.read( cp, sizeof(DarkSideHeaderOverlay) );
@@ -51,20 +51,21 @@ void FragmentPool::operator()(Data& output)
     unsigned size=dshop->event_size_;
 
     
-    if (output.size() < (size+sizeof(FragHeader)/sizeof(RawDataType)))
-    {output.resize(size+sizeof(FragHeader)/sizeof(RawDataType));
-      cp=((char*)&output[0])+sizeof(FragHeader);
-      h = (FragHeader*)&output[0];
+    if (output.size() < (size+sizeof(RawFragmentHeader)/sizeof(RawDataType)))
+    {
+      output.resize(size+sizeof(RawFragmentHeader)/sizeof(RawDataType));
+      cp=((char*)&output[0])+sizeof(RawFragmentHeader);
+      h = (RawFragmentHeader*)&output[0];
     }
     size *= sizeof(RawDataType);
-    printf("frag size=%d fragwords=0x%lx\n", size, h->frag_words_ );
+    printf("frag size=%d fragwords=0x%lx\n", size, (unsigned long)h->word_count_ );
     size -= sizeof(DarkSideHeaderOverlay);
     ifs_.read( cp+sizeof(DarkSideHeaderOverlay), size );
   }
 #endif
 
-  h->id_=seq_++;
-  h->from_=rank_;
-  h->time_ms_=1;
-  h->frag_words_ = word_count_;
+  h->event_id_=seq_++;
+  h->fragment_id_=rank_;
+  //h->time_ms_=1;
+  h->word_count_ = word_count_;
 }

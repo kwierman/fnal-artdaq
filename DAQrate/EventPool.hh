@@ -14,7 +14,7 @@
  */
 
 #include "Config.hh"
-#include "Fragment.hh"
+#include "DAQdata/RawData.hh"
 
 #include <vector>
 #include <fstream>
@@ -22,7 +22,7 @@
 class FragmentPool
 {
 public:
-  typedef std::vector<ElementType> Data;
+  typedef std::vector<artdaq::RawDataType> Data;
 
   FragmentPool(Config const &);
   ~FragmentPool();

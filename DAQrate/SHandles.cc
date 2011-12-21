@@ -3,6 +3,7 @@
 #include "Perf.hh"
 #include "Debug.hh"
 #include "Utils.hh"
+#include "DAQdata/RawData.hh"
 
 #define MY_TAG 2
 
@@ -61,9 +62,9 @@ void SHandles::sendEvent(Data& e)
 
   frags_[use_me].swap(e);
 
-  FragHeader* h = (FragHeader*)&frags_[use_me][0];
-  int event_id = h->id_;
-  h->from_ = rank_;
+  artdaq::RawFragmentHeader* h = (artdaq::RawFragmentHeader*)&frags_[use_me][0];
+  int event_id = h->event_id_;
+  h->fragment_id_ = rank_;
   int event_size = frags_[use_me].size();
 
   sm.found(event_id,use_me,dest(event_id));
@@ -71,8 +72,8 @@ void SHandles::sendEvent(Data& e)
   Debug << "send: " << rank_ << " id=" << event_id << " size=" << event_size 
 	<< " idx=" << use_me << " dest=" << dest(event_id) << flusher;
   
-  MPI_Isend(&(frags_[use_me])[0],fragment_words_, // old: event_size,
-	    MPI_LONG,dest(event_id),
+  MPI_Isend(&(frags_[use_me])[0],(fragment_words_*sizeof(artdaq::RawDataType)),
+	    MPI_BYTE,dest(event_id),
 	    MY_TAG,MPI_COMM_WORLD,&reqs_[use_me]);
 
 #if 0

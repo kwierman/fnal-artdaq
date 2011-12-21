@@ -3,7 +3,7 @@
 #include "Perf.hh"
 #include "Debug.hh"
 #include "Utils.hh"
-#include "Fragment.hh"
+#include "DAQdata/RawData.hh"
 
 #include <fstream>
 #include <sstream>
@@ -42,8 +42,8 @@ RHandles::RHandles(Config const& conf):
       Debug << "sink posting buffer " << i << " size=" << fragment_words_
 	    << " from=" << from << flusher;
       
-      MPI_Irecv(&(frags_[i])[0],fragment_words_, MPI_LONG, from, 
-		MY_TAG, MPI_COMM_WORLD, &reqs_[i]);
+      MPI_Irecv(&(frags_[i])[0],(fragment_words_*sizeof(artdaq::RawDataType)),
+                MPI_BYTE, from, MY_TAG, MPI_COMM_WORLD, &reqs_[i]);
     }
 }
 
@@ -90,9 +90,9 @@ void RHandles::recvEvent(Data& e)
 
   // event at which is now available
   frags_[which].swap(e);
-  FragHeader* fh = (FragHeader*)&e[0];
-  int event_id = fh->id_;
-  int from = fh->from_;
+  artdaq::RawFragmentHeader* fh = (artdaq::RawFragmentHeader*)&e[0];
+  int event_id = fh->event_id_;
+  int from = fh->fragment_id_;
   // make sure the event buffer is big enough
   if(frags_[which].size() < fragment_words_)
      frags_[which].resize(fragment_words_);
@@ -103,8 +103,9 @@ void RHandles::recvEvent(Data& e)
 	<< from << " which=" << which << flusher;
 
   // repost the request that was complete, from the same sender
-  rc = MPI_Irecv(&(frags_[which])[0],fragment_words_, MPI_LONG, from, 
-	    MY_TAG, MPI_COMM_WORLD,&reqs_[which]);
+  rc = MPI_Irecv(&(frags_[which])[0],
+                 (fragment_words_*sizeof(artdaq::RawDataType)),
+                 MPI_BYTE, from, MY_TAG, MPI_COMM_WORLD,&reqs_[which]);
   // printError(rc,from,stats_[which]);
 
   rm.post(from);

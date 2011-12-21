@@ -31,35 +31,29 @@ namespace artdaq
 
   void SimpleQueueReader::run()
   {
+    char* doPrint = getenv("VERBOSE_QUEUE_READING");
     while (! thread_stop_requested_) {
       std::shared_ptr<RawEvent> rawEventPtr;
       if (queue_->deqNowait(rawEventPtr)) {
-        std::cout << "Run " << rawEventPtr->header_.run_id_
-                  << ", Event " << rawEventPtr->header_.event_id_
-                  << ", FragCount " << rawEventPtr->fragment_list_.size()
-                  << ", WordCount " << rawEventPtr->header_.word_count_
-                  << std::endl;
-        for (int idx=0; idx<(int) rawEventPtr->fragment_list_.size(); ++idx) {
-          RawEvent::FragmentPtr rfp = rawEventPtr->fragment_list_[idx];
-          RawFragmentHeader* fh = (RawFragmentHeader*)&(*rfp)[0];
-          std::cout << "  Fragment " << fh->fragment_id_
-                    << ", WordCount " << fh->word_count_
+        if (doPrint != 0) {
+          std::cout << "Run " << rawEventPtr->header_.run_id_
+                    << ", Event " << rawEventPtr->header_.event_id_
+                    << ", FragCount " << rawEventPtr->fragment_list_.size()
+                    << ", WordCount " << rawEventPtr->header_.word_count_
                     << std::endl;
+          for (int idx=0; idx<(int) rawEventPtr->fragment_list_.size(); ++idx) {
+            RawEvent::FragmentPtr rfp = rawEventPtr->fragment_list_[idx];
+            RawFragmentHeader* fh = (RawFragmentHeader*)&(*rfp)[0];
+            std::cout << "  Fragment " << fh->fragment_id_
+                      << ", WordCount " << fh->word_count_
+                      << ", Event " << fh->event_id_
+                      << std::endl;
+          }
         }
       }
       else {
         usleep(250000);
       }
     }
-
-    //boost::xtime readTime;
-    //readTime.sec = 0;
-    //readTime.nsec = 250000000;
-    //while (! thread_stop_requested_) {
-    //  std::shared_ptr<RawEvent> rawEventPtr;
-    //  if (queue_->deqTimedWait(rawEventPtr, readTime)) {
-    //    std::cout << "Event " << rawEventPtr->header_.event_id_ << std::endl;
-    //  }
-    //}
   }
 }
