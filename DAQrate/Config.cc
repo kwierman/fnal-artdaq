@@ -17,7 +17,7 @@
 
 using namespace std;
 
-static const char* usage = "TotalNodes TotalEvents DetectorsPerNode SourcesPerNode SinksPerNode EventSize EventQueueSize Run";
+static const char* usage = "DetectorsPerNode SinksPerNode TotalEvents EventSize EventQueueSize Run";
 
 static void throwUsage(char* argv0, const string& msg)
 {
@@ -99,8 +99,8 @@ Config::Config(int rank, int total_procs, int argc, char* argv[]):
   offset_(rank_-((type_==TaskDetector)?detector_start_:(type_==TaskSource)?source_start_:sink_start_)),
   barrier_period_(source_buffer_count_),
   node_name_(getProcessorName()),
-  data_dir_(NULL),
-  art_argv_(NULL),
+  data_dir_(""),
+  art_argv_(0),
   art_artc_(0)
 {
 	int total_workers = (detectors_+sinks_+sources_);
