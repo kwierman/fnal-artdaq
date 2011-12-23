@@ -1,5 +1,6 @@
 
 #include <fstream>
+#include <iostream>
 #include <algorithm>
 
 #include "HuffmanTable.hh"
@@ -9,14 +10,16 @@
 using namespace std;
 
 namespace {
-  void readTrainingSet(istream & ifs, ADCCountVec & out)
+  void readTrainingSet(istream & ifs, ADCCountVec & out, size_t max_samples)
   {
+    bool forever = max_samples==0?true:false;
     const size_t sz = sizeof(adc_type);
-    while (1) {
+    while (forever || max_samples>0) {
       adc_type data;
       ifs.read((char*)&data, sz);
       if (ifs.eof()) { break; }
       out.push_back(data);
+      --max_samples;
     }
   }
 
@@ -47,10 +50,11 @@ namespace {
 
 }
 
-HuffmanTable::HuffmanTable(std::istream & ifs, size_t countmax)
+HuffmanTable::HuffmanTable(std::istream & ifs, 
+			   size_t countmax, size_t max_samples)
 {
   ADCCountVec t;
-  readTrainingSet(ifs, t);
+  readTrainingSet(ifs, t, max_samples);
   makeTable(t, countmax);
 }
 

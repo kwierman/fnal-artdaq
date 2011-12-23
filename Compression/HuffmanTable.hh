@@ -34,7 +34,7 @@ public:
 
   typedef ItPair (*Algo)(HeadList&);
 
-  HuffmanTable(std::istream& training_set, size_t countmax);
+  HuffmanTable(std::istream& training_set, size_t countmax, size_t max_samples);
   HuffmanTable(ADCCountVec const& training_set, size_t countmax);
 
   void extractTable(SymTable& out) const;
