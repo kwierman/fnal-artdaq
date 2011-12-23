@@ -18,11 +18,14 @@ FragmentPool::FragmentPool(Config const& conf):
   range_(data_length_ - word_count_)
 {
   std::ostringstream name;
-  name << "board" << conf.offset_ << ".out";
+  name << conf.data_dir_ << "board" << conf.offset_ << ".out";
   ifs_.open( name.str().c_str(), std::ifstream::in );
   std::cout << "name is " << name.str() << '\n';
   std::cout << "ifs_.is_open() is " << ifs_.is_open() << '\n';
   generate(d_.begin(),d_.end(),LongMaker());
+
+  char* fpdEnvVar = getenv("FRAGMENT_POOL_DEBUG");
+  doDebugPrint_ = (fpdEnvVar != 0);
 }
 
 FragmentPool::~FragmentPool()
@@ -44,7 +47,8 @@ void FragmentPool::operator()(Data& output)
 
     char *cp=((char*)&output[0])+sizeof(RawFragmentHeader);
     DarkSideHeaderOverlay *dshop = (DarkSideHeaderOverlay*)cp;
-    std::cout << "output.size()="<<output.size()<<" bytes="<<output.size()*4<<'\n';
+    if (doDebugPrint_)
+      std::cout << "output.size()="<<output.size()<<" bytes="<<output.size()*4<<'\n';
     ifs_.read( cp, sizeof(DarkSideHeaderOverlay) );
 
 
@@ -56,11 +60,20 @@ void FragmentPool::operator()(Data& output)
       output.resize(size+sizeof(RawFragmentHeader)/sizeof(RawDataType));
       cp=((char*)&output[0])+sizeof(RawFragmentHeader);
       h = (RawFragmentHeader*)&output[0];
+      dshop = (DarkSideHeaderOverlay*)cp;
     }
     size *= sizeof(RawDataType);
-    printf("frag size=%d fragwords=0x%lx\n", size, (unsigned long)h->word_count_ );
+    if (doDebugPrint_)
+      printf("frag size=%d fragwords=0x%lx\n", size, (unsigned long)h->word_count_ );
     size -= sizeof(DarkSideHeaderOverlay);
     ifs_.read( cp+sizeof(DarkSideHeaderOverlay), size );
+
+    if (doDebugPrint_) {
+      std::cout << "  DarkSideHeader event_size = " << dshop->event_size_
+                << ", board_id = " << dshop->board_id_
+                << ", event_counter = " << dshop->event_counter_
+                << std::endl;
+    }
   }
 #endif
 

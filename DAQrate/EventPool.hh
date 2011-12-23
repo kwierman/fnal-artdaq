@@ -37,6 +37,7 @@ private:
   Data d_;
   int range_;
   std::ifstream ifs_;
+  bool doDebugPrint_;
 };
 
 #endif

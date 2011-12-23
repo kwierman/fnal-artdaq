@@ -209,7 +209,7 @@ def main():
     if os.path.isdir(size_or_dir):
 	fo=open( size_or_dir+"board0.out", 'r' )
 	data_dir=size_or_dir
-	event_size = 12000016/4
+	event_size = (1200016+12)*num_det # (frag_bytes+frag_header_bytes)*num_det
 	fo.close()
     else:
 	event_size = int( size_or_dir, 0 )
@@ -258,7 +258,7 @@ def main():
 	fo.close()
 
 	os.system("cat %s"%(nodes_file,))
-	os.remove( nodes_file )
+	#os.remove( nodes_file )
 
 	cmd ="mpirun_rsh -rsh -hostfile %s "%(nodes_file,)
 	cmd+="-n %d "%(num_det+num_src+num_sink,)

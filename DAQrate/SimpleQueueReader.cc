@@ -43,10 +43,16 @@ namespace artdaq
                     << std::endl;
           for (int idx=0; idx<(int) rawEventPtr->fragment_list_.size(); ++idx) {
             RawEvent::FragmentPtr rfp = rawEventPtr->fragment_list_[idx];
-            RawFragmentHeader* fh = (RawFragmentHeader*)&(*rfp)[0];
-            std::cout << "  Fragment " << fh->fragment_id_
-                      << ", WordCount " << fh->word_count_
-                      << ", Event " << fh->event_id_
+            RawFragmentHeader* rfh = (RawFragmentHeader*)&(*rfp)[0];
+            std::cout << "  Fragment " << rfh->fragment_id_
+                      << ", WordCount " << rfh->word_count_
+                      << ", Event " << rfh->event_id_
+                      << std::endl;
+            DarkSideHeaderOverlay* dsh =
+              (DarkSideHeaderOverlay*)(((char*)rfh)+sizeof(RawFragmentHeader));
+            std::cout << "    DarkSide50: Event Size = " << dsh->event_size_
+                      << ", Board ID " << dsh->board_id_
+                      << ", Event Counter " << dsh->event_counter_
                       << std::endl;
           }
         }

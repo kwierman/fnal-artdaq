@@ -61,6 +61,18 @@ static int getArgRun(int argc, char* argv[])
   return atoi(argv[6]);
 }
 
+static std::string getArgDataDir(int argc, char* argv[])
+{
+  if(argc<8) {return "";}
+  std::string rawArg(argv[7]);
+  if (rawArg.find("--data-dir=") == std::string::npos) {return "";}
+  std::string dataDir = rawArg.substr(11);
+  if (dataDir.length() > 0 && dataDir[dataDir.length()-1] != '/') {
+    dataDir.append("/");
+  }
+  return dataDir;
+}
+
 
 static std::string getProcessorName()
 {
@@ -99,7 +111,7 @@ Config::Config(int rank, int total_procs, int argc, char* argv[]):
   offset_(rank_-((type_==TaskDetector)?detector_start_:(type_==TaskSource)?source_start_:sink_start_)),
   barrier_period_(source_buffer_count_),
   node_name_(getProcessorName()),
-  data_dir_(""),
+  data_dir_(getArgDataDir(argc,argv)),
   art_argv_(0),
   art_artc_(0)
 {
