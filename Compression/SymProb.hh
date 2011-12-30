@@ -34,4 +34,7 @@ typedef std::vector<SymProb> SymsVec;
 
 void calculateProbs(ADCCountVec const& data_in, SymsVec& prob_table_out, size_t countmax);
 
+// returns number of one bits in d. and the median in run_median
+unsigned long calculateRunLengths(ADCCountVec const& d, DataVec& out, unsigned long& run_median);
+
 #endif
