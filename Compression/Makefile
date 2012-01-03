@@ -8,7 +8,7 @@ CXXFLAGS=-std=c++0x -g -O2 -Wall -Wextra -fopenmp
 
 .PHONY: clean cleandat dat test
 
-all: libHuffman.so MakeSample BuildHuffmanTable EncodeHuffman DecodeHuffman tester
+all: libHuffman.so MakeSample BuildHuffmanTable EncodeHuffman DecodeHuffman tester Codes
 
 test: samples.dat uncomp.dat
 	@(diff samples.dat uncomp.dat && echo TEST OK) || echo TEST FAIL
@@ -34,6 +34,7 @@ libHuffman.so: SymProb.o SymTable.o Decoder.o Encoder.o HuffmanTable.o BlockRead
 	$(LINK.cc) -shared $+  -o $@
 
 SymProb.o: SymProb.cc SymProb.hh Properties.hh
+SymTable.o: SymTable.cc SymProb.hh Properties.hh
 SymCode.o: SymCode.cc SymCode.hh Properties.hh
 Decoder.o: Decoder.cc Decoder.hh Properties.hh SymCode.hh
 Encoder.o: Encoder.cc Encoder.hh Properties.hh SymCode.hh
@@ -42,6 +43,7 @@ HuffmanTable.o: HuffmanTable.cc Tree.hh Properties.hh SymCode.hh SymProb.hh
 tester.o: tester.cc Properties.hh HuffmanTable.hh Decoder.hh
 MakeSample.o: MakeSample.cc Properties.hh
 BuildHuffmanTable.o: BuildHuffmanTable.cc Properties.hh SymProb.hh SymCode.hh Tree.hh
+Codes.o: Codes.cc Properties.hh SymCode.hh
 EncodeHuffman.o: EncodeHuffman.cc Properties.hh SymCode.hh
 DecodeHuffman.o: DecodeHuffman.cc Properties.hh SymCode.hh
 
@@ -49,6 +51,9 @@ MakeSample: MakeSample.o
 	$(LINK.cc) -o $@ $^
 
 BuildHuffmanTable: BuildHuffmanTable.o libHuffman.so
+	$(LINK.cc) -o $@ $^
+
+Codes: Codes.o libHuffman.so
 	$(LINK.cc) -o $@ $^
 
 EncodeHuffman: EncodeHuffman.o libHuffman.so
