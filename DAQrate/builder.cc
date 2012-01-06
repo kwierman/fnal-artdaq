@@ -178,7 +178,7 @@ void Program::printHost(const std::string& functionName) const
 
 int main( int argc, char *argv[])
 {
-  int rc = -1;
+  int rc = 1;
 
   try
     {
@@ -194,7 +194,6 @@ int main( int argc, char *argv[])
     {
       cerr << "yuck - " << c << "\n";
     }
-
   return rc;
 }
 

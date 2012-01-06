@@ -219,14 +219,15 @@ def main():
     builder=os.popen("which builder 2>/dev/null").readline()
     if not builder:
 	print("Error: builder executable not found.")
-	sys.exit()
+	sys.exit(3)
 	pass
 
     print("opts=%s args=%s nodes=%s"%(opts,args,nodes))
+    rc = 0
     if nodes:
 	if ddnodes >= len(nodes):
 	    print("invalid configuration. ddnodes must be < nodes")
-	    sys.exit()
+	    sys.exit(4)
 	    pass
 	# create a nodes file... The number of lines should be == num_det+num_src+num_sink
 
@@ -279,7 +280,14 @@ def main():
 	if data_dir: cmd+=" --data-dir=%s"%(data_dir,)
 	if art_args: cmd+=" %s"%(art_args,)
 	print( "executing cmd: %s"%(cmd,) )
-	os.system( cmd )
+	rc = os.system( cmd )
+        print "return status is: %d\n" %(rc,)
+        if (rc != 0):
+            sys.exit(1)
+
+    print "return status is (really!) : %d\n" %(rc,)
     sys.exit()
 
-if __name__ == "__main__": main()
+
+if __name__ == "__main__":
+    main()
