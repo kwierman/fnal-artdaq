@@ -1,11 +1,9 @@
-#ifndef Mpi_HHH
-#define Mpi_HHH
+#ifndef artdaq_DAQrate_MPIProg_HH
+#define artdaq_DAQrate_MPIProg_HH
 
-#include "mpi.h"
 
-class MPIProg
+struct MPIProg
 {
-public:
   MPIProg(int& argc, char**& argv);
   ~MPIProg();
 

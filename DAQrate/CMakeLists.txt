@@ -18,7 +18,7 @@ set( LIB_SOURCES
      Debug.cc
      EventPool.cc
      EventStore.cc
-     Mpi.cc
+     MPIProg.cc
      Perf.cc
      RHandles.cc
      SHandles.cc

@@ -6,10 +6,9 @@
 #include "EventStore.hh"
 #include "RHandles.hh"
 #include "SHandles.hh"
-#include "Mpi.hh"
 #include "Debug.hh"
 
-#include "mpi.h"
+#include "MPIProg.hh"
 
 #include <math.h>
 #include <sys/resource.h>

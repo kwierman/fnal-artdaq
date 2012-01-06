@@ -1,5 +1,6 @@
 
-#include "Mpi.hh"
+#include "MPIProg.hh"
+#include "mpi.h"
 
 struct Clocker
 {
