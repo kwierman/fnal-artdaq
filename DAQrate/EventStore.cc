@@ -17,7 +17,7 @@ namespace artdaq
   }
 
 
-  void EventStore::operator()(Data const& ef)
+  void EventStore::operator()(Fragment const& ef)
   {
     // find the event being built and put the fragment into it,
     // start new event if not already present

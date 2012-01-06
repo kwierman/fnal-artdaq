@@ -15,15 +15,17 @@
 
 namespace artdaq
 {
+  // Class EventStore represents ...
+
   class EventStore
   {
   public:
-    typedef FragmentPool::Data Data;
+    typedef FragmentPool::Data Fragment;
     typedef std::map<RawDataType, std::shared_ptr<RawEvent> > EventMap;
 
     explicit EventStore(Config const&);
 
-    void operator()(Data const&);
+    void operator()(Fragment const&);
 
   private:
     int sources_;
