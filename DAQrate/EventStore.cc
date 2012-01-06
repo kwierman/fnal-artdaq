@@ -10,12 +10,13 @@ namespace artdaq
 {
 
   EventStore::EventStore(Config const& conf) :
-    sources_(conf.sources_),fragmentIdOffset_(conf.srcStart()),run_(conf.run_)
-  {
-    queue_.reset(new daqrate::ConcurrentQueue< std::shared_ptr<RawEvent> >());
-    reader_.reset(new SimpleQueueReader(queue_));
-  }
-
+    sources_(conf.sources_),
+    fragmentIdOffset_(conf.srcStart()),
+    run_(conf.run_),
+    events_(),
+    queue_(new daqrate::ConcurrentQueue< std::shared_ptr<RawEvent> >()),
+    reader_(new SimpleQueueReader(queue_))
+  {  }
 
   void EventStore::operator()(Fragment const& ef)
   {
