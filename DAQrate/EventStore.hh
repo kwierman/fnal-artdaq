@@ -3,9 +3,9 @@
 
 #include "Config.hh"
 #include "EventPool.hh"
-#include "ConcurrentQueue.hh"
+
 #include "DAQdata/RawData.hh"
-#include "DAQrate/GlobalQueue.hh"
+#include "GlobalQueue.hh"
 #include "SimpleQueueReader.hh"
 
 #include <map>
@@ -15,24 +15,26 @@
 
 namespace artdaq
 {
-  // Class EventStore represents ...
+  // Class EventStore represents ...  There must be only one
+  // EventStore object in any program, because of the way EventStore
+  // interacts with the creation of the shared ConcurrentQueue.
 
   class EventStore
   {
   public:
     typedef FragmentPool::Data Fragment;
-    typedef std::map<RawDataType, std::shared_ptr<RawEvent> > EventMap;
+    typedef std::map<RawDataType, RawEvent_ptr> EventMap;
 
     explicit EventStore(Config const&);
 
     void operator()(Fragment const&);
 
   private:
-    int sources_;
-    int fragmentIdOffset_;
-    int run_;
-    EventMap events_;
-    std::shared_ptr<RawEventQueue> queue_;
+    int            sources_;
+    int            fragmentIdOffset_;
+    int            run_;
+    EventMap       events_;
+    RawEventQueue& queue_;
     std::shared_ptr<SimpleQueueReader> reader_;
   };
 }

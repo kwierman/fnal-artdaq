@@ -10,8 +10,10 @@ namespace artdaq
   typedef std::shared_ptr<RawEvent> RawEvent_ptr;
   typedef daqrate::ConcurrentQueue<RawEvent_ptr> RawEventQueue;
 
-  void setQueue(RawEventQueue&);
-  RawEventQueue& getQueue();
+  // The first thread to call getGlobalQueue() causes the creation of
+  // the queue. The queue will be destroyed at static destruction
+  // time.
+  RawEventQueue& getGlobalQueue();
 }
 
 #endif

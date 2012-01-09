@@ -1,27 +1,35 @@
 #ifndef simplequeuereader_hhh
 #define simplequeuereader_hhh
 
-#include "ConcurrentQueue.hh"
-#include "DAQdata/RawData.hh"
+#include "GlobalQueue.hh"
 #include <thread>
+#include <memory>
 
 namespace artdaq
 {
+  // SimpleQueueReader can be used to test the functioning of the
+  // communication of RawEvents through the global event queue.
+  // Instances of SimpleQueueReader are not copyable, because we do
+  // not want two different readers from the same global queue in one
+  // program.
+
+
+  // Question: why do we have thread_stop_requested? Does the
+  // reader_thread_'s function ever access this value?
+
   class SimpleQueueReader
   {
   public:
-    SimpleQueueReader(std::shared_ptr<daqrate::ConcurrentQueue< 
-                      std::shared_ptr<RawEvent> > > queue);
+    SimpleQueueReader();
     ~SimpleQueueReader();
 
     void requestStop();
     void run();
 
   private:
-    std::shared_ptr<daqrate::ConcurrentQueue< std::shared_ptr<RawEvent> > > queue_;
-
-    bool thread_stop_requested_;
-    std::thread* reader_thread_;
+    RawEventQueue&               queue_;
+    volatile  bool               thread_stop_requested_;
+    std::unique_ptr<std::thread> reader_thread_;
   };
 }
 

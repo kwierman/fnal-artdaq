@@ -4,6 +4,8 @@
 #include <utility>
 #include <cstring>
 
+
+
 using namespace std;
 
 namespace artdaq
@@ -14,9 +16,11 @@ namespace artdaq
     fragmentIdOffset_(conf.srcStart()),
     run_(conf.run_),
     events_(),
-    queue_(new daqrate::ConcurrentQueue< std::shared_ptr<RawEvent> >()),
-    reader_(new SimpleQueueReader(queue_))
-  {  }
+    queue_(getGlobalQueue()),
+    reader_(new SimpleQueueReader())
+  {
+
+  }
 
   void EventStore::operator()(Fragment const& ef)
   {
@@ -61,7 +65,7 @@ namespace artdaq
       {
         PerfWriteEvent(EventMeas::END,event_id);
         events_.erase(p.first);
-        queue_->enqNowait( rawEventPtr );
+        queue_.enqNowait( rawEventPtr );
       }  
   }
 }

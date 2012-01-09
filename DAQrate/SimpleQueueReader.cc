@@ -1,25 +1,24 @@
 
 #include "SimpleQueueReader.hh"
-#include <boost/thread/xtime.hpp>
+#include "DAQdata/RawData.hh"
 
 namespace artdaq
 {
 
   SimpleQueueReader::
-  SimpleQueueReader(std::shared_ptr<daqrate::ConcurrentQueue< 
-                    std::shared_ptr<RawEvent> > > queue) : queue_(queue)
+  SimpleQueueReader() :
+    queue_(getGlobalQueue()),
+    thread_stop_requested_(false),
+    reader_thread_(new std::thread(std::bind(&SimpleQueueReader::run, this)))
   {
-    thread_stop_requested_ = false;
-    reader_thread_ = new std::thread(std::bind(&SimpleQueueReader::run, this));
   }
 
 
   SimpleQueueReader::~SimpleQueueReader()
   {
-    // stop and clean up the reader thread
+    // Request we stop, and wait for the reader_thread_ to finish.
     requestStop();
     reader_thread_->join();
-    delete reader_thread_;
   }
 
 
@@ -34,7 +33,7 @@ namespace artdaq
     char* doPrint = getenv("VERBOSE_QUEUE_READING");
     while (! thread_stop_requested_) {
       std::shared_ptr<RawEvent> rawEventPtr;
-      if (queue_->deqNowait(rawEventPtr)) {
+      if (queue_.deqNowait(rawEventPtr)) {
         if (doPrint != 0) {
           std::cout << "Run " << rawEventPtr->header_.run_id_
                     << ", Event " << rawEventPtr->header_.event_id_

@@ -14,6 +14,7 @@ SET(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
 set( LIB_NAME artdaq_DAQrate )
 
 set( LIB_SOURCES 
+     GlobalQueue.cc
      Config.cc
      Debug.cc
      EventPool.cc
