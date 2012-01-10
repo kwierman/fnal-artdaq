@@ -11,7 +11,7 @@
 // fragment_size_ = number of longs in a fragment of an event
 //
 // be careful about the event/fragment size - hardwired to sizeof(long)
-// and should be determined from the EventPool
+// and should be determined from the FragmentPool
 
 SHandles::SHandles(Config const& conf):
   buffer_count_(conf.source_buffer_count_),

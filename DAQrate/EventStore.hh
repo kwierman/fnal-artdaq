@@ -11,7 +11,7 @@
 #include <map>
 #include <memory>
 
-// bad to get definition for Data from EventPool!
+// bad to get definition for Data from FragmentPool!
 
 namespace artdaq
 {
