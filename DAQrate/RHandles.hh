@@ -1,7 +1,7 @@
 #ifndef RHandles_hhh
 #define RHandles_hhh
 
-#include "EventPool.hh"
+#include "FragmentPool.hh"
 #include "Config.hh"
 
 #include <vector>

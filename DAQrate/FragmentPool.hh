@@ -1,7 +1,8 @@
-#ifndef eventpool_HHH
-#define eventpool_HHH
+#ifndef artdaq_DAQrate_FragmentPool_hh
+#define artdaq_DAQrate_FragmentPool_hh
 
-// really this holds pieces of an event (one per source)
+// A FragmentPool holds Fragments, and is used to combine them into
+// complete events.
 
 /*
   how is works:
@@ -19,13 +20,12 @@
 #include <vector>
 #include <fstream>
 
-class FragmentPool
+class FragmentPool 
 {
 public:
   typedef std::vector<artdaq::RawDataType> Data;
 
-  FragmentPool(Config const &);
-  ~FragmentPool();
+  explicit FragmentPool(Config const &);
 
   void operator()(Data& output);
 

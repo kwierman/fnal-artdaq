@@ -2,7 +2,7 @@
 #define eventstore_hhh
 
 #include "Config.hh"
-#include "EventPool.hh"
+#include "FragmentPool.hh"
 
 #include "DAQdata/RawData.hh"
 #include "GlobalQueue.hh"

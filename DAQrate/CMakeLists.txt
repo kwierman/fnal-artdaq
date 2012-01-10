@@ -17,8 +17,8 @@ set( LIB_SOURCES
      GlobalQueue.cc
      Config.cc
      Debug.cc
-     EventPool.cc
      EventStore.cc
+     FragmentPool.cc
      MPIProg.cc
      Perf.cc
      RHandles.cc

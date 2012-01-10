@@ -1,5 +1,5 @@
 
-#include "EventPool.hh"
+#include "FragmentPool.hh"
 #include "DAQdata/Fragment.hh"
 #include "DAQdata/RawData.hh"
 #include "Utils.hh"
@@ -15,7 +15,9 @@ FragmentPool::FragmentPool(Config const& conf):
   rank_(conf.rank_),
   data_length_(word_count_*2),
   d_(data_length_),
-  range_(data_length_ - word_count_)
+  range_(data_length_ - word_count_),
+  ifs_(),
+  doDebugPrint_(getenv("FRAGMENT_POOL_DEBUG") != 0)
 {
   std::ostringstream name;
   name << conf.data_dir_ << "board" << conf.offset_ << ".out";
@@ -23,13 +25,6 @@ FragmentPool::FragmentPool(Config const& conf):
   std::cout << "name is " << name.str() << '\n';
   std::cout << "ifs_.is_open() is " << ifs_.is_open() << '\n';
   generate(d_.begin(),d_.end(),LongMaker());
-
-  char* fpdEnvVar = getenv("FRAGMENT_POOL_DEBUG");
-  doDebugPrint_ = (fpdEnvVar != 0);
-}
-
-FragmentPool::~FragmentPool()
-{
 }
 
 void FragmentPool::operator()(Data& output)

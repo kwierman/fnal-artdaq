@@ -1,7 +1,7 @@
 #ifndef SHandles_hhh
 #define SHandles_hhh
 
-#include "EventPool.hh"
+#include "FragmentPool.hh"
 #include "Config.hh"
 
 #include <vector>
