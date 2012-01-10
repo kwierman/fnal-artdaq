@@ -31,9 +31,9 @@ namespace artdaq
     void operator()(Fragment&);
 
   private:
-    int            sources_;
-    int            fragmentIdOffset_;
-    int            run_;
+    int const      sources_;
+    int const      fragmentIdOffset_;
+    int const      run_;
     EventMap       events_;
     RawEventQueue& queue_;
     std::shared_ptr<SimpleQueueReader> reader_;
