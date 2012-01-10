@@ -27,7 +27,8 @@ namespace artdaq
 
     explicit EventStore(Config const&);
 
-    void operator()(Fragment const&);
+
+    void operator()(Fragment&);
 
   private:
     int            sources_;

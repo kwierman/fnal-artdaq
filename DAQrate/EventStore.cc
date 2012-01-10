@@ -18,17 +18,15 @@ namespace artdaq
     events_(),
     queue_(getGlobalQueue()),
     reader_(new SimpleQueueReader())
-  {
+  {  }
 
-  }
-
-  void EventStore::operator()(Fragment const& ef)
+  void EventStore::operator()(Fragment& ef)
   {
     // find the event being built and put the fragment into it,
     // start new event if not already present
     // if the event is complete, delete it and report timing
 
-    RawFragmentHeader* fh = (RawFragmentHeader*)&ef[0];
+    RawFragmentHeader* fh = reinterpret_cast<RawFragmentHeader*>(&ef[0]);
     RawDataType event_id = fh->event_id_;
 
     // update the fragment ID (up to this point, it has been set to the
