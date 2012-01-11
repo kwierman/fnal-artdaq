@@ -207,7 +207,7 @@ def main():
 
     data_dir=''
     if os.path.isdir(size_or_dir):
-	fo=open( size_or_dir+"board0.out", 'r' )
+	fo=open( size_or_dir+"/board0.out", 'r' )
 	data_dir=size_or_dir
 	event_size = (1200016+12)*num_det # (frag_bytes+frag_header_bytes)*num_det
 	fo.close()
