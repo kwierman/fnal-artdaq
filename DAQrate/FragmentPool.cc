@@ -17,63 +17,155 @@ FragmentPool::FragmentPool(Config const& conf):
   d_(data_length_),
   range_(data_length_ - word_count_),
   ifs_(),
-  doDebugPrint_(getenv("FRAGMENT_POOL_DEBUG") != 0)
+  doDebugPrint_(getenv("FRAGMENT_POOL_DEBUG") != 0),
+  wordsReadFromFile_(0),
+  fileBufferWordOffset_(0)
 {
   std::ostringstream name;
   name << conf.data_dir_ << "board" << conf.offset_ << ".out";
   ifs_.open( name.str().c_str(), std::ifstream::in );
   std::cout << "name is " << name.str() << '\n';
   std::cout << "ifs_.is_open() is " << ifs_.is_open() << '\n';
-  generate(d_.begin(),d_.end(),LongMaker());
+
+  // if we successfully opened the file, pre-load the fragments
+  if (ifs_.is_open())
+  {
+    unsigned dsHeaderWords = 1 +
+      ((sizeof(DarkSideHeaderOverlay)-1) / sizeof(RawDataType));
+
+    // ensure that the data buffer is large enough to hold the header
+    if (d_.size() < dsHeaderWords)
+    {
+      d_.resize(dsHeaderWords);
+    }
+
+    // read in the first header
+    char *cp = (char*)&d_[0];
+    DarkSideHeaderOverlay *dshop = (DarkSideHeaderOverlay*)cp;
+    ifs_.read( cp, sizeof(DarkSideHeaderOverlay) );
+
+    // calculate the expected data size
+    unsigned firstFragmentWords = dshop->event_size_;
+    int numberOfFragments = conf.total_events_;
+    if (numberOfFragments > 10000) numberOfFragments = 10000;
+    unsigned long dataSetWords = firstFragmentWords * numberOfFragments;
+    if (doDebugPrint_)
+    {
+      std::cout << "Words in first fragment=" << firstFragmentWords
+                << ", data set words = " << dataSetWords
+                << ", data set bytes = " << (dataSetWords*sizeof(RawDataType))
+                << '\n';
+    }
+
+    // reset the file handle so that we're ready to start looping
+    ifs_.seekg(0, std::ios::beg);
+
+    // read in each fragment
+    cp = (char*)&d_[0];
+    dshop = (DarkSideHeaderOverlay*)cp;
+    unsigned actualEventCount = 0;
+    for (int idx = 0; idx < numberOfFragments; ++idx)
+    {
+      if (ifs_.eof()) break;
+
+      // resize the buffer, if needed (unlikely)
+      if (d_.size() < (wordsReadFromFile_ + dsHeaderWords))
+      {
+        d_.resize(wordsReadFromFile_ + dsHeaderWords);
+        cp = ((char*)&d_[0]) + (wordsReadFromFile_*sizeof(RawDataType));
+        dshop = (DarkSideHeaderOverlay*)cp;
+      }
+
+      // read in the header
+      ifs_.read( cp, sizeof(DarkSideHeaderOverlay) );
+
+      // determine the size of this fragment
+      unsigned fragmentWords = dshop->event_size_;
+
+      // resize the buffer, if needed
+      if (d_.size() < (wordsReadFromFile_ + fragmentWords))
+      {
+        d_.resize(wordsReadFromFile_ + (10 * fragmentWords));
+        cp = ((char*)&d_[0]) + (wordsReadFromFile_*sizeof(RawDataType));
+        dshop = (DarkSideHeaderOverlay*)cp;
+      }
+
+      // finish reading the fragment
+      unsigned fragmentBytes = fragmentWords * sizeof(RawDataType);
+      fragmentBytes -= sizeof(DarkSideHeaderOverlay);
+      ifs_.read( cp+sizeof(DarkSideHeaderOverlay), fragmentBytes );
+      ++actualEventCount;
+
+      // update pointers and sizes
+      wordsReadFromFile_ += fragmentWords;
+      cp = ((char*)&d_[0]) + (wordsReadFromFile_*sizeof(RawDataType));
+      dshop = (DarkSideHeaderOverlay*)cp;
+    }
+
+    if (doDebugPrint_) {
+      std::cout << "  Read in " << actualEventCount
+                << " fragments for board_id " << dshop->board_id_
+                << ", actual data words = " << wordsReadFromFile_
+                << std::endl;
+    }
+  }
+
+  // otherwise generate random data to be used
+  else {
+    generate(d_.begin(),d_.end(),LongMaker());
+  }
 }
 
 void FragmentPool::operator()(Data& output)
 {
-  if(output.size()<word_count_) output.resize(word_count_);
+  unsigned outputWordCount;
 
-  int start = (LongMaker::make()) % range_;
-  std::copy(d_.begin()+start, d_.begin()+start+word_count_, output.begin());
-  RawFragmentHeader* h = (RawFragmentHeader*)&output[0];
-#if 1
-  if (ifs_.is_open())
+  if (wordsReadFromFile_ > 0)
   {
-    if (ifs_.eof())
-      ifs_.seekg(0, std::ios::beg);
-
-    char *cp=((char*)&output[0])+sizeof(RawFragmentHeader);
-    DarkSideHeaderOverlay *dshop = (DarkSideHeaderOverlay*)cp;
-    if (doDebugPrint_)
-      std::cout << "output.size()="<<output.size()<<" bytes="<<output.size()*4<<'\n';
-    ifs_.read( cp, sizeof(DarkSideHeaderOverlay) );
-
-
-    unsigned size=dshop->event_size_;
-
-    
-    if (output.size() < (size+sizeof(RawFragmentHeader)/sizeof(RawDataType)))
+    if (fileBufferWordOffset_ >= wordsReadFromFile_)
     {
-      output.resize(size+sizeof(RawFragmentHeader)/sizeof(RawDataType));
-      cp=((char*)&output[0])+sizeof(RawFragmentHeader);
-      h = (RawFragmentHeader*)&output[0];
-      dshop = (DarkSideHeaderOverlay*)cp;
+      fileBufferWordOffset_ = 0;
     }
-    size *= sizeof(RawDataType);
-    if (doDebugPrint_)
-      printf("frag size=%d fragwords=0x%lx\n", size, (unsigned long)h->word_count_ );
-    size -= sizeof(DarkSideHeaderOverlay);
-    ifs_.read( cp+sizeof(DarkSideHeaderOverlay), size );
 
-    if (doDebugPrint_) {
-      std::cout << "  DarkSideHeader event_size = " << dshop->event_size_
-                << ", board_id = " << dshop->board_id_
-                << ", event_counter = " << dshop->event_counter_
+    char *cp = (char*)&d_[fileBufferWordOffset_];
+    DarkSideHeaderOverlay *dshop = (DarkSideHeaderOverlay*)cp;
+    unsigned fragmentWords = dshop->event_size_;
+
+    unsigned rfHeaderWords = 1 +
+      ((sizeof(RawFragmentHeader)-1) / sizeof(RawDataType));
+    if (output.size() < (fragmentWords+rfHeaderWords))
+    {
+      output.resize(fragmentWords+rfHeaderWords);
+    }
+
+    std::copy(d_.begin()+fileBufferWordOffset_,
+              d_.begin()+fileBufferWordOffset_+fragmentWords,
+              output.begin()+rfHeaderWords);
+    fileBufferWordOffset_ += fragmentWords;
+    outputWordCount = fragmentWords + rfHeaderWords;
+
+    if (doDebugPrint_)
+    {
+      std::cout << "Copied " << fragmentWords
+                << " words from the file data buffer to the send buffer."
+                << std::endl
+                << "  " << fileBufferWordOffset_
+                << " words from the file data buffer have been sent so far."
                 << std::endl;
     }
   }
-#endif
+  else
+  {
+    if(output.size()<word_count_) output.resize(word_count_);
 
+    int start = (LongMaker::make()) % range_;
+    std::copy(d_.begin()+start, d_.begin()+start+word_count_, output.begin());
+    outputWordCount = word_count_;
+  }
+
+  RawFragmentHeader* h = (RawFragmentHeader*)&output[0];
   h->event_id_=seq_++;
   h->fragment_id_=rank_;
   //h->time_ms_=1;
-  h->word_count_ = word_count_;
+  h->word_count_ = outputWordCount;
 }

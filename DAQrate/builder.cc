@@ -39,6 +39,7 @@ private:
   void printHost(const std::string& functionName) const;
 
   Config conf_;
+  MPI_Comm detector_comm_;
 };
 
 Program::Program(int argc, char* argv[]):
@@ -55,6 +56,16 @@ void Program::go()
   MPI_Barrier(MPI_COMM_WORLD);
   PerfSetStartTime();
   PerfWriteJobStart();
+
+  int* detRankPtr = new int[conf_.detectors_];
+  for (int idx = 0; idx < conf_.detectors_; ++idx) {
+    detRankPtr[idx] = idx + conf_.detector_start_;
+  }
+  MPI_Group orig_group, new_group;
+  MPI_Comm_group(MPI_COMM_WORLD, &orig_group);
+  MPI_Group_incl(orig_group, conf_.detectors_, detRankPtr, &new_group);
+  MPI_Comm_create(MPI_COMM_WORLD, new_group, &detector_comm_);
+  delete[] detRankPtr;
 
   switch(conf_.type_)
     {
@@ -101,12 +112,18 @@ void Program::detector()
   FragmentPool::Data e;
   SHandles h(conf_);
 
+  std::cout << "Detector " << conf_.rank_ << " ready." << std::endl;
+  MPI_Barrier(detector_comm_);
+
   // MPI_Barrier(MPI_COMM_WORLD);
   // not using the run time method
   // TimedLoop tl(conf_.run_time_);
 
   for(int i=0;i<conf_.total_events_;++i)
     {
+      if ((i % 100) == 0) {
+        MPI_Barrier(detector_comm_);
+      }
       ep(e); // get event
       h.sendEvent(e);
     }
