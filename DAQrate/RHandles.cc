@@ -47,7 +47,7 @@ RHandles::RHandles(Config const& conf):
     }
 }
 
-static void printError(int rc,int which, MPI_Status& stat)
+static void printError(int rc,int which, MPI_Status&)
 {
   if (rc != MPI_SUCCESS)
   {
@@ -76,7 +76,10 @@ void RHandles::recvEvent(Data& e)
   RecvMeas rm;
   int which;
 
-  int rc = MPI_Waitany(buffer_count_,&reqs_[0],&which,&stats_[0]);
+#if 0
+  int rc =
+#endif
+    MPI_Waitany(buffer_count_,&reqs_[0],&which,&stats_[0]);
 
 #if 0
   printError(rc,which,stats_[which]);
@@ -94,8 +97,8 @@ void RHandles::recvEvent(Data& e)
   int event_id = fh->event_id_;
   int from = fh->fragment_id_;
   // make sure the event buffer is big enough
-  if(frags_[which].size() < fragment_words_)
-     frags_[which].resize(fragment_words_);
+  if (frags_[which].size() < static_cast<std::size_t>(fragment_words_))
+      frags_[which].resize(fragment_words_);
 
   rm.woke(event_id,which);
 
@@ -103,7 +106,7 @@ void RHandles::recvEvent(Data& e)
 	<< from << " which=" << which << flusher;
 
   // repost the request that was complete, from the same sender
-  rc = MPI_Irecv(&(frags_[which])[0],
+  /* rc = */ MPI_Irecv(&(frags_[which])[0],
                  (fragment_words_*sizeof(artdaq::RawDataType)),
                  MPI_BYTE, from, MY_TAG, MPI_COMM_WORLD,&reqs_[which]);
   // printError(rc,from,stats_[which]);

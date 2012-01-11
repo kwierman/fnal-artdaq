@@ -53,7 +53,7 @@ public:
   std::string node_name_;
   std::string data_dir_;
   char **art_argv_;
-  int  art_artc_;
+  int  art_argc_;
 
   void print(std::ostream& ost) const;
   void printHeader(std::ostream& ost) const;

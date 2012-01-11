@@ -10,6 +10,7 @@
 
 #include <map>
 #include <memory>
+#include <thread>
 
 // bad to get definition for Data from FragmentPool!
 
@@ -19,6 +20,8 @@ namespace artdaq
   // EventStore object in any program, because of the way EventStore
   // interacts with the creation of the shared ConcurrentQueue.
 
+  // EventStore objects are not copyable.
+
   class EventStore
   {
   public:
@@ -27,16 +30,21 @@ namespace artdaq
 
     explicit EventStore(Config const&);
 
-
     void operator()(Fragment&);
 
   private:
+
+    EventStore(EventStore const&);            // not implemented
+    EventStore& operator=(EventStore const&); // not implemented
+
     int const      sources_;
     int const      fragmentIdOffset_;
     int const      run_;
     EventMap       events_;
     RawEventQueue& queue_;
-    std::shared_ptr<SimpleQueueReader> reader_;
+    std::thread    art_thread_;
+    //    std::shared_ptr<SimpleQueueReader> reader_;
+
   };
 }
 #endif

@@ -3,8 +3,7 @@
 #include "Perf.hh"
 #include <utility>
 #include <cstring>
-
-
+#include "art/Framework/Art/artapp.h"
 
 using namespace std;
 
@@ -17,8 +16,9 @@ namespace artdaq
     run_(conf.run_),
     events_(),
     queue_(getGlobalQueue()),
-    reader_(new SimpleQueueReader())
-  {  }
+    art_thread_(artapp, conf.art_argc_, conf.art_argv_)
+    //    reader_(new SimpleQueueReader())
+  { }
 
   void EventStore::operator()(Fragment& ef)
   {
@@ -40,7 +40,7 @@ namespace artdaq
     bool newElementInMap = p.second;
     rawEventPtr = p.first->second;
 
-    if(newElementInMap)
+    if (newElementInMap)
       {
         PerfWriteEvent(EventMeas::START,event_id);
 
@@ -59,7 +59,7 @@ namespace artdaq
     memcpy(&(*fp)[0], &ef[0], (fh->word_count_ * sizeof(RawDataType)));
     rawEventPtr->fragment_list_.push_back(fp);
 
-    if((int) rawEventPtr->fragment_list_.size() == sources_)
+    if (static_cast<int>(rawEventPtr->fragment_list_.size()) == sources_)
       {
         PerfWriteEvent(EventMeas::END,event_id);
         events_.erase(p.first);

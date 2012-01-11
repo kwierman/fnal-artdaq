@@ -280,13 +280,11 @@ def main():
 	if data_dir: cmd+=" --data-dir=%s"%(data_dir,)
 	if art_args: cmd+=" %s"%(art_args,)
 	print( "executing cmd: %s"%(cmd,) )
-	rc = os.system( cmd )
-        print "return status is: %d\n" %(rc,)
-        if (rc != 0):
-            sys.exit(1)
+	rc = (os.system( cmd ) >> 8)
+        print "return status of %s is: %d\n" %(cmd, rc)
 
     print "return status is (really!) : %d\n" %(rc,)
-    sys.exit()
+    sys.exit(rc)
 
 
 if __name__ == "__main__":

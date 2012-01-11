@@ -1,6 +1,6 @@
 
 #include "MPIProg.hh"
-#include "mpi.h"
+#include "quiet_mpi.hh"
 
 struct Clocker
 {

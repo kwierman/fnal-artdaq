@@ -24,7 +24,7 @@ inline void configureDebugStream(int rank, int run) { PconfigureDebugStream(rank
 #define flusher std::endl
 #else
 #define Debug junker
-inline void configureDebugStream(int rank, int run) { }
+inline void configureDebugStream(int, int) { }
 #define flusher "\n"
 #endif
 

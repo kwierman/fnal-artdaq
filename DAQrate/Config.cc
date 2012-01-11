@@ -10,7 +10,7 @@
 #include <iomanip>
 #include <cstdlib>
 
-#include <mpi.h>
+#include "quiet_mpi.hh"
 
 #include <sys/types.h>
 #include <regex.h>
@@ -113,7 +113,7 @@ Config::Config(int rank, int total_procs, int argc, char* argv[]):
   node_name_(getProcessorName()),
   data_dir_(getArgDataDir(argc,argv)),
   art_argv_(0),
-  art_artc_(0)
+  art_argc_(0)
 {
 	int total_workers = (detectors_+sinks_+sources_);
 	if(total_procs_ != total_workers)

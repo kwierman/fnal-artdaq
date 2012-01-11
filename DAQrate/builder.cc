@@ -24,11 +24,11 @@
 
 using namespace std;
 
+// Class Program is our application object.
 class Program : MPIProg
 {
 public:
   Program(int argc, char* argv[]);
-  ~Program();
 
   void go();
   void source();
@@ -41,7 +41,6 @@ private:
   Config conf_;
 };
 
-
 Program::Program(int argc, char* argv[]):
   MPIProg(argc,argv),
   conf_(rank_,procs_,argc,argv)
@@ -49,10 +48,6 @@ Program::Program(int argc, char* argv[]):
   PerfConfigure(conf_);
   conf_.writeInfo();
   configureDebugStream(conf_.rank_,conf_.run_);
-}
-
-Program::~Program()
-{
 }
 
 void Program::go()
@@ -126,10 +121,9 @@ void Program::sink()
 {
   printHost("sink");
 
-  artdaq::EventStore es(conf_);
-  FragmentPool::Data e;
+  artdaq::EventStore events(conf_);
+  FragmentPool::Data fragment;
   RHandles h(conf_);
-  
 
   int total_events = conf_.total_events_ / conf_.sinks_;
   if (conf_.offset_ < (conf_.total_events_ % conf_.sinks_)) ++total_events;
@@ -141,11 +135,10 @@ void Program::sink()
   Debug << "expect=" << expect << flusher;
   Debug << "total_events=" << total_events << flusher;
 
-  for(int i=0;i<expect;++i)
+  for (int i=0; i<expect; ++i)
     {
-      h.recvEvent(e);
-      
-      es(e);
+      h.recvEvent(fragment);
+      events(fragment);
     }
 
   h.waitAll();

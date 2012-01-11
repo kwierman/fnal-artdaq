@@ -1,7 +1,7 @@
 
 #include "Perf.hh"
 
-#include "mpi.h"
+#include "quiet_mpi.hh"
 
 #include <cstring>
 #include <vector>
