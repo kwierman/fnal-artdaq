@@ -38,6 +38,8 @@ private:
   int range_;
   std::ifstream ifs_;
   bool doDebugPrint_;
+  unsigned wordsReadFromFile_;
+  unsigned fileBufferWordOffset_;
 };
 
 #endif
