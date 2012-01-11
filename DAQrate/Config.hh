@@ -52,7 +52,7 @@ public:
   int barrier_period_;
   std::string node_name_;
   std::string data_dir_;
-  char **art_argv_;
+  char** art_argv_;
   int  art_argc_;
 
   void print(std::ostream& ost) const;

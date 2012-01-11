@@ -63,7 +63,7 @@ static int getArgRun(int argc, char* argv[])
 
 static std::string getArgDataDir(int argc, char* argv[])
 {
-  if(argc<8) {return "";}
+  if(argc<8) {return std::string();}
   std::string rawArg(argv[7]);
   if (rawArg.find("--data-dir=") == std::string::npos) {return "";}
   std::string dataDir = rawArg.substr(11);
@@ -115,13 +115,13 @@ Config::Config(int rank, int total_procs, int argc, char* argv[]):
   art_argv_(0),
   art_argc_(0)
 {
-	int total_workers = (detectors_+sinks_+sources_);
-	if(total_procs_ != total_workers)
-	{
-		cerr << "total_procs " << total_procs_ << " != "
-			 << "total_workers " << total_workers << "\n";
-		throw "total_procs != total_workers";
-	}
+  int total_workers = (detectors_+sinks_+sources_);
+  if(total_procs_ != total_workers)
+    {
+      cerr << "total_procs " << total_procs_ << " != "
+	   << "total_workers " << total_workers << "\n";
+      throw "total_procs != total_workers";
+    }
 }
 
 int Config::totalReceiveFragments() const
@@ -209,7 +209,7 @@ void Config::printHeader(std::ostream& ost) const
       << "Type Offset "
       << "BarrierPeriod "
       << "Nodename "
-	  << "StartTime\n";
+      << "StartTime\n";
 }
 
 void Config::print(std::ostream& ost) const

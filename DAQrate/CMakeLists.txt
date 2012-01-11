@@ -74,16 +74,14 @@ set ( art_exec_link_libraries
   ${Boost_FILESYSTEM_LIBRARY}
 )
 
+target_link_libraries( artdaq_DAQrate
+                       ${art_exec_link_libraries}
+                       ${common_exec_link_libraries} )
+
+
 
 add_executable( perfdump perfdump.cc )
-target_link_libraries( perfdump
-                       ${art_exec_link_libraries}
-                       ${common_exec_link_libraries} )
-
 add_executable( builder builder.cc )
-target_link_libraries( builder
-                       ${art_exec_link_libraries}
-                       ${common_exec_link_libraries} )
 
 # ----------------------------------------------------------------------
 # Install this project's headers, sources, library, and executables:
