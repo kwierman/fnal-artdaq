@@ -12,8 +12,6 @@
 #include <memory>
 #include <thread>
 
-// bad to get definition for Data from FragmentPool!
-
 namespace artdaq
 {
   // Class EventStore represents ...  There must be only one
@@ -47,9 +45,7 @@ namespace artdaq
     int const      run_;
     EventMap       events_;
     RawEventQueue& queue_;
-    //std::thread    art_thread_;
-    std::shared_ptr<SimpleQueueReader> reader_;
-
+    std::thread    reader_thread_;
   };
 }
 #endif

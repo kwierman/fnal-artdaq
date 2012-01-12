@@ -4,19 +4,22 @@
 
 namespace artdaq {
 
+  int simpleQueueReaderApp(int, char**)
+  {
+    try {
+      SimpleQueueReader reader;
+      reader.run();
+      return 0;
+    }
+    catch (...) {
+      return 1;
+    }
+  }
+
   SimpleQueueReader::
   SimpleQueueReader() :
-    queue_(getGlobalQueue()),
-    reader_thread_(new std::thread(std::bind(&SimpleQueueReader::run, this)))
-  {
-  }
-
-
-  SimpleQueueReader::~SimpleQueueReader()
-  {
-    reader_thread_->join();
-  }
-
+    queue_(getGlobalQueue())
+  {  }
 
   void SimpleQueueReader::run()
   {

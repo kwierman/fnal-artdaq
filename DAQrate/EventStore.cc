@@ -3,7 +3,7 @@
 #include "Perf.hh"
 #include <utility>
 #include <cstring>
-//#include "art/Framework/Art/artapp.h"
+#include "SimpleQueueReader.hh"
 
 using namespace std;
 
@@ -16,13 +16,12 @@ namespace artdaq
     run_(conf.run_),
     events_(),
     queue_(getGlobalQueue()),
-    //art_thread_(artapp, conf.art_argc_, conf.art_argv_)
-    reader_(new SimpleQueueReader())
+    reader_thread_(simpleQueueReaderApp, 0, nullptr)
   { }
 
   EventStore::~EventStore()
   {
-    // art_thread_.join();
+    reader_thread_.join();
   }
 
   void EventStore::insert(Fragment& ef)
