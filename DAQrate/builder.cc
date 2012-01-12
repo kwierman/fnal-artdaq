@@ -131,34 +131,38 @@ void Program::detector()
   Debug << "detector waiting " << conf_.rank_ << flusher;
   h.waitAll();
   Debug << "detector done " << conf_.rank_ << flusher;
-  MPI_Barrier(MPI_COMM_WORLD);  
+  MPI_Barrier(MPI_COMM_WORLD);
 }
 
 void Program::sink()
 {
   printHost("sink");
 
-  artdaq::EventStore events(conf_);
-  FragmentPool::Data fragment;
-  RHandles h(conf_);
+  { // This scope exists to control the lifetime of 'events'
+    artdaq::EventStore events(conf_);
+    FragmentPool::Data fragment;
+    RHandles h(conf_);
 
-  int total_events = conf_.total_events_ / conf_.sinks_;
-  if (conf_.offset_ < (conf_.total_events_ % conf_.sinks_)) ++total_events;
-  int expect = total_events * conf_.sources_;
+    int total_events = conf_.total_events_ / conf_.sinks_;
+    if (conf_.offset_ < (conf_.total_events_ % conf_.sinks_)) ++total_events;
+    int expect = total_events * conf_.sources_;
 
-  // MPI_Barrier(MPI_COMM_WORLD);
-  // remember that we get one event fragment from each source
+    // MPI_Barrier(MPI_COMM_WORLD);
+    // remember that we get one event fragment from each source
 
-  Debug << "expect=" << expect << flusher;
-  Debug << "total_events=" << total_events << flusher;
+    Debug << "expect=" << expect << flusher;
+    Debug << "total_events=" << total_events << flusher;
 
-  for (int i=0; i<expect; ++i)
-    {
-      h.recvEvent(fragment);
-      events(fragment);
-    }
+    for (int i=0; i<expect; ++i)
+      {
+	h.recvEvent(fragment);
+	events(fragment);
+      }
+    FragmentPool::Data dflt;
+    events(dflt);
+    h.waitAll(); // not sure if this should be inside braces
+  } // end of lifetime of 'events'
 
-  h.waitAll();
   Debug << "Sink done " << conf_.rank_ << flusher;
   MPI_Barrier(MPI_COMM_WORLD);
 }
@@ -215,8 +219,8 @@ void printUsage()
   getrusage(RUSAGE_SELF, &usage);
 
   cout << myid << ":"
-       << " user=" << asDouble(usage.ru_utime) 
+       << " user=" << asDouble(usage.ru_utime)
        << " sys=" << asDouble(usage.ru_stime)
        << endl;
 }
-            
+
