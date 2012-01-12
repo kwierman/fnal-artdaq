@@ -4,7 +4,7 @@
 
 struct MPIProg
 {
-  MPIProg(int& argc, char**& argv);
+  MPIProg(int argc, char** argv);
   ~MPIProg();
 
   int procs_;

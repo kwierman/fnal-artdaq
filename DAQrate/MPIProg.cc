@@ -10,7 +10,7 @@ struct Clocker
   double& out_;
 };
 
-MPIProg::MPIProg(int& argc, char**& argv)
+MPIProg::MPIProg(int argc, char** argv)
 {
   MPI_Init(&argc,&argv);
   MPI_Comm_size(MPI_COMM_WORLD,&procs_);
