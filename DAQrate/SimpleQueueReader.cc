@@ -23,7 +23,7 @@ namespace artdaq
   {
     char* doPrint = getenv("VERBOSE_QUEUE_READING");
     while (true) {
-      std::shared_ptr<RawEvent> rawEventPtr;
+      RawEvent_ptr rawEventPtr;
       if (queue_.deqNowait(rawEventPtr)) {
 	// If we got a null pointer, we're done...
 	if (!rawEventPtr) break;

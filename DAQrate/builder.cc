@@ -156,10 +156,10 @@ void Program::sink()
     for (int i=0; i<expect; ++i)
       {
 	h.recvEvent(fragment);
-	events(fragment);
+	events.insert(fragment);
       }
-    FragmentPool::Data dflt;
-    events(dflt);
+
+    events.endOfData();
     h.waitAll(); // not sure if this should be inside braces
   } // end of lifetime of 'events'
 

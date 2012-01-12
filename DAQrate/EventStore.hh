@@ -31,10 +31,14 @@ namespace artdaq
     explicit EventStore(Config const&);
     ~EventStore();
 
-    void operator()(Fragment&);
+    // The fragment we are given must NOT be empty; it must at least
+    // contain the necessary header information.
+    void insert(Fragment&);
+
+    // Put the end-of-data marker onto the RawEvent queue.
+    void endOfData();
 
   private:
-
     EventStore(EventStore const&);            // not implemented
     EventStore& operator=(EventStore const&); // not implemented
 

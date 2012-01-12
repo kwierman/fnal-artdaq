@@ -3,7 +3,7 @@
 #include "Perf.hh"
 #include <utility>
 #include <cstring>
-#include "art/Framework/Art/artapp.h"
+//#include "art/Framework/Art/artapp.h"
 
 using namespace std;
 
@@ -25,8 +25,9 @@ namespace artdaq
     // art_thread_.join();
   }
 
-  void EventStore::operator()(Fragment& ef)
+  void EventStore::insert(Fragment& ef)
   {
+    assert(!ef.empty());
     // find the event being built and put the fragment into it,
     // start new event if not already present
     // if the event is complete, delete it and report timing
@@ -38,7 +39,7 @@ namespace artdaq
     // detector rank or the source rank, but now we just want a simple index)
     fh->fragment_id_ -= fragmentIdOffset_;
 
-    std::shared_ptr<RawEvent> rawEventPtr(new RawEvent());
+    RawEvent_ptr rawEventPtr(new RawEvent());
     pair<EventMap::iterator,bool> p =
       events_.insert(EventMap::value_type(event_id, rawEventPtr));
 
@@ -69,6 +70,13 @@ namespace artdaq
         PerfWriteEvent(EventMeas::END,event_id);
         events_.erase(p.first);
         queue_.enqNowait( rawEventPtr );
-      }  
+      }
+  }
+
+  void
+  EventStore::endOfData()
+  {
+    RawEvent_ptr end_of_data(0);
+    queue_.enqNowait(end_of_data);
   }
 }

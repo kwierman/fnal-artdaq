@@ -74,11 +74,9 @@ set ( art_exec_link_libraries
   ${Boost_FILESYSTEM_LIBRARY}
 )
 
-target_link_libraries( artdaq_DAQrate
-                       ${art_exec_link_libraries}
-                       ${common_exec_link_libraries} )
-
-
+#target_link_libraries( artdaq_DAQrate
+#                       ${art_exec_link_libraries}
+#                       ${common_exec_link_libraries} )
 
 add_executable( perfdump perfdump.cc )
 add_executable( builder builder.cc )
