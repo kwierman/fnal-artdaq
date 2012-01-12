@@ -3,6 +3,7 @@
 #include "Perf.hh"
 #include "DAQdata/RawData.hh"
 
+#include <cstring>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -112,8 +113,10 @@ Config::Config(int rank, int total_procs, int argc, char* argv[]):
   barrier_period_(source_buffer_count_),
   node_name_(getProcessorName()),
   data_dir_(getArgDataDir(argc,argv)),
-  art_argv_(0),
-  art_argc_(0)
+
+  art_argc_(getArtArgc(argc, argv)),
+  art_argv_(getArtArgv(argc-art_argc_,argv))
+
 {
   int total_workers = (detectors_+sinks_+sources_);
   if(total_procs_ != total_workers)
@@ -194,6 +197,22 @@ int Config::getDestFriend() const
 int Config::getSrcFriend() const
 {
   return offset_ + srcStart();
+}
+
+int Config::getArtArgc(int argc, char* argv[]) const
+{
+  // Find the '--' in argv
+  int pos = 0;
+  for ( ; pos < argc; ++pos)
+    {
+      if (strcmp(argv[pos], "--") == 0) break;
+    }
+  return argc - pos;
+}
+
+char** Config::getArtArgv(int pos, char** argv) const
+{
+  return argv + pos;
 }
 
 void Config::printHeader(std::ostream& ost) const 
