@@ -7,7 +7,7 @@ using namespace std;
 int main()
 {
   char const* argv[] = { "execname", "5", "5", "100", "6000140",
-			 "2",  "1",   "--", "a", "bc", "de f" };
+                         "2",  "1",   "--", "a", "bc", "de f" };
   int argc = sizeof(argv)/sizeof(char*);
 
   int rank = 1;
