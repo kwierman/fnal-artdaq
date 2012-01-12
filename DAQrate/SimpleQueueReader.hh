@@ -13,9 +13,8 @@ namespace artdaq
   // not want two different readers from the same global queue in one
   // program.
 
-
-  // Question: why do we have thread_stop_requested? Does the
-  // reader_thread_'s function ever access this value?
+  // SimpleQueueReader will continue to read RawEvents off the queue
+  // until it encounters a null pointer, at which point it stops.
 
   class SimpleQueueReader
   {
@@ -23,12 +22,10 @@ namespace artdaq
     SimpleQueueReader();
     ~SimpleQueueReader();
 
-    void requestStop();
     void run();
 
   private:
     RawEventQueue&               queue_;
-    volatile  bool               thread_stop_requested_;
     std::unique_ptr<std::thread> reader_thread_;
   };
 }

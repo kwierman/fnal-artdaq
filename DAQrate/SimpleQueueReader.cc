@@ -8,7 +8,6 @@ namespace artdaq
   SimpleQueueReader::
   SimpleQueueReader() :
     queue_(getGlobalQueue()),
-    thread_stop_requested_(false),
     reader_thread_(new std::thread(std::bind(&SimpleQueueReader::run, this)))
   {
   }
@@ -16,24 +15,19 @@ namespace artdaq
 
   SimpleQueueReader::~SimpleQueueReader()
   {
-    // Request we stop, and wait for the reader_thread_ to finish.
-    requestStop();
     reader_thread_->join();
-  }
-
-
-  void SimpleQueueReader::requestStop()
-  {
-    thread_stop_requested_ = true;
   }
 
 
   void SimpleQueueReader::run()
   {
     char* doPrint = getenv("VERBOSE_QUEUE_READING");
-    while (! thread_stop_requested_) {
+    while (true) {
       std::shared_ptr<RawEvent> rawEventPtr;
       if (queue_.deqNowait(rawEventPtr)) {
+	// If we got a null pointer, we're done...
+	if (!rawEventPtr) break;
+	// Otherwise, do our work ...
         if (doPrint != 0) {
           std::cout << "Run " << rawEventPtr->header_.run_id_
                     << ", Event " << rawEventPtr->header_.event_id_

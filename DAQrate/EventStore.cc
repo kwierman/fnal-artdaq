@@ -16,9 +16,14 @@ namespace artdaq
     run_(conf.run_),
     events_(),
     queue_(getGlobalQueue()),
-    art_thread_(artapp, conf.art_argc_, conf.art_argv_)
-    //    reader_(new SimpleQueueReader())
+    //art_thread_(artapp, conf.art_argc_, conf.art_argv_)
+    reader_(new SimpleQueueReader())
   { }
+
+  EventStore::~EventStore()
+  {
+    // art_thread_.join();
+  }
 
   void EventStore::operator()(Fragment& ef)
   {

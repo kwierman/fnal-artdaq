@@ -29,6 +29,7 @@ namespace artdaq
     typedef std::map<RawDataType, RawEvent_ptr> EventMap;
 
     explicit EventStore(Config const&);
+    ~EventStore();
 
     void operator()(Fragment&);
 
@@ -42,8 +43,8 @@ namespace artdaq
     int const      run_;
     EventMap       events_;
     RawEventQueue& queue_;
-    std::thread    art_thread_;
-    //    std::shared_ptr<SimpleQueueReader> reader_;
+    //std::thread    art_thread_;
+    std::shared_ptr<SimpleQueueReader> reader_;
 
   };
 }
