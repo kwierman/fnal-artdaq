@@ -17,11 +17,12 @@ namespace artdaq
   class SimpleQueueReader
   {
   public:
-    SimpleQueueReader();
+    explicit SimpleQueueReader(std::size_t eec = 100);
     void run();
 
   private:
-    RawEventQueue&               queue_;
+    RawEventQueue&  queue_;
+    std::size_t     expectedEventCount_;
   };
 }
 

@@ -2,6 +2,10 @@
 #include "SimpleQueueReader.hh"
 #include "DAQdata/RawData.hh"
 
+#include <cassert>
+#include <string>
+#include <iostream>
+
 namespace artdaq {
 
   int simpleQueueReaderApp(int, char**)
@@ -11,24 +15,32 @@ namespace artdaq {
       reader.run();
       return 0;
     }
+    catch (std::string const & msg) {
+      std::cerr << "simpleQueueReaderApp failed: "
+                << msg;
+      return 1;
+    }
     catch (...) {
       return 1;
     }
   }
 
   SimpleQueueReader::
-  SimpleQueueReader() :
-    queue_(getGlobalQueue())
+  SimpleQueueReader(std::size_t eec) :
+    queue_(getGlobalQueue()),
+    expectedEventCount_(eec)
   {  }
 
   void SimpleQueueReader::run()
   {
+    std::size_t eventsSeen = 0;
     char* doPrint = getenv("VERBOSE_QUEUE_READING");
     while (true) {
       RawEvent_ptr rawEventPtr;
       if (queue_.deqNowait(rawEventPtr)) {
         // If we got a null pointer, we're done...
         if (!rawEventPtr) { break; }
+        ++eventsSeen;
         // Otherwise, do our work ...
         if (doPrint != 0) {
           std::cout << "Run " << rawEventPtr->header_.run_id_
@@ -56,5 +68,8 @@ namespace artdaq {
         usleep(250000);
       }
     }
+    if (eventsSeen != expectedEventCount_)
+    { throw std::string("Wrong number of events in SimpleQueueReader\n"); }
   }
+
 }
