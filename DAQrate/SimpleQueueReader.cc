@@ -45,11 +45,11 @@ namespace artdaq {
         if (doPrint != 0) {
           std::cout << "Run " << rawEventPtr->header_.run_id_
                     << ", Event " << rawEventPtr->header_.event_id_
-                    << ", FragCount " << rawEventPtr->fragment_list_.size()
+                    << ", FragCount " << rawEventPtr->fragments_.size()
                     << ", WordCount " << rawEventPtr->header_.word_count_
                     << std::endl;
-          for (int idx = 0; idx < (int) rawEventPtr->fragment_list_.size(); ++idx) {
-            RawEvent::FragmentPtr rfp = rawEventPtr->fragment_list_[idx];
+          for (int idx = 0; idx < (int) rawEventPtr->fragments_.size(); ++idx) {
+            RawEvent::FragmentPtr rfp = rawEventPtr->fragments_[idx];
             RawFragmentHeader* rfh = (RawFragmentHeader*) & (*rfp)[0];
             std::cout << "  Fragment " << rfh->fragment_id_
                       << ", WordCount " << rfh->word_count_

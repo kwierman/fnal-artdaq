@@ -42,7 +42,7 @@ namespace artdaq
     typedef std::vector<FragmentPtr> Fragments;
 
     RawEventHeader header_;
-    Fragments fragment_list_;
+    Fragments      fragments_;
   };
 
 }

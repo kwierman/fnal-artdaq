@@ -94,9 +94,9 @@ namespace artdaq
 
     RawEvent::FragmentPtr fp(new Fragment(fh->word_count_));
     memcpy(&(*fp)[0], &ef[0], (fh->word_count_ * sizeof(RawDataType)));
-    rawEventPtr->fragment_list_.push_back(fp);
+    rawEventPtr->fragments_.push_back(fp);
 
-    if (static_cast<int>(rawEventPtr->fragment_list_.size()) == sources_)
+    if (static_cast<int>(rawEventPtr->fragments_.size()) == sources_)
       {
         PerfWriteEvent(EventMeas::END,event_id);
         events_.erase(p.first);
