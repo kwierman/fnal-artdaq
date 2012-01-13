@@ -8,6 +8,9 @@
 // the offset_ is the index of the first sink
 // the offset_ = sources_
 
+// Define the environment variable ARTDAQ_DAQRATE_USE_ART to any value
+// to set use_artapp_ to true.
+
 class Config
 {
 public:
@@ -57,6 +60,7 @@ public:
 
   int  art_argc_;
   char** art_argv_;
+  bool use_artapp_;
 
   void print(std::ostream& ost) const;
   void printHeader(std::ostream& ost) const;

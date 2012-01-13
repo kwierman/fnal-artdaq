@@ -3,9 +3,41 @@
 #include "Perf.hh"
 #include <utility>
 #include <cstring>
+#include <dlfcn.h>
 #include "SimpleQueueReader.hh"
 
 using namespace std;
+
+namespace
+{
+  typedef int (ARTFUL_FCN)(int, char**);
+
+  // Because we can't depend on art, we copied this from hard_cast.h
+
+  inline
+  void
+  hard_cast(void * src, ARTFUL_FCN* & dest)
+  {
+    memcpy(&dest, &src, sizeof(ARTFUL_FCN*));
+  }
+
+  ARTFUL_FCN* get_artapp()
+  {
+    // This is hackery, and needs to be made robust.
+    void* lptr = dlopen("libartdaq_art", RTLD_LAZY | RTLD_GLOBAL);
+    assert(lptr);
+    void* fptr = dlsym(lptr, "artmain");
+    assert(fptr);
+    ARTFUL_FCN* result(0);
+    hard_cast(fptr, result);
+    return result;
+  }
+
+  ARTFUL_FCN* choose_function(Config const& cfg)
+  {
+    return (cfg.use_artapp_) ? get_artapp() : &artdaq::simpleQueueReaderApp;
+  }
+}
 
 namespace artdaq
 {
