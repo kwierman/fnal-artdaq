@@ -115,7 +115,8 @@ Config::Config(int rank, int total_procs, int argc, char* argv[]):
   data_dir_(getArgDataDir(argc, argv)),
 
   art_argc_(getArtArgc(argc, argv)),
-  art_argv_(getArtArgv(argc - art_argc_, argv))
+  art_argv_(getArtArgv(argc - art_argc_, argv)),
+  use_artapp_(getenv("ARTDAQ_DAQRATE_USE_ART") != 0)
 
 {
   int total_workers = (detectors_ + sinks_ + sources_);
