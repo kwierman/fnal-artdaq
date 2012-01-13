@@ -12,9 +12,9 @@ using namespace std;
 namespace {
   void readTrainingSet(istream & ifs, ADCCountVec & out, size_t max_samples)
   {
-    bool forever = max_samples==0?true:false;
+    bool forever = max_samples == 0 ? true : false;
     const size_t sz = sizeof(adc_type);
-    while (forever || max_samples>0) {
+    while (forever || max_samples > 0) {
       adc_type data;
       ifs.read((char*)&data, sz);
       if (ifs.eof()) { break; }
@@ -50,8 +50,8 @@ namespace {
 
 }
 
-HuffmanTable::HuffmanTable(std::istream & ifs, 
-			   size_t countmax, size_t max_samples)
+HuffmanTable::HuffmanTable(std::istream & ifs,
+                           size_t countmax, size_t max_samples)
 {
   ADCCountVec t;
   readTrainingSet(ifs, t, max_samples);

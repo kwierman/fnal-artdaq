@@ -7,29 +7,22 @@
 
 namespace artdaq
 {
-  // SimpleQueueReader can be used to test the functioning of the
-  // communication of RawEvents through the global event queue.
-  // Instances of SimpleQueueReader are not copyable, because we do
-  // not want two different readers from the same global queue in one
-  // program.
+  // simpleQueueReaderApp is a function that can be used in place of
+  // artapp(), to read RawEvents from the shared RawEvent queue.
+  // Note that it ignores both of its arguments.
+  int simpleQueueReaderApp(int, char**);
 
-
-  // Question: why do we have thread_stop_requested? Does the
-  // reader_thread_'s function ever access this value?
-
+  // SimpleQueueReader will continue to read RawEvents off the queue
+  // until it encounters a null pointer, at which point it stops.
   class SimpleQueueReader
   {
   public:
-    SimpleQueueReader();
-    ~SimpleQueueReader();
-
-    void requestStop();
+    explicit SimpleQueueReader(std::size_t eec = 100);
     void run();
 
   private:
-    RawEventQueue&               queue_;
-    volatile  bool               thread_stop_requested_;
-    std::unique_ptr<std::thread> reader_thread_;
+    RawEventQueue&  queue_;
+    std::size_t     expectedEventCount_;
   };
 }
 

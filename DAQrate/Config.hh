@@ -21,6 +21,8 @@ public:
   int srcStart() const;
   int getDestFriend() const;
   int getSrcFriend() const;
+  int getArtArgc(int argc, char* argv[]) const;
+  char** getArtArgv(int argc, char* argv[]) const;
   std::string typeName() const;
   int totalReceiveFragments() const;
   std::string infoFilename(std::string const& prefix) const;
@@ -52,8 +54,9 @@ public:
   int barrier_period_;
   std::string node_name_;
   std::string data_dir_;
-  char **art_argv_;
-  int  art_artc_;
+
+  int  art_argc_;
+  char** art_argv_;
 
   void print(std::ostream& ost) const;
   void printHeader(std::ostream& ost) const;

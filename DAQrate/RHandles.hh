@@ -6,7 +6,7 @@
 
 #include <vector>
 
-#include "mpi.h"
+#include "quiet_mpi.hh"
 
 /*
   Protocol: want to do a send for each request object, then wait for for
