@@ -86,8 +86,10 @@ int main(int argc, char* argv[])
 
 #pragma omp parallel
   {
+#pragma omp critical
+    cout << "T" << omp_get_thread_num() << "E" << endl;
     size_t i;
-#pragma omp for
+#pragma omp single
     for(i=0;i<tot;++i)
       {
 #pragma omp task shared(compdata,bits,times)
