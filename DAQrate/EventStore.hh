@@ -6,6 +6,7 @@
 
 #include "DAQdata/RawData.hh"
 #include "GlobalQueue.hh"
+#include "MonitoredQuantity.hh"
 #include "SimpleQueueReader.hh"
 
 #include <map>
@@ -40,10 +41,13 @@ namespace artdaq
     EventStore(EventStore const&);            // not implemented
     EventStore& operator=(EventStore const&); // not implemented
 
+    int const      rank_;
     int const      sources_;
     int const      fragmentIdOffset_;
     int const      run_;
+    bool           firstFragment_;
     EventMap       events_;
+    artdaq::MonitoredQuantity eventBuildingMonitor_;
     RawEventQueue& queue_;
     std::thread    reader_thread_;
   };

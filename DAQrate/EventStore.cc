@@ -43,10 +43,13 @@ namespace artdaq
 {
 
   EventStore::EventStore(Config const& conf) :
+    rank_(conf.rank_),
     sources_(conf.sources_),
     fragmentIdOffset_(conf.srcStart()),
     run_(conf.run_),
+    firstFragment_(true),
     events_(),
+    eventBuildingMonitor_(1, 1),
     queue_(getGlobalQueue()),
     reader_thread_(simpleQueueReaderApp, 0, nullptr)
   { }
@@ -54,11 +57,30 @@ namespace artdaq
   EventStore::~EventStore()
   {
     reader_thread_.join();
+
+    eventBuildingMonitor_.calculateStatistics();
+    artdaq::MonitoredQuantity::Stats stats;
+    eventBuildingMonitor_.getStats(stats);
+    std::cout << "EventStore " << rank_
+              << ": events processed = "
+              << stats.fullSampleCount
+              << ", rate = "
+              << stats.fullSampleRate
+              << " events/sec"
+              << ", date rate = "
+              << (stats.fullValueRate * sizeof(RawDataType)
+                  / 1024.0 / 1024.0)
+              << " MB/sec" << std::endl;
   }
 
   void EventStore::insert(Fragment& ef)
   {
     assert(!ef.empty());
+    if (firstFragment_) {
+      firstFragment_ = false;
+      eventBuildingMonitor_.reset();
+    }
+
     // find the event being built and put the fragment into it,
     // start new event if not already present
     // if the event is complete, delete it and report timing
@@ -101,6 +123,8 @@ namespace artdaq
         PerfWriteEvent(EventMeas::END,event_id);
         events_.erase(p.first);
         queue_.enqNowait( rawEventPtr );
+
+        eventBuildingMonitor_.addSample(rawEventPtr->header_.word_count_);
       }
   }
 

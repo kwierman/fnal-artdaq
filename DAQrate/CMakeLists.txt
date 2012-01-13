@@ -19,6 +19,7 @@ set( LIB_SOURCES
      Debug.cc
      EventStore.cc
      FragmentPool.cc
+     MonitoredQuantity.cc
      MPIProg.cc
      Perf.cc
      RHandles.cc

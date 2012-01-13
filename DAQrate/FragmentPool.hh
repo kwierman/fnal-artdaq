@@ -37,7 +37,7 @@ private:
   Data d_;
   int range_;
   std::ifstream ifs_;
-  bool doDebugPrint_;
+  int debugPrintLevel_;
   unsigned wordsReadFromFile_;
   unsigned fileBufferWordOffset_;
 };

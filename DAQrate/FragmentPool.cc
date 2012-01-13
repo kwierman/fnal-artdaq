@@ -2,10 +2,12 @@
 #include "FragmentPool.hh"
 #include "DAQdata/Fragment.hh"
 #include "DAQdata/RawData.hh"
+#include "MonitoredQuantity.hh"
 #include "Utils.hh"
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <iomanip>
 
 using namespace artdaq;
 
@@ -17,10 +19,13 @@ FragmentPool::FragmentPool(Config const& conf):
   d_(data_length_),
   range_(data_length_ - word_count_),
   ifs_(),
-  doDebugPrint_(getenv("FRAGMENT_POOL_DEBUG") != 0),
+  debugPrintLevel_(0),
   wordsReadFromFile_(0),
   fileBufferWordOffset_(0)
 {
+  char *envVarPtr = getenv("FRAGMENT_POOL_DEBUG");
+  if (envVarPtr != 0) debugPrintLevel_ = atoi(envVarPtr);
+
   std::ostringstream name;
   name << conf.data_dir_ << "board" << conf.offset_ << ".out";
   ifs_.open( name.str().c_str(), std::ifstream::in );
@@ -49,7 +54,7 @@ FragmentPool::FragmentPool(Config const& conf):
     int numberOfFragments = conf.total_events_;
     if (numberOfFragments > 10000) numberOfFragments = 10000;
     unsigned long dataSetWords = firstFragmentWords * numberOfFragments;
-    if (doDebugPrint_)
+    if (debugPrintLevel_ >= 2)
     {
       std::cout << "Words in first fragment=" << firstFragmentWords
                 << ", data set words = " << dataSetWords
@@ -61,6 +66,7 @@ FragmentPool::FragmentPool(Config const& conf):
     ifs_.seekg(0, std::ios::beg);
 
     // read in each fragment
+    artdaq::MonitoredQuantity fileReadMonitor(1, 1);
     cp = (char*)&d_[0];
     dshop = (DarkSideHeaderOverlay*)cp;
     unsigned actualEventCount = 0;
@@ -78,6 +84,7 @@ FragmentPool::FragmentPool(Config const& conf):
 
       // read in the header
       ifs_.read( cp, sizeof(DarkSideHeaderOverlay) );
+      fileReadMonitor.addSample(sizeof(DarkSideHeaderOverlay));
 
       // determine the size of this fragment
       unsigned fragmentWords = dshop->event_size_;
@@ -95,6 +102,7 @@ FragmentPool::FragmentPool(Config const& conf):
       fragmentBytes -= sizeof(DarkSideHeaderOverlay);
       ifs_.read( cp+sizeof(DarkSideHeaderOverlay), fragmentBytes );
       ++actualEventCount;
+      fileReadMonitor.addSample(fragmentBytes);
 
       // update pointers and sizes
       wordsReadFromFile_ += fragmentWords;
@@ -102,11 +110,23 @@ FragmentPool::FragmentPool(Config const& conf):
       dshop = (DarkSideHeaderOverlay*)cp;
     }
 
-    if (doDebugPrint_) {
+    if (debugPrintLevel_ >= 3) {
       std::cout << "  Read in " << actualEventCount
                 << " fragments for board_id " << dshop->board_id_
                 << ", actual data words = " << wordsReadFromFile_
                 << std::endl;
+    }
+
+    if (debugPrintLevel_ >= 1) {
+      fileReadMonitor.calculateStatistics();
+      artdaq::MonitoredQuantity::Stats stats;
+      fileReadMonitor.getStats(stats);
+      std::cout << "File input for detector " << rank_
+                << ": bytes read =" << std::setw(12)
+                << static_cast<long>(stats.fullValueSum)
+                << ", read rate = "
+                << (stats.fullValueRate / 1024.0 / 1024.0)
+                << " MB/sec" << std::endl;
     }
   }
 
@@ -144,7 +164,7 @@ void FragmentPool::operator()(Data& output)
     fileBufferWordOffset_ += fragmentWords;
     outputWordCount = fragmentWords + rfHeaderWords;
 
-    if (doDebugPrint_)
+    if (debugPrintLevel_ >= 4)
     {
       std::cout << "Copied " << fragmentWords
                 << " words from the file data buffer to the send buffer."
