@@ -42,6 +42,18 @@ namespace
 namespace artdaq
 {
 
+  EventStore::EventStore(int src_count, int run, int argc, char* argv[]):
+    rank_(0),
+    sources_(src_count),
+    fragmentIdOffset_(0),
+    run_(run),
+    firstFragment_(true),
+    events_(),
+    eventBuildingMonitor_(1, 1),
+    queue_(getGlobalQueue()),
+    reader_thread_(simpleQueueReaderApp, 0, nullptr)
+  { }
+
   EventStore::EventStore(Config const& conf) :
     rank_(conf.rank_),
     sources_(conf.sources_),

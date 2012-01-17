@@ -28,6 +28,8 @@ namespace artdaq
     typedef std::map<RawDataType, RawEvent_ptr> EventMap;
 
     explicit EventStore(Config const&);
+    EventStore::EventStore(int src_count, int run):
+
     ~EventStore();
 
     // The fragment we are given must NOT be empty; it must at least
