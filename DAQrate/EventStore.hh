@@ -28,7 +28,7 @@ namespace artdaq
     typedef std::map<RawDataType, RawEvent_ptr> EventMap;
 
     explicit EventStore(Config const&);
-    EventStore::EventStore(int src_count, int run):
+    EventStore(int src_count, int run, int argc, char* argv[]);
 
     ~EventStore();
 
