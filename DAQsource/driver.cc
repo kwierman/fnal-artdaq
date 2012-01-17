@@ -1,7 +1,10 @@
 
+
+#include "boost/program_options.hpp"
+
 #include "DAQdata/RawData.hh"
 #include "DAQrate/EventStore.hh"
-#include "DAQrate/DS50Reader.hh"
+//#include "DAQrate/DS50Reader.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/make_ParameterSet.h"
 #include "cetlib/filepath_maker.h"
@@ -9,20 +12,52 @@
 #include <iostream>
 
 using namespace std;
+using namespace fhicl;
+namespace  bpo = boost::program_options;
 
 int main(int argc, char* argv[])
 {
-  if(argc<2)
-    {
-      cerr << "Usage: " << argv[0] << " fhicl_cntl_file\n";
-      return -1;
-    }
+  std::ostringstream descstr;
+  descstr << argv[0]
+          << " <-c <config-file>> <other-options> [<source-file>]+";
 
-  fhicl::ParameterSet pset;
-  cet::filepath_lookup gunk("FHICL_FILE_PATH");
-  fhicl::make_ParameterSet(argv[1],gunk,pset);
-  fhicl::ParameterSet ds_pset = pset.getParameterSet("ds50");
+  bpo::options_description desc(descstr.str());
+  desc.add_options()
+    ("config,c", bpo::value<std::string>(), "Configuration file.")
+    ("help,h", "produce help message");
+  bpo::variables_map vm;
+  try {
+    bpo::store(bpo::command_line_parser(argc, argv).options(desc).run(), vm);
+    bpo::notify(vm);
+  }
+  catch (bpo::error const & e) {
+    std::cerr << "Exception from command line processing in " << argv[0]
+              << ": " << e.what() << "\n";
+    return -1;
+  }
 
+  if (vm.count("help")) {
+    std::cout << desc << std::endl;
+    return 1;
+  }
+
+  if (!vm.count("config")) {
+    std::cerr << "Exception from command line processing in " << argv[0]
+              << ": no configuration file given.\n"
+              << "For usage and an options list, please do '"
+              << argv[0] <<  " --help"
+              << "'.\n";
+    return 2;
+  }
+
+
+  ParameterSet pset;
+  cet::filepath_lookup lookup_policy("FHICL_FILE_PATH");
+  make_ParameterSet(vm["config"].as<std::string>(),
+                           lookup_policy, pset);
+  ParameterSet ds_pset = pset.get<ParameterSet>("ds50");
+
+#if 0
   artdaq::DS50EventReader reader(ds_pset);
 
   artdaq::EventStore store(ds_pset.get<int>("run"),
@@ -53,5 +88,7 @@ int main(int argc, char* argv[])
 	   [&](Fragments& val) { /* go through each fragment and put it onto the store queue */ }
 	   );
 
+#endif
   return 0;
 }
+
