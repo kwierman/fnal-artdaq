@@ -42,7 +42,10 @@ namespace
 namespace artdaq
 {
 
-  EventStore::EventStore(int src_count, int run, int argc, char* argv[]):
+   EventStore::EventStore(int src_count,
+                          int run,
+                          int argc __attribute__((unused)),
+                          char* argv[] __attribute__((unused))):
     rank_(0),
     sources_(src_count),
     fragmentIdOffset_(0),

@@ -38,7 +38,7 @@ endif ( NOT qualifier )
 cet_cmake_env( artdaq v0_00_01 ${qualifier} )
 
 
-cet_set_compiler_flags(DIAGS VIGILANT EXTRA_FLAGS -pedantic)
+cet_set_compiler_flags(DIAGS VIGILANT WERROR EXTRA_FLAGS -pedantic)
 if ("${qualifier}" STREQUAL "e1")
   include_directories (/usr/mpi/gcc/mvapich2-1.6/include/)
   cet_add_compiler_flags(CXX -fopenmp -std=c++0x;-Wno-deprecated-declarations
