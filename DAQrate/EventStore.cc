@@ -5,6 +5,8 @@
 #include <cstring>
 #include <dlfcn.h>
 #include <iomanip>
+#include <fstream>
+#include <sstream>
 #include "SimpleQueueReader.hh"
 #include "StatisticsCollection.hh"
 
@@ -83,10 +85,16 @@ namespace artdaq
     MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
       getMonitoredQuantity(EVENT_RATE_STAT_KEY);
     if (mqPtr.get() != 0) {
+      ostringstream oss;
+      oss << EVENT_RATE_STAT_KEY << "_" << setfill('0') << setw(4) << run_
+          << "_" << setfill('0') << setw(4) << rank_ << ".txt";
+      std::string filename = oss.str();
+      ofstream outStream(filename.c_str());
+
       mqPtr->waitUntilAccumulatorsHaveBeenFlushed(1.0);
       artdaq::MonitoredQuantity::Stats stats;
       mqPtr->getStats(stats);
-      std::cout << "EventStore " << rank_ << ": events processed = "
+      outStream << "EventStore rank " << rank_ << ": events processed = "
                 << stats.fullSampleCount << " at " << stats.fullSampleRate
                 << " events/sec, date rate = "
                 << (stats.fullValueRate * sizeof(RawDataType)
@@ -97,7 +105,7 @@ namespace artdaq
           foundTheStart = true;
         }
         if (foundTheStart) {
-          std::cout << "  " << std::fixed << std::setprecision(3)
+          outStream << "  " << std::fixed << std::setprecision(3)
                     << stats.recentBinnedEndTimes[idx]
                     << ": " << stats.recentBinnedSampleCounts[idx]
                     << " events at "
@@ -112,6 +120,7 @@ namespace artdaq
                     << " sec" << std::endl;
         }
       }
+      outStream.close();
     }
   }
 
