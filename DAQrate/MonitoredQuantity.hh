@@ -21,11 +21,11 @@ namespace artdaq
 
   class MonitoredQuantity
   {
+  public:
 
     typedef double DURATION_T;
     typedef double TIME_POINT_T;
     
-  public:
     class Stats;
 
     enum DataSetType { FULL = 0,      // the full data set (all samples)
@@ -112,6 +112,8 @@ namespace artdaq
     {
       return _expectedCalculationInterval;
     }
+
+    bool waitUntilAccumulatorsHaveBeenFlushed(DURATION_T timeout) const;
 
     /**
        Write all our collected statistics into the given Stats struct.

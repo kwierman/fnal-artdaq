@@ -324,6 +324,26 @@ void MonitoredQuantity::setNewTimeWindowForRecentResults(DURATION_T interval)
   //reset();
 }
 
+bool MonitoredQuantity::
+waitUntilAccumulatorsHaveBeenFlushed(DURATION_T timeout) const
+{
+  {
+    boost::mutex::scoped_lock sl(_accumulationMutex);
+    if (_workingSampleCount == 0) {return true;}
+  }
+
+  long sleepTime = static_cast<long>(timeout * 100000.0);
+  for (int idx = 0; idx < 10; ++idx) {
+    usleep(sleepTime);
+    {
+      boost::mutex::scoped_lock sl(_accumulationMutex);
+      if (_workingSampleCount == 0) {return true;}
+    }
+  }
+
+  return false;
+}
+
 void
 MonitoredQuantity::getStats(Stats& s) const
 {
