@@ -51,11 +51,13 @@ void  MonitoredQuantity::addSample(const uint64_t value)
   addSample(static_cast<double>(value));
 }
 
-void MonitoredQuantity::calculateStatistics(TIME_POINT_T currentTime)
+bool MonitoredQuantity::calculateStatistics(TIME_POINT_T currentTime)
 {
-  if (! _enabled) {return;}
-  if (_lastCalculationTime <= 0.0) {return;}
-  if (currentTime - _lastCalculationTime < _expectedCalculationInterval) {return;}
+  if (! _enabled) {return false;}
+  if (_lastCalculationTime <= 0.0) {return false;}
+  if (currentTime - _lastCalculationTime < _expectedCalculationInterval) {
+    return false;
+  }
 
   // create local copies of the working values to minimize the
   // time that we could block a thread trying to add a sample.
@@ -90,6 +92,7 @@ void MonitoredQuantity::calculateStatistics(TIME_POINT_T currentTime)
   {
     boost::mutex::scoped_lock sl(_resultsMutex);
     _lastLatchedSampleValue = latestLastLatchedSampleValue;
+    _lastLatchedCalculationTime = _lastCalculationTime;
 
     // we simply add the latest results to the full set
     _fullSampleCount += latestSampleCount;
@@ -107,6 +110,7 @@ void MonitoredQuantity::calculateStatistics(TIME_POINT_T currentTime)
     _binValueMin[_workingBinId] = latestValueMin;
     _binValueMax[_workingBinId] = latestValueMax;
     _binDuration[_workingBinId] = latestDuration;
+    _binEndTime[_workingBinId] = _lastCalculationTime;
 
     if (latestDuration > 0.0) {
       _lastLatchedValueRate = latestValueSum / latestDuration;
@@ -197,6 +201,8 @@ void MonitoredQuantity::calculateStatistics(TIME_POINT_T currentTime)
       _recentValueRMS = 0.0;
     }
   }
+
+  return true;
 }
 
 void MonitoredQuantity::_reset_accumulators()
@@ -220,6 +226,7 @@ void MonitoredQuantity::_reset_results()
     _binValueMin[idx] =  INFINITY;
     _binValueMax[idx] = -INFINITY;
     _binDuration[idx] = 0.0;
+    _binEndTime[idx] = 0.0;
   }
 
   _fullSampleCount = 0;
@@ -302,6 +309,7 @@ void MonitoredQuantity::setNewTimeWindowForRecentResults(DURATION_T interval)
     _binValueMin.reserve(_binCount);
     _binValueMax.reserve(_binCount);
     _binDuration.reserve(_binCount);
+    _binEndTime.reserve(_binCount);
 
     _reset_results();
   }
@@ -346,17 +354,20 @@ MonitoredQuantity::getStats(Stats& s) const
   s.recentBinnedSampleCounts.resize(_binCount);
   s.recentBinnedValueSums.resize(_binCount);
   s.recentBinnedDurations.resize(_binCount);
+  s.recentBinnedEndTimes.resize(_binCount);
   unsigned int sourceBinId = _workingBinId;
   for (unsigned int idx = 0; idx < _binCount; ++idx) {
     if (sourceBinId >= _binCount) {sourceBinId = 0;}
     s.recentBinnedSampleCounts[idx] = _binSampleCount[sourceBinId];
     s.recentBinnedValueSums[idx] = _binValueSum[sourceBinId];
     s.recentBinnedDurations[idx] = _binDuration[sourceBinId];
+    s.recentBinnedEndTimes[idx] = _binEndTime[sourceBinId];
     ++sourceBinId;
   }
 
   s.lastSampleValue = _lastLatchedSampleValue;
   s.lastValueRate = _lastLatchedValueRate;
+  s.lastCalculationTime = _lastLatchedCalculationTime;
   s.enabled = _enabled;
 }
 

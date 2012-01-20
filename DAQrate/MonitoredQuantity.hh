@@ -64,7 +64,7 @@ namespace artdaq
      * will be called once per interval specified by
      * expectedCalculationInterval
      */
-    void calculateStatistics(TIME_POINT_T currentTime = 
+    bool calculateStatistics(TIME_POINT_T currentTime = 
                              getCurrentTime());
 
     /**
@@ -153,6 +153,7 @@ namespace artdaq
     std::vector<double> _binValueMin;
     std::vector<double> _binValueMax;
     std::vector<DURATION_T> _binDuration;
+    std::vector<TIME_POINT_T> _binEndTime;
 
     long long _fullSampleCount;
     double _fullSampleRate;
@@ -177,6 +178,7 @@ namespace artdaq
     DURATION_T _recentDuration;
     double _lastLatchedSampleValue;
     double _lastLatchedValueRate;
+    TIME_POINT_T _lastLatchedCalculationTime;
 
     mutable boost::mutex _resultsMutex;
 
@@ -213,9 +215,11 @@ namespace artdaq
     std::vector<long long> recentBinnedSampleCounts;
     std::vector<double> recentBinnedValueSums;
     std::vector<DURATION_T> recentBinnedDurations;
+    std::vector<TIME_POINT_T> recentBinnedEndTimes;
 
     double lastSampleValue;
     double lastValueRate;
+    TIME_POINT_T lastCalculationTime;
     bool   enabled;
 
     long long getSampleCount(DataSetType t = FULL) const { return t == RECENT ? recentSampleCount : fullSampleCount; }
