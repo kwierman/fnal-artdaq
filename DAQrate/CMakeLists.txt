@@ -25,6 +25,7 @@ set( LIB_SOURCES
      RHandles.cc
      SHandles.cc
      SimpleQueueReader.cc
+     StatisticsCollection.cc
      Utils.cc     
    )
 
