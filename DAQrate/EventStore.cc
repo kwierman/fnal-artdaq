@@ -4,7 +4,9 @@
 #include <utility>
 #include <cstring>
 #include <dlfcn.h>
+#include <iomanip>
 #include "SimpleQueueReader.hh"
+#include "StatisticsCollection.hh"
 
 using namespace std;
 
@@ -41,6 +43,7 @@ namespace
 
 namespace artdaq
 {
+  const std::string EventStore::EVENT_RATE_STAT_KEY("EventStoreEventRate");
 
    EventStore::EventStore(int src_count,
                           int run,
@@ -50,51 +53,71 @@ namespace artdaq
     sources_(src_count),
     fragmentIdOffset_(0),
     run_(run),
-    firstFragment_(true),
     events_(),
-    eventBuildingMonitor_(1, 1),
     queue_(getGlobalQueue()),
     reader_thread_(simpleQueueReaderApp, 0, nullptr)
-  { }
+  {
+    MonitoredQuantityPtr mqPtr(new MonitoredQuantity(1.0, 60.0));
+    StatisticsCollection::getInstance().
+      addMonitoredQuantity(EVENT_RATE_STAT_KEY, mqPtr);
+  }
 
   EventStore::EventStore(Config const& conf) :
     rank_(conf.rank_),
     sources_(conf.sources_),
     fragmentIdOffset_(conf.srcStart()),
     run_(conf.run_),
-    firstFragment_(true),
     events_(),
-    eventBuildingMonitor_(1, 1),
     queue_(getGlobalQueue()),
     reader_thread_(simpleQueueReaderApp, 0, nullptr)
-  { }
+  {
+    MonitoredQuantityPtr mqPtr(new MonitoredQuantity(1.0, 60.0));
+    StatisticsCollection::getInstance().
+      addMonitoredQuantity(EVENT_RATE_STAT_KEY, mqPtr);
+  }
 
   EventStore::~EventStore()
   {
     reader_thread_.join();
 
-    eventBuildingMonitor_.calculateStatistics();
-    artdaq::MonitoredQuantity::Stats stats;
-    eventBuildingMonitor_.getStats(stats);
-    std::cout << "EventStore " << rank_
-              << ": events processed = "
-              << stats.fullSampleCount
-              << ", rate = "
-              << stats.fullSampleRate
-              << " events/sec"
-              << ", date rate = "
-              << (stats.fullValueRate * sizeof(RawDataType)
-                  / 1024.0 / 1024.0)
-              << " MB/sec" << std::endl;
+    MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
+      getMonitoredQuantity(EVENT_RATE_STAT_KEY);
+    if (mqPtr.get() != 0) {
+      mqPtr->waitUntilAccumulatorsHaveBeenFlushed(1.0);
+      artdaq::MonitoredQuantity::Stats stats;
+      mqPtr->getStats(stats);
+      std::cout << "EventStore " << rank_ << ": events processed = "
+                << stats.fullSampleCount << " at " << stats.fullSampleRate
+                << " events/sec, date rate = "
+                << (stats.fullValueRate * sizeof(RawDataType)
+                    / 1024.0 / 1024.0) << " MB/sec" << std::endl;
+      bool foundTheStart = false;
+      for (int idx = 0; idx < (int) stats.recentBinnedDurations.size(); ++idx) {
+        if (stats.recentBinnedDurations[idx] > 0.0) {
+          foundTheStart = true;
+        }
+        if (foundTheStart) {
+          std::cout << "  " << std::fixed << std::setprecision(3)
+                    << stats.recentBinnedEndTimes[idx]
+                    << ": " << stats.recentBinnedSampleCounts[idx]
+                    << " events at "
+                    << (stats.recentBinnedSampleCounts[idx] /
+                        stats.recentBinnedDurations[idx])
+                    << " events/sec, data rate = "
+                    << (stats.recentBinnedValueSums[idx] *
+                        sizeof(RawDataType) / 1024.0 / 1024.0 /
+                        stats.recentBinnedDurations[idx])
+                    << " MB/sec, bin size = "
+                    << stats.recentBinnedDurations[idx]
+                    << " sec" << std::endl;
+        }
+      }
+    }
   }
 
   void EventStore::insert(Fragment& ef)
   {
     assert(!ef.empty());
-    if (firstFragment_) {
-      firstFragment_ = false;
-      eventBuildingMonitor_.reset();
-    }
 
     // find the event being built and put the fragment into it,
     // start new event if not already present
@@ -139,7 +162,11 @@ namespace artdaq
         events_.erase(p.first);
         queue_.enqNowait( rawEventPtr );
 
-        eventBuildingMonitor_.addSample(rawEventPtr->header_.word_count_);
+        MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
+          getMonitoredQuantity(EVENT_RATE_STAT_KEY);
+        if (mqPtr.get() != 0) {
+          mqPtr->addSample(rawEventPtr->header_.word_count_);
+        }
       }
   }
 

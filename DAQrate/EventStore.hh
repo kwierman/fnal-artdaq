@@ -6,7 +6,6 @@
 
 #include "DAQdata/RawData.hh"
 #include "GlobalQueue.hh"
-#include "MonitoredQuantity.hh"
 #include "SimpleQueueReader.hh"
 
 #include <map>
@@ -26,6 +25,8 @@ namespace artdaq
   public:
     typedef FragmentPool::Data Fragment;
     typedef std::map<RawDataType, RawEvent_ptr> EventMap;
+
+    static const std::string EVENT_RATE_STAT_KEY;
 
     explicit EventStore(Config const&);
     EventStore(int src_count, int run, int argc, char* argv[]);
@@ -47,9 +48,7 @@ namespace artdaq
     int const      sources_;
     int const      fragmentIdOffset_;
     int const      run_;
-    bool           firstFragment_;
     EventMap       events_;
-    artdaq::MonitoredQuantity eventBuildingMonitor_;
     RawEventQueue& queue_;
     std::thread    reader_thread_;
   };
