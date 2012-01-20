@@ -98,7 +98,8 @@ namespace artdaq
                 << stats.fullSampleCount << " at " << stats.fullSampleRate
                 << " events/sec, date rate = "
                 << (stats.fullValueRate * sizeof(RawDataType)
-                    / 1024.0 / 1024.0) << " MB/sec" << std::endl;
+                    / 1024.0 / 1024.0) << " MB/sec, duration = "
+                << stats.fullDuration << " sec" << std::endl;
       bool foundTheStart = false;
       for (int idx = 0; idx < (int) stats.recentBinnedDurations.size(); ++idx) {
         if (stats.recentBinnedDurations[idx] > 0.0) {
