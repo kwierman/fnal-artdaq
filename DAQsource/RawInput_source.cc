@@ -24,8 +24,8 @@ namespace artdaq {
   struct RawEventQueueReader {
     art::PrincipalMaker const & pm_;
     RawEventQueue &             queue_;
-    const vector<string>        inst_names_;
-    boost::xtime                waiting_time_;
+    vector<string> const        inst_names_;
+    daqrate::seconds            waiting_time_;
 
     RawEventQueueReader(fhicl::ParameterSet const & ps,
                         art::ProductRegistryHelper & help,

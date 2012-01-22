@@ -592,7 +592,7 @@ namespace daqrate
 
   template <class T, class EnqPolicy>
   bool
-  ConcurrentQueue<T,EnqPolicy>::deqTimedait
+  ConcurrentQueue<T,EnqPolicy>::deqTimedWait
   (
    ValueType& item,
    seconds const& waitTime
