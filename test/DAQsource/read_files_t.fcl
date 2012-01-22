@@ -3,6 +3,7 @@ process: testreading
 source: {
   module_type: RawInput
   instances: [ board0, board1, board2, board3, board4 ]  
+  waiting_time: 1.0 // waiting time in seconds
 
   # Because RawInput is instantiated from ReaderSource, we need a
   # non-empty vector<string> fileNames.

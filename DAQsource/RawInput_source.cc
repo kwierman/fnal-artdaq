@@ -10,6 +10,7 @@
 #include "art/Persistency/Provenance/FileFormatVersion.h"
 #include "art/Utilities/Exception.h"
 #include "fhiclcpp/ParameterSet.h"
+#include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include <memory>
 #include <vector>
@@ -46,7 +47,8 @@ namespace artdaq {
                                            art::PrincipalMaker const & pm):
     pm_(pm),
     queue_(getGlobalQueue()),
-    inst_names_(ps.get<vector<string>>("instances"))
+    inst_names_(ps.get<vector<string>>("instances")),
+    waiting_time_(ps.get<double>("waiting_time", std::numeric_limits<double>::infinity()))
   {
     for_each(inst_names_.cbegin(), inst_names_.cend(),
              [&](string const & iname) {
@@ -71,7 +73,12 @@ namespace artdaq {
                                      art::EventPrincipal* & outE)
   {
     RawEvent_ptr p;
-    queue_.deqTimedWait(p, waiting_time_);
+    bool got_event = queue_.deqTimedWait(p, waiting_time_);
+    if (!got_event) {
+      mf::LogInfo("InputFailure")
+        << "Reading timed out in RawEventQueueReader::readNext()";
+      return false;
+    }
     // check for end of data stream
     if (!p) { return false; }
     art::Timestamp runstart;
