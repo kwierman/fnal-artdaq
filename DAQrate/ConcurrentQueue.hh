@@ -10,14 +10,28 @@
 
 #include <iostream> // debugging
 
-#include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <boost/utility/enable_if.hpp>
-#include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/xtime.hpp>
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <type_traits>
+
+// #include <boost/date_time/posix_time/posix_time_types.hpp>
+// #include <boost/utility/enable_if.hpp>
+// #include <boost/thread/condition.hpp>
+// #include <boost/thread/mutex.hpp>
+// #include <boost/thread/xtime.hpp>
 
 namespace daqrate
 {
+  // We shall use daqrate::seconds as our "standard" duration
+  // type. Note that this differs from std::chrono::seconds, which has
+  // a representation in some integer type of at least 35 bits.
+  //
+  // daqrate::duration dur(1.0) represents a duration of 1 second.
+  // daqrate::duration dur2(0.001) represents a duration of 1
+  // millisecond.
+  typedef std::chrono::duration<double> seconds;
+
   /**
      Class template ConcurrentQueue provides a FIFO that can be used
      to communicate data between multiple producer and consumer
@@ -84,7 +98,7 @@ namespace daqrate
     }
     
     template <typename T>
-    typename boost::enable_if<hasMemoryUsed<T>, MemoryType>::type
+    typename std::enable_if<hasMemoryUsed<T>::value, MemoryType>::type
     memoryUsage(const T& t)
     {
       MemoryType usage(0UL);
@@ -98,7 +112,7 @@ namespace daqrate
     }
   
     template <typename T>
-    typename boost::disable_if<hasMemoryUsed<T>, MemoryType>::type
+    typename std::enable_if<!hasMemoryUsed<T>::value, MemoryType>::type
     memoryUsage(const T& t)
     { return sizeof(t); }
 
@@ -129,7 +143,7 @@ namespace daqrate
      SizeType& size,
      detail::MemoryType const& itemSize,
      detail::MemoryType& used,
-     boost::condition& nonempty
+     std::condition_variable& nonempty
      )
     {
       elements.push_back(item);
@@ -147,7 +161,7 @@ namespace daqrate
      detail::MemoryType& used,
      detail::MemoryType& memory,
      size_t& elementsDropped,
-     boost::condition& nonempty
+     std::condition_variable& nonempty
      )
     {
       detail::MemoryType itemSize = detail::memoryUsage(item);
@@ -181,7 +195,7 @@ namespace daqrate
      SizeType& size,
      detail::MemoryType const& itemSize,
      detail::MemoryType& used,
-     boost::condition& nonempty
+     std::condition_variable& nonempty
      )
     {
       elements.push_back(item);
@@ -199,7 +213,7 @@ namespace daqrate
      detail::MemoryType& used,
      detail::MemoryType& memory,
      size_t& elementsDropped,
-     boost::condition& nonempty
+     std::condition_variable& nonempty
      )
     {
       SizeType elementsRemoved(0);
@@ -245,7 +259,7 @@ namespace daqrate
      SizeType& size,
      detail::MemoryType const& itemSize,
      detail::MemoryType& used,
-     boost::condition& nonempty
+     std::condition_variable& nonempty
      )
     {
       elements.push_back(item);
@@ -263,7 +277,7 @@ namespace daqrate
      detail::MemoryType& used,
      detail::MemoryType& memory,
      size_t& elementsDropped,
-     boost::condition& nonempty
+     std::condition_variable& nonempty
      )
     {
       detail::MemoryType itemSize = detail::memoryUsage(item);
@@ -335,7 +349,7 @@ namespace daqrate
        false if the timeout has expired. This may throw any exception
        thrown by the assignment operator of T, or badAlloc.
     */
-    bool enqTimedWait(T const& p, boost::xtime const&);
+    bool enqTimedWait(T const& p, seconds const&);
 
     /**
        Assign the value at the head of the queue to item and then
@@ -362,7 +376,7 @@ namespace daqrate
        or false if the timeout has expired. This may throw any
        exception thrown by the assignment operator of type EnqPolicy::ValueType.
     */
-    bool deqTimedWait(ValueType&, boost::xtime const&);
+    bool deqTimedWait(ValueType&, seconds const&);
 
     /**
        Return true if the queue is empty, and false if it is not.
@@ -426,11 +440,12 @@ namespace daqrate
     
 
   private:
-    typedef boost::mutex::scoped_lock LockType;
+    typedef std::lock_guard<std::mutex>  LockType;
+    typedef std::unique_lock<std::mutex> WaitLockType;
 
-    mutable boost::mutex protectElements_;
-    mutable boost::condition queueNotEmpty_;
-    mutable boost::condition queueNotFull_;
+    mutable std::mutex protectElements_;
+    mutable std::condition_variable queueNotEmpty_;
+    mutable std::condition_variable queueNotFull_;
 
     SequenceType elements_;
     SizeType capacity_;
@@ -536,7 +551,7 @@ namespace daqrate
   void
   ConcurrentQueue<T,EnqPolicy>::enqWait(T const& item)
   {
-    LockType lock(protectElements_);
+    WaitLockType lock(protectElements_);
     while ( isFull() ) queueNotFull_.wait(lock);
     EnqPolicy::doInsert(item, elements_, size_,
                         detail::memoryUsage(item), used_, queueNotEmpty_);
@@ -547,13 +562,13 @@ namespace daqrate
   ConcurrentQueue<T,EnqPolicy>::enqTimedWait
   (
    T const& item, 
-   boost::xtime const& waitTime
+   seconds const& waitTime
    )
   {
-    LockType lock(protectElements_);
+    WaitLockType lock(protectElements_);
     if ( isFull() )
       {
-        queueNotFull_.timed_wait(lock, waitTime);
+        queueNotFull_.wait_for(lock, waitTime);
       }
     return insertIfPossible(item);
   }
@@ -570,23 +585,23 @@ namespace daqrate
   void
   ConcurrentQueue<T,EnqPolicy>::deqWait(ValueType& item)
   {
-    LockType lock(protectElements_);
+    WaitLockType lock(protectElements_);
     while (size_ == 0) queueNotEmpty_.wait(lock);
     removeHead(item);
   }
 
   template <class T, class EnqPolicy>
   bool
-  ConcurrentQueue<T,EnqPolicy>::deqTimedWait
+  ConcurrentQueue<T,EnqPolicy>::deqTimedait
   (
    ValueType& item,
-   boost::xtime const& waitTime
+   seconds const& waitTime
    )
   {
-    LockType lock(protectElements_);
+    WaitLockType lock(protectElements_);
     if (size_ == 0)
       {
-        queueNotEmpty_.timed_wait(lock, waitTime);
+        queueNotEmpty_.wait_for(lock, waitTime);
       }
     return removeHeadIfPossible(item);
   }

@@ -4,7 +4,7 @@ source: {
   module_type: RawInput
   instances: [ board0, board1, board2, board3, board4 ]  
 
-  # This seems very silly -- because RawInput is made from ReaderSource,
-  # it expects a parameter fileNames
-  fileNames: [ ]
+  # Because RawInput is instantiated from ReaderSource, we need a
+  # non-empty vector<string> fileNames.
+  fileNames: [ dummy ]
 }
