@@ -12,11 +12,13 @@ find_package(MPI REQUIRED)
 SET(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
 
 set( LIB_NAME artdaq_DAQrate )
+find_library( FHICLCPP NAMES fhiclcpp PATHS $ENV{FHICLCPP_LIB} )
 
 set( LIB_SOURCES 
      GlobalQueue.cc
      Config.cc
      Debug.cc
+     DS50EventReader.cc
      EventStore.cc
      FragmentPool.cc
      MonitoredQuantity.cc
@@ -30,6 +32,10 @@ set( LIB_SOURCES
    )
 
 add_library( ${LIB_NAME} SHARED ${LIB_SOURCES} )
+
+target_link_libraries( artdaq_DAQrate
+                       ${FHICLCPP}
+                     )
 
 include(CetTest)
 cet_test(daqrate PREBUILT NO_AUTO)
