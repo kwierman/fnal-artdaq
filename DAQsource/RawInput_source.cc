@@ -27,6 +27,7 @@ namespace artdaq {
     RawEventQueue &             queue_;
     vector<string> const        inst_names_;
     daqrate::seconds            waiting_time_;
+    bool                        resume_after_timeout_;
 
     RawEventQueueReader(fhicl::ParameterSet const & ps,
                         art::ProductRegistryHelper & help,
@@ -48,7 +49,8 @@ namespace artdaq {
     pm_(pm),
     queue_(getGlobalQueue()),
     inst_names_(ps.get<vector<string>>("instances")),
-    waiting_time_(ps.get<double>("waiting_time", std::numeric_limits<double>::infinity()))
+    waiting_time_(ps.get<double>("waiting_time", std::numeric_limits<double>::infinity())),
+    resume_after_timeout_(ps.get<bool>("resume_after_timeout", true))
   {
     for_each(inst_names_.cbegin(), inst_names_.cend(),
              [&](string const & iname) {
@@ -73,12 +75,21 @@ namespace artdaq {
                                      art::EventPrincipal* & outE)
   {
     RawEvent_ptr p;
-    bool got_event = queue_.deqTimedWait(p, waiting_time_);
-    if (!got_event) {
-      mf::LogInfo("InputFailure")
-        << "Reading timed out in RawEventQueueReader::readNext()";
-      return false;
-    }
+
+    // Try to get an event from the queue ...
+    bool keep_looping = true;
+    bool got_event = false;
+    while (keep_looping)
+      {
+        keep_looping = false;
+        got_event = queue_.deqTimedWait(p, waiting_time_);
+        if (!got_event) {
+          mf::LogInfo("InputFailure")
+            << "Reading timed out in RawEventQueueReader::readNext()";
+          keep_looping = resume_after_timeout_;
+        }
+      }
+    if (!got_event) return false;
     // check for end of data stream
     if (!p) { return false; }
     art::Timestamp runstart;
