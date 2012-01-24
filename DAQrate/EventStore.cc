@@ -162,7 +162,7 @@ namespace artdaq
         rawEventPtr->header_.word_count_ += fh->word_count_;
       }
 
-    RawEvent::FragmentPtr fp(new Fragment(fh->word_count_));
+    FragmentPtr fp(new Fragment(fh->word_count_));
     memcpy(&(*fp)[0], &ef[0], (fh->word_count_ * sizeof(RawDataType)));
     rawEventPtr->fragments_.push_back(fp);
 

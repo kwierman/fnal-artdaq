@@ -49,7 +49,7 @@ namespace artdaq {
                     << ", WordCount " << rawEventPtr->header_.word_count_
                     << std::endl;
           for (int idx = 0; idx < (int) rawEventPtr->fragments_.size(); ++idx) {
-            RawEvent::FragmentPtr rfp = rawEventPtr->fragments_[idx];
+            FragmentPtr rfp = rawEventPtr->fragments_[idx];
             RawFragmentHeader* rfh = (RawFragmentHeader*) & (*rfp)[0];
             std::cout << "  Fragment " << rfh->fragment_id_
                       << ", WordCount " << rfh->word_count_

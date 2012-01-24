@@ -38,8 +38,6 @@ namespace artdaq
 
   struct RawEvent
   {
-    typedef std::shared_ptr<Fragment> FragmentPtr;
-    typedef std::vector<FragmentPtr> Fragments;
 
     RawEventHeader header_;
     Fragments      fragments_;
