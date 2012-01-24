@@ -1,6 +1,7 @@
 #include "boost/program_options.hpp"
 
 #include "DAQdata/RawData.hh"
+#include "DAQdata/Fragments.hh"
 #include "DAQrate/EventStore.hh"
 #include "DAQrate/DS50EventReader.hh"
 #include "fhiclcpp/ParameterSet.h"
@@ -64,14 +65,15 @@ int main(int argc, char* argv[])
 
   // simple way - speed depends on I/I reading
   artdaq::Fragments el;
+#if 0
   while(reader.getNext(el))
     {
       for_each(el.begin(),el.end(),
-	       [&](Fragments::value_type& val) { store.insert(val); }
+	       [&](artdaq::Fragments::value_type& val) { store.insert(val); }
 	       );
     }
 
-#if 0
+
   // buffering way
   vector<Fragments> event_buffer;
   int total_events = ds_pset.get<int>("total_events");

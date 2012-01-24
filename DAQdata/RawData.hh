@@ -2,6 +2,7 @@
 #define RAWDATA_HHH
 
 #include "Fragment.hh"
+#include "Fragments.hh"
 
 #include <memory>
 #include <vector>
