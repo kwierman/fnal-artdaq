@@ -1,6 +1,8 @@
 #include "DS50EventReader.hh"
 #include <string>
 
+#include "fhiclcpp/ParameterSet.h"
+
 using fhicl::ParameterSet;
 
 namespace artdaq

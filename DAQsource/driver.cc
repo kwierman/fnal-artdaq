@@ -1,10 +1,8 @@
-
-
 #include "boost/program_options.hpp"
 
 #include "DAQdata/RawData.hh"
 #include "DAQrate/EventStore.hh"
-//#include "DAQrate/DS50Reader.hh"
+#include "DAQrate/DS50EventReader.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/make_ParameterSet.h"
 #include "cetlib/filepath_maker.h"
@@ -57,15 +55,15 @@ int main(int argc, char* argv[])
                            lookup_policy, pset);
   ParameterSet ds_pset = pset.get<ParameterSet>("ds50");
 
-#if 0
-  artdaq::DS50EventReader reader(ds_pset);
 
-  artdaq::EventStore store(ds_pset.get<int>("run"),
-			   ds_pset.get<int>("source_count"),
+  artdaq::DS50EventReader reader(ds_pset);
+  artdaq::EventStore store(ds_pset.get<int>("source_count"),
+                           ds_pset.get<int>("run"),
 			   argc,argv);
 
+
   // simple way - speed depends on I/I reading
-  Fragments el;
+  artdaq::Fragments el;
   while(reader.getNext(el))
     {
       for_each(el.begin(),el.end(),
@@ -73,6 +71,7 @@ int main(int argc, char* argv[])
 	       );
     }
 
+#if 0
   // buffering way
   vector<Fragments> event_buffer;
   int total_events = ds_pset.get<int>("total_events");
@@ -87,8 +86,8 @@ int main(int argc, char* argv[])
   for_each(event_buffer.begin(),event_buffer.end(),
 	   [&](Fragments& val) { /* go through each fragment and put it onto the store queue */ }
 	   );
-
 #endif
+
+  store.endOfData();
   return 0;
 }
-

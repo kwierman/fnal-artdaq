@@ -1,7 +1,7 @@
 #ifndef artdaq_DAQrate_DS50EventREader_hh
 #define artdaq_DAQrate_DS50EventREader_hh
 
-#include "fhiclcpp/ParameterSet.h"
+#include "fhiclcpp/fwd.h"
 
 namespace artdaq
 {
