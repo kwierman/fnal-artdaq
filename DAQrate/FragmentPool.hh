@@ -23,18 +23,16 @@
 class FragmentPool 
 {
 public:
-  typedef std::vector<artdaq::RawDataType> Data;
-
   explicit FragmentPool(Config const &);
-
-  void operator()(Data& output);
-
+  
+  void operator()(artdaq::Fragment& output);
+  
 private:
   int seq_;
   unsigned word_count_; // in words, not bytes
   int rank_;
   int data_length_;
-  Data d_;
+  artdaq::Fragment d_;
   int range_;
   std::ifstream ifs_;
   int debugPrintLevel_;

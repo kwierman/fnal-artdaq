@@ -7,8 +7,10 @@
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/make_ParameterSet.h"
 #include "cetlib/filepath_maker.h"
+#include "cetlib/container_algorithms.h"
 
 #include <iostream>
+#include <utility>
 
 using namespace std;
 using namespace fhicl;
@@ -62,22 +64,25 @@ int main(int argc, char* argv[])
                            ds_pset.get<int>("run"),
 			   argc,argv);
 
+  // Read or generate fragments as rapidly as possible, and feed them
+  // into the EventStore. The throughput resulting from this design
+  // choice is likely to have the fragment reading (or generation)
+  // speed as the limiting factor
+  artdaq::FragmentPtrs frags;
 
-  // simple way - speed depends on I/I reading
-  artdaq::Fragments el;
-#if 0
-  while(reader.getNext(el))
+  while(reader.getNext(frags))
     {
-      for_each(el.begin(),el.end(),
-	       [&](artdaq::Fragments::value_type& val) { store.insert(val); }
-	       );
+      for (auto& val : frags)
+        {
+          store.insert(std::move(val));
+        }
     }
-
+#if 0
 
   // buffering way
-  vector<Fragments> event_buffer;
+  vector<FragmentPtrs> event_buffer;
   int total_events = ds_pset.get<int>("total_events");
-  Fragments event;
+  FragmentPtrs event;
 
   while(reader.getNext(event) && total_events>0)
     {
@@ -86,7 +91,7 @@ int main(int argc, char* argv[])
     }
 
   for_each(event_buffer.begin(),event_buffer.end(),
-	   [&](Fragments& val) { /* go through each fragment and put it onto the store queue */ }
+	   [&](FragmentsPtrs& val) { /* go through each fragment and put it onto the store queue */ }
 	   );
 #endif
 

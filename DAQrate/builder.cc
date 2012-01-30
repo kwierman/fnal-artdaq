@@ -14,12 +14,12 @@
 #include <sys/resource.h>
 
 #include <ctime>
-
 #include <iostream>
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <iterator>
+#include <utility>
 #include <unistd.h>
 
 using namespace std;
@@ -82,12 +82,12 @@ void Program::source()
 {
   printHost("source");
   // needs to get data from the detectors and send it to the sinks
-  FragmentPool::Data e;
+  artdaq::Fragment frag;
   RHandles from_d(conf_);
   SHandles to_r(conf_);
   for (int i = 0; i < conf_.total_events_; ++i) {
-    from_d.recvEvent(e);
-    to_r.sendEvent(e);
+    from_d.recvEvent(frag);
+    to_r.sendEvent(frag);
   }
   Debug << "source waiting " << conf_.rank_ << flusher;
   to_r.waitAll();
@@ -99,8 +99,8 @@ void Program::source()
 void Program::detector()
 {
   printHost("detector");
-  FragmentPool ep(conf_);
-  FragmentPool::Data e;
+  FragmentPool pool(conf_);
+  artdaq::Fragment frag;
   SHandles h(conf_);
   std::cout << "Detector " << conf_.rank_ << " ready." << std::endl;
   MPI_Barrier(detector_comm_);
@@ -111,8 +111,8 @@ void Program::detector()
     if ((i % 100) == 0) {
       MPI_Barrier(detector_comm_);
     }
-    ep(e); // get event
-    h.sendEvent(e);
+    pool(frag); // get fragment
+    h.sendEvent(frag);
   }
   Debug << "detector waiting " << conf_.rank_ << flusher;
   h.waitAll();
@@ -126,7 +126,7 @@ void Program::sink()
   {
     // This scope exists to control the lifetime of 'events'
     artdaq::EventStore events(conf_);
-    FragmentPool::Data fragment;
+    artdaq::FragmentPtr pfragment(new artdaq::Fragment);
     RHandles h(conf_);
     int total_events = conf_.total_events_ / conf_.sinks_;
     if (conf_.offset_ < (conf_.total_events_ % conf_.sinks_)) { ++total_events; }
@@ -136,8 +136,8 @@ void Program::sink()
     Debug << "expect=" << expect << flusher;
     Debug << "total_events=" << total_events << flusher;
     for (int i = 0; i < expect; ++i) {
-      h.recvEvent(fragment);
-      events.insert(fragment);
+      h.recvEvent(*pfragment);
+      events.insert(std::move(pfragment));
     }
     events.endOfData();
     h.waitAll(); // not sure if this should be inside braces

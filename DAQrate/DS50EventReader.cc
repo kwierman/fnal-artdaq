@@ -13,4 +13,23 @@ namespace artdaq
     if (!do_random_) 
       throw std::string("Only random generation supported.");
   }
+
+  bool
+  DS50EventReader::getNext(FragmentPtrs& output)
+  {
+    return (do_random_) ? getNext_random_(output) : getNext_read_(output);
+  }
+
+  bool
+  DS50EventReader::getNext_random_(FragmentPtrs&)
+  {
+    return false;
+  }
+
+  bool
+  DS50EventReader::getNext_read_(FragmentPtrs&)
+  {
+      throw std::string("Only random generation supported.");
+  }
+
 }

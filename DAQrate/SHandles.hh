@@ -1,7 +1,8 @@
 #ifndef SHandles_hhh
 #define SHandles_hhh
 
-#include "FragmentPool.hh"
+#include "DAQdata/Fragment.hh"
+#include "DAQdata/Fragments.hh"
 #include "Config.hh"
 
 #include <vector>
@@ -24,14 +25,11 @@ public:
   typedef std::vector<MPI_Status> Statuses;
   typedef std::vector<int> Flags; // busy flags
 
-  typedef FragmentPool::Data Data;
-  typedef std::vector<Data> Fragments; // was Events
-
-  SHandles(Config const&);
+  explicit SHandles(Config const&);
 
   // will take the data on the send (not copy),
   // will replace the data on recv (not copy)
-  void sendEvent(Data&);
+  void sendEvent(artdaq::Fragment&);
   void waitAll();
   
 private:
@@ -50,7 +48,7 @@ private:
   Statuses stats_;
   Flags flags_;
 
-  Fragments frags_;
+  artdaq::Fragments frags_;
   bool is_direct_;
   int friend_;
 };

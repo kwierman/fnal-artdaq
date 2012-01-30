@@ -7,8 +7,8 @@
 #include <iomanip>
 #include <fstream>
 #include <sstream>
-#include "SimpleQueueReader.hh"
 #include "StatisticsCollection.hh"
+#include "SimpleQueueReader.hh"
 
 using namespace std;
 
@@ -125,9 +125,10 @@ namespace artdaq
     }
   }
 
-  void EventStore::insert(Fragment& ef)
+  void EventStore::insert(FragmentPtr && pfrag)
   {
-    assert(!ef.empty());
+    assert(pfrag && !pfrag->empty());
+    Fragment& ef = *pfrag;
 
     // find the event being built and put the fragment into it,
     // start new event if not already present
@@ -164,7 +165,7 @@ namespace artdaq
 
     FragmentPtr fp(new Fragment(fh->word_count_));
     memcpy(&(*fp)[0], &ef[0], (fh->word_count_ * sizeof(RawDataType)));
-    rawEventPtr->fragments_.push_back(fp);
+    rawEventPtr->fragments_.push_back(std::move(fp));
 
     if (static_cast<int>(rawEventPtr->fragments_.size()) == sources_)
       {

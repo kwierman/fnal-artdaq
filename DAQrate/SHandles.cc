@@ -4,8 +4,11 @@
 #include "Debug.hh"
 #include "Utils.hh"
 #include "DAQdata/RawData.hh"
+#include "DAQdata/Fragment.hh"
 
 #define MY_TAG 2
+
+using namespace artdaq;
 
 // size_ = number of buffers
 // fragment_size_ = number of longs in a fragment of an event
@@ -51,11 +54,11 @@ int SHandles::findAvailable()
   return use_me;
 }
 
-void SHandles::sendEvent(Data & e)
+void SHandles::sendEvent(Fragment & frag)
 {
   SendMeas sm;
   int use_me = findAvailable();
-  frags_[use_me].swap(e);
+  frags_[use_me].swap(frag);
   artdaq::RawFragmentHeader* h = (artdaq::RawFragmentHeader*)&frags_[use_me][0];
   int event_id = h->event_id_;
   h->fragment_id_ = rank_;

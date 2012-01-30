@@ -6,8 +6,9 @@
 #include "Fragment.hh"
 
 namespace artdaq {
-  typedef std::shared_ptr<Fragment> FragmentPtr;
-  typedef std::vector<FragmentPtr> Fragments;
+  typedef std::vector<Fragment>     Fragments;
+  typedef std::unique_ptr<Fragment> FragmentPtr;
+  typedef std::vector<FragmentPtr>  FragmentPtrs;
 }
 
 #endif

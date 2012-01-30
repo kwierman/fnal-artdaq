@@ -136,7 +136,7 @@ FragmentPool::FragmentPool(Config const& conf):
   }
 }
 
-void FragmentPool::operator()(Data& output)
+void FragmentPool::operator()(Fragment& output)
 {
   unsigned outputWordCount;
 

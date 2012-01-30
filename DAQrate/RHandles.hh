@@ -1,7 +1,8 @@
 #ifndef RHandles_hhh
 #define RHandles_hhh
 
-#include "FragmentPool.hh"
+#include "DAQdata/Fragment.hh"
+#include "DAQdata/Fragments.hh"
 #include "Config.hh"
 
 #include <vector>
@@ -20,18 +21,15 @@
 class RHandles
 {
 public:
-  typedef FragmentPool::Data Data;
-  typedef std::vector<Data> Fragments;
-
   typedef std::vector<MPI_Request> Requests;
   typedef std::vector<MPI_Status> Statuses;
   typedef std::vector<int> Flags; // busy flags
 
-  RHandles(Config const&);
+  explicit RHandles(Config const&);
 
   // will take the data on the send (not copy),
   // will replace the data on recv (not copy)
-  void recvEvent(Data&);
+  void recvEvent(artdaq::Fragment&);
   void waitAll();
 
 private:
@@ -46,7 +44,7 @@ private:
   Statuses stats_;
   Flags flags_;
 
-  Fragments frags_;
+  artdaq::Fragments frags_;
   bool is_direct_;
   int friend_;
 };

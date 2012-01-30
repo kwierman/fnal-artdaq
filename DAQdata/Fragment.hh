@@ -7,9 +7,9 @@
 
 namespace artdaq
 {
-  typedef uint32_t RawDataType;
-  typedef std::vector<RawDataType> Fragment;
-  typedef std::vector<uint64_t> CompressedFragPart;
+  typedef uint32_t                        RawDataType;
+  typedef std::vector<RawDataType>        Fragment;
+  typedef std::vector<uint64_t>           CompressedFragPart;
   typedef std::vector<CompressedFragPart> CompressedFragParts;
 
   struct DarkSideHeaderOverlay

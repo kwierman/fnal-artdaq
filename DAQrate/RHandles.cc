@@ -4,11 +4,14 @@
 #include "Debug.hh"
 #include "Utils.hh"
 #include "DAQdata/RawData.hh"
+#include "cetlib/container_algorithms.h"
 
 #include <fstream>
 #include <sstream>
 
+
 using namespace std;
+using namespace artdaq;
 
 #define MY_TAG 2
 
@@ -64,7 +67,7 @@ static void printError(int rc, int which, MPI_Status &)
 #endif
 }
 
-void RHandles::recvEvent(Data & e)
+void RHandles::recvEvent(Fragment & e)
 {
   // Debug << "recv entered" << flusher;
   RecvMeas rm;
@@ -82,17 +85,22 @@ void RHandles::recvEvent(Data & e)
   if (reqs_[which] != MPI_REQUEST_NULL)
   { throw "NOTE: req is not MPI_REQUEST_NULL in recvEvent"; }
   // event at which is now available
+  e.clear();
+  e.reserve(frags_[which].size());
+  cet::for_all(frags_[which], [&](artdaq::Fragment::value_type i){e.push_back(i);});
+
   frags_[which].swap(e);
   artdaq::RawFragmentHeader* fh = (artdaq::RawFragmentHeader*)&e[0];
   int event_id = fh->event_id_;
   int from = fh->fragment_id_;
   // make sure the event buffer is big enough
-  if (frags_[which].size() < static_cast<std::size_t>(fragment_words_))
+  if (frags_[which].size() < static_cast<size_t>(fragment_words_))
   { frags_[which].resize(fragment_words_); }
   rm.woke(event_id, which);
   Debug << "recv: " << rank_ << " id=" << event_id << " from="
         << from << " which=" << which << flusher;
   // repost the request that was complete, from the same sender
+  // This makes the buffer we've just received data on available to receive new data.
   /* rc = */ MPI_Irecv(&(frags_[which])[0],
                        (fragment_words_ * sizeof(artdaq::RawDataType)),
                        MPI_BYTE, from, MY_TAG, MPI_COMM_WORLD, &reqs_[which]);

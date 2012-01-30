@@ -2,11 +2,10 @@
 #define eventstore_hhh
 
 #include "Config.hh"
-#include "FragmentPool.hh"
+#include "Fragment.hh"
 
 #include "DAQdata/RawData.hh"
 #include "GlobalQueue.hh"
-#include "SimpleQueueReader.hh"
 
 #include <map>
 #include <memory>
@@ -23,7 +22,6 @@ namespace artdaq
   class EventStore
   {
   public:
-    typedef FragmentPool::Data Fragment;
     typedef std::map<RawDataType, RawEvent_ptr> EventMap;
 
     static const std::string EVENT_RATE_STAT_KEY;
@@ -33,9 +31,10 @@ namespace artdaq
 
     ~EventStore();
 
-    // The fragment we are given must NOT be empty; it must at least
+    // The pointer we are given must NOT be null, and the Fragment to
+    // which it points must NOT be empty; the Fragment must at least
     // contain the necessary header information.
-    void insert(Fragment&);
+    void insert(FragmentPtr &&);
 
     // Put the end-of-data marker onto the RawEvent queue.
     void endOfData();

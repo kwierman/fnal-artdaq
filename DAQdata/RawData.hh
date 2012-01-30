@@ -41,7 +41,7 @@ namespace artdaq
   {
 
     RawEventHeader header_;
-    Fragments      fragments_;
+    FragmentPtrs   fragments_;
   };
 
 }
