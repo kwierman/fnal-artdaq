@@ -1,0 +1,7 @@
+ds50:
+{
+  do_random: true
+  events_to_generate: 400
+  run_number: 10
+  source_count: 1
+}

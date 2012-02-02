@@ -28,5 +28,7 @@ over to the art::Event. This means using unique_ptr<Fragment> as the
 "handle" used to control the Fragment; unique_ptr<Fragment> is the
 type named as FragmentPtr.
 
-The DS50EventReader is responsible for creating Fragments, housed in
-a vector of FragmentPtrs.
+The DS50EventReader is responsible for creating Fragments, housed in a
+vector of FragmentPtrs. It can read data files (not yet implemented,
+at the time of this writing) and generate random data (also not yet
+implemented).

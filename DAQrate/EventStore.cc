@@ -127,7 +127,9 @@ namespace artdaq
 
   void EventStore::insert(FragmentPtr && pfrag)
   {
-    assert(pfrag && !pfrag->empty());
+    assert(pfrag != nullptr);
+    assert(!pfrag->empty());
+
     Fragment& ef = *pfrag;
 
     // find the event being built and put the fragment into it,
