@@ -3,28 +3,20 @@
 
 #include "fhiclcpp/fwd.h"
 #include "DAQdata/Fragments.hh"
+#include "DS50EventGenerator.hh"
 
 namespace artdaq
 {
-  class DS50EventReader
+  // DS50EventReader reads DS50 events from a file or set of files.
+
+  class DS50EventReader : public DS50EventGenerator
   {
   public:
-    explicit DS50EventReader(fhicl::ParameterSet const& ps);
+    explicit DS50EventReader(fhicl::ParameterSet const&);
+    virtual ~DS50EventReader();
 
-    // Obtain the next collection of Fragments. Return false to
-    // indicate end-of-data.
-    bool getNext(FragmentPtrs& output);
   private:
-    bool        do_random_;        // generate random data if true
-    std::size_t events_to_generate_; // go forever if this is 0
-    std::size_t events_gotten_;
-
-    // Obtain the next set of fragments through random generation.
-    bool getNext_random_(FragmentPtrs& output);
-
-    // Obtain the next set of fragments through reading the input
-    // file.
-    bool getNext_read_(FragmentPtrs& output);
+    virtual bool getNext_(FragmentPtrs& output);
   };
 }
 

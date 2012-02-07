@@ -18,7 +18,9 @@ set( LIB_SOURCES
      GlobalQueue.cc
      Config.cc
      Debug.cc
+     DS50EventGenerator.cc
      DS50EventReader.cc
+     DS50EventSimulator.cc
      EventStore.cc
      FragmentPool.cc
      MonitoredQuantity.cc

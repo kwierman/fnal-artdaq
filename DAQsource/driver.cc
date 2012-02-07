@@ -3,18 +3,29 @@
 #include "DAQdata/RawData.hh"
 #include "DAQdata/Fragments.hh"
 #include "DAQrate/EventStore.hh"
+#include "DAQrate/DS50EventGenerator.hh"
 #include "DAQrate/DS50EventReader.hh"
+#include "DAQrate/DS50EventSimulator.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/make_ParameterSet.h"
 #include "cetlib/filepath_maker.h"
 #include "cetlib/container_algorithms.h"
 
 #include <iostream>
+#include <memory>
 #include <utility>
 
 using namespace std;
 using namespace fhicl;
 namespace  bpo = boost::program_options;
+
+artdaq::DS50EventGenerator* make_generator(ParameterSet const& ps)
+{
+  if (ps.get<bool>("do_random"))
+    return new artdaq::DS50EventSimulator(ps);
+  else
+    return new artdaq::DS50EventReader(ps);
+}
 
 int main(int argc, char* argv[]) try
   {
@@ -58,8 +69,8 @@ int main(int argc, char* argv[]) try
                       lookup_policy, pset);
     ParameterSet ds_pset = pset.get<ParameterSet>("ds50");
 
+    std::unique_ptr<artdaq::DS50EventGenerator> const gen(make_generator(ds_pset));
 
-    artdaq::DS50EventReader reader(ds_pset);
     artdaq::EventStore store(ds_pset.get<int>("source_count"),
                              ds_pset.get<int>("run_number"),
                              argc,argv);
@@ -70,7 +81,7 @@ int main(int argc, char* argv[]) try
     // speed as the limiting factor
     artdaq::FragmentPtrs frags;
 
-    while(reader.getNext(frags))
+    while(gen->getNext(frags))
       {
         for (auto& val : frags)
           {
@@ -84,7 +95,7 @@ int main(int argc, char* argv[]) try
     int total_events = ds_pset.get<int>("total_events");
     FragmentPtrs event;
 
-    while(reader.getNext(event) && total_events>0)
+    while(gen->getNext(event) && total_events>0)
       {
         event_buffer.push_back(event);
         --total_events;
