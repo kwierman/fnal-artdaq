@@ -15,7 +15,7 @@ void printRawEvent(artdaq::RawEvent const& rawEvent)
             << std::endl;
   for (int idx = 0; idx < (int) rawEvent.fragments_.size(); ++idx) {
     artdaq::Fragment const& frag = *(rawEvent.fragments_[idx]);
-    artdaq::RawFragmentHeader const* rfh = (artdaq::RawFragmentHeader*) & (frag)[0];
+    artdaq::RawFragmentHeader const* rfh = frag.fragmentHeader();
     std::cout << "  Fragment " << rfh->fragment_id_
               << ", WordCount " << rfh->word_count_
               << ", Event " << rfh->event_id_

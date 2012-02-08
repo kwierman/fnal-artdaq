@@ -45,8 +45,6 @@ cet_test(daqrate PREBUILT NO_AUTO)
 # ----------------------------------------------------------------------
 # Build this project's executables:
 
-link_libraries( ${LIB_NAME} )
-
 find_library( ART_FRAMEWORK_CORE NAMES art_Framework_Core PATHS $ENV{ART_LIB} )
 
 set ( common_exec_link_libraries
@@ -83,6 +81,8 @@ set ( art_exec_link_libraries
   ${SIGC}
   ${Boost_FILESYSTEM_LIBRARY}
 )
+
+link_libraries( ${LIB_NAME} artdaq_DAQdata)
 
 #target_link_libraries( artdaq_DAQrate
 #                       ${art_exec_link_libraries}

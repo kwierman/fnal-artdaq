@@ -16,7 +16,7 @@ FragmentPool::FragmentPool(Config const& conf):
   word_count_(conf.fragment_words_),
   rank_(conf.rank_),
   data_length_(word_count_*2),
-  d_(data_length_),
+  frag_(data_length_),
   range_(data_length_ - word_count_),
   ifs_(),
   debugPrintLevel_(0),
@@ -39,13 +39,13 @@ FragmentPool::FragmentPool(Config const& conf):
       ((sizeof(DarkSideHeaderOverlay)-1) / sizeof(RawDataType));
 
     // ensure that the data buffer is large enough to hold the header
-    if (d_.size() < dsHeaderWords)
+    if (frag_.size() < dsHeaderWords)
     {
-      d_.resize(dsHeaderWords);
+      frag_.resize(dsHeaderWords);
     }
 
     // read in the first header
-    char *cp = (char*)&d_[0];
+    char *cp = (char*)&frag_[0];
     DarkSideHeaderOverlay *dshop = (DarkSideHeaderOverlay*)cp;
     ifs_.read( cp, sizeof(DarkSideHeaderOverlay) );
 
@@ -67,7 +67,7 @@ FragmentPool::FragmentPool(Config const& conf):
 
     // read in each fragment
     artdaq::MonitoredQuantity fileReadMonitor(1, 1);
-    cp = (char*)&d_[0];
+    cp = (char*)&frag_[0];
     dshop = (DarkSideHeaderOverlay*)cp;
     unsigned actualEventCount = 0;
     for (int idx = 0; idx < numberOfFragments; ++idx)
@@ -75,10 +75,10 @@ FragmentPool::FragmentPool(Config const& conf):
       if (ifs_.eof()) break;
 
       // resize the buffer, if needed (unlikely)
-      if (d_.size() < (wordsReadFromFile_ + dsHeaderWords))
+      if (frag_.size() < (wordsReadFromFile_ + dsHeaderWords))
       {
-        d_.resize(wordsReadFromFile_ + dsHeaderWords);
-        cp = ((char*)&d_[0]) + (wordsReadFromFile_*sizeof(RawDataType));
+        frag_.resize(wordsReadFromFile_ + dsHeaderWords);
+        cp = ((char*)&frag_[0]) + (wordsReadFromFile_*sizeof(RawDataType));
         dshop = (DarkSideHeaderOverlay*)cp;
       }
 
@@ -90,10 +90,10 @@ FragmentPool::FragmentPool(Config const& conf):
       unsigned fragmentWords = dshop->event_size_;
 
       // resize the buffer, if needed
-      if (d_.size() < (wordsReadFromFile_ + fragmentWords))
+      if (frag_.size() < (wordsReadFromFile_ + fragmentWords))
       {
-        d_.resize(wordsReadFromFile_ + (10 * fragmentWords));
-        cp = ((char*)&d_[0]) + (wordsReadFromFile_*sizeof(RawDataType));
+        frag_.resize(wordsReadFromFile_ + (10 * fragmentWords));
+        cp = ((char*)&frag_[0]) + (wordsReadFromFile_*sizeof(RawDataType));
         dshop = (DarkSideHeaderOverlay*)cp;
       }
 
@@ -106,7 +106,7 @@ FragmentPool::FragmentPool(Config const& conf):
 
       // update pointers and sizes
       wordsReadFromFile_ += fragmentWords;
-      cp = ((char*)&d_[0]) + (wordsReadFromFile_*sizeof(RawDataType));
+      cp = ((char*)&frag_[0]) + (wordsReadFromFile_*sizeof(RawDataType));
       dshop = (DarkSideHeaderOverlay*)cp;
     }
 
@@ -132,7 +132,7 @@ FragmentPool::FragmentPool(Config const& conf):
 
   // otherwise generate random data to be used
   else {
-    generate(d_.begin(),d_.end(),LongMaker());
+    generate(frag_.begin(),frag_.end(),LongMaker());
   }
 }
 
@@ -147,7 +147,7 @@ void FragmentPool::operator()(Fragment& output)
       fileBufferWordOffset_ = 0;
     }
 
-    char *cp = (char*)&d_[fileBufferWordOffset_];
+    char *cp = (char*)&frag_[fileBufferWordOffset_];
     DarkSideHeaderOverlay *dshop = (DarkSideHeaderOverlay*)cp;
     unsigned fragmentWords = dshop->event_size_;
 
@@ -158,8 +158,8 @@ void FragmentPool::operator()(Fragment& output)
       output.resize(fragmentWords+rfHeaderWords);
     }
 
-    std::copy(d_.begin()+fileBufferWordOffset_,
-              d_.begin()+fileBufferWordOffset_+fragmentWords,
+    std::copy(frag_.begin()+fileBufferWordOffset_,
+              frag_.begin()+fileBufferWordOffset_+fragmentWords,
               output.begin()+rfHeaderWords);
     fileBufferWordOffset_ += fragmentWords;
     outputWordCount = fragmentWords + rfHeaderWords;
@@ -179,7 +179,7 @@ void FragmentPool::operator()(Fragment& output)
     if(output.size()<word_count_) output.resize(word_count_);
 
     int start = (LongMaker::make()) % range_;
-    std::copy(d_.begin()+start, d_.begin()+start+word_count_, output.begin());
+    std::copy(frag_.begin()+start, frag_.begin()+start+word_count_, output.begin());
     outputWordCount = word_count_;
   }
 

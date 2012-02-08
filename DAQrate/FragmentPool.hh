@@ -15,7 +15,7 @@
  */
 
 #include "Config.hh"
-#include "DAQdata/RawData.hh"
+#include "DAQdata/Fragment.hh"
 
 #include <vector>
 #include <fstream>
@@ -32,7 +32,7 @@ private:
   unsigned word_count_; // in words, not bytes
   int rank_;
   int data_length_;
-  artdaq::Fragment d_;
+  artdaq::Fragment frag_;
   int range_;
   std::ifstream ifs_;
   int debugPrintLevel_;

@@ -1,14 +1,12 @@
 #ifndef RAWDATA_HHH
 #define RAWDATA_HHH
 
-#include "Fragment.hh"
-#include "Fragments.hh"
-
 #include <memory>
 #include <vector>
 
 namespace artdaq
 {
+  typedef uint32_t RawDataType;
 
   /*
     This header is our own independent header definition
@@ -31,17 +29,6 @@ namespace artdaq
     RawDataType word_count_;
     RawDataType event_id_;
     RawDataType fragment_id_;
-  };
-
-  /*
-    Each event has our header plus one or more raw data fragments
-  */
-
-  struct RawEvent
-  {
-
-    RawEventHeader header_;
-    FragmentPtrs   fragments_;
   };
 
 }

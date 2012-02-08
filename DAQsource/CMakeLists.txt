@@ -11,4 +11,5 @@ target_link_libraries(driver artdaq_DAQrate
                       ${CETLIB}
                       ${Boost_PROGRAM_OPTIONS_LIBRARY}
                       ${FHICLCPP}
+                      artdaq_DAQdata
                      )
