@@ -183,7 +183,7 @@ void FragmentPool::operator()(Fragment& output)
     outputWordCount = word_count_;
   }
 
-  RawFragmentHeader* h = (RawFragmentHeader*)&output[0];
+  RawFragmentHeader* h = output.fragmentHeader();
   h->event_id_=seq_++;
   h->fragment_id_=rank_;
   //h->time_ms_=1;

@@ -60,6 +60,9 @@ namespace artdaq
     void swap(Fragment& other)
     { vals_.swap(other.vals_); }
 
+    RawFragmentHeader* fragmentHeader()
+    { return reinterpret_cast<RawFragmentHeader*>(&vals_[0]); }
+
     RawFragmentHeader const* fragmentHeader() const
     { return reinterpret_cast<RawFragmentHeader const*>(&vals_[0]); }
 

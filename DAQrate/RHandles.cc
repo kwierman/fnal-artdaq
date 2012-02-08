@@ -90,7 +90,7 @@ void RHandles::recvEvent(Fragment & e)
   cet::for_all(frags_[which], [&](artdaq::Fragment::value_type i){e.push_back(i);});
 
   frags_[which].swap(e);
-  artdaq::RawFragmentHeader* fh = (artdaq::RawFragmentHeader*)&e[0];
+  artdaq::RawFragmentHeader* fh = e.fragmentHeader();
   int event_id = fh->event_id_;
   int from = fh->fragment_id_;
   // make sure the event buffer is big enough

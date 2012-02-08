@@ -136,7 +136,7 @@ namespace artdaq
     // start new event if not already present
     // if the event is complete, delete it and report timing
 
-    RawFragmentHeader* fh = reinterpret_cast<RawFragmentHeader*>(&ef[0]);
+    RawFragmentHeader* fh = ef.fragmentHeader();
     RawDataType event_id = fh->event_id_;
 
     // update the fragment ID (up to this point, it has been set to the

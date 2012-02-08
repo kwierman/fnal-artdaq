@@ -59,7 +59,7 @@ void SHandles::sendEvent(Fragment & frag)
   SendMeas sm;
   int use_me = findAvailable();
   frags_[use_me].swap(frag);
-  artdaq::RawFragmentHeader* h = (artdaq::RawFragmentHeader*)&frags_[use_me][0];
+  artdaq::RawFragmentHeader* h = frags_[use_me].fragmentHeader();
   int event_id = h->event_id_;
   h->fragment_id_ = rank_;
   int event_size = frags_[use_me].size();
