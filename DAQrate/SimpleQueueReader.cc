@@ -1,5 +1,6 @@
 #include "SimpleQueueReader.hh"
 #include "DAQdata/RawData.hh"
+#include "DAQdata/DS50data.hh"
 
 #include <cassert>
 #include <string>

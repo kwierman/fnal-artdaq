@@ -1,8 +1,11 @@
+#error "Building of FragmentPool is temporarily disabled"
+
 #ifndef artdaq_DAQrate_FragmentPool_hh
 #define artdaq_DAQrate_FragmentPool_hh
 
-// A FragmentPool holds Fragments, and is used to combine them into
-// complete events.
+// FragmentPool either reads DS50 data files, or generates random DS50
+// events. It does *not* deal with generic Fragments; it knows about
+// DS50 specifics.
 
 /*
   how is works:

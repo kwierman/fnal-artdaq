@@ -62,7 +62,7 @@ void SHandles::sendEvent(Fragment & frag)
   artdaq::RawFragmentHeader* h = frags_[use_me].fragmentHeader();
   int event_id = h->event_id_;
   h->fragment_id_ = rank_;
-  int event_size = frags_[use_me].size();
+  int event_size = frags_[use_me].dataSize();
   sm.found(event_id, use_me, dest(event_id));
   Debug << "send: " << rank_ << " id=" << event_id << " size=" << event_size
         << " idx=" << use_me << " dest=" << dest(event_id) << flusher;

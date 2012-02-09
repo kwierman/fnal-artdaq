@@ -22,7 +22,7 @@ set( LIB_SOURCES
      DS50EventReader.cc
      DS50EventSimulator.cc
      EventStore.cc
-     FragmentPool.cc
+     #FragmentPool.cc
      MonitoredQuantity.cc
      MPIProg.cc
      Perf.cc
@@ -89,7 +89,7 @@ link_libraries( ${LIB_NAME} artdaq_DAQdata)
 #                       ${common_exec_link_libraries} )
 
 add_executable( perfdump perfdump.cc )
-add_executable( builder builder.cc )
+#add_executable( builder builder.cc )
 
 # ----------------------------------------------------------------------
 # Install this project's headers, sources, library, and executables:

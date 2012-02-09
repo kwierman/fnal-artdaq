@@ -2,9 +2,9 @@
 
 namespace artdaq
 {
-  Fragment::Fragment() : vals_()
+  Fragment::Fragment() : vals_(data_offset_(), 0)
   { }
 
-  Fragment::Fragment(std::size_t n) : vals_(n)
+  Fragment::Fragment(std::size_t n) : vals_(n+data_offset_(), 0)
   { }
 }

@@ -6,9 +6,9 @@
 #include "DAQdata/RawData.hh"
 #include "cetlib/container_algorithms.h"
 
+#include <cassert>
 #include <fstream>
 #include <sstream>
-
 
 using namespace std;
 using namespace artdaq;
@@ -67,7 +67,7 @@ static void printError(int rc, int which, MPI_Status &)
 #endif
 }
 
-void RHandles::recvEvent(Fragment & e)
+void RHandles::recvEvent(Fragment & output)
 {
   // Debug << "recv entered" << flusher;
   RecvMeas rm;
@@ -84,18 +84,27 @@ void RHandles::recvEvent(Fragment & e)
   { throw "NOTE: MPI_UNDEFINED returned as on index value from Waitany"; }
   if (reqs_[which] != MPI_REQUEST_NULL)
   { throw "NOTE: req is not MPI_REQUEST_NULL in recvEvent"; }
-  // event at which is now available
-  e.clear();
-  e.reserve(frags_[which].size());
-  cet::for_all(frags_[which], [&](artdaq::Fragment::value_type i){e.push_back(i);});
 
-  frags_[which].swap(e);
-  artdaq::RawFragmentHeader* fh = e.fragmentHeader();
+  // The Fragment at index 'which' is now available. Copy its data
+  // into the output.
+  output = frags_[which];
+
+//   output.clear();
+//   output.reserve(frags_[which].size());
+//   cet::for_all(frags_[which], [&](artdaq::Fragment::value_type i){output.push_back(i);});
+//   frags_[which].swap(output);
+
+
+  artdaq::RawFragmentHeader* fh = output.fragmentHeader();
   int event_id = fh->event_id_;
-  int from = fh->fragment_id_;
-  // make sure the event buffer is big enough
-  if (frags_[which].size() < static_cast<size_t>(fragment_words_))
-  { frags_[which].resize(fragment_words_); }
+  int from     = fh->fragment_id_;
+
+  // This resetting should not be needed, because we're never changing
+  // frags_[which].
+  assert(frags_[which].dataSize()+3 == static_cast<size_t>(fragment_words_));
+//   // make sure the fragment buffer is big enough
+//   if (frags_[which].size() < static_cast<size_t>(fragment_words_))
+//   { frags_[which].resize(fragment_words_); }
   rm.woke(event_id, which);
   Debug << "recv: " << rank_ << " id=" << event_id << " from="
         << from << " which=" << which << flusher;

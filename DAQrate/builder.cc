@@ -111,7 +111,7 @@ void Program::detector()
     if ((i % 100) == 0) {
       MPI_Barrier(detector_comm_);
     }
-    pool(frag); // get fragment
+    pool(frag); // read or generate fragment
     h.sendEvent(frag);
   }
   Debug << "detector waiting " << conf_.rank_ << flusher;

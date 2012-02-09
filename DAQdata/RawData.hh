@@ -6,6 +6,7 @@
 
 namespace artdaq
 {
+  // This is the type referred to elsewhere as a 'word'.
   typedef uint32_t RawDataType;
 
   /*
@@ -29,6 +30,9 @@ namespace artdaq
     RawDataType word_count_;
     RawDataType event_id_;
     RawDataType fragment_id_;
+#if !defined(__GCCXML__) && defined(__GXX_EXPERIMENTAL_CXX0X__)
+    constexpr static std::size_t num_vals() { return 3; }
+#endif
   };
 
 }

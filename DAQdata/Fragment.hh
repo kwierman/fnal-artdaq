@@ -21,38 +21,43 @@ namespace artdaq
     Fragment();
     explicit Fragment(std::size_t n);
 
-    std::size_t size() const
-    { return vals_.size(); }
+#if !defined(__GCCXML__) && defined(__GXX_EXPERIMENTAL_CXX0X__)
+    // Return the number of words in the data payload. This does not
+    // include the number of words in the header.
+    std::size_t dataSize() const
+    { return vals_.size() - data_offset_(); }
 
+    // Resize the data payload to hold sz words.
     void resize(std::size_t sz, RawDataType v = RawDataType())
-    { vals_.resize(sz, v); }
+    { vals_.resize(sz+data_offset_(), v); }
 
-    iterator begin()
-    { return vals_.begin(); }
+    // Return an iterator to the beginning of the data payload.
+    iterator dataBegin()
+    { return vals_.begin() + data_offset_(); }
 
-    iterator end()
+    iterator dataEnd()
     { return vals_.end(); }
 
-    const_iterator begin() const
-    { return vals_.begin(); }
+    const_iterator dataBegin() const
+    { return vals_.begin() + data_offset_(); }
 
-    const_iterator end() const
+    const_iterator dataEnd() const
     { return vals_.end(); }
 
     RawDataType& operator[](std::size_t i)
-    { return vals_[i]; }
+    { return vals_[i+data_offset_()]; }
 
     RawDataType operator[](std::size_t i) const
-    { return vals_[i]; }
+    { return vals_[i+data_offset_()]; }
 
     void clear()
-    { vals_.clear(); }
+    { vals_.erase(dataBegin(), dataEnd()); }
 
     bool empty()
-    { return vals_.empty(); }
+    { return vals_.size() - data_offset_() == 0; }
 
     void reserve(std::size_t cap)
-    { vals_.reserve(cap); }
+    { vals_.reserve(cap + data_offset_()); }
 
     void push_back(RawDataType v)
     { vals_.push_back(v); }
@@ -65,41 +70,24 @@ namespace artdaq
 
     RawFragmentHeader const* fragmentHeader() const
     { return reinterpret_cast<RawFragmentHeader const*>(&vals_[0]); }
+#endif
 
   private:
+#if !defined(__GCCXML__) && defined(__GXX_EXPERIMENTAL_CXX0X__)
+    constexpr static std::size_t data_offset_() 
+    { return RawFragmentHeader::num_vals(); }
+#endif
+
     std::vector<RawDataType> vals_;
   };
 
+#if !defined(__GCCXML__) && defined(__GXX_EXPERIMENTAL_CXX0X__)
   inline void swap(Fragment& x, Fragment& y) { x.swap(y); }
+#endif
 
   typedef std::vector<uint64_t>           CompressedFragPart;
   typedef std::vector<CompressedFragPart> CompressedFragParts;
 
-  struct DarkSideHeaderOverlay
-  {
-    unsigned long event_size_ : 28;
-    unsigned long junk1 : 4;
-    unsigned long channel_mask_ : 8;
-    unsigned long pattern_ : 16;
-    unsigned long junk2 : 3;
-    unsigned long board_id_ : 5;
-    unsigned long event_counter_ : 24;
-    unsigned long reserved_ : 8;
-    unsigned long trigger_time_tag_ : 32;
-  };
 
-  struct DarkSideHeader
-  {
-    unsigned long word0;
-    unsigned long word1;
-  };
-
-  struct CompressedBoard
-  {
-    DarkSideHeader header_;
-    CompressedFragParts parts_;
-  };
-
-  typedef std::vector<CompressedBoard> CompressedRawEvent;
 }
 #endif

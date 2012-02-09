@@ -13,7 +13,7 @@
 #include <sys/time.h>
 #include <omp.h>
 
-#include "DAQdata/Fragment.hh"
+#include "DAQdata/DS50data.hh"
 #include "Properties.hh"
 #include "SymCode.hh"
 #include "Encoder.hh"

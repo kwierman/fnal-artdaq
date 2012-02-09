@@ -1,3 +1,12 @@
+#error "Building of FragmentPool is temporarily disabled"
+/*
+
+This class may no longer be relevant. If it *is* relevant, it needs to
+be un-broken.
+
+It's use should probably be replaced by use of DS50EventReader.
+
+*/
 
 #include "FragmentPool.hh"
 #include "DAQdata/Fragment.hh"
@@ -38,11 +47,12 @@ FragmentPool::FragmentPool(Config const& conf):
     unsigned dsHeaderWords = 1 +
       ((sizeof(DarkSideHeaderOverlay)-1) / sizeof(RawDataType));
 
-    // ensure that the data buffer is large enough to hold the header
-    if (frag_.size() < dsHeaderWords)
-    {
-      frag_.resize(dsHeaderWords);
-    }
+    // THE FOLLOWING is now guaranteed by constructor of Fragment.
+//     // ensure that the data buffer is large enough to hold the header
+//     if (frag_.size() < dsHeaderWords)
+//     {
+//       frag_.resize(dsHeaderWords);
+//     }
 
     // read in the first header
     char *cp = (char*)&frag_[0];
@@ -75,7 +85,7 @@ FragmentPool::FragmentPool(Config const& conf):
       if (ifs_.eof()) break;
 
       // resize the buffer, if needed (unlikely)
-      if (frag_.size() < (wordsReadFromFile_ + dsHeaderWords))
+      if (frag_.dataSize()+3 < (wordsReadFromFile_ + dsHeaderWords))
       {
         frag_.resize(wordsReadFromFile_ + dsHeaderWords);
         cp = ((char*)&frag_[0]) + (wordsReadFromFile_*sizeof(RawDataType));
@@ -90,7 +100,7 @@ FragmentPool::FragmentPool(Config const& conf):
       unsigned fragmentWords = dshop->event_size_;
 
       // resize the buffer, if needed
-      if (frag_.size() < (wordsReadFromFile_ + fragmentWords))
+      if (frag_.dataSize()+3 < (wordsReadFromFile_ + fragmentWords))
       {
         frag_.resize(wordsReadFromFile_ + (10 * fragmentWords));
         cp = ((char*)&frag_[0]) + (wordsReadFromFile_*sizeof(RawDataType));
@@ -132,7 +142,7 @@ FragmentPool::FragmentPool(Config const& conf):
 
   // otherwise generate random data to be used
   else {
-    generate(frag_.begin(),frag_.end(),LongMaker());
+    //generate(frag_.begin(),frag_.end(),LongMaker());
   }
 }
 
@@ -153,7 +163,7 @@ void FragmentPool::operator()(Fragment& output)
 
     unsigned rfHeaderWords = 1 +
       ((sizeof(RawFragmentHeader)-1) / sizeof(RawDataType));
-    if (output.size() < (fragmentWords+rfHeaderWords))
+    if (output.dataSize()+3 < (fragmentWords+rfHeaderWords))
     {
       output.resize(fragmentWords+rfHeaderWords);
     }
