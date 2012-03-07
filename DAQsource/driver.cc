@@ -1,6 +1,5 @@
 #include "boost/program_options.hpp"
 
-#include "DAQdata/RawData.hh"
 #include "DAQdata/Fragments.hh"
 #include "DAQrate/EventStore.hh"
 #include "DAQrate/DS50EventGenerator.hh"
@@ -73,7 +72,7 @@ int main(int argc, char* argv[]) try
 
     artdaq::EventStore store(ds_pset.get<int>("source_count"),
                              ds_pset.get<int>("run_number"),
-                             argc,argv);
+                             argc, argv);
 
     // Read or generate fragments as rapidly as possible, and feed them
     // into the EventStore. The throughput resulting from this design
@@ -81,15 +80,15 @@ int main(int argc, char* argv[]) try
     // speed as the limiting factor
     artdaq::FragmentPtrs frags;
 
-    while(gen->getNext(frags))
+    while (gen->getNext(frags))
       {
         for (auto& val : frags)
           {
             store.insert(std::move(val));
           }
       }
-#if 0
 
+#if 0
     // buffering way
     vector<FragmentPtrs> event_buffer;
     int total_events = ds_pset.get<int>("total_events");

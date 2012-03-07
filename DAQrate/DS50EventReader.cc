@@ -5,8 +5,6 @@
 
 using fhicl::ParameterSet;
 
-const std::size_t NUM_BOARDS = 5; // Should this be a configuration parameter?
-
 namespace artdaq
 {
   DS50EventReader::DS50EventReader(ParameterSet const&)

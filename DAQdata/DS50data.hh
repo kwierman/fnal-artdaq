@@ -2,9 +2,26 @@
 #define artdaq_DAQdata_DS50data_hh
 
 #include "Fragment.hh"
+#include "features.hh"
 
 // TODO: Consider changing this from namespace artdaq, with long type
 // names, to namespace ds50, with short type names.
+
+namespace ds50
+{
+  class Board
+  {
+  public:
+    Board();
+#if USE_MODERN_FEATURES
+    // Note that the given fragment f is plundered; call this c'tor
+    // using std::move.
+    explicit Board(artdaq::Fragment&& f);
+#endif
+  private:
+    artdaq::Fragment data_;
+  };
+}
 
 namespace artdaq
 {

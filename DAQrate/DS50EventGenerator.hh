@@ -18,6 +18,8 @@ namespace artdaq
     // indicate end-of-data.
     bool getNext(FragmentPtrs& output);
 
+    static constexpr std::size_t num_boards() { return 5; }
+
   private:
     virtual bool getNext_(FragmentPtrs& output) = 0;
   };

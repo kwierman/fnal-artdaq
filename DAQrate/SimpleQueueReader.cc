@@ -1,34 +1,9 @@
 #include "SimpleQueueReader.hh"
-#include "DAQdata/RawData.hh"
 #include "DAQdata/DS50data.hh"
 
 #include <cassert>
-#include <string>
 #include <iostream>
-
-
-void printRawEvent(artdaq::RawEvent const& rawEvent)
-{
-  std::cout << "Run " << rawEvent.header_.run_id_
-            << ", Event " << rawEvent.header_.event_id_
-            << ", FragCount " << rawEvent.fragments_.size()
-            << ", WordCount " << rawEvent.header_.word_count_
-            << std::endl;
-  for (int idx = 0; idx < (int) rawEvent.fragments_.size(); ++idx) {
-    artdaq::Fragment const& frag = *(rawEvent.fragments_[idx]);
-    artdaq::RawFragmentHeader const* rfh = frag.fragmentHeader();
-    std::cout << "  Fragment " << rfh->fragment_id_
-              << ", WordCount " << rfh->word_count_
-              << ", Event " << rfh->event_id_
-              << std::endl;
-    artdaq::DarkSideHeaderOverlay* dsh =
-      (artdaq::DarkSideHeaderOverlay*)(((char*)rfh) + sizeof(artdaq::RawFragmentHeader));
-    std::cout << "    DarkSide50: Event Size = " << dsh->event_size_
-              << ", Board ID " << dsh->board_id_
-              << ", Event Counter " << dsh->event_counter_
-              << std::endl;
-  }
-}
+#include <string>
 
 namespace artdaq {
 
@@ -66,7 +41,7 @@ namespace artdaq {
         if (!rawEventPtr) { break; }
         ++eventsSeen;
         // Otherwise, do our work ...
-        if (doPrint) printRawEvent(*rawEventPtr);
+        if (doPrint) std::cout << *rawEventPtr << std::endl;
       }
       else {
         usleep(250000);

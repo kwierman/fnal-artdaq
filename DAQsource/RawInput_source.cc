@@ -95,19 +95,19 @@ namespace artdaq {
     art::Timestamp runstart;
     // make new runs or subruns if in* are 0 or if the run/subrun
     // have changed
-    if (inR == 0 || inR->run() != p->header_.run_id_) {
-      outR = pm_.makeRunPrincipal(p->header_.run_id_,
+    if (inR == 0 || inR->run() != p->runID()) {
+      outR = pm_.makeRunPrincipal(p->runID(),
                                   runstart);
     }
-    art::SubRunID subrun_check(p->header_.run_id_, p->header_.subrun_id_);
+    art::SubRunID subrun_check(p->runID(), p->subrunID());
     if (inSR == 0 || subrun_check != inSR->id()) {
-      outSR = pm_.makeSubRunPrincipal(p->header_.run_id_,
-                                      p->header_.subrun_id_,
+      outSR = pm_.makeSubRunPrincipal(p->runID(),
+                                      p->subrunID(),
                                       runstart);
     }
-    outE = pm_.makeEventPrincipal(p->header_.run_id_,
-                                  p->header_.subrun_id_,
-                                  p->header_.event_id_,
+    outE = pm_.makeEventPrincipal(p->runID(),
+                                  p->subrunID(),
+                                  p->eventID(),
                                   runstart);
     // add all the fragments as products
     if (inst_names_.size() < p->fragments_.size()) {
@@ -115,7 +115,7 @@ namespace artdaq {
         << "more raw data fragments than expected.\n"
         << "expected " << inst_names_.size() << " and got "
         << p->fragments_.size() << "\n"
-        << "for event " << p->header_.run_id_;
+        << "for event " << p->runID();
     }
     for (size_t i = 0, sz = p->fragments_.size();
          i < sz; ++i) {

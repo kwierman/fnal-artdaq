@@ -3,7 +3,9 @@ project(artdaq_DAQdata_DAQdataDictionaries)
 
 set( LIB_NAME artdaq_DAQdata)
 set( LIB_SOURCES
+     DS50data.cc
      Fragment.cc
+     RawEvent.cc
     )
 
 add_library( ${LIB_NAME} SHARED ${LIB_SOURCES} )

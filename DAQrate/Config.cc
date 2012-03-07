@@ -1,7 +1,7 @@
 
 #include "Config.hh"
 #include "Perf.hh"
-#include "DAQdata/RawData.hh"
+#include "DAQdata/Fragment.hh"
 
 #include <cstring>
 #include <iostream>

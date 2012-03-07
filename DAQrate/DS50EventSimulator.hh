@@ -23,6 +23,7 @@ namespace artdaq
 
     std::size_t events_to_generate_; // go forever if this is 0
     std::size_t events_gotten_;
+    RawDataType run_number_;
   };
 }
 

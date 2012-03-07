@@ -11,11 +11,12 @@ Definitions
 A 'Fragment' contains a vector of data words.
 
 A 'FramentHandle' provides unique ownership of a
-Fragment. FragmentPtrs can't be copyied, but can be moved.
+Fragment. FragmentPtrs can't be copied, but can be moved.
 
 A 'data word' is an unsigned integer of a size determined to be
 natural for the problem being solved; this will usually be the natural
-size of an integer on the DAQ platform.
+size of an integer on the DAQ platform. Currently, this is a 64-bit
+unsigned integer.
 
 Flow
 ----

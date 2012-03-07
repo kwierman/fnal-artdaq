@@ -3,7 +3,6 @@
 #include "Perf.hh"
 #include "Debug.hh"
 #include "Utils.hh"
-#include "DAQdata/RawData.hh"
 #include "DAQdata/Fragment.hh"
 
 #define MY_TAG 2
@@ -59,12 +58,14 @@ void SHandles::sendEvent(Fragment & frag)
   SendMeas sm;
   int use_me = findAvailable();
   frags_[use_me].swap(frag);
-  artdaq::RawFragmentHeader* h = frags_[use_me].fragmentHeader();
-  int event_id = h->event_id_;
-  h->fragment_id_ = rank_;
-  int event_size = frags_[use_me].dataSize();
+  //artdaq::RawFragmentHeader* h = frags_[use_me].fragmentHeader();
+  //int event_id = h->event_id_;
+  Fragment::event_id_t event_id = frags_[use_me].eventID();
+
+  // h->fragment_id_ = rank_; // Not needed: our Fragment should be well-formed
+  size_t fragment_size = frags_[use_me].size();
   sm.found(event_id, use_me, dest(event_id));
-  Debug << "send: " << rank_ << " id=" << event_id << " size=" << event_size
+  Debug << "send: " << rank_ << " id=" << event_id << " size=" << fragment_size
         << " idx=" << use_me << " dest=" << dest(event_id) << flusher;
   MPI_Isend(&(frags_[use_me])[0], (fragment_words_ * sizeof(artdaq::RawDataType)),
             MPI_BYTE, dest(event_id),

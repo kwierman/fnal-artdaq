@@ -10,7 +10,6 @@ It's use should probably be replaced by use of DS50EventReader.
 
 #include "FragmentPool.hh"
 #include "DAQdata/Fragment.hh"
-#include "DAQdata/RawData.hh"
 #include "MonitoredQuantity.hh"
 #include "Utils.hh"
 #include <fstream>

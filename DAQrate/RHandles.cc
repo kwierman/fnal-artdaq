@@ -3,7 +3,6 @@
 #include "Perf.hh"
 #include "Debug.hh"
 #include "Utils.hh"
-#include "DAQdata/RawData.hh"
 #include "cetlib/container_algorithms.h"
 
 #include <cassert>
@@ -95,16 +94,19 @@ void RHandles::recvEvent(Fragment & output)
 //   frags_[which].swap(output);
 
 
-  artdaq::RawFragmentHeader* fh = output.fragmentHeader();
-  int event_id = fh->event_id_;
-  int from     = fh->fragment_id_;
+  //artdaq::detail::RawFragmentHeader* fh = output.fragmentHeader();
+
+  //   int event_id = fh->event_id;
+  Fragment::event_id_t event_id = output.eventID();
+
+  //  int from     = fh->fragment_id;
+  Fragment::fragment_id_t from = output.fragmentID();
 
   // This resetting should not be needed, because we're never changing
   // frags_[which].
-  assert(frags_[which].dataSize()+3 == static_cast<size_t>(fragment_words_));
-//   // make sure the fragment buffer is big enough
-//   if (frags_[which].size() < static_cast<size_t>(fragment_words_))
-//   { frags_[which].resize(fragment_words_); }
+  //   // make sure the fragment buffer is big enough
+  //   if (frags_[which].size() < static_cast<size_t>(fragment_words_))
+  //   { frags_[which].resize(fragment_words_); }
   rm.woke(event_id, which);
   Debug << "recv: " << rank_ << " id=" << event_id << " from="
         << from << " which=" << which << flusher;

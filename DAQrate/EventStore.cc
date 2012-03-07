@@ -7,8 +7,11 @@
 #include <iomanip>
 #include <fstream>
 #include <sstream>
+
+#include "quiet_mpi.hh"
 #include "StatisticsCollection.hh"
 #include "SimpleQueueReader.hh"
+#include "Utils.hh"
 
 using namespace std;
 
@@ -16,8 +19,8 @@ namespace
 {
   typedef int (ARTFUL_FCN)(int, char**);
 
-  // Because we can't depend on art, we copied this from hard_cast.h
-
+  // Because we do not want to introduce a compile- or link-time
+  // dependence on art, we copied this from hard_cast.h
   inline
   void
   hard_cast(void * src, ARTFUL_FCN* & dest)
@@ -37,9 +40,9 @@ namespace
     return result;
   }
 
-  ARTFUL_FCN* choose_function(Config const& cfg)
+  ARTFUL_FCN* choose_function(bool use_artapp)
   {
-    return (cfg.use_artapp_) ? get_artapp() : &artdaq::simpleQueueReaderApp;
+    return (use_artapp) ? get_artapp() : &artdaq::simpleQueueReaderApp;
   }
 }
 
@@ -47,28 +50,41 @@ namespace artdaq
 {
   const std::string EventStore::EVENT_RATE_STAT_KEY("EventStoreEventRate");
 
-   EventStore::EventStore(int src_count,
-                          int run,
-                          int argc __attribute__((unused)),
-                          char* argv[] __attribute__((unused))):
-    rank_(0),
-    sources_(src_count),
-    fragmentIdOffset_(0),
-    run_(run),
+  inline int get_mpi_rank()
+  {
+    int rk(0);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rk);
+    return rk;
+  }
+
+  EventStore::EventStore(size_t num_fragments_per_event,
+                         run_id_t run,
+                         int argc __attribute__((unused)),
+                         char* argv[] __attribute__((unused))):
+    id_(0),
+    num_fragments_per_event_(num_fragments_per_event),
+    run_id_(run),
+    subrun_id_(0),
     events_(),
     queue_(getGlobalQueue()),
     reader_thread_(simpleQueueReaderApp, 0, nullptr)
   {
+    // TODO: Consider doing away with the named local mqPtr, and
+    // making use of make_shared<MonitoredQuantity> in the call to
+    // addMonitoredQuantity. Maybe modify addMonitoredQuantity to be a
+    // variadic template that forwards its function arguments to the
+    // constructor of the MonitoredQuantity being made?
     MonitoredQuantityPtr mqPtr(new MonitoredQuantity(1.0, 60.0));
     StatisticsCollection::getInstance().
       addMonitoredQuantity(EVENT_RATE_STAT_KEY, mqPtr);
   }
 
-  EventStore::EventStore(Config const& conf) :
-    rank_(conf.rank_),
-    sources_(conf.sources_),
-    fragmentIdOffset_(conf.srcStart()),
-    run_(conf.run_),
+  EventStore::EventStore(size_t num_fragments_per_event,
+                         run_id_t run) :
+    id_(get_mpi_rank()),
+    num_fragments_per_event_(num_fragments_per_event),
+    run_id_(run),
+    subrun_id_(0),
     events_(),
     queue_(getGlobalQueue()),
     reader_thread_(simpleQueueReaderApp, 0, nullptr)
@@ -81,20 +97,86 @@ namespace artdaq
   EventStore::~EventStore()
   {
     reader_thread_.join();
+    reportStatistics_();
+  }
 
+  void EventStore::insert(FragmentPtr pfrag)
+  {
+    // We should never get a null pointer, nor should we get a
+    // Fragment without a good fragment ID.
+    assert(pfrag != nullptr);
+    assert(pfrag->fragmentID() != Fragment::InvalidFragmentID);
+
+    // find the event being built and put the fragment into it,
+    // start new event if not already present
+    // if the event is complete, delete it and report timing
+
+    //RawFragmentHeader* fh = pfrag->fragmentHeader();
+    Fragment::event_id_t event_id = pfrag->eventID();
+
+    // The fragmentID is expected to be correct in the incoming
+    // fragment; the EventStore has no business changing it in the
+    // current design.
+    //     // update the fragment ID (up to this point, it has been set to the
+    //     // detector rank or the source rank, but now we just want a simple index)
+    //     fh->fragment_id_ -= fragmentIdOffset_;
+
+    // Find if the right event id is already known to events_ and, if so, where
+    // it is.
+    EventMap::iterator loc = events_.lower_bound(event_id);
+    if (loc == events_.end() || events_.key_comp()(event_id, loc->first))
+      {
+        // We don't have an event with this id; create one an insert it at loc,
+        // and ajust loc to point to the newly inserted event.
+        RawEvent_ptr newevent(new RawEvent(run_id_, subrun_id_, event_id));
+        loc = 
+          events_.insert(loc, EventMap::value_type(event_id, newevent));
+      }
+
+    // Now insert the fragment into the event we have located.
+    loc->second->insertFragment(std::move(pfrag));
+
+    if (loc->second->numFragments() == num_fragments_per_event_)
+      {
+        // This RawEvent is complete; capture it, remove it from the
+        // map, report on statistics, and put the shared pointer onto
+        // the event queue.
+        RawEvent_ptr complete_event(loc->second);
+        PerfWriteEvent(EventMeas::END,event_id);
+        events_.erase(loc);
+        queue_.enqNowait(complete_event);
+
+        MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
+          getMonitoredQuantity(EVENT_RATE_STAT_KEY);
+        if (mqPtr.get() != 0) {
+          mqPtr->addSample(complete_event->wordCount());
+        }
+      }
+  }
+
+  void
+  EventStore::endOfData()
+  {
+    RawEvent_ptr end_of_data(0);
+    queue_.enqNowait(end_of_data);
+  }
+
+  void
+  EventStore::reportStatistics_()
+  {
     MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
       getMonitoredQuantity(EVENT_RATE_STAT_KEY);
     if (mqPtr.get() != 0) {
       ostringstream oss;
-      oss << EVENT_RATE_STAT_KEY << "_" << setfill('0') << setw(4) << run_
-          << "_" << setfill('0') << setw(4) << rank_ << ".txt";
+      oss << EVENT_RATE_STAT_KEY << "_" << setfill('0') << setw(4) << run_id_
+          << "_" << setfill('0') << setw(4) << id_ << ".txt";
       std::string filename = oss.str();
       ofstream outStream(filename.c_str());
 
       mqPtr->waitUntilAccumulatorsHaveBeenFlushed(1.0);
       artdaq::MonitoredQuantity::Stats stats;
       mqPtr->getStats(stats);
-      outStream << "EventStore rank " << rank_ << ": events processed = "
+      outStream << "EventStore rank " << id_ << ": events processed = "
                 << stats.fullSampleCount << " at " << stats.fullSampleRate
                 << " events/sec, date rate = "
                 << (stats.fullValueRate * sizeof(RawDataType)
@@ -123,70 +205,5 @@ namespace artdaq
       }
       outStream.close();
     }
-  }
-
-  void EventStore::insert(FragmentPtr && pfrag)
-  {
-    assert(pfrag != nullptr);
-    assert(!pfrag->empty());
-
-    Fragment& ef = *pfrag;
-
-    // find the event being built and put the fragment into it,
-    // start new event if not already present
-    // if the event is complete, delete it and report timing
-
-    RawFragmentHeader* fh = ef.fragmentHeader();
-    RawDataType event_id = fh->event_id_;
-
-    // update the fragment ID (up to this point, it has been set to the
-    // detector rank or the source rank, but now we just want a simple index)
-    fh->fragment_id_ -= fragmentIdOffset_;
-
-    RawEvent_ptr rawEventPtr(new RawEvent());
-    pair<EventMap::iterator,bool> p =
-      events_.insert(EventMap::value_type(event_id, rawEventPtr));
-
-    bool newElementInMap = p.second;
-    rawEventPtr = p.first->second;
-
-    if (newElementInMap)
-      {
-        PerfWriteEvent(EventMeas::START,event_id);
-
-        rawEventPtr->header_.word_count_ = fh->word_count_ +
-          (sizeof(RawEventHeader) / sizeof(RawDataType));
-        rawEventPtr->header_.run_id_ = run_;
-        rawEventPtr->header_.subrun_id_ = 0;
-        rawEventPtr->header_.event_id_ = event_id;
-      }
-    else
-      {
-        rawEventPtr->header_.word_count_ += fh->word_count_;
-      }
-
-    FragmentPtr fp(new Fragment(fh->word_count_));
-    memcpy(&(*fp)[0], &ef[0], (fh->word_count_ * sizeof(RawDataType)));
-    rawEventPtr->fragments_.push_back(std::move(fp));
-
-    if (static_cast<int>(rawEventPtr->fragments_.size()) == sources_)
-      {
-        PerfWriteEvent(EventMeas::END,event_id);
-        events_.erase(p.first);
-        queue_.enqNowait( rawEventPtr );
-
-        MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
-          getMonitoredQuantity(EVENT_RATE_STAT_KEY);
-        if (mqPtr.get() != 0) {
-          mqPtr->addSample(rawEventPtr->header_.word_count_);
-        }
-      }
-  }
-
-  void
-  EventStore::endOfData()
-  {
-    RawEvent_ptr end_of_data(0);
-    queue_.enqNowait(end_of_data);
   }
 }

@@ -2,7 +2,6 @@
 #define DAQ_GLOBAL_QUEUE_HH
 
 #include "DAQrate/ConcurrentQueue.hh"
-#include "DAQdata/RawData.hh"
 #include "DAQdata/RawEvent.hh"
 #include <memory>
 
