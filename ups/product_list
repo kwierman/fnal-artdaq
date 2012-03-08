@@ -1,7 +1,5 @@
-
 # set up CET products
 setup cetpkgsupport
-setup cetbuildtools v1_15_04
+setup cetbuildtools v1_15_09
 setup -B art_openmp v0_00_02 -q +$CETPKG_QUAL$extraqual
 setup -B mvapich2 v1_6_0
-
