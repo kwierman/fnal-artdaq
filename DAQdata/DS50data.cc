@@ -1,8 +1,9 @@
-#include "DS50data.hh"
+#include "Board.hh"
 
-namespace ds50
-{
-  Board::Board(artdaq::Fragment&& f) : 
-    data_(f) 
-  { }
-}
+ds50::Board::Board() :
+  data_()
+{ }
+
+Board::Board(artdaq::Fragment&& f) : 
+  data_(f) 
+{ }
