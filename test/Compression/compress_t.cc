@@ -1,6 +1,6 @@
-#include "Compression/Decoder.hh"
-#include "Compression/Encoder.hh"
-#include "Compression/Properties.hh"
+#include "artdaq/Compression/Decoder.hh"
+#include "artdaq/Compression/Encoder.hh"
+#include "artdaq/Compression/Properties.hh"
 
 #include <cassert>
 #include <algorithm>

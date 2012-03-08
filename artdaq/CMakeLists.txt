@@ -1,0 +1,4 @@
+add_subdirectory(Compression)
+add_subdirectory(DAQrate)
+add_subdirectory(DAQdata)
+add_subdirectory(DAQsource)

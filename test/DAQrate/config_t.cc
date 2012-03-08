@@ -1,4 +1,4 @@
-#include "DAQrate/Config.hh"
+#include "artdaq/DAQrate/Config.hh"
 #include <cstring>
 #include <cassert>
 

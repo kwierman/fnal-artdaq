@@ -118,10 +118,7 @@ include(ArtDictionary)
 include(BuildPlugins)
 
 # source
-add_subdirectory(Compression)
-add_subdirectory(DAQrate)
-add_subdirectory(DAQdata)
-add_subdirectory(DAQsource)
+add_subdirectory(artdaq)
 
 # testing
 add_subdirectory(test)

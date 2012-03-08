@@ -1,5 +1,5 @@
-#ifndef CU_ALLOC_H
-#define CU_ALLOC_H
+#ifndef gpuPerf_alloc_hh
+#define gpuPerf_alloc_hh
 
 #include <iostream>
 
@@ -52,4 +52,4 @@ namespace cu
 }
 
 
-#endif
+#endif /* gpuPerf_alloc_hh */
