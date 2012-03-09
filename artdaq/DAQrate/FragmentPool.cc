@@ -4,7 +4,7 @@
 This class may no longer be relevant. If it *is* relevant, it needs to
 be un-broken.
 
-It's use should probably be replaced by use of DS50EventReader.
+It's use should probably be replaced by use of DS50FragmentReader.
 
 */
 

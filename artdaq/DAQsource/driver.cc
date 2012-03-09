@@ -2,9 +2,9 @@
 
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQrate/EventStore.hh"
-#include "artdaq/DAQrate/DS50EventGenerator.hh"
-#include "artdaq/DAQrate/DS50EventReader.hh"
-#include "artdaq/DAQrate/DS50EventSimulator.hh"
+#include "artdaq/DAQrate/FragmentGenerator.hh"
+#include "artdaq/DAQrate/DS50FragmentReader.hh"
+#include "artdaq/DAQrate/DS50FragmentSimulator.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/make_ParameterSet.h"
 #include "cetlib/filepath_maker.h"
@@ -18,12 +18,12 @@ using namespace std;
 using namespace fhicl;
 namespace  bpo = boost::program_options;
 
-artdaq::DS50EventGenerator* make_generator(ParameterSet const& ps)
+artdaq::FragmentGenerator* make_generator(ParameterSet const& ps)
 {
   if (ps.get<bool>("do_random"))
-    return new artdaq::DS50EventSimulator(ps);
+    return new artdaq::DS50FragmentSimulator(ps);
   else
-    return new artdaq::DS50EventReader(ps);
+    return new artdaq::DS50FragmentReader(ps);
 }
 
 int main(int argc, char* argv[]) try
@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) try
                       lookup_policy, pset);
     ParameterSet ds_pset = pset.get<ParameterSet>("ds50");
 
-    std::unique_ptr<artdaq::DS50EventGenerator> const gen(make_generator(ds_pset));
+    std::unique_ptr<artdaq::FragmentGenerator> const gen(make_generator(ds_pset));
 
     artdaq::EventStore store(ds_pset.get<int>("source_count"),
                              ds_pset.get<int>("run_number"),
