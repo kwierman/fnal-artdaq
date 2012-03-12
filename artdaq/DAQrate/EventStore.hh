@@ -1,7 +1,6 @@
 #ifndef artdaq_DAQrate_EventStore_hh
 #define artdaq_DAQrate_EventStore_hh
 
-#include "artdaq/DAQrate/Fragment.hh"
 #include "artdaq/DAQdata/RawEvent.hh"
 #include "artdaq/DAQrate/GlobalQueue.hh"
 
