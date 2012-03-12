@@ -22,6 +22,8 @@ set( LIB_SOURCES
 
 add_library( ${LIB_NAME} SHARED ${LIB_SOURCES} )
 
+target_link_libraries(${LIB_NAME} artdaq_DAQdata)
+
 # ----------------------------------------------------------------------
 # Build this project's executables:
 
