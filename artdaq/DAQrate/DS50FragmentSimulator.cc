@@ -19,7 +19,6 @@ artdaq::DS50FragmentSimulator::getNext_(FragmentPtrs & frags)
       current_event_num_ > events_to_generate_) {
     return false;
   }
-  FragmentPtrs tmp;
   RawDataType fragID(0);
   for (size_t i = 0; i < fragments_per_event_; ++i) {
     ++fragID;
