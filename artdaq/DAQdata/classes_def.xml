@@ -2,9 +2,6 @@
 <lcgdict>
   <class name="artdaq::RawDataType"/>
   <class name="artdaq::Fragment"/>
-  <class name="artdaq::CompressedFragPart"/>
-  <class name="artdaq::CompressedFragParts"/>
-  <class name="artdaq::DarkSideHeader"/>
-  <class name="artdaq::CompressedBoard"/>
-  <class name="art::Wrapper<artdaq::Fragment>"/>
+  <class name="std::vector<artdaq::Fragment>"/>
+  <class name="art::Wrapper<std::vector<artdaq::Fragment> >"/>
 </lcgdict>
