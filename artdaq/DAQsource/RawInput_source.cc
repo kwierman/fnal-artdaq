@@ -57,7 +57,7 @@ namespace artdaq {
     resume_after_timeout(ps.get<bool>("resume_after_timeout", true)),
     pretend_module_name("daq")
   {
-    help.reconstitutes<Fragment, art::InEvent>(pretend_module_name);
+    help.reconstitutes<std::vector<Fragment>, art::InEvent>(pretend_module_name);
   }
 
   inline
@@ -66,16 +66,16 @@ namespace artdaq {
   }
 
   void detail::RawEventQueueReader::readFile(string const & /* name */,
-                                     art::FileBlock* & fb)
+                                             art::FileBlock* & fb)
   {
     fb = new art::FileBlock(art::FileFormatVersion(1, "RawEvent2011"), "nothing");
   }
 
   bool detail::RawEventQueueReader::readNext(art::RunPrincipal* const & inR,
-                                           art::SubRunPrincipal* const & inSR,
-                                           art::RunPrincipal* & outR,
-                                           art::SubRunPrincipal* & outSR,
-                                           art::EventPrincipal* & outE)
+                                             art::SubRunPrincipal* const & inSR,
+                                             art::RunPrincipal* & outR,
+                                             art::SubRunPrincipal* & outSR,
+                                             art::EventPrincipal* & outE)
   {
     RawEvent_ptr popped_event;
 
@@ -116,13 +116,13 @@ namespace artdaq {
     art::SubRunID subrun_check(popped_event->runID(), popped_event->subrunID());
     if (inSR == 0 || subrun_check != inSR->id()) {
       outSR = pmaker.makeSubRunPrincipal(popped_event->runID(),
-                                      popped_event->subrunID(),
-                                      runstart);
+                                         popped_event->subrunID(),
+                                         runstart);
     }
     outE = pmaker.makeEventPrincipal(popped_event->runID(),
-                                  popped_event->subrunID(),
-                                  popped_event->eventID(),
-                                  runstart);
+                                     popped_event->subrunID(),
+                                     popped_event->eventID(),
+                                     runstart);
 
     // Finally, grab the Fragments out of the RawEvent, and insert
     // them into the EventPrincipal.
