@@ -54,7 +54,7 @@ namespace artdaq {
   {
     for_each(inst_names_.cbegin(), inst_names_.cend(),
              [&](string const & iname) {
-               help.reconstitutes<Fragment, art::InEvent>("RawInput", iname);
+               help.reconstitutes<Fragment, art::InEvent>("DS50RawInput", iname);
              });
   }
 
@@ -131,7 +131,7 @@ namespace artdaq {
     return true;
   }
 
-  typedef art::ReaderSource<RawEventQueueReader> RawInput;
+  typedef art::ReaderSource<RawEventQueueReader> DS50RawInput;
 }
 
-DEFINE_ART_INPUT_SOURCE(artdaq::RawInput)
+DEFINE_ART_INPUT_SOURCE(artdaq::DS50RawInput)
