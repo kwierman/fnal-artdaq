@@ -11,18 +11,17 @@ namespace detail {
   struct RawFragmentHeader;
 }
 
-struct detail::RawFragmentHeader
-{
+struct detail::RawFragmentHeader {
   typedef uint64_t RawDataType;
 
 #if USE_MODERN_FEATURES
   typedef uint16_t version_t;
   typedef uint64_t event_id_t;
-  enum type_t : uint8_t {
+enum type_t : uint8_t {
     DATA = 0,
-      END_OF_DATA,
-      INVALID = 0xFF
-           };
+    END_OF_DATA,
+    INVALID = 0xFF
+  };
   typedef uint16_t fragment_id_t;
 
   // Each of the following invalid values is chosen based on the
@@ -42,7 +41,7 @@ struct detail::RawFragmentHeader
   RawDataType fragment_id : 16;
 
   constexpr static std::size_t num_words()
-    { return sizeof(detail::RawFragmentHeader); }
+  { return sizeof(detail::RawFragmentHeader); }
 
 #endif /* USE_MODERN_FEATURES */
 
