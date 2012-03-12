@@ -21,10 +21,10 @@ public:
 private:
   virtual bool getNext_(FragmentPtrs & output);
 
-  std::size_t events_to_generate_; // go forever if this is 0
-  std::size_t events_gotten_;
-  std::size_t fragments_per_event_;
-  RawDataType run_number_;
+  std::size_t current_event_num_;
+  std::size_t const events_to_generate_; // go forever if this is 0
+  std::size_t const fragments_per_event_;
+  RawDataType const run_number_;
 };
 
 #endif /* artdaq_DAQrate_DS50FragmentSimulator_hh */
