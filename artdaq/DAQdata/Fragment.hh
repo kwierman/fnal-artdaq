@@ -6,60 +6,27 @@
 #include <vector>
 #include <stdint.h>
 
+#include "artdaq/DAQdata/detail/RawFragmentHeader.hh"
 #include "artdaq/DAQdata/features.hh"
 
 namespace artdaq
 {
-  typedef uint64_t RawDataType;
-
-  // detail::RawFragmentHeader is an overlay that provides the user's
-  // view of the data contained within a Fragment. It is intended to
-  // be hidden from the user of Fragment, as an implementation
-  // detail. The interface of Fragment is intended to be used to
-  // access the data.
-
-  namespace detail { struct RawFragmentHeader; }
-  struct detail::RawFragmentHeader
-  {
-    // TODO: should Fragments know about Run and SubRun numbers?
-    // If they do, then RawEventHeader should be updated.
-    typedef uint16_t version_t;
-    typedef uint16_t type_t;
-    typedef uint64_t event_id_t;
-    typedef uint16_t fragment_id_t;
-
-    // Each of the following invalid values is chosen based on the
-    // size of the bitfield in which the corresponding data are
-    // encoded; if any of the sizes are changed, the corresponding
-    // values must be updated.
-    static const version_t InvalidVersion  = 0xFFFF;
-    static const type_t    InvalidType     = 0xFFFF;
-    static const event_id_t InvalidEventID = 0xFFFFFFFFFFFF;
-    static const fragment_id_t InvalidFragmentID = 0xFFFF;
-
-    RawDataType word_count  : 32; // number of RawDataTypes in this Fragment
-    RawDataType version     : 16;
-    RawDataType type        : 16;
-
-    RawDataType event_id    : 48;
-    RawDataType fragment_id : 16;
-
-#if USE_MODERN_FEATURES
-    constexpr static std::size_t num_words() 
-    { return sizeof(detail::RawFragmentHeader); }
-#endif
-  };
+  typedef detail::RawFragmentHeader::RawDataType RawDataType;
 
   class Fragment
   {
   public:
+    // Create a Fragment with all header values zeroed.
+    Fragment();
+
+    // Hide all except default constructor and data members from ROOT
+#if USE_MODERN_FEATURES
     typedef detail::RawFragmentHeader::version_t     version_t;
     typedef detail::RawFragmentHeader::type_t        type_t;
     typedef detail::RawFragmentHeader::event_id_t    event_id_t;
     typedef detail::RawFragmentHeader::fragment_id_t fragment_id_t;
 
     static const version_t InvalidVersion  = detail::RawFragmentHeader::InvalidVersion;
-    static const type_t    InvalidType     = detail::RawFragmentHeader::InvalidType;
     static const event_id_t InvalidEventID = detail::RawFragmentHeader::InvalidEventID;
     static const fragment_id_t InvalidFragmentID = detail::RawFragmentHeader::InvalidFragmentID;
 
@@ -68,8 +35,6 @@ namespace artdaq
     typedef std::vector<RawDataType>::const_iterator const_iterator;
     typedef std::vector<RawDataType>::value_type     value_type;
 
-    // Create a Fragment with all header values zeroed.
-    Fragment();
 
     // Create a Fragment ready to hold n words of payload, and with
     // all values zeroed.
@@ -77,15 +42,16 @@ namespace artdaq
 
     // Create a fragment with the given event id and fragment id, and
     // with no data payload.
-    Fragment(event_id_t eventID, fragment_id_t fragID, type_t type=0);
+    Fragment(event_id_t eventID,
+             fragment_id_t fragID,
+             type_t type = type_t::DATA);
 
-#if USE_MODERN_FEATURES
     // Print out summary information for this Fragment to the given stream.
     void print(std::ostream& os) const;
 
     size_t        size() const { return fragmentHeader()->word_count; }
     version_t     version() const { return fragmentHeader()->version; }
-    type_t        type() const { return fragmentHeader()->type; }
+    type_t        type() const { return static_cast<type_t>(fragmentHeader()->type); }
     event_id_t    eventID() const { return fragmentHeader()->event_id; }
     fragment_id_t fragmentID() const { return fragmentHeader()->fragment_id; }
 
@@ -148,9 +114,7 @@ namespace artdaq
 
 #if USE_MODERN_FEATURES
   inline void swap(Fragment& x, Fragment& y) { x.swap(y); }
-#endif
 
-#if USE_MODERN_FEATURES
   inline
   std::ostream& operator<<(std::ostream& os, Fragment const& f)
   {

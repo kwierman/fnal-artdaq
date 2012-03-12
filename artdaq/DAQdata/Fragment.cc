@@ -13,7 +13,7 @@ namespace artdaq
     vals_(n+RawFragmentHeader::num_words(), 0)
   {
     fragmentHeader()->word_count  = vals_.size();
-    fragmentHeader()->type        = Fragment::InvalidType;
+    fragmentHeader()->type        = type_t::INVALID;
     fragmentHeader()->event_id    = Fragment::InvalidEventID;
     fragmentHeader()->fragment_id = Fragment::InvalidFragmentID;
   }

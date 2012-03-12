@@ -12,7 +12,7 @@ add_library( ${LIB_NAME} SHARED ${LIB_SOURCES} )
 
 art_dictionary(DICTIONARY_LIBRARIES ${ARTDAQ})
 
-install_headers()
+install_headers(SUBDIRS detail)
 install_source()
 install( TARGETS ${LIB_NAME}
          DESTINATION ${flavorqual_dir}/lib )
