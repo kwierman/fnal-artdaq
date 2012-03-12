@@ -1,4 +1,4 @@
-
+#include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQrate/ConcurrentQueue.hh"
 #include "artdaq/DAQrate/GlobalQueue.hh"
 #include "art/Framework/Core/Frameworkfwd.h"
@@ -29,9 +29,9 @@ namespace artdaq {
 
       art::PrincipalMaker const & pmaker;
       RawEventQueue &             incoming_events;
-      vector<string> const        product_instance_names;
       daqrate::seconds            waiting_time;
       bool                        resume_after_timeout;
+      std::string                 pretend_module_name;
 
       RawEventQueueReader(fhicl::ParameterSet const & ps,
                           art::ProductRegistryHelper & help,
@@ -53,16 +53,11 @@ namespace artdaq {
                                                    art::PrincipalMaker const & pm):
     pmaker(pm),
     incoming_events(getGlobalQueue()),
-    product_instance_names(ps.get<vector<string>>("instances")),
     waiting_time(ps.get<double>("waiting_time", std::numeric_limits<double>::infinity())),
-    resume_after_timeout(ps.get<bool>("resume_after_timeout", true))
+    resume_after_timeout(ps.get<bool>("resume_after_timeout", true)),
+    pretend_module_name("daq")
   {
-    for (auto const& iname : product_instance_names)
-      help.reconstitutes<Fragment, art::InEvent>("DS50RawInput", iname);
-//     for_each(product_instance_names.cbegin(), product_instance_names.cend(),
-//              [&](string const & iname) {
-//                help.reconstitutes<Fragment, art::InEvent>("DS50RawInput", iname);
-//              });
+    help.reconstitutes<Fragment, art::InEvent>(pretend_module_name);
   }
 
   inline
@@ -76,13 +71,13 @@ namespace artdaq {
     fb = new art::FileBlock(art::FileFormatVersion(1, "RawEvent2011"), "nothing");
   }
 
-  bool detailRawEventQueueReader::readNext(art::RunPrincipal* const & inR,
+  bool detail::RawEventQueueReader::readNext(art::RunPrincipal* const & inR,
                                            art::SubRunPrincipal* const & inSR,
                                            art::RunPrincipal* & outR,
                                            art::SubRunPrincipal* & outSR,
                                            art::EventPrincipal* & outE)
   {
-    RawEvent_ptr p;
+    RawEvent_ptr popped_event;
 
     // Try to get an event from the queue. We'll continuously loop, either until:
     //   1) we have read a RawEvent off the queue, or
@@ -94,7 +89,7 @@ namespace artdaq {
     while (keep_looping)
       {
         keep_looping = false;
-        got_event = incoming_events.deqTimedWait(p, waiting_time);
+        got_event = incoming_events.deqTimedWait(popped_event, waiting_time);
         if (!got_event) {
           mf::LogInfo("InputFailure")
             << "Reading timed out in RawEventQueueReader::readNext()";
@@ -109,49 +104,35 @@ namespace artdaq {
     //   2) the event we read was the end-of-data marker: a null
     //      pointer
 
-    if (!got_event || !p) return false;
+    if (!got_event || !popped_event) return false;
 
     art::Timestamp runstart;
     // make new runs or subruns if in* are 0 or if the run/subrun
     // have changed
-    if (inR == 0 || inR->run() != p->runID()) {
-      outR = pmaker.makeRunPrincipal(p->runID(),
+    if (inR == 0 || inR->run() != popped_event->runID()) {
+      outR = pmaker.makeRunPrincipal(popped_event->runID(),
                                      runstart);
     }
-    art::SubRunID subrun_check(p->runID(), p->subrunID());
+    art::SubRunID subrun_check(popped_event->runID(), popped_event->subrunID());
     if (inSR == 0 || subrun_check != inSR->id()) {
-      outSR = pmaker.makeSubRunPrincipal(p->runID(),
-                                      p->subrunID(),
+      outSR = pmaker.makeSubRunPrincipal(popped_event->runID(),
+                                      popped_event->subrunID(),
                                       runstart);
     }
-    outE = pmaker.makeEventPrincipal(p->runID(),
-                                  p->subrunID(),
-                                  p->eventID(),
+    outE = pmaker.makeEventPrincipal(popped_event->runID(),
+                                  popped_event->subrunID(),
+                                  popped_event->eventID(),
                                   runstart);
 
-    // add all the fragments as products
-    if (product_instance_names.size() < p->fragments_.size()) {
-      throw art::Exception(art::errors::DataCorruption)
-        << "more raw data fragments than expected.\n"
-        << "expected " << product_instance_names.size() << " and got "
-        << p->fragments_.size() << "\n"
-        << "for event " << p->runID();
-    }
-    for (size_t i = 0, sz = p->fragments_.size();
-         i < sz; ++i) {
-      // PROBLEM! std::shared_ptr instances cannot release their
-      // controlled objects, so we have to copy them into the Event
-      // (by copying to the std::auto_ptr). Look into using
-      // std::unique_ptr, and move semantics to move into and out of
-      // the shared queue.
-      auto_ptr<Fragment> frag(new Fragment(*p->fragments_[i]));
-      put_product_in_principal(frag, *outE, product_instance_names[i]);
-    }
-
+    // Finally, grab the Fragments out of the RawEvent, and insert
+    // them into the EventPrincipal.
+    put_product_in_principal(popped_event->releaseProduct(),
+                             *outE,
+                             pretend_module_name);
     return true;
   }
 
-  typedef art::ReaderSource<RawEventQueueReader> DS50RawInput;
+  typedef art::ReaderSource<detail::RawEventQueueReader> RawInput;
 }
 
-DEFINE_ART_INPUT_SOURCE(artdaq::DS50RawInput)
+DEFINE_ART_INPUT_SOURCE(artdaq::RawInput)

@@ -1,6 +1,6 @@
 project(artdaq_test)
 
-simple_plugin(DS50RawInput "source" artdaq_DAQrate)
+simple_plugin(RawInput "source" artdaq_DAQrate)
 
 add_executable(driver driver.cc )
 

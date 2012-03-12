@@ -8,6 +8,7 @@
 
 #include <stddef.h>
 #include <iosfwd>
+#include <memory>
 
 namespace artdaq
 {
@@ -45,8 +46,9 @@ namespace artdaq
   // invariants (the contained Fragments should all have the correct
   // event id).
 
-  struct RawEvent
+  class RawEvent
   {
+  public:
     typedef detail::RawEventHeader::run_id_t    run_id_t;
     typedef detail::RawEventHeader::subrun_id_t subrun_id_t;
     typedef detail::RawEventHeader::event_id_t  event_id_t;
@@ -72,8 +74,15 @@ namespace artdaq
 
     // Print summary information about this RawEvent to the given stream.
     void print(std::ostream& os) const;
+
+    // Release all the Fragments from this RawEvent, returning them to
+    // the caller through an auto_ptr that manages a vector into which
+    // the Fragments have been moved.
+    std::auto_ptr<std::vector<Fragment>> releaseProduct();
+
 #endif
 
+  private:
     detail::RawEventHeader header_;
     FragmentPtrs           fragments_;
   };
@@ -122,6 +131,22 @@ namespace artdaq
   inline RawEvent::run_id_t RawEvent::runID() const { return header_.run_id; }
   inline RawEvent::subrun_id_t RawEvent::subrunID() const { return header_.subrun_id; }
   inline RawEvent::event_id_t RawEvent::eventID() const { return header_.event_id; }
+
+  inline
+  std::auto_ptr<std::vector<Fragment>>
+  RawEvent::releaseProduct()
+  {
+    std::auto_ptr<std::vector<Fragment>> result(new std::vector<Fragment>);
+    result->reserve(fragments_.size());
+    for (size_t i = 0, sz = fragments_.size(); i < sz; ++i) {
+      result->emplace_back(std::move(*fragments_[i]));
+    }
+    // It seems more hygenic to clear fragments_ rather than to leave
+    // it full of unique_ptrs to Fragments that have been plundered by
+    // the move.
+    fragments_.clear();
+    return result;
+  }
 
   inline
   std::ostream& operator<<(std::ostream& os, RawEvent const& ev)
