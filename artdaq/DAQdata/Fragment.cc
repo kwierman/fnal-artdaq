@@ -29,6 +29,7 @@ namespace artdaq
     fragmentHeader()->fragment_id = fragID;
   }
 
+#if USE_MODERN_FEATURES
   void
   Fragment::print(std::ostream& os) const
   {
@@ -37,5 +38,6 @@ namespace artdaq
        << ", Event " << eventID()
        << '\n';
   }
+#endif
 
 }

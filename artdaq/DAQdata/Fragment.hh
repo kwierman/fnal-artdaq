@@ -79,10 +79,10 @@ namespace artdaq
     // with no data payload.
     Fragment(event_id_t eventID, fragment_id_t fragID, type_t type=0);
 
+#if USE_MODERN_FEATURES
     // Print out summary information for this Fragment to the given stream.
     void print(std::ostream& os) const;
 
-#if USE_MODERN_FEATURES
     size_t        size() const { return fragmentHeader()->word_count; }
     version_t     version() const { return fragmentHeader()->version; }
     type_t        type() const { return fragmentHeader()->type; }
@@ -150,12 +150,14 @@ namespace artdaq
   inline void swap(Fragment& x, Fragment& y) { x.swap(y); }
 #endif
 
+#if USE_MODERN_FEATURES
   inline
   std::ostream& operator<<(std::ostream& os, Fragment const& f)
   {
     f.print(os);
     return os;
   }
+#endif
 
   typedef std::vector<uint64_t>           CompressedFragPart;
   typedef std::vector<CompressedFragPart> CompressedFragParts;
