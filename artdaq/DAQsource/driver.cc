@@ -86,6 +86,7 @@ int main(int argc, char* argv[]) try
           {
             store.insert(std::move(val));
           }
+        frags.clear();
       }
 
 #if 0

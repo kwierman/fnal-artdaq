@@ -5,9 +5,8 @@
 
 using fhicl::ParameterSet;
 
-namespace artdaq
-{
-  DS50FragmentReader::DS50FragmentReader(ParameterSet const&)
+namespace artdaq {
+  DS50FragmentReader::DS50FragmentReader(ParameterSet const &)
   {
     throw std::string("Sorry, DS50FragmentReader does not yet work.");
   }
@@ -16,7 +15,7 @@ namespace artdaq
   { }
 
   bool
-  DS50FragmentReader::getNext_(FragmentPtrs&)
+  DS50FragmentReader::getNext_(FragmentPtrs &)
   {
     return false;
   }
