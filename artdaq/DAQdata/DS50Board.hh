@@ -3,7 +3,6 @@
 
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/detail/DS50Header.hh"
-#include "artdaq/DAQdata/features.hh"
 
 // Fragment overlay class for DS50 data.
 namespace ds50 {
@@ -16,7 +15,6 @@ namespace ds50 {
     typedef detail::Header::event_counter_t event_counter_t;
     typedef detail::Header::trigger_time_tag_t trigger_time_tag_t;
 
-#if USE_MODERN_FEATURES
     // Make a Board, by taking over the innards of the given Fragment.
     explicit Board(artdaq::Fragment & f);
 
@@ -26,14 +24,12 @@ namespace ds50 {
     board_id_t board_id() const;
     event_counter_t event_counter() const;
     trigger_time_tag_t trigger_time_tag() const;
-#endif
 
   private:
     detail::Header const * header_() const;
     artdaq::Fragment & data_;
   };
 
-#if USE_MODERN_FEATURES
   inline
   detail::Header const * Board::header_() const
   { return reinterpret_cast<detail::Header const *>(&*data_.dataBegin()); }
@@ -66,6 +62,5 @@ namespace ds50 {
   inline
   Board::trigger_time_tag_t Board::trigger_time_tag() const
   { return header_()->trigger_time_tag; }
-#endif
 }
 #endif /* artdaq_DAQdata_DS50Board_hh */
