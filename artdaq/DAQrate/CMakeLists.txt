@@ -21,6 +21,7 @@ set( LIB_SOURCES
      FragmentGenerator.cc
      DS50FragmentReader.cc
      DS50FragmentSimulator.cc
+     GenericFragmentSimulator.cc
      EventStore.cc
      #FragmentPool.cc
      MonitoredQuantity.cc
@@ -38,6 +39,7 @@ add_library( ${LIB_NAME} SHARED ${LIB_SOURCES} )
 target_link_libraries( artdaq_DAQrate
   artdaq_DAQdata
   ${FHICLCPP}
+  ${CLHEP}
   )
 
 include(CetTest)
