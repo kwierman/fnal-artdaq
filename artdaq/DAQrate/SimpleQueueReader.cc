@@ -1,5 +1,4 @@
 #include "artdaq/DAQrate/SimpleQueueReader.hh"
-#include "artdaq/DAQdata/DS50data.hh"
 
 #include <cassert>
 #include <iostream>
