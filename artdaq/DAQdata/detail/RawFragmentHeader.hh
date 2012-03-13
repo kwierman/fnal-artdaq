@@ -17,7 +17,7 @@ struct detail::RawFragmentHeader {
 #if USE_MODERN_FEATURES
   typedef uint16_t version_t;
   typedef uint64_t event_id_t;
-enum type_t : uint8_t {
+  enum type_t : uint8_t {
     DATA = 0,
     END_OF_DATA,
     INVALID = 0xFF
@@ -34,7 +34,7 @@ enum type_t : uint8_t {
 
   RawDataType word_count  : 32; // number of RawDataTypes in this Fragment
   RawDataType version     : 16;
-  RawDataType type        :  8; // Must be at least as big as FragmentType.
+  RawDataType type        :  8;
   RawDataType unused      :  8;
 
   RawDataType event_id    : 48;
