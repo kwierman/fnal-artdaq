@@ -1,5 +1,5 @@
-#ifndef OIUY
-#define OIUY
+#ifndef artdaq_DAQdata_detail_RawFragmentHeader_hh
+#define artdaq_DAQdata_detail_RawFragmentHeader_hh
 // detail::RawFragmentHeader is an overlay that provides the user's view
 // of the data contained within a Fragment. It is intended to be hidden
 // from the user of Fragment, as an implementation detail. The interface
@@ -47,4 +47,4 @@ struct detail::RawFragmentHeader {
 
 };
 
-#endif
+#endif /* artdaq_DAQdata_detail_RawFragmentHeader_hh */
