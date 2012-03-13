@@ -15,7 +15,8 @@ namespace artdaq
   public:
     virtual ~FragmentGenerator();
     // Obtain the next collection of Fragments. Return false to
-    // indicate end-of-data.
+    // indicate end-of-data. Fragments may or may not be in the same event;
+    // Fragments may or may not have the same fragment id.
     bool getNext(FragmentPtrs& output);
 
   private:

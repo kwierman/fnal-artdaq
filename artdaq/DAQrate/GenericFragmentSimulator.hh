@@ -1,4 +1,4 @@
-#ifndef artdaq_DAQrate_GenericFragmentSimulator_hh
+#†ifndef artdaq_DAQrate_GenericFragmentSimulator_hh
 #define artdaq_DAQrate_GenericFragmentSimulator_hh
 
 #include "CLHEP/Random/JamesRandom.h"
@@ -16,6 +16,12 @@ namespace artdaq {
 // GenericFragmentSimulator creates simulated Generic events, with data
 // distributed according to a "histogram" provided in the configuration
 // data.
+//
+// With this implementation, a single call to getNext(frags) will return
+// a complete event (event ids are incremented automatically); fragment
+// ids are sequential.
+// Event size and content are both configurable; see the implementation for
+// details.
 
 class artdaq::GenericFragmentSimulator : public artdaq::FragmentGenerator {
 public:

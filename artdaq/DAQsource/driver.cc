@@ -1,10 +1,21 @@
+//
+// Driver is a program for testing the behavior of the generic
+// RawInput source. Run 'driver --help' to get a description of the
+// expected command-line parameters.
+//
+//
+// The current version generates simple data fragments, for testing
+// that data are transmitted without corruption from the
+// artdaq::EventStore through to the artdaq::RawInput source.
+//
+
 #include "boost/program_options.hpp"
 
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQrate/EventStore.hh"
 #include "artdaq/DAQrate/FragmentGenerator.hh"
-#include "artdaq/DAQrate/DS50FragmentReader.hh"
-#include "artdaq/DAQrate/DS50FragmentSimulator.hh"
+// #include "artdaq/DAQrate/DS50FragmentReader.hh"
+// #include "artdaq/DAQrate/DS50FragmentSimulator.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/make_ParameterSet.h"
 #include "cetlib/filepath_maker.h"
