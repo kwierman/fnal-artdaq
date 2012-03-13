@@ -47,12 +47,15 @@ artdaq::GenericFragmentSimulator::getNext_(FragmentPtrs & frags)
                       event_size,
                       [&]() -> long {
                         return
-                          event_content_generator_.fireInt(std::numeric_limits<long>::max());
+                          event_content_generator_.
+                          fireInt(std::numeric_limits<long>::max());
                       }
                      );
       break;
     case content_selector_t::DEAD_BEEF:
-      std::fill_n(frags.back()->dataBegin(), event_size, 0XDEADBEEF);
+      std::fill_n(frags.back()->dataBegin(),
+                  event_size,
+                  0xDEADBEEFDEADBEEF);
       break;
     default:
       throw cet::exception("UnknownContentSelection")
