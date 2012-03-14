@@ -7,11 +7,17 @@
 
 #include "artdaq/DAQdata/features.hh"
 
-namespace detail {
-  struct RawFragmentHeader;
+extern "C" {
+#include <stdint.h>
 }
 
-struct detail::RawFragmentHeader {
+namespace artdaq {
+  namespace detail {
+    struct RawFragmentHeader;
+  }
+}
+
+struct artdaq::detail::RawFragmentHeader {
   typedef uint64_t RawDataType;
 
 #if USE_MODERN_FEATURES
