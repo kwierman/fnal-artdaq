@@ -10,6 +10,8 @@
 #include "artdaq/DAQdata/detail/RawFragmentHeader.hh"
 #include "artdaq/DAQdata/features.hh"
 
+class TBuffer;
+
 namespace artdaq {
   typedef detail::RawFragmentHeader::RawDataType RawDataType;
 
@@ -29,16 +31,16 @@ public:
   // Create a Fragment with all header values zeroed.
   Fragment();
 
-  // Hide all except default constructor and data members from ROOT
+  // Hide most things from ROOT.
 #if USE_MODERN_FEATURES
   typedef detail::RawFragmentHeader::version_t     version_t;
   typedef detail::RawFragmentHeader::type_t        type_t;
   typedef detail::RawFragmentHeader::event_id_t    event_id_t;
   typedef detail::RawFragmentHeader::fragment_id_t fragment_id_t;
 
-  static const version_t InvalidVersion  = detail::RawFragmentHeader::InvalidVersion;
-  static const event_id_t InvalidEventID = detail::RawFragmentHeader::InvalidEventID;
-  static const fragment_id_t InvalidFragmentID = detail::RawFragmentHeader::InvalidFragmentID;
+  static version_t const InvalidVersion;
+  static event_id_t const InvalidEventID;
+  static fragment_id_t const InvalidFragmentID;
 
   typedef std::vector<RawDataType>::reference      reference;
   typedef std::vector<RawDataType>::iterator       iterator;
@@ -59,83 +61,85 @@ public:
   void print(std::ostream & os) const;
 
   // Header accessors
-  size_t        size() const { return fragmentHeader()->word_count; }
-  version_t     version() const { return fragmentHeader()->version; }
-  type_t        type() const { return static_cast<type_t>(fragmentHeader()->type); }
-  event_id_t    eventID() const { return fragmentHeader()->event_id; }
-  fragment_id_t fragmentID() const { return fragmentHeader()->fragment_id; }
+  std::size_t   size() const;
+  version_t     version() const;
+  type_t        type() const;
+  event_id_t    eventID() const;
+  fragment_id_t fragmentID() const;
 
   // Header setters
-  void setSize(size_t size);
   void setVersion(version_t version);
   void setType(type_t type);
   void setEventID(event_id_t event_id);
   void setFragmentID(fragment_id_t fragment_id);
+  void updateSize();
 
   // Return the number of words in the data payload. This does not
   // include the number of words in the header.
-  std::size_t dataSize() const
-  { return vals_.size() - detail::RawFragmentHeader::num_words(); }
+  std::size_t dataSize() const;
 
   // Resize the data payload to hold sz words.
-  void resize(std::size_t sz, RawDataType v = RawDataType())
-  { vals_.resize(sz + detail::RawFragmentHeader::num_words(), v); }
+  void resize(std::size_t sz, RawDataType v = RawDataType());
 
   // Return an iterator to the beginning of the data payload.
-  iterator dataBegin()
-  { return vals_.begin() + detail::RawFragmentHeader::num_words(); }
+  iterator dataBegin();
 
-  iterator dataEnd()
-  { return vals_.end(); }
-
-  const_iterator dataBegin() const
-  { return vals_.begin() + detail::RawFragmentHeader::num_words(); }
-
-  const_iterator dataEnd() const
-  { return vals_.end(); }
-
-  RawDataType & operator[](std::size_t i)
-  { return vals_[i + detail::RawFragmentHeader::num_words()]; }
-
-  RawDataType operator[](std::size_t i) const
-  { return vals_[i + detail::RawFragmentHeader::num_words()]; }
-
-  void clear()
-  { vals_.erase(dataBegin(), dataEnd()); }
-
-  bool empty()
-  { return vals_.size() - detail::RawFragmentHeader::num_words() == 0; }
-
-  void reserve(std::size_t cap)
-  { vals_.reserve(cap + detail::RawFragmentHeader::num_words()); }
-
-  void push_back(RawDataType v)
-  { vals_.push_back(v); }
-
-  void swap(Fragment & other)
-  { vals_.swap(other.vals_); }
-
-#endif /* USE_MODERN_FEATURES */
+  iterator dataEnd();
+  const_iterator dataBegin() const;
+  const_iterator dataEnd() const;
+  RawDataType & operator[](std::size_t i);
+  RawDataType operator[](std::size_t i) const;
+  void clear();
+  bool empty();
+  void reserve(std::size_t cap);
+  void push_back(RawDataType v);
+  void swap(Fragment & other);
+#endif
+  void Streamer(TBuffer & buf);
 
 private:
   std::vector<RawDataType> vals_;
 
 #if USE_MODERN_FEATURES
-  detail::RawFragmentHeader * fragmentHeader()
-  { return reinterpret_cast<detail::RawFragmentHeader *>(&vals_[0]); }
-
-  detail::RawFragmentHeader const * fragmentHeader() const
-  { return reinterpret_cast<detail::RawFragmentHeader const *>(&vals_[0]); }
+  detail::RawFragmentHeader * fragmentHeader();
+  detail::RawFragmentHeader const * fragmentHeader() const;
 #endif
 };
 
 #if USE_MODERN_FEATURES
 inline
-void
-artdaq::Fragment::setSize(size_t size)
+std::size_t
+artdaq::Fragment::size() const
 {
-  assert(size < 0x100000000);
-  fragmentHeader()->word_count = size;
+  return fragmentHeader()->word_count;
+}
+
+inline
+artdaq::Fragment::version_t
+artdaq::Fragment::version() const
+{
+  return fragmentHeader()->version;
+}
+
+inline
+artdaq::Fragment::type_t
+artdaq::Fragment::type() const
+{
+  return static_cast<type_t>(fragmentHeader()->type);
+}
+
+inline
+artdaq::Fragment::event_id_t
+artdaq::Fragment::eventID() const
+{
+  return fragmentHeader()->event_id;
+}
+
+inline
+artdaq::Fragment::fragment_id_t
+artdaq::Fragment::fragmentID() const
+{
+  return fragmentHeader()->fragment_id;
 }
 
 inline
@@ -165,6 +169,119 @@ void
 artdaq::Fragment::setFragmentID(fragment_id_t fragment_id)
 {
   fragmentHeader()->fragment_id = fragment_id;
+}
+
+inline
+void
+artdaq::Fragment::updateSize()
+{
+  assert(vals_.size() < 0x100000000);
+  fragmentHeader()->word_count = vals_.size();
+}
+
+inline
+std::size_t
+artdaq::Fragment::dataSize() const
+{
+  return vals_.size() - detail::RawFragmentHeader::num_words();
+}
+
+inline
+void
+artdaq::Fragment::resize(std::size_t sz, RawDataType v)
+{
+  vals_.resize(sz + detail::RawFragmentHeader::num_words(), v);
+}
+
+inline
+artdaq::Fragment::iterator
+artdaq::Fragment::dataBegin()
+{
+  return vals_.begin() + detail::RawFragmentHeader::num_words();
+}
+
+inline
+artdaq::Fragment::iterator
+artdaq::Fragment::dataEnd()
+{
+  return vals_.end();
+}
+
+inline
+artdaq::Fragment::const_iterator
+artdaq::Fragment::dataBegin() const
+{
+  return vals_.begin() + detail::RawFragmentHeader::num_words();
+}
+
+inline
+artdaq::Fragment::const_iterator
+artdaq::Fragment::dataEnd() const
+{
+  return vals_.end();
+}
+
+inline
+artdaq::RawDataType &
+artdaq::Fragment::operator[](std::size_t i)
+{
+  return vals_[i + detail::RawFragmentHeader::num_words()];
+}
+
+inline
+artdaq::RawDataType
+artdaq::Fragment::operator[](std::size_t i) const
+{
+  return vals_[i + detail::RawFragmentHeader::num_words()];
+}
+
+inline
+void
+artdaq::Fragment::clear()
+{
+  vals_.erase(dataBegin(), dataEnd());
+}
+
+inline
+bool
+artdaq::Fragment::empty()
+{
+  return vals_.size() - detail::RawFragmentHeader::num_words() == 0;
+}
+
+inline
+void
+artdaq::Fragment::reserve(std::size_t cap)
+{
+  vals_.reserve(cap + detail::RawFragmentHeader::num_words());
+}
+
+inline
+void
+artdaq::Fragment::push_back(RawDataType v)
+{
+  vals_.push_back(v);
+}
+
+inline
+void
+artdaq::Fragment::swap(Fragment & other)
+{
+  vals_.swap(other.vals_);
+}
+
+inline
+artdaq::detail::RawFragmentHeader *
+artdaq::Fragment::fragmentHeader()
+{
+  return reinterpret_cast<detail::RawFragmentHeader *>(&vals_[0]);
+}
+
+inline
+artdaq::detail::RawFragmentHeader const *
+artdaq::Fragment::fragmentHeader() const
+{
+  return reinterpret_cast<detail::RawFragmentHeader const *>(&vals_[0]);
 }
 
 inline
