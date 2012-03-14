@@ -20,7 +20,7 @@ namespace  bpo = boost::program_options;
 
 artdaq::FragmentGenerator* make_generator(ParameterSet const& ps)
 {
-  if (ps.get<bool>("do_random"))
+  if (ps.get<bool>("generate_data"))
     return new artdaq::DS50FragmentSimulator(ps);
   else
     return new artdaq::DS50FragmentReader(ps);

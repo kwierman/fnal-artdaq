@@ -1,6 +1,6 @@
 ds50:
 {
-  do_random: true
+  generate_data: true
   events_to_generate: 400
   run_number: 10
   source_count: 1
