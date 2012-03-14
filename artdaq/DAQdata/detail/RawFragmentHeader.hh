@@ -46,11 +46,20 @@ struct artdaq::detail::RawFragmentHeader {
   RawDataType event_id    : 48;
   RawDataType fragment_id : 16;
 
-  constexpr static std::size_t num_words()
-  { return sizeof(detail::RawFragmentHeader); }
+  constexpr static std::size_t num_words();
 
 #endif /* USE_MODERN_FEATURES */
 
 };
+
+#if USE_MODERN_FEATURES
+inline
+constexpr
+std::size_t
+artdaq::detail::RawFragmentHeader::num_words()
+{
+  return sizeof(detail::RawFragmentHeader) / sizeof(RawDataType);
+}
+#endif
 
 #endif /* artdaq_DAQdata_detail_RawFragmentHeader_hh */
