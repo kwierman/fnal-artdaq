@@ -8,6 +8,7 @@
 namespace ds50 {
   class Board {
   public:
+    typedef detail::Header::data_t data_t;
     typedef detail::Header::event_size_t event_size_t;
     typedef detail::Header::channel_mask_t channel_mask_t;
     typedef detail::Header::pattern_t pattern_t;
@@ -15,7 +16,6 @@ namespace ds50 {
     typedef detail::Header::event_counter_t event_counter_t;
     typedef detail::Header::trigger_time_tag_t trigger_time_tag_t;
 
-    // Make a Board, by taking over the innards of the given Fragment.
     explicit Board(artdaq::Fragment & f);
 
     size_t event_size() const;
@@ -24,6 +24,8 @@ namespace ds50 {
     board_id_t board_id() const;
     event_counter_t event_counter() const;
     trigger_time_tag_t trigger_time_tag() const;
+
+    static constexpr size_t header_size_words();
 
   private:
     detail::Header const * header_() const;
@@ -62,5 +64,13 @@ namespace ds50 {
   inline
   Board::trigger_time_tag_t Board::trigger_time_tag() const
   { return header_()->trigger_time_tag; }
+
+  inline
+  constexpr
+  size_t
+  Board::header_size_words()
+ {
+   return detail::Header::size_words;
+ }
 }
 #endif /* artdaq_DAQdata_DS50Board_hh */
