@@ -30,38 +30,52 @@ artdaq::GenericFragmentSimulator::getNext_(FragmentPtrs & frags)
       current_event_num_ > events_to_generate_) {
     return false;
   }
-  RawDataType fragID(0);
+  Fragment::fragment_id_t fragID(0);
+  frags.reserve(frags.size() + fragments_per_event_);
   for (size_t i = 0; i < fragments_per_event_; ++i) {
     ++fragID;
-    frags.emplace_back(new Fragment(current_event_num_, fragID));
-    size_t event_size = eventSize_();
-    frags.back()->reserve(event_size); // Allocate correct size now.
-    switch (content_selection_) {
-    case content_selector_t::EMPTY:
-      break;
-    case content_selector_t::FRAG_ID:
-      std::fill_n(frags.back()->dataBegin(), eventSize_(), fragID);
-      break;
-    case content_selector_t::RANDOM:
-      std::generate_n(frags.back()->dataBegin(),
-                      event_size,
-                      [&]() -> long {
-                        return
-                          event_content_generator_.
-                          fireInt(std::numeric_limits<long>::max());
-                      }
-                     );
-      break;
-    case content_selector_t::DEAD_BEEF:
-      std::fill_n(frags.back()->dataBegin(),
-                  event_size,
-                  0xDEADBEEFDEADBEEF);
-      break;
-    default:
-      throw cet::exception("UnknownContentSelection")
-        << "Unknown content selection: "
-        << static_cast<uint8_t>(content_selection_);
-    }
+    frags.emplace_back();
+    bool result =
+      getNext(current_event_num_, fragID, frags.back());
+    if (!result) return result;
+  }
+  return true;
+}
+
+bool
+artdaq::GenericFragmentSimulator::
+getNext(Fragment::event_id_t event_id,
+        Fragment::fragment_id_t fragment_id,
+        FragmentPtr & frag_ptr)
+{
+  frag_ptr.reset(new Fragment(event_id, fragment_id));
+  size_t event_size = eventSize_();
+  frag_ptr->reserve(event_size); // Allocate correct size now.
+  switch (content_selection_) {
+  case content_selector_t::EMPTY:
+    break;
+  case content_selector_t::FRAG_ID:
+    std::fill_n(frag_ptr->dataBegin(), eventSize_(), fragment_id);
+    break;
+  case content_selector_t::RANDOM:
+    std::generate_n(frag_ptr->dataBegin(),
+                    event_size,
+                    [&]() -> long {
+                      return
+                        event_content_generator_.
+                        fireInt(std::numeric_limits<long>::max());
+                    }
+                   );
+    break;
+  case content_selector_t::DEAD_BEEF:
+    std::fill_n(frag_ptr->dataBegin(),
+                event_size,
+                0xDEADBEEFDEADBEEF);
+    break;
+  default:
+    throw cet::exception("UnknownContentSelection")
+      << "Unknown content selection: "
+      << static_cast<uint8_t>(content_selection_);
   }
   return true;
 }

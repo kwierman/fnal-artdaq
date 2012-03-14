@@ -29,6 +29,11 @@ public:
     DEAD_BEEF
   };
 
+  // Not part of virtual interface: generate a specific fragment.
+  bool getNext(Fragment::event_id_t,
+               Fragment::fragment_id_t,
+               FragmentPtr & frag_ptr);
+
 private:
   virtual bool getNext_(FragmentPtrs & output);
 
