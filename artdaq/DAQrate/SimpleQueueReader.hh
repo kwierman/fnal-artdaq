@@ -17,7 +17,7 @@ namespace artdaq
   class SimpleQueueReader
   {
   public:
-    explicit SimpleQueueReader(std::size_t eec = 100);
+    explicit SimpleQueueReader(std::size_t eec = 0);
     void run();
 
   private:

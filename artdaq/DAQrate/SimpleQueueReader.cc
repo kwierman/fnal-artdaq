@@ -46,7 +46,7 @@ namespace artdaq {
         usleep(250000);
       }
     }
-    if (eventsSeen != expectedEventCount_)
+    if (expectedEventCount_ && eventsSeen != expectedEventCount_)
     { throw std::string("Wrong number of events in SimpleQueueReader\n"); }
   }
 }
