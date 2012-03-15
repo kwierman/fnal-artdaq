@@ -3,7 +3,6 @@
 
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/Fragments.hh"
-#include "artdaq/DAQrate/Config.hh"
 
 #include <vector>
 
@@ -17,36 +16,39 @@
   This needs to be separated into a thing for sending and a thing for receiving.
   There probably needs to be a common class that both use.
  */
- 
-class RHandles
-{
+
+namespace artdaq {
+  class RHandles;
+}
+
+class artdaq::RHandles {
 public:
   typedef std::vector<MPI_Request> Requests;
   typedef std::vector<MPI_Status> Statuses;
   typedef std::vector<int> Flags; // busy flags
 
-  explicit RHandles(Config const&);
+  RHandles(size_t buffer_count,
+           uint64_t max_initial_send_words,
+           size_t src_count,
+           size_t src_start);
 
   // will take the data on the send (not copy),
   // will replace the data on recv (not copy)
-  void recvEvent(artdaq::Fragment&);
+  void recvEvent(Fragment &);
   void waitAll();
 
 private:
 
   int buffer_count_; // was size_
-  int fragment_words_;
+  int max_initial_send_words_;
   int src_count_; // number of sources
   int src_start_; // start of the source ranks
-  int rank_;
 
   Requests reqs_;
   Statuses stats_;
   Flags flags_;
 
-  artdaq::Fragments frags_;
-  bool is_direct_;
-  int friend_;
+  Fragments payload_;
 };
 
 #endif /* artdaq_DAQrate_RHandles_hh */
