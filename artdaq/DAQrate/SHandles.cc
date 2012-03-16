@@ -2,12 +2,9 @@
 #include "artdaq/DAQrate/SHandles.hh"
 #include "artdaq/DAQrate/Perf.hh"
 #include "artdaq/DAQrate/Debug.hh"
+#include "artdaq/DAQrate/MPITag.hh"
 #include "artdaq/DAQrate/Utils.hh"
 #include "artdaq/DAQdata/Fragment.hh"
-
-#define MY_TAG 2
-
-using namespace artdaq;
 
 // size_ = number of buffers
 // fragment_size_ = number of longs in a fragment of an event
@@ -15,31 +12,30 @@ using namespace artdaq;
 // be careful about the event/fragment size - hardwired to sizeof(long)
 // and should be determined from the FragmentPool
 
-SHandles::SHandles(Config const & conf):
-  buffer_count_(conf.source_buffer_count_),
-  fragment_words_(conf.fragment_words_),
-  dest_count_(conf.destCount()),
-  dest_start_(conf.destStart()), // starts after last source
-  rank_(conf.rank_),
+artdaq::SHandles::SHandles(size_t buffer_count,
+                           uint64_t max_initial_send_words,
+                           size_t dest_count,
+                           size_t dest_start)
+  :
+  buffer_count_(buffer_count),
+  max_initial_send_words_(max_initial_send_words),
+  dest_count_(dest_count),
+  dest_start_(dest_start),
   pos_(),
   reqs_(buffer_count_, MPI_REQUEST_NULL),
   stats_(buffer_count_),
   flags_(buffer_count_),
-  frags_(buffer_count_),
-  is_direct_(conf.type_ == Config::TaskDetector),
-  friend_(conf.getDestFriend())
+  payload_(buffer_count_)
 {
 }
 
-int SHandles::dest(long event_id) const
+int artdaq::SHandles::dest(Fragment::event_id_t event_id) const
 {
-  // sinks are [offset,total_nodes)
-  return is_direct_ ?
-         (friend_) :
-         (int)(event_id % dest_count_ + dest_start_);
+  // Works if dest_count_ == 1
+  return (int)(event_id % dest_count_ + dest_start_);
 }
 
-int SHandles::findAvailable()
+int artdaq::SHandles::findAvailable()
 {
   int use_me = 0;
   do {
@@ -53,29 +49,53 @@ int SHandles::findAvailable()
   return use_me;
 }
 
-void SHandles::sendEvent(Fragment & frag)
+void artdaq::SHandles::sendEvent(Fragment & frag)
 {
+  // Precondition: Fragment must be complete and consistent (including
+  // header information).
   SendMeas sm;
   int use_me = findAvailable();
-  frags_[use_me].swap(frag);
-  //artdaq::RawFragmentHeader* h = frags_[use_me].fragmentHeader();
-  //int event_id = h->event_id_;
-  Fragment::event_id_t event_id = frags_[use_me].eventID();
-
-  // h->fragment_id_ = rank_; // Not needed: our Fragment should be well-formed
-  size_t fragment_size = frags_[use_me].size();
-  sm.found(event_id, use_me, dest(event_id));
-  Debug << "send: " << rank_ << " id=" << event_id << " size=" << fragment_size
-        << " idx=" << use_me << " dest=" << dest(event_id) << flusher;
-  MPI_Isend(&(frags_[use_me])[0], (fragment_words_ * sizeof(artdaq::RawDataType)),
-            MPI_BYTE, dest(event_id),
-            MY_TAG, MPI_COMM_WORLD, &reqs_[use_me]);
-#if 0
-  writeData(rank_, (const char*) & (frags_[use_me])[0], frags_[use_me].size()*sizeof(Data::value_type));
-#endif
+  Fragment & curfrag = payload_[use_me];
+  curfrag.swap(frag);
+  Fragment::event_id_t event_id = curfrag.eventID();
+  int const mpi_to = dest(event_id);
+  Debug << "send: " << stats_[use_me].MPI_SOURCE
+        << " id=" << event_id
+        << " size=" << curfrag.dataSize()
+        << " idx=" << use_me
+        << " dest=" << dest(event_id)
+        << flusher;
+  if (!(curfrag.size() > max_initial_send_words_)) {  // Send as one chunk.
+    MPI_Isend(&*curfrag.dataBegin(),
+              curfrag.dataSize() * sizeof(Fragment::value_type),
+              MPI_BYTE,
+              mpi_to,
+              MPITag::FINAL,
+              MPI_COMM_WORLD,
+              &reqs_[use_me]);
+  }
+  else { // Send in two chunks. Receiver will do the right thing as
+    // indicated by the data tag on the first chunk and the
+    // fragment size information in the header therein.
+    MPI_Isend(&*curfrag.dataBegin(),
+              max_initial_send_words_ * sizeof(Fragment::value_type),
+              MPI_BYTE,
+              mpi_to,
+              MPITag::INCOMPLETE,
+              MPI_COMM_WORLD,
+              &reqs_[use_me]);
+    MPI_Isend(&*curfrag.dataBegin() + max_initial_send_words_,
+              (curfrag.size() - max_initial_send_words_) *
+              sizeof(Fragment::value_type),
+              MPI_BYTE,
+              mpi_to,
+              MPITag::FINAL,
+              MPI_COMM_WORLD,
+              &reqs_[use_me]);
+  }
 }
 
-void SHandles::waitAll()
+void artdaq::SHandles::waitAll()
 {
   MPI_Waitall(buffer_count_, &reqs_[0], &stats_[0]);
 }

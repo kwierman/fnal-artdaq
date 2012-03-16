@@ -2,6 +2,7 @@
 #include "artdaq/DAQrate/RHandles.hh"
 #include "artdaq/DAQrate/Perf.hh"
 #include "artdaq/DAQrate/Debug.hh"
+#include "artdaq/DAQrate/MPITag.hh"
 #include "artdaq/DAQrate/Utils.hh"
 #include "cetlib/container_algorithms.h"
 
@@ -9,40 +10,40 @@
 #include <fstream>
 #include <sstream>
 
-using namespace std;
-using namespace artdaq;
-
-#define MY_TAG 2
-
 // size_ = number of buffers
 // fragment_size_ = number of longs in a fragment of an event
 //
 // be careful about the event/fragment size - hardwired to sizeof(long)
 // and should be determined from the FragmentPool
 
-RHandles::RHandles(Config const & conf):
-  buffer_count_(conf.sink_buffer_count_),
-  fragment_words_(conf.fragment_words_),
-  src_count_(conf.srcCount()),
-  src_start_(conf.srcStart()),
-  rank_(conf.rank_),
+artdaq::RHandles::RHandles(size_t buffer_count,
+                           uint64_t max_initial_send_words,
+                           size_t src_count,
+                           size_t src_start):
+  buffer_count_(buffer_count),
+  max_initial_send_words_(max_initial_send_words),
+  src_count_(src_count),
+  src_start_(src_start),
   reqs_(buffer_count_, MPI_REQUEST_NULL),
   stats_(buffer_count_),
   flags_(buffer_count_),
-  frags_(buffer_count_),
-  is_direct_(conf.type_ == Config::TaskSource),
-  friend_(conf.getSrcFriend())
+  payload_(buffer_count_)
 {
   // post all the buffers, making sure that the source numbers are correct
   for (int i = 0; i < buffer_count_; ++i) {
     // make sure all buffers are the correct size
-    frags_[i].resize(fragment_words_);
-    // sources are [0,offset)
-    int from = is_direct_ ? friend_ : (i % src_count_ + src_start_);
-    Debug << "sink posting buffer " << i << " size=" << fragment_words_
+    payload_[i].resize(max_initial_send_words_);
+    // Sources are [0,offset). This works if src_count == 1.
+    int from = i % src_count_ + src_start_;
+    Debug << "sink posting buffer " << i << " size=" << max_initial_send_words_
           << " from=" << from << flusher;
-    MPI_Irecv(&(frags_[i])[0], (fragment_words_ * sizeof(artdaq::RawDataType)),
-              MPI_BYTE, from, MY_TAG, MPI_COMM_WORLD, &reqs_[i]);
+    MPI_Irecv(&(payload_[i])[0],
+              (max_initial_send_words_ * sizeof(Fragment::value_type)),
+              MPI_BYTE,
+              from,
+              MPI_ANY_TAG,
+              MPI_COMM_WORLD,
+              &reqs_[i]);
   }
 }
 
@@ -66,62 +67,69 @@ static void printError(int rc, int which, MPI_Status &)
 #endif
 }
 
-void RHandles::recvEvent(Fragment & output)
+void artdaq::RHandles::recvEvent(Fragment & output)
 {
   // Debug << "recv entered" << flusher;
   RecvMeas rm;
   int which;
-#if 0
-  int rc =
-#endif
-    MPI_Waitany(buffer_count_, &reqs_[0], &which, &stats_[0]);
-#if 0
-  printError(rc, which, stats_[which]);
-  writeData(rank_, (const char*) & (frags_[which])[0], frags_[which].size()*sizeof(Data::value_type));
-#endif
+  MPI_Waitany(buffer_count_, &reqs_[0], &which, &stats_[0]);
   if (which == MPI_UNDEFINED)
   { throw "NOTE: MPI_UNDEFINED returned as on index value from Waitany"; }
   if (reqs_[which] != MPI_REQUEST_NULL)
   { throw "NOTE: req is not MPI_REQUEST_NULL in recvEvent"; }
-
-  // The Fragment at index 'which' is now available. Copy its data
-  // into the output.
-  output = frags_[which];
-
-//   output.clear();
-//   output.reserve(frags_[which].size());
-//   cet::for_all(frags_[which], [&](artdaq::Fragment::value_type i){output.push_back(i);});
-//   frags_[which].swap(output);
-
-
-  //artdaq::detail::RawFragmentHeader* fh = output.fragmentHeader();
-
-  //   int event_id = fh->event_id;
-  Fragment::event_id_t event_id = output.eventID();
-
-  //  int from     = fh->fragment_id;
-  Fragment::fragment_id_t from = output.fragmentID();
-
-  // This resetting should not be needed, because we're never changing
-  // frags_[which].
-  //   // make sure the fragment buffer is big enough
-  //   if (frags_[which].size() < static_cast<size_t>(fragment_words_))
-  //   { frags_[which].resize(fragment_words_); }
-  rm.woke(event_id, which);
-  Debug << "recv: " << rank_ << " id=" << event_id << " from="
-        << from << " which=" << which << flusher;
-  // repost the request that was complete, from the same sender
-  // This makes the buffer we've just received data on available to receive new data.
-  /* rc = */ MPI_Irecv(&(frags_[which])[0],
-                       (fragment_words_ * sizeof(artdaq::RawDataType)),
-                       MPI_BYTE, from, MY_TAG, MPI_COMM_WORLD, &reqs_[which]);
-  // printError(rc,from,stats_[which]);
-  rm.post(from);
+  if (stats_[which].MPI_TAG == MPITag::FINAL) { // Done.
+    // The Fragment at index 'which' is now available.
+    // Resize (down) to size to remove trailing garbage.
+    payload_[which].resize(payload_[which].size() -
+                           detail::RawFragmentHeader::num_words());;
+    output.swap(payload_[which]);
+    // Reset our buffer.
+    Fragment tmp(max_initial_send_words_);
+    payload_[which].swap(tmp);
+    // Performance measurement.
+    Fragment::event_id_t event_id = output.eventID();
+    rm.woke(event_id, which);
+    int rank;
+    Debug << "recv: "
+          << (MPI_Comm_rank(MPI_COMM_WORLD, &rank), rank)
+          << " id=" << event_id
+          << " fragID=" << output.fragmentID()
+          << " which=" << which
+          << flusher;
+    // Repost the request that was complete, from the same sender.  This
+    // makes the buffer we've just received data on available to receive
+    // new data.
+    MPI_Irecv(&(payload_[which])[0],
+              (max_initial_send_words_ * sizeof(Fragment::value_type)),
+              MPI_BYTE,
+              stats_[which].MPI_SOURCE, // Same source.
+              MPI_ANY_TAG,
+              MPI_COMM_WORLD,
+              &reqs_[which]);
+    rm.post(stats_[which].MPI_SOURCE);
+  }
+  else { // Incomplete.
+    assert(stats_[which].MPI_TAG == MPITag::INCOMPLETE);
+    // Make our frag the correct size to receive the reset of the data.
+    payload_[which].resize(payload_[which].size() -
+                         detail::RawFragmentHeader::num_words());;
+    // TODO: Should I call rm.woke() here or not?
+    // Repost to receive the rest of the data (all in one chunk since we
+    // know how much to expect).
+    MPI_Irecv(&(payload_[which])[max_initial_send_words_],
+              (payload_[which].size() - max_initial_send_words_)
+              * sizeof(Fragment::value_type),
+              MPI_BYTE,
+              stats_[which].MPI_SOURCE,
+              MPI_ANY_TAG,
+              MPI_COMM_WORLD,
+              &reqs_[which]);
+    recvEvent(output); // Call ourselves to wait for the final chunk.
+  }
 }
 
-void RHandles::waitAll()
+void artdaq::RHandles::waitAll()
 {
-  // MPI_Waitall(buffer_count_,&reqs_[0],&stats_[0]);
   // clean up the remaining buffers
   for (int i = 0; i < buffer_count_; ++i) {
     MPI_Cancel(&reqs_[i]);

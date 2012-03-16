@@ -60,7 +60,8 @@ artdaq::Fragment::Streamer(TBuffer & buf)
 {
   if (buf.IsReading()) {
     if (vals_.size() != size()) {
-      std::cerr << "WARNING: Fragment header word_count is inconsistent on disk: Fixing.\n"
+      std::cerr << "WARNING: Fragment header word_count is inconsistent "
+                << "on file: Fixing.\n"
                 << *this;
       updateSize();
     }
