@@ -13,6 +13,7 @@ public:
 
   // returns the number of bits in the out buffer
   reg_type operator()(ADCCountVec const& in, DataVec& out);
+  reg_type operator()(adc_type const* beg, adc_type const* last, DataVec& out);
 
 private:
   SymTable syms_;

@@ -52,8 +52,13 @@ Encoder::Encoder(SymTable const & syms):
 
 reg_type Encoder::operator()(ADCCountVec const & in, DataVec & out)
 {
+  return (*this)(in.begin(),in.end(),out);
+}
+
+reg_type Encoder::operator()(adc_type const* beg, adc_type const* end, DataVec & out)
+{
   Accum a(out, syms_);
-  for_each(in.begin(), in.end(), [&](ADCCountVec::value_type const & v) { a.put(v); });
+  for_each(beg, end, [&](adc_type const & v) { a.put(v); });
   return a.totalBits();
 }
 
