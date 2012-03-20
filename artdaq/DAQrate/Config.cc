@@ -38,36 +38,17 @@ static double getArgSinks(int argc, char* argv[])
   return atof(argv[2]);
 }
 
-static int getArgEventSize(int argc, char* argv[])
-{
-  if (argc < 4) { throwUsage(argv[0], "no event_size argument"); }
-  return atoi(argv[4]);
-}
-
 static int getArgQueueSize(int argc, char* argv[])
 {
-  if (argc < 5) { throwUsage(argv[0], "no event_queue_size argument"); }
+  if (argc < 4) { throwUsage(argv[0], "no event_queue_size argument"); }
   return atoi(argv[5]);
 }
 
 static int getArgRun(int argc, char* argv[])
 {
-  if (argc < 6) { throwUsage(argv[0], "no run argument"); }
+  if (argc < 5) { throwUsage(argv[0], "no run argument"); }
   return atoi(argv[6]);
 }
-
-static std::string getArgDataDir(int argc, char* argv[])
-{
-  if (argc < 7) {return std::string();}
-  std::string rawArg(argv[7]);
-  if (rawArg.find("--data-dir=") == std::string::npos) {return "";}
-  std::string dataDir = rawArg.substr(11);
-  if (dataDir.length() > 0 && dataDir[dataDir.length() - 1] != '/') {
-    dataDir.append("/");
-  }
-  return dataDir;
-}
-
 
 static std::string getProcessorName()
 {
@@ -93,24 +74,18 @@ Config::Config(int rank, int total_procs, int argc, char* argv[]):
   source_start_(detectors_),
   sink_start_(detectors_ + sources_),
 
-  event_size_(getArgEventSize(argc, argv)),
   event_queue_size_(getArgQueueSize(argc, argv)),
   run_(getArgRun(argc, argv)),
 
-  packet_size_(event_size_ / sources_),
-  max_initial_send_words_(packet_size_ / sizeof(artdaq::RawDataType)),
   source_buffer_count_(event_queue_size_ * sinks_),
   sink_buffer_count_(event_queue_size_ * sources_),
   type_((rank_ < detectors_) ? TaskDetector : ((rank_ < (detectors_ + sources_)) ? TaskSource : TaskSink)),
   offset_(rank_ - ((type_ == TaskDetector) ? detector_start_ : (type_ == TaskSource) ? source_start_ : sink_start_)),
   barrier_period_(source_buffer_count_),
   node_name_(getProcessorName()),
-  data_dir_(getArgDataDir(argc, argv)),
-
   art_argc_(getArtArgc(argc, argv)),
   art_argv_(getArtArgv(argc - art_argc_, argv)),
   use_artapp_(getenv("ARTDAQ_DAQRATE_USE_ART") != 0)
-
 {
   int total_workers = (detectors_ + sinks_ + sources_);
   if (total_procs_ != total_workers) {
@@ -198,8 +173,8 @@ void Config::printHeader(std::ostream & ost) const
       << "DetectorsPerNode SourcesPerNode SinksPerNode "
       << "BuilderNodes DetectorNodes Sources Sinks Detectors "
       << "DetectorStart SourceStart SinkStart "
-      << "EventSize EventQueueSize "
-      << "Run PacketSize "
+      << "EventQueueSize "
+      << "Run "
       << "SourceBufferCount SinkBufferCount "
       << "Type Offset "
       << "BarrierPeriod "
@@ -216,10 +191,8 @@ void Config::print(std::ostream & ost) const
       << detector_start_ << " "
       << source_start_ << " "
       << sink_start_ << " "
-      << event_size_ << " "
       << event_queue_size_ << " "
       << run_ << " "
-      << packet_size_ << " "
       << source_buffer_count_ << " "
       << sink_buffer_count_ << " "
       << typeName() << " "

@@ -4,14 +4,13 @@ import sys
 import os
 
 USAGE="\
-   Usage: %s [options] <num dect and src> <num sink> <filebase> <qsize> <run#>\n\
-      OR  %s [options] <num dect and src> <num sink> <eventsz>  <qsize> <run#>\n\
-Examples: %s 5 5 10000\n\
-          %s 4 4 $DATA --nodes=grunt{1-5} --ddnodes=1 # 1 node  sending to 4\n\
-          %s 4 4 $DATA --nodes=grunt{1-5} --ddnodes=4 # 4 nodes sending to 1\n\
-          %s 5 5 $DATA --nodes=grunt{1-5} --ddnodes=0 # \n\
-          %s 5 5 $DATA --nodes=grunt{1-5} # same as above\
-"%((os.path.basename(sys.argv[0]),)*7)
+   Usage: %s [options] <num dect and src> <num sink> <qsize> <run#>\n\
+Examples: %s 5 5\n\
+          %s 4 4 --nodes=grunt{1-5} --ddnodes=1 # 1 node  sending to 4\n\
+          %s 4 4 --nodes=grunt{1-5} --ddnodes=4 # 4 nodes sending to 1\n\
+          %s 5 5 --nodes=grunt{1-5} --ddnodes=0 # \n\
+          %s 5 5 --nodes=grunt{1-5} # same as above\
+"%((os.path.basename(sys.argv[0]),)*6)
 
 
 
@@ -195,25 +194,13 @@ def main():
             assert False, "unhandled option"
 
 
-    if len(args) < 6: print(USAGE); sys.exit()    
+    if len(args) < 4: print(USAGE); sys.exit()    
 
     num_det    = int( args[0],0 )
     num_src    = int( args[0],0 )
     num_sink   = int( args[1],0 )
-    size_or_dir=      args[2]
-    queue_size = int( args[3],0 )
-    run_number = int( args[4],0 )
-
-    data_dir=''
-    if os.path.isdir(size_or_dir):
-	fo=open( size_or_dir+"/board0.out", 'r' )
-	data_dir=size_or_dir
-	event_size = (1200016+12)*num_det # (frag_bytes+frag_header_bytes)*num_det
-	fo.close()
-    else:
-	event_size = int( size_or_dir, 0 )
-
-
+    queue_size = int( args[2],0 )
+    run_number = int( args[3],0 )
 
     builder=os.popen("which builder 2>/dev/null").readline()
     if not builder:
@@ -264,9 +251,7 @@ def main():
 	cmd+="-n %d "%(num_det+num_src+num_sink,)
 	cmd+=builder[:-1]
 	cmd+=" %d %d "%(num_det,num_sink)
-	cmd+="%d "%(event_size)
 	cmd+="%d %d"%(queue_size, run_number)
-	if data_dir: cmd+=" --data-dir=%s"%(data_dir,)
 	if art_args: cmd+=" %s"%(art_args,)
 	print( "executing cmd: %s"%(cmd,) )
 	#os.system(cmd)
@@ -274,9 +259,7 @@ def main():
 	cmd ="mpirun -n %d "%(num_det+num_src+num_sink,)
 	cmd+=builder[:-1]
 	cmd+=" %d %d "%(num_det,num_sink)
-	cmd+="%d "%(event_size)
 	cmd+="%d %d"%(queue_size, run_number)
-	if data_dir: cmd+=" --data-dir=%s"%(data_dir,)
 	if art_args: cmd+=" %s"%(art_args,)
 	print( "executing cmd: %s"%(cmd,) )
 	rc = (os.system( cmd ) >> 8)
