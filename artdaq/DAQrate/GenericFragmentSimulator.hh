@@ -1,4 +1,4 @@
-#†ifndef artdaq_DAQrate_GenericFragmentSimulator_hh
+#ifndef artdaq_DAQrate_GenericFragmentSimulator_hh
 #define artdaq_DAQrate_GenericFragmentSimulator_hh
 
 #include "CLHEP/Random/JamesRandom.h"

@@ -1,5 +1,8 @@
 include(CetTest)
 
+cet_test(daq_flow_t LIBRARIES artdaq_DAQrate)
+
+
 cet_test(driver_t HANDBUILT
          TEST_EXEC driver
          TEST_ARGS -c driver_t.fcl

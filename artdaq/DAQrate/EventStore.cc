@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sstream>
 
+#include "cetlib/exception.h"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 #include "artdaq/DAQrate/StatisticsCollection.hh"
 #include "artdaq/DAQrate/SimpleQueueReader.hh"
@@ -31,10 +32,14 @@ namespace
   ARTFUL_FCN* get_artapp()
   {
     // This is hackery, and needs to be made robust.
-    void* lptr = dlopen("libartdaq_art", RTLD_LAZY | RTLD_GLOBAL);
-    assert(lptr);
+    char const* LIBNAME = "libart_Framework_Art.so";
+    void* lptr = dlopen(LIBNAME, RTLD_LAZY | RTLD_GLOBAL);
+    if (!lptr)
+      throw cet::exception("LoadFailure") << "dlopen failed to find " << LIBNAME << '\n';
     void* fptr = dlsym(lptr, "artmain");
-    assert(fptr);
+    if (!fptr)
+      throw cet::exception("LoadFailure") << "dlopen failed to find artmain in " << LIBNAME << '\n';
+
     ARTFUL_FCN* result(0);
     hard_cast(fptr, result);
     return result;
@@ -67,7 +72,7 @@ namespace artdaq
     subrun_id_(0),
     events_(),
     queue_(getGlobalQueue()),
-    reader_thread_(simpleQueueReaderApp, 0, nullptr)
+    reader_thread_(get_artapp(), 0, nullptr)
   {
     // TODO: Consider doing away with the named local mqPtr, and
     // making use of make_shared<MonitoredQuantity> in the call to
@@ -87,7 +92,7 @@ namespace artdaq
     subrun_id_(0),
     events_(),
     queue_(getGlobalQueue()),
-    reader_thread_(simpleQueueReaderApp, 0, nullptr)
+    reader_thread_(get_artapp(), 0, nullptr)
   {
     MonitoredQuantityPtr mqPtr(new MonitoredQuantity(1.0, 60.0));
     StatisticsCollection::getInstance().
