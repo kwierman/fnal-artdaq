@@ -32,7 +32,7 @@ artdaq::DS50FragmentReader::getNext_(FragmentPtrs & frags)
   }
   // Useful constants for byte arithmetic.
   static size_t const ds50_words_per_frag_word =
-    sizeof(RawDataType) /
+    sizeof(Fragment::value_type) /
     sizeof(Board::data_t);
   static size_t const initial_frag_size =
     Board::header_size_words() /
