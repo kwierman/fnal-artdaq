@@ -56,9 +56,9 @@ namespace ds50
     produces<DS50RawData>();
   }
 
-  void DS50Compress::produce(art::Event& e)
+  void DS50Compression::produce(art::Event& e)
   {
-    typedef std::vector<Fragment> FragVec;
+    typedef std::vector<artdaq::Fragment> FragVec;
 
     art::Handle<FragVec> handle;
     e.getByLabel(raw_label_, handle);
@@ -71,13 +71,13 @@ namespace ds50
       {
 	auto payload = (*handle)[i].dataBegin();
 	// start of payload is the DS50 header
-	Board b(*payload);
+	Board b((*handle)[i]);
 	// DS50 data immediately follows the header
 	// the board class should be giving out the start/end of
 	// data as adc_type pointer instead of calculating it here
 	// DS50 data is in data_t units.
-	ds50::Board::data_t* head_start = (ds50::Board::data_t*)payload;
-	ds50::Board::data_t* data_start = head_start + b.head_size_words();
+	ds50::Board::data_t* head_start = (ds50::Board::data_t*)*payload;
+	ds50::Board::data_t* data_start = head_start + b.header_size_words();
 	// we want the data in adc_type units
 	// there are two adc values per word
 	adc_type* adc_start = (adc_type*)data_start;
@@ -90,8 +90,8 @@ namespace ds50
     e.put(prod);
   }
 
-  void DS50Compression::endSubRun(art::SubRun& sr) { }
-  void DS50Compression::endRun(art::Run& r) { }
+  void DS50Compression::endSubRun(art::SubRun&) { }
+  void DS50Compression::endRun(art::Run&) { }
 
   DEFINE_ART_MODULE(DS50Compression)
 }

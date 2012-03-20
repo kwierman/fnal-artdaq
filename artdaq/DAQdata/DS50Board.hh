@@ -16,7 +16,7 @@ namespace ds50 {
     typedef detail::Header::event_counter_t event_counter_t;
     typedef detail::Header::trigger_time_tag_t trigger_time_tag_t;
 
-    explicit Board(artdaq::Fragment & f);
+    explicit Board(artdaq::Fragment const & f);
 
     size_t event_size() const;
     channel_mask_t channel_mask() const;
@@ -29,7 +29,7 @@ namespace ds50 {
 
   private:
     detail::Header const * header_() const;
-    artdaq::Fragment & data_;
+    artdaq::Fragment const & data_;
   };
 
   inline
@@ -37,7 +37,7 @@ namespace ds50 {
   { return reinterpret_cast<detail::Header const *>(&*data_.dataBegin()); }
 
   inline
-  Board::Board(artdaq::Fragment & f)
+  Board::Board(artdaq::Fragment const & f)
     :
     data_(f)
   { }
