@@ -20,10 +20,16 @@ typedef std::vector<reg_type> DataVec;
 typedef double signal_type;
 typedef std::vector<signal_type> SignalVec;
 
-constexpr unsigned long reg_size_bits = (sizeof(reg_type)*8);
-constexpr unsigned long chunk_size_bytes = 1<<16;
-constexpr unsigned long chunk_size_counts = chunk_size_bytes / sizeof(adc_type);
-constexpr unsigned long chunk_size_regs = chunk_size_bytes / sizeof(reg_type);
+#if defined(__GCCXML__) || !defined(__GXX_EXPERIMENTAL_CXX0X__)
+#define Constexpr /**/
+#else
+#define Constexpr constexpr
+#endif
+
+Constexpr unsigned long reg_size_bits = (sizeof(reg_type)*8);
+Constexpr unsigned long chunk_size_bytes = 1<<16;
+Constexpr unsigned long chunk_size_counts = chunk_size_bytes / sizeof(adc_type);
+Constexpr unsigned long chunk_size_regs = chunk_size_bytes / sizeof(reg_type);
 
 inline size_t bitCountToBytes(reg_type bits)
 {
@@ -33,16 +39,16 @@ inline size_t bitCountToBytes(reg_type bits)
 template <size_t N>
 struct Properties_t
 {
-  constexpr static adc_type count_max() { return 1<<N; }
-  constexpr static adc_type count_min() { return 0; }
+  Constexpr static adc_type count_max() { return 1<<N; }
+  Constexpr static adc_type count_min() { return 0; }
 
-  constexpr static double signal_low() { return -20.; }
-  constexpr static double signal_high() { return 140.; }
-  constexpr static double adc_low() { return count_min(); }
-  constexpr static double adc_high() { return (double)(count_max()); }
+  Constexpr static double signal_low() { return -20.; }
+  Constexpr static double signal_high() { return 140.; }
+  Constexpr static double adc_low() { return count_min(); }
+  Constexpr static double adc_high() { return (double)(count_max()); }
 
-  constexpr static double m() { return (adc_high()-adc_low())/(signal_high()-signal_low()); }
-  constexpr static double b() { return -signal_low() * m(); }
+  Constexpr static double m() { return (adc_high()-adc_low())/(signal_high()-signal_low()); }
+  Constexpr static double b() { return -signal_low() * m(); }
 
   static adc_type signalToADC(double sig)
   { 
@@ -56,6 +62,10 @@ struct Properties_t
   }
 
 };
+
+#if defined(__GCCXML__) || !defined(__GXX_EXPERIMENTAL_CXX0X__)
+#undef Constexpr
+#endif
 
 typedef Properties_t<12> Properties;
 

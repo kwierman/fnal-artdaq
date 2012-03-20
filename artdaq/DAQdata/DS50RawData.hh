@@ -31,7 +31,7 @@ namespace ds50
     reg_type fragmentBitCount(size_t which) const
     { return counts_.at(which); }
     void setFragmentBitCount(size_t which, reg_type count)
-    { counts_.[which] = count; }
+    { counts_[which] = count; }
 
     // return a reference to the entire CompVec? perhaps.
 

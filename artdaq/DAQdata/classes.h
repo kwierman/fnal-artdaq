@@ -1,4 +1,5 @@
 #include "artdaq/DAQdata/Fragment.hh"
+#include "artdaq/DAQdata/DS50RawData.hh"
 #include "art/Persistency/Common/Wrapper.h"
 #include <vector>
 
