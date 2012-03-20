@@ -52,7 +52,8 @@ Encoder::Encoder(SymTable const & syms):
 
 reg_type Encoder::operator()(ADCCountVec const & in, DataVec & out)
 {
-  return (*this)(in.begin(),in.end(),out);
+  return (*this)(&in[0], &in[in.size()] ,out);
+  // return (*this)(in.begin(),in.end(),out);
 }
 
 reg_type Encoder::operator()(adc_type const* beg, adc_type const* end, DataVec & out)
