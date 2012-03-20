@@ -205,7 +205,7 @@ inline std::ostream & operator<<(std::ostream & ost, EventMeas const & h)
   return ost;
 }
 
-void PerfConfigure(Config const &);
+void PerfConfigure(Config const &, size_t expected_events);
 void PerfSetStartTime();
 double PerfGetStartTime();
 void PerfWriteJobStart();

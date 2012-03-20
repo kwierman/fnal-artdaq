@@ -23,7 +23,6 @@ set( LIB_SOURCES
      DS50FragmentSimulator.cc
      GenericFragmentSimulator.cc
      EventStore.cc
-     #FragmentPool.cc
      MonitoredQuantity.cc
      MPIProg.cc
      Perf.cc
@@ -85,14 +84,19 @@ set ( art_exec_link_libraries
   ${Boost_FILESYSTEM_LIBRARY}
 )
 
-link_libraries( ${LIB_NAME} artdaq_DAQdata)
-
 #target_link_libraries( artdaq_DAQrate
 #                       ${art_exec_link_libraries}
 #                       ${common_exec_link_libraries} )
 
 add_executable( perfdump perfdump.cc )
-#add_executable( builder builder.cc )
+target_link_libraries(perfdump ${LIB_NAME})
+
+add_executable( builder builder.cc )
+target_link_libraries(builder
+  ${LIB_NAME}
+  ${FHICLCPP}
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+)
 
 # ----------------------------------------------------------------------
 # Install this project's headers, sources, library, and executables:

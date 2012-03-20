@@ -4,13 +4,13 @@ import sys
 import os
 
 USAGE="\
-   Usage: %s [options] <num dect and src> <num sink> <events> <filebase> <qsize> <run#>\n\
-      OR  %s [options] <num dect and src> <num sink> <events> <eventsz>  <qsize> <run#>\n\
-Examples: %s 5 5 1000 10000\n\
-          %s 4 4 1000 $DATA --nodes=grunt{1-5} --ddnodes=1 # 1 node  sending to 4\n\
-          %s 4 4 1000 $DATA --nodes=grunt{1-5} --ddnodes=4 # 4 nodes sending to 1\n\
-          %s 5 5 1000 $DATA --nodes=grunt{1-5} --ddnodes=0 # \n\
-          %s 5 5 1000 $DATA --nodes=grunt{1-5} # same as above\
+   Usage: %s [options] <num dect and src> <num sink> <filebase> <qsize> <run#>\n\
+      OR  %s [options] <num dect and src> <num sink> <eventsz>  <qsize> <run#>\n\
+Examples: %s 5 5 10000\n\
+          %s 4 4 $DATA --nodes=grunt{1-5} --ddnodes=1 # 1 node  sending to 4\n\
+          %s 4 4 $DATA --nodes=grunt{1-5} --ddnodes=4 # 4 nodes sending to 1\n\
+          %s 5 5 $DATA --nodes=grunt{1-5} --ddnodes=0 # \n\
+          %s 5 5 $DATA --nodes=grunt{1-5} # same as above\
 "%((os.path.basename(sys.argv[0]),)*7)
 
 
@@ -200,10 +200,9 @@ def main():
     num_det    = int( args[0],0 )
     num_src    = int( args[0],0 )
     num_sink   = int( args[1],0 )
-    num_events = int( args[2],0 )
-    size_or_dir=      args[3]
-    queue_size = int( args[4],0 )
-    run_number = int( args[5],0 )
+    size_or_dir=      args[2]
+    queue_size = int( args[3],0 )
+    run_number = int( args[4],0 )
 
     data_dir=''
     if os.path.isdir(size_or_dir):
@@ -265,7 +264,7 @@ def main():
 	cmd+="-n %d "%(num_det+num_src+num_sink,)
 	cmd+=builder[:-1]
 	cmd+=" %d %d "%(num_det,num_sink)
-	cmd+="%d %d "%(num_events, event_size)
+	cmd+="%d "%(event_size)
 	cmd+="%d %d"%(queue_size, run_number)
 	if data_dir: cmd+=" --data-dir=%s"%(data_dir,)
 	if art_args: cmd+=" %s"%(art_args,)
@@ -275,7 +274,7 @@ def main():
 	cmd ="mpirun -n %d "%(num_det+num_src+num_sink,)
 	cmd+=builder[:-1]
 	cmd+=" %d %d "%(num_det,num_sink)
-	cmd+="%d %d "%(num_events, event_size)
+	cmd+="%d "%(event_size)
 	cmd+="%d %d"%(queue_size, run_number)
 	if data_dir: cmd+=" --data-dir=%s"%(data_dir,)
 	if art_args: cmd+=" %s"%(art_args,)

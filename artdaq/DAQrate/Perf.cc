@@ -24,7 +24,7 @@ namespace {
     Perf();
     ~Perf();
 
-    void configure(Config const &);
+    void configure(Config const &, size_t expected_events);
     static Perf* instance();
 
     template <class T> void write(T const & write_me);
@@ -64,9 +64,8 @@ namespace {
     ostr.write((const char*)&data_[0], pos_);
   }
 
-  void Perf::configure(Config const & conf)
+  void Perf::configure(Config const & conf, size_t expected_events)
   {
-    int totalfrags = conf.totalReceiveFragments();
     int res_size = 0;
     rank_ = conf.rank_;
     run_ = conf.run_;
@@ -74,11 +73,15 @@ namespace {
             conf.type_ == Config::TaskSource ? JobStartMeas::SOURCE : JobStartMeas::DETECTOR;
     start_ = MPI_Wtime();
     filename_ = conf.infoFilename("perf_");
-    if (type_ != JobStartMeas::SINK) { res_size += sizeof(SendMeas) * totalfrags; }
-    if (type_ != JobStartMeas::DETECTOR) { res_size += sizeof(RecvMeas) * totalfrags; }
-    res_size += sizeof(EventMeas) * conf.total_events_;
+    if (type_ != JobStartMeas::SINK) {
+      res_size += sizeof(SendMeas) * conf.sinks_ * expected_events; // Guess.
+    }
+    if (type_ != JobStartMeas::DETECTOR) {
+      res_size += sizeof(RecvMeas) * conf.sources_ * expected_events; // Guess.
+    }
+    res_size += sizeof(EventMeas) * expected_events;
     res_size += 1000 * 1000 * 100;
-    data_.reserve(res_size);
+    data_.reserve(res_size); // Guess -- will reallocate if necessary.
   }
 
 }
@@ -89,8 +92,8 @@ double PerfGetStartTime()
 void PerfSetStartTime()
 { Perf::instance()->start_ = MPI_Wtime(); }
 
-void PerfConfigure(Config const & conf)
-{ Perf::instance()->configure(conf); }
+void PerfConfigure(Config const & conf, size_t expected_events)
+{ Perf::instance()->configure(conf, expected_events); }
 
 void PerfWriteJobStart()
 { JobStartMeas js; }

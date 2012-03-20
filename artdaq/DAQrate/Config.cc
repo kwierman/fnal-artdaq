@@ -18,7 +18,7 @@
 
 using namespace std;
 
-static const char* usage = "DetectorsPerNode SinksPerNode TotalEvents EventSize EventQueueSize Run";
+static const char* usage = "DetectorsPerNode SinksPerNode EventSize EventQueueSize Run";
 
 static void throwUsage(char* argv0, const string & msg)
 {
@@ -38,33 +38,27 @@ static double getArgSinks(int argc, char* argv[])
   return atof(argv[2]);
 }
 
-static int getArgTotalEvents(int argc, char* argv[])
-{
-  if (argc < 4) { throwUsage(argv[0], "no total_events argument"); }
-  return atoi(argv[3]);
-}
-
 static int getArgEventSize(int argc, char* argv[])
 {
-  if (argc < 5) { throwUsage(argv[0], "no event_size argument"); }
+  if (argc < 4) { throwUsage(argv[0], "no event_size argument"); }
   return atoi(argv[4]);
 }
 
 static int getArgQueueSize(int argc, char* argv[])
 {
-  if (argc < 6) { throwUsage(argv[0], "no event_queue_size argument"); }
+  if (argc < 5) { throwUsage(argv[0], "no event_queue_size argument"); }
   return atoi(argv[5]);
 }
 
 static int getArgRun(int argc, char* argv[])
 {
-  if (argc < 7) { throwUsage(argv[0], "no run argument"); }
+  if (argc < 6) { throwUsage(argv[0], "no run argument"); }
   return atoi(argv[6]);
 }
 
 static std::string getArgDataDir(int argc, char* argv[])
 {
-  if (argc < 8) {return std::string();}
+  if (argc < 7) {return std::string();}
   std::string rawArg(argv[7]);
   if (rawArg.find("--data-dir=") == std::string::npos) {return "";}
   std::string dataDir = rawArg.substr(11);
@@ -99,13 +93,12 @@ Config::Config(int rank, int total_procs, int argc, char* argv[]):
   source_start_(detectors_),
   sink_start_(detectors_ + sources_),
 
-  total_events_(getArgTotalEvents(argc, argv)),
   event_size_(getArgEventSize(argc, argv)),
   event_queue_size_(getArgQueueSize(argc, argv)),
   run_(getArgRun(argc, argv)),
 
   packet_size_(event_size_ / sources_),
-  fragment_words_(packet_size_ / sizeof(artdaq::RawDataType)),
+  max_initial_send_words_(packet_size_ / sizeof(artdaq::RawDataType)),
   source_buffer_count_(event_queue_size_ * sinks_),
   sink_buffer_count_(event_queue_size_ * sources_),
   type_((rank_ < detectors_) ? TaskDetector : ((rank_ < (detectors_ + sources_)) ? TaskSource : TaskSink)),
@@ -125,18 +118,6 @@ Config::Config(int rank, int total_procs, int argc, char* argv[]):
          << "total_workers " << total_workers << "\n";
     throw "total_procs != total_workers";
   }
-}
-
-int Config::totalReceiveFragments() const
-{
-#if 1
-  return total_events_;
-#else
-  if (type_ == TaskDetector) { throw "detectors do not receive events"; }
-  int m = total_events_ / destCount(); // each to receive
-  int r = total_events_ % destCount(); // leftovers
-  return m + (offset_ < r) ? 1 : 0;
-#endif
 }
 
 void Config::writeInfo() const
@@ -217,7 +198,6 @@ void Config::printHeader(std::ostream & ost) const
       << "DetectorsPerNode SourcesPerNode SinksPerNode "
       << "BuilderNodes DetectorNodes Sources Sinks Detectors "
       << "DetectorStart SourceStart SinkStart "
-      << "TotalEvents TotalReceiveFragments "
       << "EventSize EventQueueSize "
       << "Run PacketSize "
       << "SourceBufferCount SinkBufferCount "
@@ -236,8 +216,6 @@ void Config::print(std::ostream & ost) const
       << detector_start_ << " "
       << source_start_ << " "
       << sink_start_ << " "
-      << total_events_ << " "
-      << totalReceiveFragments() << " "
       << event_size_ << " "
       << event_queue_size_ << " "
       << run_ << " "

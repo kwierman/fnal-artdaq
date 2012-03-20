@@ -96,17 +96,19 @@ void artdaq::RHandles::recvEvent(Fragment & output)
           << " fragID=" << output.fragmentID()
           << " which=" << which
           << flusher;
-    // Repost the request that was complete, from the same sender.  This
-    // makes the buffer we've just received data on available to receive
-    // new data.
-    MPI_Irecv(&(payload_[which])[0],
-              (max_initial_send_words_ * sizeof(Fragment::value_type)),
-              MPI_BYTE,
-              stats_[which].MPI_SOURCE, // Same source.
-              MPI_ANY_TAG,
-              MPI_COMM_WORLD,
-              &reqs_[which]);
-    rm.post(stats_[which].MPI_SOURCE);
+    if (output.type() != Fragment::type_t::END_OF_DATA) {
+      // Repost the request that was complete, from the same sender.  This
+      // makes the buffer we've just received data on available to receive
+      // new data.
+      MPI_Irecv(&(payload_[which])[0],
+                (max_initial_send_words_ * sizeof(Fragment::value_type)),
+                MPI_BYTE,
+                stats_[which].MPI_SOURCE, // Same source.
+                MPI_ANY_TAG,
+                MPI_COMM_WORLD,
+                &reqs_[which]);
+      rm.post(stats_[which].MPI_SOURCE);
+    } // else done.
   }
   else { // Incomplete.
     assert(stats_[which].MPI_TAG == MPITag::INCOMPLETE);

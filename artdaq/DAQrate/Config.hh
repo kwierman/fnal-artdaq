@@ -27,7 +27,6 @@ public:
   int getArtArgc(int argc, char* argv[]) const;
   char** getArtArgv(int argc, char* argv[]) const;
   std::string typeName() const;
-  int totalReceiveFragments() const;
   std::string infoFilename(std::string const& prefix) const;
   void writeInfo() const;
 
@@ -42,14 +41,13 @@ public:
   int source_start_;
   int sink_start_;
 
-  int total_events_;
   int event_size_;
   int event_queue_size_;
   int run_;
 
   // calculated parameters
   int packet_size_;
-  int fragment_words_;
+  int max_initial_send_words_;
   int source_buffer_count_;
   int sink_buffer_count_;
   TaskType type_;
