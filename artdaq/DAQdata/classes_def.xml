@@ -4,7 +4,4 @@
   <class name="artdaq::Fragment"/>
   <class name="std::vector<artdaq::Fragment>"/>
   <class name="art::Wrapper<std::vector<artdaq::Fragment> >"/>
-  <class name="adc_type"/>
-  <class name="ds50::DS50RawData"/>
-  <class name="art::Wrapper<ds50::DS50RawData>"/>
 </lcgdict>
