@@ -21,6 +21,8 @@
 #include "cetlib/filepath_maker.h"
 #include "cetlib/container_algorithms.h"
 
+#include "art/Framework/Art/artapp.h"
+
 #include <iostream>
 #include <memory>
 #include <utility>
@@ -81,9 +83,10 @@ int main(int argc, char* argv[]) try
 
     std::unique_ptr<artdaq::FragmentGenerator> const gen(make_generator(ds_pset));
 
-    artdaq::EventStore store(ds_pset.get<int>("source_count"),
-                             ds_pset.get<int>("run_number"),
-                             argc, argv);
+    artdaq::EventStore store(ds_pset.get<size_t>("source_count"),
+                             ds_pset.get<artdaq::EventStore::run_id_t>("run_number"),
+                             1, argc, argv,
+                             &artapp);
 
     // Read or generate fragments as rapidly as possible, and feed them
     // into the EventStore. The throughput resulting from this design

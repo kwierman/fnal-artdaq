@@ -16,63 +16,30 @@
 
 using namespace std;
 
-namespace
-{
-  typedef int (ARTFUL_FCN)(int, char**);
-
-  // Because we do not want to introduce a compile- or link-time
-  // dependence on art, we copied this from hard_cast.h
-  inline
-  void
-  hard_cast(void * src, ARTFUL_FCN* & dest)
-  {
-    memcpy(&dest, &src, sizeof(ARTFUL_FCN*));
-  }
-
-  ARTFUL_FCN* get_artapp()
-  {
-    // This is hackery, and needs to be made robust.
-    char const* LIBNAME = "libart_Framework_Art.so";
-    void* lptr = dlopen(LIBNAME, RTLD_LAZY | RTLD_GLOBAL);
-    if (!lptr)
-      throw cet::exception("LoadFailure") << "dlopen failed to find " << LIBNAME << '\n';
-    void* fptr = dlsym(lptr, "artmain");
-    if (!fptr)
-      throw cet::exception("LoadFailure") << "dlopen failed to find artmain in " << LIBNAME << '\n';
-
-    ARTFUL_FCN* result(0);
-    hard_cast(fptr, result);
-    return result;
-  }
-
-  ARTFUL_FCN* choose_function(bool use_artapp)
-  {
-    return (use_artapp) ? get_artapp() : &artdaq::simpleQueueReaderApp;
-  }
-}
-
 namespace artdaq
 {
   const std::string EventStore::EVENT_RATE_STAT_KEY("EventStoreEventRate");
 
-  inline int get_mpi_rank()
-  {
-    int rk(0);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rk);
-    return rk;
-  }
+//   inline int get_mpi_rank()
+//   {
+//     int rk(0);
+//     MPI_Comm_rank(MPI_COMM_WORLD, &rk);
+//     return rk;
+//   }
 
   EventStore::EventStore(size_t num_fragments_per_event,
                          run_id_t run,
-                         int argc __attribute__((unused)),
-                         char* argv[] __attribute__((unused))):
-    id_(0),
+                         int store_id,
+                         int argc,
+                         char* argv[],
+                         ARTFUL_FCN* reader) :
+    id_(store_id),
     num_fragments_per_event_(num_fragments_per_event),
     run_id_(run),
     subrun_id_(0),
     events_(),
     queue_(getGlobalQueue()),
-    reader_thread_(get_artapp(), 0, nullptr)
+    reader_thread_(reader, argc, argv)
   {
     // TODO: Consider doing away with the named local mqPtr, and
     // making use of make_shared<MonitoredQuantity> in the call to
@@ -84,20 +51,21 @@ namespace artdaq
       addMonitoredQuantity(EVENT_RATE_STAT_KEY, mqPtr);
   }
 
-  EventStore::EventStore(size_t num_fragments_per_event,
-                         run_id_t run) :
-    id_(get_mpi_rank()),
-    num_fragments_per_event_(num_fragments_per_event),
-    run_id_(run),
-    subrun_id_(0),
-    events_(),
-    queue_(getGlobalQueue()),
-    reader_thread_(get_artapp(), 0, nullptr)
-  {
-    MonitoredQuantityPtr mqPtr(new MonitoredQuantity(1.0, 60.0));
-    StatisticsCollection::getInstance().
-      addMonitoredQuantity(EVENT_RATE_STAT_KEY, mqPtr);
-  }
+//   EventStore::EventStore(size_t num_fragments_per_event,
+//                          run_id_t run,
+//                          ARTFUL_FCN* reader) :
+//     id_(get_mpi_rank()),
+//     num_fragments_per_event_(num_fragments_per_event),
+//     run_id_(run),
+//     subrun_id_(0),
+//     events_(),
+//     queue_(getGlobalQueue()),
+//     reader_thread_(reader, 0, nullptr)
+//   {
+//     MonitoredQuantityPtr mqPtr(new MonitoredQuantity(1.0, 60.0));
+//     StatisticsCollection::getInstance().
+//       addMonitoredQuantity(EVENT_RATE_STAT_KEY, mqPtr);
+//   }
 
   EventStore::~EventStore()
   {

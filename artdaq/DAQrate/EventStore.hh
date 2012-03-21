@@ -11,6 +11,7 @@
 
 namespace artdaq
 {
+
   // An EventStore is given Fragments, which it collects until it
   // finds it has a complete RawEvent. When a complete RawEvent is
   // assembled, the EventStore puts it onto the global RawEvent queue.
@@ -22,7 +23,8 @@ namespace artdaq
   // The EventStore is also responsible for starting the thread that
   // will be popping events off the global queue. This is so that the
   // EventStore is guaranteed to live long enough to allow the global
-  // queue to be drained.
+  // queue to be drained. The current implementation uses only a free
+  // function as the 'thread function' for this thread.
   //
   // A future enhancement of EventStore may make it be able to move
   // from handling run X to handling run Y; such an enhancement will
@@ -32,6 +34,7 @@ namespace artdaq
   class EventStore
   {
   public:
+    typedef int (ARTFUL_FCN)(int, char**);
     typedef RawEvent::run_id_t      run_id_t;
     typedef RawEvent::subrun_id_t   subrun_id_t;
     typedef Fragment::event_id_t    event_id_t;
@@ -42,11 +45,11 @@ namespace artdaq
     EventStore(EventStore const&) = delete;
     EventStore& operator=(EventStore const&) = delete;
 
-    // Create an EventStore for an MPI program.
-    EventStore(size_t num_fragments_per_event, run_id_t run);
-
-    // Create an EventStore for a non-MPI program.
-    EventStore(size_t num_fragments_per_event, run_id_t run, int argc, char* argv[]);
+    // Create an EventStore that uses 'reader' as the function to be
+    // executed by the thread this EventStore will spawn.
+    EventStore(size_t num_fragments_per_event, run_id_t run,
+               int store_id, int argc, char* argv[],
+               ARTFUL_FCN* reader);
 
     ~EventStore();
 
