@@ -1,0 +1,59 @@
+
+ds50:
+{
+  generate_data: true
+  events_to_generate: 2
+  run_number: 2
+  source_count: 1
+}
+
+services:
+{
+  scheduler:  # options block in the old system
+  {
+  }
+
+   Timing: { }
+
+   user:
+   {
+     # user-defined, plugin services
+   }
+}
+
+physics:
+{
+  producers:
+  {
+    comp:
+    {
+      module_type: DS50Compression
+      raw_label: daq
+      table_file: "../Compression/DS50Run002211.txt"
+    }
+  }
+
+  analyzers:
+  {
+  }
+
+  filters:
+  {
+  }
+
+  p1: [ comp ]
+  # e1: [ ]
+
+  trigger_paths: [ p1 ]
+  end_paths: [ ]
+}
+
+source:
+{
+  module_type: RawInput
+  waiting_time: 10000.0
+  resume_after_timeout: true
+  fileNames: [ dummy ]
+}
+
+process_name: DEVEL

@@ -15,6 +15,7 @@
 #include "artdaq/Compression/Encoder.hh"
 #include "artdaq/DAQdata/DS50RawData.hh"
 #include "artdaq/DAQdata/Fragment.hh"
+#include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQdata/DS50Board.hh"
 
 #include <iostream>
@@ -54,13 +55,15 @@ namespace ds50
       encode_(table_)
   {
     produces<DS50RawData>();
+
+    std::cerr << "Hello from DS50Compression\n";
   }
 
   void DS50Compression::produce(art::Event& e)
   {
-    typedef std::vector<artdaq::Fragment> FragVec;
+    std::cerr << "Hello from DS50Compression produce\n";
 
-    art::Handle<FragVec> handle;
+    art::Handle<artdaq::Fragments> handle;
     e.getByLabel(raw_label_, handle);
 
     std::auto_ptr<DS50RawData> prod(new DS50RawData(*handle));
@@ -69,19 +72,11 @@ namespace ds50
     size_t len = handle->size();
     for(size_t i=0;i<len;++i)
       {
-	auto payload = (*handle)[i].dataBegin();
+	artdaq::Fragment const& frag = (*handle)[i];
+	Board b(frag);
 	// start of payload is the DS50 header
-	Board b((*handle)[i]);
-	// DS50 data immediately follows the header
-	// the board class should be giving out the start/end of
-	// data as adc_type pointer instead of calculating it here
-	// DS50 data is in data_t units.
-	ds50::Board::data_t* head_start = (ds50::Board::data_t*)*payload;
-	ds50::Board::data_t* data_start = head_start + b.header_size_words();
-	// we want the data in adc_type units
-	// there are two adc values per word
-	adc_type* adc_start = (adc_type*)data_start;
-	adc_type* adc_end   = adc_start + (b.event_size() * 2);
+	auto adc_start = b.dataBegin();
+	auto adc_end   = b.dataEnd();
 
 	reg_type bit_count  = encode_(adc_start,adc_end, prod->fragment(i));
 	prod->setFragmentBitCount(i,bit_count);

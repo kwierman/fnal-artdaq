@@ -1,6 +1,7 @@
 #ifndef artdaq_DAQdata_DS50Board_hh
 #define artdaq_DAQdata_DS50Board_hh
 
+#include "artdaq/Compression/Properties.hh"
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/detail/DS50Header.hh"
 
@@ -25,6 +26,10 @@ namespace ds50 {
     event_counter_t event_counter() const;
     trigger_time_tag_t trigger_time_tag() const;
 
+    size_t total_adc_values() const;
+    adc_type const* dataBegin() const;
+    adc_type const* dataEnd() const;
+
     static constexpr size_t header_size_words();
 
   private:
@@ -41,6 +46,19 @@ namespace ds50 {
     :
     data_(f)
   { }
+
+  inline size_t Board::total_adc_values() const
+  { return event_size() * 2; }
+
+  inline adc_type const* Board::dataBegin() const
+  { 
+    return reinterpret_cast<adc_type const*>(header_()) + header_size_words();
+  }
+
+  inline adc_type const* Board::dataEnd() const
+  {
+    return dataBegin() + total_adc_values();
+  }
 
   inline
   size_t Board::event_size() const
