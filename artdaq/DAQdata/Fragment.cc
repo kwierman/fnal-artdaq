@@ -18,12 +18,14 @@ artdaq::Fragment::fragment_id_t const artdaq::Fragment::InvalidFragmentID =
 
 artdaq::Fragment::Fragment() :
   vals_(RawFragmentHeader::num_words(), 0)
-{ }
+{
+  updateSize_();
+}
 
 artdaq::Fragment::Fragment(std::size_t n) :
   vals_(n + RawFragmentHeader::num_words(), 0)
 {
-  fragmentHeader()->word_count  = vals_.size();
+  updateSize_();
   fragmentHeader()->type        = type_t::INVALID;
   fragmentHeader()->event_id    = Fragment::InvalidEventID;
   fragmentHeader()->fragment_id = Fragment::InvalidFragmentID;
@@ -34,7 +36,7 @@ artdaq::Fragment::Fragment(event_id_t eventID,
                            type_t type) :
   vals_(RawFragmentHeader::num_words(), 0)
 {
-  fragmentHeader()->word_count  = vals_.size();
+  updateSize_();
   fragmentHeader()->type        = type;
   fragmentHeader()->event_id    = eventID;
   fragmentHeader()->fragment_id = fragID;
@@ -63,11 +65,11 @@ artdaq::Fragment::Streamer(TBuffer & buf)
       std::cerr << "WARNING: Fragment header word_count is inconsistent "
                 << "on file: Fixing.\n"
                 << *this;
-      updateSize();
+      updateSize_();
     }
   }
   else {
-    updateSize();
+    updateSize_();
   }
 }
 #endif

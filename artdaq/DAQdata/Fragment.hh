@@ -72,7 +72,6 @@ public:
   void setType(type_t type);
   void setEventID(event_id_t event_id);
   void setFragmentID(fragment_id_t fragment_id);
-  void updateSize();
 
   // Return the number of words in the data payload. This does not
   // include the number of words in the header.
@@ -92,12 +91,12 @@ public:
   void clear();
   bool empty();
   void reserve(std::size_t cap);
-  void push_back(RawDataType v);
   void swap(Fragment & other);
 #endif
   void Streamer(TBuffer & buf);
 
 private:
+  void updateSize_();
   std::vector<RawDataType> vals_;
 
 #if USE_MODERN_FEATURES
@@ -173,7 +172,7 @@ artdaq::Fragment::setFragmentID(fragment_id_t fragment_id)
 
 inline
 void
-artdaq::Fragment::updateSize()
+artdaq::Fragment::updateSize_()
 {
   assert(vals_.size() < 0x100000000);
   fragmentHeader()->word_count = vals_.size();
@@ -191,6 +190,7 @@ void
 artdaq::Fragment::resize(std::size_t sz, RawDataType v)
 {
   vals_.resize(sz + detail::RawFragmentHeader::num_words(), v);
+  updateSize_();
 }
 
 inline
@@ -240,6 +240,7 @@ void
 artdaq::Fragment::clear()
 {
   vals_.erase(dataBegin(), dataEnd());
+  updateSize_();
 }
 
 inline
@@ -256,12 +257,12 @@ artdaq::Fragment::reserve(std::size_t cap)
   vals_.reserve(cap + detail::RawFragmentHeader::num_words());
 }
 
-inline
-void
-artdaq::Fragment::push_back(RawDataType v)
-{
-  vals_.push_back(v);
-}
+// inline
+// void
+// artdaq::Fragment::push_back(RawDataType v)
+// {
+//   vals_.push_back(v);
+// }
 
 inline
 void
