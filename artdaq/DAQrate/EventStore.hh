@@ -6,7 +6,8 @@
 
 #include <map>
 #include <memory>
-#include <thread>
+//#include <thread>
+#include <future>
 #include <stdint.h>
 
 namespace artdaq
@@ -42,8 +43,23 @@ namespace artdaq
 
     static const std::string EVENT_RATE_STAT_KEY;
 
+    EventStore() = delete;
     EventStore(EventStore const&) = delete;
     EventStore& operator=(EventStore const&) = delete;
+
+    // This constructor is obsolete; please modify your code to use
+    // the c'tor below it...
+    EventStore(int, int, int, char**) :
+      id_(),
+      num_fragments_per_event_(),
+      run_id_(),
+      subrun_id_(),
+      events_(),
+      queue_(getGlobalQueue()),
+      reader_thread_()
+    {
+      throw "This constructor is obsolete\n";
+    }
 
     // Create an EventStore that uses 'reader' as the function to be
     // executed by the thread this EventStore will spawn.
@@ -51,16 +67,16 @@ namespace artdaq
                int store_id, int argc, char* argv[],
                ARTFUL_FCN* reader);
 
-    ~EventStore();
-
     // Give ownership of the Fragment to the EventStore. The pointer
     // we are given must NOT be null, and the Fragment to which it
     // points must NOT be empty; the Fragment must at least contain
     // the necessary header information.
     void insert(FragmentPtr pfrag);
 
-    // Put the end-of-data marker onto the RawEvent queue.
-    void endOfData();
+    // Put the end-of-data marker onto the RawEvent queue, and wait
+    // for the reader function to exit, returning the value the reader
+    // returned.
+    int endOfData();
 
   private:
     // id_ is the unique identifier of this object; MPI programs will
@@ -71,7 +87,7 @@ namespace artdaq
     subrun_id_t const subrun_id_;
     EventMap       events_;
     RawEventQueue& queue_;
-    std::thread    reader_thread_;
+    std::future<int> reader_thread_;
 
     void reportStatistics_();
   };

@@ -39,7 +39,7 @@ namespace artdaq
     subrun_id_(0),
     events_(),
     queue_(getGlobalQueue()),
-    reader_thread_(reader, argc, argv)
+    reader_thread_(std::async(std::launch::async, reader, argc, argv))
   {
     // TODO: Consider doing away with the named local mqPtr, and
     // making use of make_shared<MonitoredQuantity> in the call to
@@ -67,11 +67,6 @@ namespace artdaq
 //       addMonitoredQuantity(EVENT_RATE_STAT_KEY, mqPtr);
 //   }
 
-  EventStore::~EventStore()
-  {
-    reader_thread_.join();
-    reportStatistics_();
-  }
 
   void EventStore::insert(FragmentPtr pfrag)
   {
@@ -127,11 +122,12 @@ namespace artdaq
       }
   }
 
-  void
+  int
   EventStore::endOfData()
   {
     RawEvent_ptr end_of_data(0);
     queue_.enqNowait(end_of_data);
+    return reader_thread_.get();
   }
 
   void

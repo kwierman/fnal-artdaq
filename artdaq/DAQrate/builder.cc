@@ -226,8 +226,16 @@ void Program::sink()
       }
     }
     while (sources_sending);
-    events.endOfData();
-    h.waitAll(); // not sure if this should be inside braces
+
+    // Now we are done collecting fragments, so we can shut down the
+    // receive handles.
+    h.waitAll();
+
+    // Make the reader application finish, and capture it's return
+    // status.
+    int rc = events.endOfData();
+    Debug << "Sink: reader is done, exit status was: " << rc << flusher;
+
   } // end of lifetime of 'events'
   Debug << "Sink done " << conf_.rank_ << flusher;
   MPI_Barrier(MPI_COMM_WORLD);
