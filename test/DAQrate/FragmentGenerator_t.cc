@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE ( FargmentGenerator_t )
+#define BOOST_TEST_MODULE ( FragmentGenerator_t )
 #include "boost/test/auto_unit_test.hpp"
 
 #include "artdaq/DAQdata/Fragment.hh"

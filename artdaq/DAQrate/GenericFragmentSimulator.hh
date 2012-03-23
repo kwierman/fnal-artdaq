@@ -36,6 +36,7 @@ public:
   };
 
   // Not part of virtual interface: generate a specific fragment.
+  using FragmentGenerator::getNext;
   bool getNext(Fragment::event_id_t,
                Fragment::fragment_id_t,
                FragmentPtr & frag_ptr);
@@ -43,21 +44,21 @@ public:
 private:
   virtual bool getNext_(FragmentPtrs & output);
 
-  std::size_t eventSize_();
+  std::size_t generateFragmentSize_();
 
   // Configuration
   content_selector_t const content_selection_;
-  std::size_t const event_size_spec_; // Posson mean if random size wanted.
+  std::size_t const fragment_size_spec_; // Poisson mean if random size wanted.
   std::size_t const events_to_generate_; // Go forever if this is 0
   std::size_t const fragments_per_event_;
   RawDataType const run_number_;
-  bool const want_random_event_size_;
+  bool const want_random_fragment_size_;
 
 // State
   std::size_t current_event_num_;
-  std::unique_ptr<CLHEP::HepRandomEngine> engine_;
-  CLHEP::RandPoissonT event_size_generator_;
-  CLHEP::RandFlat event_content_generator_;
+  CLHEP::HepJamesRandom engine_;
+  CLHEP::RandPoissonT fragment_size_generator_;
+  CLHEP::RandFlat fragment_content_generator_;
 };
 
 #endif /* artdaq_DAQrate_GenericFragmentSimulator_hh */

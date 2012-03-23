@@ -11,6 +11,10 @@ cet_test(FragmentGenerator_t USE_BOOST_UNIT
   LIBRARIES artdaq_DAQrate
   )
 
+cet_test(GenericFragmentSimulator_t USE_BOOST_UNIT
+  LIBRARIES artdaq_DAQrate
+  )
+
 #cet_test(daqrate_trivial HANDBUILT
 #         TEST_EXEC daqrate
 #         TEST_ARGS 1 1 100 6000140 2 1
