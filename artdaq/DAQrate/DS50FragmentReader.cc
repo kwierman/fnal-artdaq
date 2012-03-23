@@ -118,7 +118,6 @@ artdaq::DS50FragmentReader::getNext_(FragmentPtrs & frags)
            bytes_left_to_read + header_size_bytes);
     read_bytes += bytes_left_to_read;
     // Update fragment header.
-    frag.updateSize();
     frag.setFragmentID(board.board_id());
     frag.setEventID(board.event_counter());
   }
