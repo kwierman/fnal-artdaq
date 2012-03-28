@@ -22,6 +22,19 @@ include_directories(${MPI_INCLUDE_PATH})
 
 cet_test(cpi_t SOURCES ${MPI_INCLUDE_PATH}/../share/mvapich2/examples_graphics/cpi.c LIBRARIES ${MPI_LIBRARIES})
 
+cet_test(daqrate_fileread_nosink HANDBUILT
+  TEST_EXEC daqrate
+  DATAFILES fcl/daqrate_fileread.fcl
+  fcl/daqrate_fileread_nosink.fcl
+  TEST_ARGS 5 1 3 1 -- -c daqrate_fileread_nosink.fcl HANDBUILT
+)
+
+cet_test(daqrate_fileread HANDBUILT
+  TEST_EXEC daqrate
+  DATAFILES fcl/daqrate_fileread.fcl
+  TEST_ARGS 5 1 3 1 -- -c daqrate_fileread.fcl HANDBUILT
+)
+
 #cet_test(daqrate_trivial HANDBUILT
 #         TEST_EXEC daqrate
 #         TEST_ARGS 1 1 100 6000140 2 1
