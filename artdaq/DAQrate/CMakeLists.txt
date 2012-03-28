@@ -7,13 +7,15 @@
 # ----------------------------------------------------------------------
 # Build this project's library:
 
-SET(MPI_CXX_COMPILER "mpicxx")
 find_package(MPI REQUIRED)
-SET(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
+# Remove cxx library -- compiled with wrong version of GCC.
+LIST(REMOVE_AT MPI_LIBRARIES 0)
+include_directories(${MPI_INCLUDE_PATH})
 
 set( LIB_NAME artdaq_DAQrate )
 find_library( FHICLCPP NAMES fhiclcpp PATHS $ENV{FHICLCPP_LIB} )
 
+add_definitions(-DDEBUGME)
 set( LIB_SOURCES 
      GlobalQueue.cc
      Config.cc
@@ -39,6 +41,7 @@ target_link_libraries( artdaq_DAQrate
   artdaq_DAQdata
   ${FHICLCPP}
   ${CLHEP}
+  ${MPI_LIBRARIES}
   )
 
 include(CetTest)

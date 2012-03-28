@@ -52,24 +52,3 @@ artdaq::Fragment::print(std::ostream & os) const
      << '\n';
 }
 #endif
-
-// Activate this code if/when we care about putting Fragments in ROOT
-// files and retrieving them -- deactivated for now due to increase in
-// link dependencies.
-#ifdef ARTDAQ_WANT_FRAGMENT_STREAMER
-void
-artdaq::Fragment::Streamer(TBuffer & buf)
-{
-  if (buf.IsReading()) {
-    if (vals_.size() != size()) {
-      std::cerr << "WARNING: Fragment header word_count is inconsistent "
-                << "on file: Fixing.\n"
-                << *this;
-      updateSize_();
-    }
-  }
-  else {
-    updateSize_();
-  }
-}
-#endif

@@ -24,7 +24,6 @@ namespace artdaq {
 class artdaq::RHandles {
 public:
   typedef std::vector<MPI_Request> Requests;
-  typedef std::vector<MPI_Status> Statuses;
   typedef std::vector<int> Flags; // busy flags
 
   RHandles(size_t buffer_count,
@@ -38,6 +37,7 @@ public:
   void waitAll();
 
 private:
+  int nextSource_();
 
   int buffer_count_; // was size_
   int max_initial_send_words_;
@@ -45,11 +45,18 @@ private:
   int src_start_; // start of the source ranks
 
   Requests reqs_;
-  Statuses stats_;
+  MPI_Status status_;
   Flags flags_;
+  int last_source_posted_;
 
   Fragments payload_;
 };
+
+inline
+int
+artdaq::RHandles::nextSource_() {
+  return ++last_source_posted_ % src_count_ + src_start_;
+}
 
 #endif /* artdaq_DAQrate_RHandles_hh */
 

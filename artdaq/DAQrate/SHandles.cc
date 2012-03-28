@@ -5,6 +5,10 @@
 #include "artdaq/DAQrate/MPITag.hh"
 #include "artdaq/DAQrate/Utils.hh"
 #include "artdaq/DAQdata/Fragment.hh"
+#include "cetlib/exception.h"
+
+#include <algorithm>
+#include <iterator>
 
 // size_ = number of buffers
 // fragment_size_ = number of longs in a fragment of an event
@@ -59,34 +63,69 @@ void artdaq::SHandles::sendEvent(Fragment & frag)
   curfrag.swap(frag);
   Fragment::event_id_t event_id = curfrag.eventID();
   int const mpi_to = dest(event_id);
-  Debug << "send: " << stats_[use_me].MPI_SOURCE
-        << " id=" << event_id
-        << " size=" << curfrag.dataSize()
-        << " idx=" << use_me
-        << " dest=" << dest(event_id)
-        << flusher;
-  if (!(curfrag.size() > max_initial_send_words_)) {  // Send as one chunk.
-    MPI_Isend(&*curfrag.dataBegin(),
-              curfrag.dataSize() * sizeof(Fragment::value_type),
-              MPI_BYTE,
-              mpi_to,
-              MPITag::FINAL,
-              MPI_COMM_WORLD,
-              &reqs_[use_me]);
-  }
-  else { // Send in two chunks. Receiver will do the right thing as
-    // indicated by the data tag on the first chunk and the
-    // fragment size information in the header therein.
-    MPI_Isend(&*curfrag.dataBegin(),
+  int rank;
+  assert(MPI_Comm_rank(MPI_COMM_WORLD, &rank) == MPI_SUCCESS);
+  if (curfrag.size() > max_initial_send_words_) {
+    if (buffer_count_ > 1) {
+      throw cet::exception("unimplemented")
+        << "Current unable to deal with overlarge fragments when "
+        << "running with multiple buffers.";
+    }
+    // Send in two chunks. Receiver will do the right thing as indicated
+    // by the data tag on the first chunk and the fragment size
+    // information in the header therein.
+    Debug << "send partial: " << rank
+          << " id=" << event_id
+          << " size=" << max_initial_send_words_
+          << " idx=" << use_me
+          << " dest=" << mpi_to
+          << " tag=" << MPITag::INCOMPLETE
+          << " fragID=" << curfrag.fragmentID()
+          << flusher;
+    MPI_Isend(&*curfrag.headerBegin(),
               max_initial_send_words_ * sizeof(Fragment::value_type),
               MPI_BYTE,
               mpi_to,
               MPITag::INCOMPLETE,
               MPI_COMM_WORLD,
               &reqs_[use_me]);
-    MPI_Isend(&*curfrag.dataBegin() + max_initial_send_words_,
+    Debug << "send final: " << rank
+          << " id=" << event_id
+          << " size=" << (curfrag.size() - max_initial_send_words_)
+          << " idx=" << use_me
+          << " dest=" << mpi_to
+          << " tag=" << MPITag::FINAL
+          << " fragID=" << curfrag.fragmentID()
+          << flusher;
+    std::copy_n(curfrag.dataBegin(),
+                std::min(static_cast<Fragment::value_type>(5), curfrag.dataSize()),
+                std::ostream_iterator<Fragment::value_type>(Debug, ", "));
+    Debug << flusher;
+    MPI_Isend(&*curfrag.headerBegin() + max_initial_send_words_,
               (curfrag.size() - max_initial_send_words_) *
               sizeof(Fragment::value_type),
+              MPI_BYTE,
+              mpi_to,
+              MPITag::FINAL,
+              MPI_COMM_WORLD,
+              &reqs_[use_me]);
+  }
+  else {
+    // Send as one chunk.
+    Debug << "send complete: " << rank
+          << " id=" << event_id
+          << " size=" << curfrag.size()
+          << " idx=" << use_me
+          << " dest=" << mpi_to
+          << " tag=" << MPITag::FINAL
+          << " fragID=" << curfrag.fragmentID()
+          << flusher;
+    std::copy_n(curfrag.dataBegin(),
+                std::min(static_cast<Fragment::value_type>(5), curfrag.dataSize()),
+                std::ostream_iterator<Fragment::value_type>(Debug, ", "));
+    Debug << flusher;
+    MPI_Isend(&*curfrag.headerBegin(),
+              curfrag.size() * sizeof(Fragment::value_type),
               MPI_BYTE,
               mpi_to,
               MPITag::FINAL,
@@ -99,4 +138,3 @@ void artdaq::SHandles::waitAll()
 {
   MPI_Waitall(buffer_count_, &reqs_[0], &stats_[0]);
 }
-

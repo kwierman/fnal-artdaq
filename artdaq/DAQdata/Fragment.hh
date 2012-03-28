@@ -15,12 +15,6 @@ class TBuffer;
 namespace artdaq {
   typedef detail::RawFragmentHeader::RawDataType RawDataType;
 
-  //////////////////////////////////////////////////////////////////////
-  // TODO: Obsolete: do not use!
-  typedef std::vector<uint64_t>           CompressedFragPart;
-  typedef std::vector<CompressedFragPart> CompressedFragParts;
-  //////////////////////////////////////////////////////////////////////
-
   class Fragment;
 
   std::ostream & operator<<(std::ostream & os, Fragment const & f);
@@ -80,20 +74,23 @@ public:
   // Resize the data payload to hold sz words.
   void resize(std::size_t sz, RawDataType v = RawDataType());
 
-  // Return an iterator to the beginning of the data payload.
+  // Return an iterator to the beginning of the data payload (post-header).
   iterator dataBegin();
-
+  // ... and the end
   iterator dataEnd();
+
+  // Return an iterator to the beginning of the header (should be used
+  // for serialization only: use setters for preference).
+  iterator headerBegin();
+
   const_iterator dataBegin() const;
   const_iterator dataEnd() const;
-  RawDataType & operator[](std::size_t i);
-  RawDataType operator[](std::size_t i) const;
+  const_iterator headerBegin() const; // See note for non-const, above.
   void clear();
   bool empty();
   void reserve(std::size_t cap);
   void swap(Fragment & other);
 #endif
-  void Streamer(TBuffer & buf);
 
 private:
   void updateSize_();
@@ -208,6 +205,13 @@ artdaq::Fragment::dataEnd()
 }
 
 inline
+artdaq::Fragment::iterator
+artdaq::Fragment::headerBegin()
+{
+  return vals_.begin();
+}
+
+inline
 artdaq::Fragment::const_iterator
 artdaq::Fragment::dataBegin() const
 {
@@ -222,17 +226,10 @@ artdaq::Fragment::dataEnd() const
 }
 
 inline
-artdaq::RawDataType &
-artdaq::Fragment::operator[](std::size_t i)
+artdaq::Fragment::const_iterator
+artdaq::Fragment::headerBegin() const
 {
-  return vals_[i + detail::RawFragmentHeader::num_words()];
-}
-
-inline
-artdaq::RawDataType
-artdaq::Fragment::operator[](std::size_t i) const
-{
-  return vals_[i + detail::RawFragmentHeader::num_words()];
+  return vals_.begin();
 }
 
 inline
@@ -256,13 +253,6 @@ artdaq::Fragment::reserve(std::size_t cap)
 {
   vals_.reserve(cap + detail::RawFragmentHeader::num_words());
 }
-
-// inline
-// void
-// artdaq::Fragment::push_back(RawDataType v)
-// {
-//   vals_.push_back(v);
-// }
 
 inline
 void

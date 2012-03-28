@@ -254,7 +254,7 @@ def main():
 	cmd+="%d %d"%(queue_size, run_number)
 	if art_args: cmd+=" %s"%(art_args,)
 	print( "executing cmd: %s"%(cmd,) )
-	#os.system(cmd)
+	os.system(cmd)
     else:
 	cmd ="mpirun -n %d "%(num_det+num_src+num_sink,)
 	cmd+=builder[:-1]

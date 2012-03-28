@@ -24,7 +24,7 @@ inline void configureDebugStream(int rank, int run) { PconfigureDebugStream(rank
 #else
 #define Debug junker
 inline void configureDebugStream(int, int) { }
-#define flusher "\n"
+#define flusher (char)0
 #endif
 
 #endif /* artdaq_DAQrate_Debug_hh */

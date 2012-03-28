@@ -18,7 +18,7 @@
 
 using namespace std;
 
-static const char* usage = "DetectorsPerNode SinksPerNode EventSize EventQueueSize Run";
+static const char* usage = "DetectorsPerNode SinksPerNode Run";
 
 static void throwUsage(char* argv0, const string & msg)
 {
@@ -41,13 +41,13 @@ static double getArgSinks(int argc, char* argv[])
 static int getArgQueueSize(int argc, char* argv[])
 {
   if (argc < 4) { throwUsage(argv[0], "no event_queue_size argument"); }
-  return atoi(argv[5]);
+  return atoi(argv[3]);
 }
 
 static int getArgRun(int argc, char* argv[])
 {
   if (argc < 5) { throwUsage(argv[0], "no run argument"); }
-  return atoi(argv[6]);
+  return atoi(argv[4]);
 }
 
 static std::string getProcessorName()
@@ -99,9 +99,7 @@ void Config::writeInfo() const
 {
   string fname = infoFilename("config_");
   ofstream ostr(fname.c_str());
-  if (rank_ == 0) {
-    printHeader(ostr);
-  }
+  printHeader(ostr);
   ostr << *this << "\n";
 }
 

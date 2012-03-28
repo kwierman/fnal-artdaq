@@ -14,7 +14,7 @@
 class Config
 {
 public:
-  enum TaskType { TaskSink=0, TaskSource=1, TaskDetector=2 };
+  enum TaskType : int { TaskSink=0, TaskSource=1, TaskDetector=2 };
 
   Config(int rank, int nprocs, int argc, char* argv[]);
 

@@ -15,6 +15,13 @@ cet_test(GenericFragmentSimulator_t USE_BOOST_UNIT
   LIBRARIES artdaq_DAQrate
   )
 
+find_package(MPI REQUIRED)
+ # Remove cxx library -- compiled with wrong version of GCC.
+LIST(REMOVE_AT MPI_LIBRARIES 0)
+include_directories(${MPI_INCLUDE_PATH})
+
+cet_test(cpi_t SOURCES ${MPI_INCLUDE_PATH}/../share/mvapich2/examples_graphics/cpi.c LIBRARIES ${MPI_LIBRARIES})
+
 #cet_test(daqrate_trivial HANDBUILT
 #         TEST_EXEC daqrate
 #         TEST_ARGS 1 1 100 6000140 2 1
