@@ -53,14 +53,14 @@ int artdaq::SHandles::findAvailable()
   return use_me;
 }
 
-void artdaq::SHandles::sendEvent(Fragment & frag)
+void artdaq::SHandles::sendEvent(Fragment && frag)
 {
   // Precondition: Fragment must be complete and consistent (including
   // header information).
   SendMeas sm;
   int use_me = findAvailable();
   Fragment & curfrag = payload_[use_me];
-  curfrag.swap(frag);
+  curfrag = std::move(frag);
   Fragment::event_id_t event_id = curfrag.eventID();
   int const mpi_to = dest(event_id);
   int rank;

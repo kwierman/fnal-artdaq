@@ -1,4 +1,3 @@
-
 #include "artdaq/DAQrate/RHandles.hh"
 #include "artdaq/DAQrate/Perf.hh"
 #include "artdaq/DAQrate/Debug.hh"
@@ -11,12 +10,6 @@
 #include <fstream>
 #include <iterator>
 #include <sstream>
-
-// size_ = number of buffers
-// fragment_size_ = number of longs in a fragment of an event
-//
-// be careful about the event/fragment size - hardwired to sizeof(long)
-// and should be determined from the FragmentPool
 
 artdaq::RHandles::RHandles(size_t buffer_count,
                            uint64_t max_initial_send_words,

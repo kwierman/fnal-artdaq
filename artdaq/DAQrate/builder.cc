@@ -9,6 +9,7 @@
 #include "artdaq/DAQrate/Perf.hh"
 #include "artdaq/DAQrate/RHandles.hh"
 #include "artdaq/DAQrate/SHandles.hh"
+#include "artdaq/DAQrate/SimpleQueueReader.hh"
 #include "artdaq/DAQrate/Utils.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 #include "cetlib/container_algorithms.h"
@@ -135,15 +136,15 @@ void Program::source()
   size_t fragments_expected = 0;
   do {
     from_d.recvEvent(frag);
-    if (want_sink_) {
-      to_r.sendEvent(frag);
-    }
     if (frag.type() == artdaq::Fragment::type_t::END_OF_DATA) {
       Debug << "Fragment data: " << *frag.dataBegin() << flusher;
       fragments_expected = *frag.dataBegin();
     }
     else {
       ++fragments_processed;
+    }
+    if (want_sink_) {
+      to_r.sendEvent(std::move(frag));
     }
   }
   while (Debug << "Fragments expected: " << fragments_expected << ", fragments processed: " << fragments_processed << flusher,
@@ -195,7 +196,7 @@ void Program::detector()
   size_t fragments_sent = 0;
   while (gen->getNext(frags) && fragments_sent < fragments_per_source) {
     for (auto & fragPtr : frags) {
-      h.sendEvent(*fragPtr);
+      h.sendEvent(std::move(*fragPtr));
       if (++fragments_sent == fragments_per_source) { break; }
       if ((fragments_sent % 100) == 0) {
         // Don't get too far out of sync.
@@ -213,7 +214,7 @@ void Program::detector()
   eod_frag.resize(1);
   *eod_frag.dataBegin() = fragments_sent;
   Debug << "EOD data = " << *eod_frag.dataBegin() << flusher;
-  h.sendEvent(eod_frag);
+  h.sendEvent(std::move(eod_frag));
   Debug << "detector waiting " << conf_.rank_ << flusher;
   h.waitAll();
   Debug << "detector done " << conf_.rank_ << flusher;
@@ -226,23 +227,23 @@ void Program::sink()
   printHost("sink");
   if (want_sink_) {
     // This scope exists to control the lifetime of 'events'
-    Debug << 1 << flusher;
+    int sink_rank;
+    MPI_Comm_rank(local_group_comm_, &sink_rank);
     artdaq::EventStore events(conf_.detectors_,
                               conf_.run_,
+                              sink_rank,
                               conf_.art_argc_,
-                              conf_.art_argv_);
-    Debug << 2 << flusher;
-    artdaq::FragmentPtr pfragment(new artdaq::Fragment);
-    Debug << 3 << flusher;
+                              conf_.art_argv_,
+                              &artdaq::simpleQueueReaderApp);
     artdaq::RHandles h(conf_.sink_buffer_count_,
                        conf_.max_initial_send_words_,
                        conf_.sources_,
                        conf_.source_start_);
-    Debug << 4 << flusher;
     size_t sources_sending = conf_.sources_;
     size_t fragments_expected = 0;
     size_t fragments_received = 0;
     do {
+      artdaq::FragmentPtr pfragment(new artdaq::Fragment);
       h.recvEvent(*pfragment);
       if (pfragment->type() == artdaq::Fragment::type_t::END_OF_DATA) {
         --sources_sending;
