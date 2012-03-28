@@ -205,7 +205,7 @@ void Program::detector()
     }
     frags.clear();
   }
-  artdaq::Fragment eod_frag(artdaq::Fragment::InvalidEventID,
+  artdaq::Fragment eod_frag(artdaq::Fragment::InvalidSequenceID,
                             artdaq::Fragment::InvalidFragmentID,
                             artdaq::Fragment::type_t::END_OF_DATA);
   // TODO: for v2.0, use GMP to manage fragment total where we might be

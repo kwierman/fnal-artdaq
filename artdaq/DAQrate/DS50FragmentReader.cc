@@ -119,7 +119,7 @@ artdaq::DS50FragmentReader::getNext_(FragmentPtrs & frags)
     read_bytes += bytes_left_to_read;
     // Update fragment header.
     frag.setFragmentID(board.board_id());
-    frag.setEventID(board.event_counter());
+    frag.setSequenceID(board.event_counter());
   }
   // Update counter for next time.
   if (in_data.is_open()) {

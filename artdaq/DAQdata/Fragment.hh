@@ -33,7 +33,7 @@ public:
   typedef detail::RawFragmentHeader::fragment_id_t fragment_id_t;
 
   static version_t const InvalidVersion;
-  static event_id_t const InvalidEventID;
+  static event_id_t const InvalidSequenceID;
   static fragment_id_t const InvalidFragmentID;
 
   typedef std::vector<RawDataType>::reference      reference;
@@ -64,7 +64,7 @@ public:
   // Header setters
   void setVersion(version_t version);
   void setType(type_t type);
-  void setEventID(event_id_t event_id);
+  void setSequenceID(event_id_t event_id);
   void setFragmentID(fragment_id_t fragment_id);
 
   // Return the number of words in the data payload. This does not
@@ -154,7 +154,7 @@ artdaq::Fragment::setType(type_t type)
 
 inline
 void
-artdaq::Fragment::setEventID(event_id_t event_id)
+artdaq::Fragment::setSequenceID(event_id_t event_id)
 {
   assert(event_id < 0x1000000000000);
   fragmentHeader()->event_id = event_id;

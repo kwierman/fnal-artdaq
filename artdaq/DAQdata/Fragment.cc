@@ -11,8 +11,8 @@ using artdaq::detail::RawFragmentHeader;
 
 artdaq::Fragment::version_t const artdaq::Fragment::InvalidVersion =
   detail::RawFragmentHeader::InvalidVersion;
-artdaq::Fragment::event_id_t const artdaq::Fragment::InvalidEventID =
-  detail::RawFragmentHeader::InvalidEventID;
+artdaq::Fragment::event_id_t const artdaq::Fragment::InvalidSequenceID =
+  detail::RawFragmentHeader::InvalidSequenceID;
 artdaq::Fragment::fragment_id_t const artdaq::Fragment::InvalidFragmentID =
   detail::RawFragmentHeader::InvalidFragmentID;
 
@@ -27,7 +27,7 @@ artdaq::Fragment::Fragment(std::size_t n) :
 {
   updateSize_();
   fragmentHeader()->type        = type_t::INVALID;
-  fragmentHeader()->event_id    = Fragment::InvalidEventID;
+  fragmentHeader()->event_id    = Fragment::InvalidSequenceID;
   fragmentHeader()->fragment_id = Fragment::InvalidFragmentID;
 }
 

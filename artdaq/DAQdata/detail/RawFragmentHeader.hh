@@ -35,7 +35,7 @@ struct artdaq::detail::RawFragmentHeader {
   // encoded; if any of the sizes are changed, the corresponding
   // values must be updated.
   static const version_t InvalidVersion  = 0xFFFF;
-  static const event_id_t InvalidEventID = 0xFFFFFFFFFFFF;
+  static const event_id_t InvalidSequenceID = 0xFFFFFFFFFFFF;
   static const fragment_id_t InvalidFragmentID = 0xFFFF;
 
   RawDataType word_count  : 32; // number of RawDataTypes in this Fragment
