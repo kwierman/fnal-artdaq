@@ -8,7 +8,6 @@
 
 #include <cassert>
 #include <fstream>
-#include <iterator>
 #include <sstream>
 
 artdaq::RHandles::RHandles(size_t buffer_count,
@@ -91,10 +90,6 @@ void artdaq::RHandles::recvFragment(Fragment & output)
     // Resize (down) to size to remove trailing garbage.
     payload_[which].resize(payload_[which].size() -
                            detail::RawFragmentHeader::num_words());;
-    std::copy_n(payload_[which].dataBegin(),
-                std::min(static_cast<Fragment::value_type>(5), payload_[which].dataSize()),
-                std::ostream_iterator<Fragment::value_type>(Debug, ", "));
-    Debug << flusher;
     output.swap(payload_[which]);
     // Reset our buffer.
     Fragment tmp(max_initial_send_words_);

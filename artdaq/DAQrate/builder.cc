@@ -137,7 +137,7 @@ void Program::source()
   do {
     from_d.recvFragment(frag);
     if (frag.type() == artdaq::Fragment::type_t::END_OF_DATA) {
-      Debug << "Fragment data: " << *frag.dataBegin() << flusher;
+      // Debug << "Fragment data: " << *frag.dataBegin() << flusher;
       fragments_expected = *frag.dataBegin();
     }
     else {
@@ -147,8 +147,7 @@ void Program::source()
       to_r.sendFragment(std::move(frag));
     }
   }
-  while (Debug << "Fragments expected: " << fragments_expected << ", fragments processed: " << fragments_processed << flusher,
-         (!fragments_expected) || fragments_processed < fragments_expected);
+  while ((!fragments_expected) || fragments_processed < fragments_expected);
   Debug << "source waiting " << conf_.rank_ << flusher;
   if (want_sink_) {
     to_r.waitAll();
@@ -185,7 +184,6 @@ void Program::detector()
                      conf_.max_initial_send_words_,
                      1, // Direct.
                      conf_.getDestFriend());
-  std::cout << "Detector " << conf_.rank_ << " ready." << std::endl;
   MPI_Barrier(local_group_comm_);
   // MPI_Barrier(MPI_COMM_WORLD);
   // not using the run time method
@@ -213,7 +211,7 @@ void Program::detector()
   // of running.
   eod_frag.resize(1);
   *eod_frag.dataBegin() = fragments_sent;
-  Debug << "EOD data = " << *eod_frag.dataBegin() << flusher;
+  // Debug << "EOD data = " << *eod_frag.dataBegin() << flusher;
   h.sendFragment(std::move(eod_frag));
   Debug << "detector waiting " << conf_.rank_ << flusher;
   h.waitAll();
@@ -248,9 +246,9 @@ void Program::sink()
       if (pfragment->type() == artdaq::Fragment::type_t::END_OF_DATA) {
         --sources_sending;
         // TODO: use GMP to avoid overflow possibility.
-        Debug << "fragments expected: " << fragments_expected;
+        // Debug << "fragments expected: " << fragments_expected;
         fragments_expected += *pfragment->dataBegin();
-        Debug << " -> " << fragments_expected << flusher;
+        // Debug << " -> " << fragments_expected << flusher;
       }
       else {
         ++fragments_received;

@@ -8,7 +8,6 @@
 #include "cetlib/exception.h"
 
 #include <algorithm>
-#include <iterator>
 
 // size_ = number of buffers
 // fragment_size_ = number of longs in a fragment of an event
@@ -97,10 +96,6 @@ void artdaq::SHandles::sendFragment(Fragment && frag)
           << " tag=" << MPITag::FINAL
           << " fragID=" << curfrag.fragmentID()
           << flusher;
-    std::copy_n(curfrag.dataBegin(),
-                std::min(static_cast<Fragment::value_type>(5), curfrag.dataSize()),
-                std::ostream_iterator<Fragment::value_type>(Debug, ", "));
-    Debug << flusher;
     MPI_Isend(&*curfrag.headerBegin() + max_initial_send_words_,
               (curfrag.size() - max_initial_send_words_) *
               sizeof(Fragment::value_type),
@@ -120,10 +115,6 @@ void artdaq::SHandles::sendFragment(Fragment && frag)
           << " tag=" << MPITag::FINAL
           << " fragID=" << curfrag.fragmentID()
           << flusher;
-    std::copy_n(curfrag.dataBegin(),
-                std::min(static_cast<Fragment::value_type>(5), curfrag.dataSize()),
-                std::ostream_iterator<Fragment::value_type>(Debug, ", "));
-    Debug << flusher;
     MPI_Isend(&*curfrag.headerBegin(),
               curfrag.size() * sizeof(Fragment::value_type),
               MPI_BYTE,

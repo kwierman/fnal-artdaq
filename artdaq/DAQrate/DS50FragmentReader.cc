@@ -125,10 +125,5 @@ artdaq::DS50FragmentReader::getNext_(FragmentPtrs & frags)
   if (in_data.is_open()) {
     next_point_.second = in_data.tellg();
   }
-  std::cerr << "INFO: returning after having read "
-            << frags.size()
-            << " fragments for a total of "
-            << read_bytes
-            << " bytes.\n";
   return true;
 }
