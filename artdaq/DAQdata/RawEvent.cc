@@ -9,7 +9,7 @@ namespace artdaq
   {
     os << "Run " << runID()
        << ", Subrun " << subrunID()
-       << ", Event " << eventID()
+       << ", Event " << sequenceID()
        << ", FragCount " << numFragments()
        << ", WordCount " << wordCount()
        << '\n';

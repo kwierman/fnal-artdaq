@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(Simple)
     BOOST_REQUIRE_EQUAL(fragments.size(), NUM_FRAGS_PER_EVENT);
     for (auto&& fragptr : fragments) {
       BOOST_CHECK(fragptr.get());
-      BOOST_CHECK_EQUAL(fragptr->eventID(), num_events_seen);
+      BOOST_CHECK_EQUAL(fragptr->sequenceID(), num_events_seen);
       BOOST_CHECK_EQUAL(fragptr->size(), FRAGMENT_SIZE+artdaq::detail::RawFragmentHeader::num_words());
       BOOST_CHECK_EQUAL(fragptr->dataSize(), FRAGMENT_SIZE);
     }

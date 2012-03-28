@@ -61,7 +61,7 @@ void artdaq::SHandles::sendFragment(Fragment && frag)
   int use_me = findAvailable();
   Fragment & curfrag = payload_[use_me];
   curfrag = std::move(frag);
-  Fragment::event_id_t event_id = curfrag.eventID();
+  Fragment::event_id_t event_id = curfrag.sequenceID();
   int const mpi_to = dest(event_id);
   int rank;
   assert(MPI_Comm_rank(MPI_COMM_WORLD, &rank) == MPI_SUCCESS);

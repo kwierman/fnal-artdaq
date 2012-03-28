@@ -47,7 +47,7 @@ public:
 
   // Create a fragment with the given event id and fragment id, and
   // with no data payload.
-  Fragment(event_id_t eventID,
+  Fragment(event_id_t sequenceID,
            fragment_id_t fragID,
            type_t type = type_t::DATA);
 
@@ -58,7 +58,7 @@ public:
   std::size_t   size() const;
   version_t     version() const;
   type_t        type() const;
-  event_id_t    eventID() const;
+  event_id_t    sequenceID() const;
   fragment_id_t fragmentID() const;
 
   // Header setters
@@ -126,7 +126,7 @@ artdaq::Fragment::type() const
 
 inline
 artdaq::Fragment::event_id_t
-artdaq::Fragment::eventID() const
+artdaq::Fragment::sequenceID() const
 {
   return fragmentHeader()->event_id;
 }

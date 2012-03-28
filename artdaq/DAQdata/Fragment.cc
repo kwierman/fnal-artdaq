@@ -31,14 +31,14 @@ artdaq::Fragment::Fragment(std::size_t n) :
   fragmentHeader()->fragment_id = Fragment::InvalidFragmentID;
 }
 
-artdaq::Fragment::Fragment(event_id_t eventID,
+artdaq::Fragment::Fragment(event_id_t sequenceID,
                            fragment_id_t fragID,
                            type_t type) :
   vals_(RawFragmentHeader::num_words(), 0)
 {
   updateSize_();
   fragmentHeader()->type        = type;
-  fragmentHeader()->event_id    = eventID;
+  fragmentHeader()->event_id    = sequenceID;
   fragmentHeader()->fragment_id = fragID;
 }
 
@@ -48,7 +48,7 @@ artdaq::Fragment::print(std::ostream & os) const
 {
   os << " Fragment " << fragmentID()
      << ", WordCount " << size()
-     << ", Event " << eventID()
+     << ", Event " << sequenceID()
      << '\n';
 }
 #endif

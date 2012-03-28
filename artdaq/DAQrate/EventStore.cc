@@ -80,7 +80,7 @@ namespace artdaq
     // if the event is complete, delete it and report timing
 
     //RawFragmentHeader* fh = pfrag->fragmentHeader();
-    Fragment::event_id_t event_id = pfrag->eventID();
+    Fragment::event_id_t event_id = pfrag->sequenceID();
 
     // The fragmentID is expected to be correct in the incoming
     // fragment; the EventStore has no business changing it in the

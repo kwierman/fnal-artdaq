@@ -121,7 +121,7 @@ namespace artdaq {
     }
     outE = pmaker.makeEventPrincipal(popped_event->runID(),
                                      popped_event->subrunID(),
-                                     popped_event->eventID(),
+                                     popped_event->sequenceID(),
                                      runstart);
 
     // Finally, grab the Fragments out of the RawEvent, and insert

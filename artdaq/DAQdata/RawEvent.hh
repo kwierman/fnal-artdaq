@@ -70,7 +70,7 @@ namespace artdaq
     // Accessors for header information
     run_id_t runID() const;
     subrun_id_t subrunID() const;
-    event_id_t eventID() const;
+    event_id_t sequenceID() const;
 
     // Print summary information about this RawEvent to the given stream.
     void print(std::ostream& os) const;
@@ -103,10 +103,10 @@ namespace artdaq
           << "Attempt to insert a null FragmentPtr into a RawEvent detected.\n";
       }
 
-    if (pfrag->eventID() != header_.event_id)
+    if (pfrag->sequenceID() != header_.event_id)
       {
         throw cet::exception("DataCorruption")
-          << "Attempt to insert a Fragment from event " << pfrag->eventID()
+          << "Attempt to insert a Fragment from event " << pfrag->sequenceID()
           << " into a RawEvent with id " << header_.event_id
           << " detected\n";
       }
@@ -130,7 +130,7 @@ namespace artdaq
 
   inline RawEvent::run_id_t RawEvent::runID() const { return header_.run_id; }
   inline RawEvent::subrun_id_t RawEvent::subrunID() const { return header_.subrun_id; }
-  inline RawEvent::event_id_t RawEvent::eventID() const { return header_.event_id; }
+  inline RawEvent::event_id_t RawEvent::sequenceID() const { return header_.event_id; }
 
   inline
   std::auto_ptr<std::vector<Fragment>>
