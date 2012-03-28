@@ -193,6 +193,11 @@ void Program::detector()
   artdaq::FragmentPtrs frags;
   size_t fragments_sent = 0;
   while (gen->getNext(frags) && fragments_sent < fragments_per_source) {
+    if (!fragments_sent) {
+      // Get the detectors lined up first time before we start the
+      // firehoses.
+      MPI_Barrier(local_group_comm_);
+    }
     for (auto & fragPtr : frags) {
       h.sendFragment(std::move(*fragPtr));
       if (++fragments_sent == fragments_per_source) { break; }
