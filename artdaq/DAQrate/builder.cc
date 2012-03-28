@@ -1,3 +1,4 @@
+#include "art/Framework/Art/artapp.h"
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQrate/Config.hh"
 #include "artdaq/DAQrate/Debug.hh"
@@ -232,12 +233,16 @@ void Program::sink()
     // This scope exists to control the lifetime of 'events'
     int sink_rank;
     MPI_Comm_rank(local_group_comm_, &sink_rank);
+    artdaq::EventStore::ARTFUL_FCN *reader =
+      (daq_control_ps_.get<bool>("useArt", false))?
+      &artapp:
+      &artdaq::simpleQueueReaderApp;
     artdaq::EventStore events(conf_.detectors_,
                               conf_.run_,
                               sink_rank,
                               conf_.art_argc_,
                               conf_.art_argv_,
-                              &artdaq::simpleQueueReaderApp);
+                              reader);
     artdaq::RHandles h(conf_.sink_buffer_count_,
                        conf_.max_initial_send_words_,
                        conf_.sources_,

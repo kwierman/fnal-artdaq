@@ -57,7 +57,6 @@ cet_test(daqrate PREBUILT NO_AUTO)
 find_library( ART_FRAMEWORK_CORE NAMES art_Framework_Core PATHS $ENV{ART_LIB} )
 
 set ( common_exec_link_libraries
-  ${ART_FRAMEWORK_CORE}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${ROOT_CINTEX}
   ${ROOT_PHYSICS}
@@ -85,8 +84,6 @@ find_library( ART_UTILITIES NAMES art_Utilities PATHS $ENV{ART_LIB} )
 set ( art_exec_link_libraries
   ${ART_PERSISTENCY_COMMON_DICT}
   ${ART_FRAMEWORK_ART}
-  ${ART_FRAMEWORK_SERVICES_REGISTRY}
-  ${ART_UTILITIES}
   ${SIGC}
   ${Boost_FILESYSTEM_LIBRARY}
 )
@@ -101,8 +98,9 @@ target_link_libraries(perfdump ${LIB_NAME})
 add_executable( builder builder.cc )
 target_link_libraries(builder
   ${LIB_NAME}
+  ${art_exec_link_libraries}
   ${FHICLCPP}
-  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${common_exec_link_libraries}
 )
 
 # ----------------------------------------------------------------------
