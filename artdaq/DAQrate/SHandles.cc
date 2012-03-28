@@ -33,10 +33,10 @@ artdaq::SHandles::SHandles(size_t buffer_count,
 {
 }
 
-int artdaq::SHandles::dest(Fragment::event_id_t event_id) const
+int artdaq::SHandles::dest(Fragment::sequence_id_t sequence_id) const
 {
   // Works if dest_count_ == 1
-  return (int)(event_id % dest_count_ + dest_start_);
+  return (int)(sequence_id % dest_count_ + dest_start_);
 }
 
 int artdaq::SHandles::findAvailable()
@@ -61,8 +61,8 @@ void artdaq::SHandles::sendFragment(Fragment && frag)
   int use_me = findAvailable();
   Fragment & curfrag = payload_[use_me];
   curfrag = std::move(frag);
-  Fragment::event_id_t event_id = curfrag.sequenceID();
-  int const mpi_to = dest(event_id);
+  Fragment::sequence_id_t sequence_id = curfrag.sequenceID();
+  int const mpi_to = dest(sequence_id);
   int rank;
   assert(MPI_Comm_rank(MPI_COMM_WORLD, &rank) == MPI_SUCCESS);
   if (curfrag.size() > max_initial_send_words_) {
@@ -75,7 +75,7 @@ void artdaq::SHandles::sendFragment(Fragment && frag)
     // by the data tag on the first chunk and the fragment size
     // information in the header therein.
     Debug << "send partial: " << rank
-          << " id=" << event_id
+          << " id=" << sequence_id
           << " size=" << max_initial_send_words_
           << " idx=" << use_me
           << " dest=" << mpi_to
@@ -90,7 +90,7 @@ void artdaq::SHandles::sendFragment(Fragment && frag)
               MPI_COMM_WORLD,
               &reqs_[use_me]);
     Debug << "send final: " << rank
-          << " id=" << event_id
+          << " id=" << sequence_id
           << " size=" << (curfrag.size() - max_initial_send_words_)
           << " idx=" << use_me
           << " dest=" << mpi_to
@@ -113,7 +113,7 @@ void artdaq::SHandles::sendFragment(Fragment && frag)
   else {
     // Send as one chunk.
     Debug << "send complete: " << rank
-          << " id=" << event_id
+          << " id=" << sequence_id
           << " size=" << curfrag.size()
           << " idx=" << use_me
           << " dest=" << mpi_to

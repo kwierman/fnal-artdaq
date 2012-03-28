@@ -29,11 +29,11 @@ public:
 #if USE_MODERN_FEATURES
   typedef detail::RawFragmentHeader::version_t     version_t;
   typedef detail::RawFragmentHeader::type_t        type_t;
-  typedef detail::RawFragmentHeader::event_id_t    event_id_t;
+  typedef detail::RawFragmentHeader::sequence_id_t    sequence_id_t;
   typedef detail::RawFragmentHeader::fragment_id_t fragment_id_t;
 
   static version_t const InvalidVersion;
-  static event_id_t const InvalidSequenceID;
+  static sequence_id_t const InvalidSequenceID;
   static fragment_id_t const InvalidFragmentID;
 
   typedef std::vector<RawDataType>::reference      reference;
@@ -47,7 +47,7 @@ public:
 
   // Create a fragment with the given event id and fragment id, and
   // with no data payload.
-  Fragment(event_id_t sequenceID,
+  Fragment(sequence_id_t sequenceID,
            fragment_id_t fragID,
            type_t type = type_t::DATA);
 
@@ -58,13 +58,13 @@ public:
   std::size_t   size() const;
   version_t     version() const;
   type_t        type() const;
-  event_id_t    sequenceID() const;
+  sequence_id_t    sequenceID() const;
   fragment_id_t fragmentID() const;
 
   // Header setters
   void setVersion(version_t version);
   void setType(type_t type);
-  void setSequenceID(event_id_t event_id);
+  void setSequenceID(sequence_id_t sequence_id);
   void setFragmentID(fragment_id_t fragment_id);
 
   // Return the number of words in the data payload. This does not
@@ -125,10 +125,10 @@ artdaq::Fragment::type() const
 }
 
 inline
-artdaq::Fragment::event_id_t
+artdaq::Fragment::sequence_id_t
 artdaq::Fragment::sequenceID() const
 {
-  return fragmentHeader()->event_id;
+  return fragmentHeader()->sequence_id;
 }
 
 inline
@@ -154,10 +154,10 @@ artdaq::Fragment::setType(type_t type)
 
 inline
 void
-artdaq::Fragment::setSequenceID(event_id_t event_id)
+artdaq::Fragment::setSequenceID(sequence_id_t sequence_id)
 {
-  assert(event_id < 0x1000000000000);
-  fragmentHeader()->event_id = event_id;
+  assert(sequence_id < 0x1000000000000);
+  fragmentHeader()->sequence_id = sequence_id;
 }
 
 inline

@@ -38,8 +38,8 @@ namespace artdaq
     typedef int (ARTFUL_FCN)(int, char**);
     typedef RawEvent::run_id_t      run_id_t;
     typedef RawEvent::subrun_id_t   subrun_id_t;
-    typedef Fragment::event_id_t    event_id_t;
-    typedef std::map<event_id_t, RawEvent_ptr> EventMap;
+    typedef Fragment::sequence_id_t    sequence_id_t;
+    typedef std::map<sequence_id_t, RawEvent_ptr> EventMap;
 
     static const std::string EVENT_RATE_STAT_KEY;
 

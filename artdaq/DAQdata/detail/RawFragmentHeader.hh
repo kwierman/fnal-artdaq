@@ -22,7 +22,7 @@ struct artdaq::detail::RawFragmentHeader {
 
 #if USE_MODERN_FEATURES
   typedef uint16_t version_t;
-  typedef uint64_t event_id_t;
+  typedef uint64_t sequence_id_t;
   enum type_t : uint8_t {
     DATA = 0,
     END_OF_DATA,
@@ -35,7 +35,7 @@ struct artdaq::detail::RawFragmentHeader {
   // encoded; if any of the sizes are changed, the corresponding
   // values must be updated.
   static const version_t InvalidVersion  = 0xFFFF;
-  static const event_id_t InvalidSequenceID = 0xFFFFFFFFFFFF;
+  static const sequence_id_t InvalidSequenceID = 0xFFFFFFFFFFFF;
   static const fragment_id_t InvalidFragmentID = 0xFFFF;
 
   RawDataType word_count  : 32; // number of RawDataTypes in this Fragment
@@ -43,7 +43,7 @@ struct artdaq::detail::RawFragmentHeader {
   RawDataType type        :  8;
   RawDataType unused      :  8;
 
-  RawDataType event_id    : 48;
+  RawDataType sequence_id    : 48;
   RawDataType fragment_id : 16;
 
   constexpr static std::size_t num_words();

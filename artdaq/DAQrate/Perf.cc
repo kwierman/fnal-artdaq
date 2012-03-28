@@ -101,8 +101,8 @@ void PerfWriteJobStart()
 void PerfWriteJobEnd()
 { JobEndMeas je; }
 
-void PerfWriteEvent(EventMeas::Type t, int event_id)
-{ EventMeas e(t, event_id); }
+void PerfWriteEvent(EventMeas::Type t, int sequence_id)
+{ EventMeas e(t, sequence_id); }
 
 // ------------
 CommonMeas::CommonMeas(): buf_(), event_(), enter_(MPI_Wtime()), exit_() { }

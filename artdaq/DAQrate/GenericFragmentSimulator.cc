@@ -44,11 +44,11 @@ artdaq::GenericFragmentSimulator::getNext_(FragmentPtrs & frags)
 
 bool
 artdaq::GenericFragmentSimulator::
-getNext(Fragment::event_id_t event_id,
+getNext(Fragment::sequence_id_t sequence_id,
         Fragment::fragment_id_t fragment_id,
         FragmentPtr & frag_ptr)
 {
-  frag_ptr.reset(new Fragment(event_id, fragment_id));
+  frag_ptr.reset(new Fragment(sequence_id, fragment_id));
   size_t fragment_size = generateFragmentSize_();
   frag_ptr->resize(fragment_size, 0);
   switch (content_selection_) {

@@ -210,7 +210,7 @@ void PerfSetStartTime();
 double PerfGetStartTime();
 void PerfWriteJobStart();
 void PerfWriteJobEnd();
-void PerfWriteEvent(EventMeas::Type, int event_id);
+void PerfWriteEvent(EventMeas::Type, int sequence_id);
 
 
 #endif /* artdaq_DAQrate_Perf_hh */

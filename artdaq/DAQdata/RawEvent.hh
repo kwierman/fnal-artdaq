@@ -26,18 +26,18 @@ namespace artdaq
   {
     typedef uint32_t             run_id_t;    // Fragments don't know about runs
     typedef uint32_t             subrun_id_t; // Fragments don't know about subruns
-    typedef Fragment::event_id_t event_id_t;
+    typedef Fragment::sequence_id_t sequence_id_t;
     
     run_id_t run_id;       // RawDataType run_id;
     subrun_id_t subrun_id; // RawDataType subrun_id;
-    event_id_t event_id;   // RawDataType event_id;
+    sequence_id_t sequence_id;   // RawDataType sequence_id;
 
     RawEventHeader(run_id_t run,
                    subrun_id_t subrun,
-                   event_id_t event) :
+                   sequence_id_t event) :
       run_id(run),
       subrun_id(subrun),
-      event_id(event)
+      sequence_id(event)
     { }
 
   };
@@ -51,9 +51,9 @@ namespace artdaq
   public:
     typedef detail::RawEventHeader::run_id_t    run_id_t;
     typedef detail::RawEventHeader::subrun_id_t subrun_id_t;
-    typedef detail::RawEventHeader::event_id_t  event_id_t;
+    typedef detail::RawEventHeader::sequence_id_t  sequence_id_t;
 
-    RawEvent(run_id_t run, subrun_id_t subrun, event_id_t event);
+    RawEvent(run_id_t run, subrun_id_t subrun, sequence_id_t event);
 
     // Insert the given (pointer to a) Fragment into this
     // RawEvent. This takes ownership of the Fragment referenced by
@@ -70,7 +70,7 @@ namespace artdaq
     // Accessors for header information
     run_id_t runID() const;
     subrun_id_t subrunID() const;
-    event_id_t sequenceID() const;
+    sequence_id_t sequenceID() const;
 
     // Print summary information about this RawEvent to the given stream.
     void print(std::ostream& os) const;
@@ -88,7 +88,7 @@ namespace artdaq
   };
 
   inline
-  RawEvent::RawEvent(run_id_t run, subrun_id_t subrun, event_id_t event) :
+  RawEvent::RawEvent(run_id_t run, subrun_id_t subrun, sequence_id_t event) :
       header_(run,subrun,event),
       fragments_()
     { }
@@ -103,11 +103,11 @@ namespace artdaq
           << "Attempt to insert a null FragmentPtr into a RawEvent detected.\n";
       }
 
-    if (pfrag->sequenceID() != header_.event_id)
+    if (pfrag->sequenceID() != header_.sequence_id)
       {
         throw cet::exception("DataCorruption")
           << "Attempt to insert a Fragment from event " << pfrag->sequenceID()
-          << " into a RawEvent with id " << header_.event_id
+          << " into a RawEvent with id " << header_.sequence_id
           << " detected\n";
       }
   
@@ -130,7 +130,7 @@ namespace artdaq
 
   inline RawEvent::run_id_t RawEvent::runID() const { return header_.run_id; }
   inline RawEvent::subrun_id_t RawEvent::subrunID() const { return header_.subrun_id; }
-  inline RawEvent::event_id_t RawEvent::sequenceID() const { return header_.event_id; }
+  inline RawEvent::sequence_id_t RawEvent::sequenceID() const { return header_.sequence_id; }
 
   inline
   std::auto_ptr<std::vector<Fragment>>

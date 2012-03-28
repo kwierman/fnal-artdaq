@@ -74,14 +74,14 @@ void artdaq::RHandles::recvFragment(Fragment & output)
   { throw "NOTE: MPI_UNDEFINED returned as on index value from Waitany"; }
   if (reqs_[which] != MPI_REQUEST_NULL)
   { throw "NOTE: req is not MPI_REQUEST_NULL in recvFragment"; }
-  Fragment::event_id_t event_id = payload_[which].sequenceID();
+  Fragment::sequence_id_t sequence_id = payload_[which].sequenceID();
   Debug << "recv: " << rank
         << " idx=" << which
         << " status_error=" << status_.MPI_ERROR
         << " status_count=" << status_.count
         << " source=" << status_.MPI_SOURCE
         << " tag=" << status_.MPI_TAG
-        << " Fragment sequenceID=" << event_id
+        << " Fragment sequenceID=" << sequence_id
         << " Fragment size=" << payload_[which].size()
         << " Fragment dataSize=" << payload_[which].dataSize()
         << " fragID=" << payload_[which].fragmentID()
@@ -100,7 +100,7 @@ void artdaq::RHandles::recvFragment(Fragment & output)
     Fragment tmp(max_initial_send_words_);
     payload_[which].swap(tmp);
     // Performance measurement.
-    rm.woke(event_id, which);
+    rm.woke(sequence_id, which);
     // Repost to receive more data from possibly different sources.
     int from = nextSource_();
     Debug << "Posting buffer " << which

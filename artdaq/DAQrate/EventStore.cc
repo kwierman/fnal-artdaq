@@ -80,7 +80,7 @@ namespace artdaq
     // if the event is complete, delete it and report timing
 
     //RawFragmentHeader* fh = pfrag->fragmentHeader();
-    Fragment::event_id_t event_id = pfrag->sequenceID();
+    Fragment::sequence_id_t sequence_id = pfrag->sequenceID();
 
     // The fragmentID is expected to be correct in the incoming
     // fragment; the EventStore has no business changing it in the
@@ -91,14 +91,14 @@ namespace artdaq
 
     // Find if the right event id is already known to events_ and, if so, where
     // it is.
-    EventMap::iterator loc = events_.lower_bound(event_id);
-    if (loc == events_.end() || events_.key_comp()(event_id, loc->first))
+    EventMap::iterator loc = events_.lower_bound(sequence_id);
+    if (loc == events_.end() || events_.key_comp()(sequence_id, loc->first))
       {
         // We don't have an event with this id; create one an insert it at loc,
         // and ajust loc to point to the newly inserted event.
-        RawEvent_ptr newevent(new RawEvent(run_id_, subrun_id_, event_id));
+        RawEvent_ptr newevent(new RawEvent(run_id_, subrun_id_, sequence_id));
         loc = 
-          events_.insert(loc, EventMap::value_type(event_id, newevent));
+          events_.insert(loc, EventMap::value_type(sequence_id, newevent));
       }
 
     // Now insert the fragment into the event we have located.
@@ -110,7 +110,7 @@ namespace artdaq
         // map, report on statistics, and put the shared pointer onto
         // the event queue.
         RawEvent_ptr complete_event(loc->second);
-        PerfWriteEvent(EventMeas::END,event_id);
+        PerfWriteEvent(EventMeas::END,sequence_id);
         events_.erase(loc);
         queue_.enqNowait(complete_event);
 

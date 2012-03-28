@@ -37,7 +37,7 @@ public:
 
 private:
 
-  int dest(Fragment::event_id_t) const;
+  int dest(Fragment::sequence_id_t) const;
   int findAvailable();
 
   size_t buffer_count_;

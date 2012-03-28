@@ -37,7 +37,7 @@ public:
 
   // Not part of virtual interface: generate a specific fragment.
   using FragmentGenerator::getNext;
-  bool getNext(Fragment::event_id_t,
+  bool getNext(Fragment::sequence_id_t,
                Fragment::fragment_id_t,
                FragmentPtr & frag_ptr);
 
