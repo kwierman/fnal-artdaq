@@ -9,7 +9,7 @@
 #include <iomanip>
 #include <string>
 
-// for handles use - sendEvent and recvEvent
+// for handles use - sendFragment and recvFragment
 #define PERF_SEND 1
 #define PERF_FOUND 2
 #define PERF_SENT 3

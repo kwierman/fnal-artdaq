@@ -135,7 +135,7 @@ void Program::source()
   size_t fragments_processed = 0;
   size_t fragments_expected = 0;
   do {
-    from_d.recvEvent(frag);
+    from_d.recvFragment(frag);
     if (frag.type() == artdaq::Fragment::type_t::END_OF_DATA) {
       Debug << "Fragment data: " << *frag.dataBegin() << flusher;
       fragments_expected = *frag.dataBegin();
@@ -144,7 +144,7 @@ void Program::source()
       ++fragments_processed;
     }
     if (want_sink_) {
-      to_r.sendEvent(std::move(frag));
+      to_r.sendFragment(std::move(frag));
     }
   }
   while (Debug << "Fragments expected: " << fragments_expected << ", fragments processed: " << fragments_processed << flusher,
@@ -196,7 +196,7 @@ void Program::detector()
   size_t fragments_sent = 0;
   while (gen->getNext(frags) && fragments_sent < fragments_per_source) {
     for (auto & fragPtr : frags) {
-      h.sendEvent(std::move(*fragPtr));
+      h.sendFragment(std::move(*fragPtr));
       if (++fragments_sent == fragments_per_source) { break; }
       if ((fragments_sent % 100) == 0) {
         // Don't get too far out of sync.
@@ -214,7 +214,7 @@ void Program::detector()
   eod_frag.resize(1);
   *eod_frag.dataBegin() = fragments_sent;
   Debug << "EOD data = " << *eod_frag.dataBegin() << flusher;
-  h.sendEvent(std::move(eod_frag));
+  h.sendFragment(std::move(eod_frag));
   Debug << "detector waiting " << conf_.rank_ << flusher;
   h.waitAll();
   Debug << "detector done " << conf_.rank_ << flusher;
@@ -244,7 +244,7 @@ void Program::sink()
     size_t fragments_received = 0;
     do {
       artdaq::FragmentPtr pfragment(new artdaq::Fragment);
-      h.recvEvent(*pfragment);
+      h.recvFragment(*pfragment);
       if (pfragment->type() == artdaq::Fragment::type_t::END_OF_DATA) {
         --sources_sending;
         // TODO: use GMP to avoid overflow possibility.

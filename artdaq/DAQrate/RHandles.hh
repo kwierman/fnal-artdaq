@@ -33,7 +33,7 @@ public:
 
   // will take the data on the send (not copy),
   // will replace the data on recv (not copy)
-  void recvEvent(Fragment &);
+  void recvFragment(Fragment &);
   void waitAll();
 
 private:

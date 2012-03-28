@@ -53,7 +53,7 @@ int artdaq::SHandles::findAvailable()
   return use_me;
 }
 
-void artdaq::SHandles::sendEvent(Fragment && frag)
+void artdaq::SHandles::sendFragment(Fragment && frag)
 {
   // Precondition: Fragment must be complete and consistent (including
   // header information).

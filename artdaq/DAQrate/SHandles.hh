@@ -32,7 +32,7 @@ public:
            size_t dest_count,
            size_t dest_start);
 
-  void sendEvent(Fragment &&);
+  void sendFragment(Fragment &&);
   void waitAll();
 
 private:

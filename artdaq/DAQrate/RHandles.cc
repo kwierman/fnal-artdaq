@@ -62,7 +62,7 @@ static void printError(int rc, int which, MPI_Status &)
 #endif
 }
 
-void artdaq::RHandles::recvEvent(Fragment & output)
+void artdaq::RHandles::recvFragment(Fragment & output)
 {
   // Debug << "recv entered" << flusher;
   RecvMeas rm;
@@ -73,7 +73,7 @@ void artdaq::RHandles::recvEvent(Fragment & output)
   if (which == MPI_UNDEFINED)
   { throw "NOTE: MPI_UNDEFINED returned as on index value from Waitany"; }
   if (reqs_[which] != MPI_REQUEST_NULL)
-  { throw "NOTE: req is not MPI_REQUEST_NULL in recvEvent"; }
+  { throw "NOTE: req is not MPI_REQUEST_NULL in recvFragment"; }
   Fragment::event_id_t event_id = payload_[which].eventID();
   Debug << "recv: " << rank
         << " idx=" << which
@@ -141,7 +141,7 @@ void artdaq::RHandles::recvEvent(Fragment & output)
               MPI_ANY_TAG,
               MPI_COMM_WORLD,
               &reqs_[which]);
-    recvEvent(output); // Call ourselves to wait for the final chunk.
+    recvFragment(output); // Call ourselves to wait for the final chunk.
   }
 }
 
