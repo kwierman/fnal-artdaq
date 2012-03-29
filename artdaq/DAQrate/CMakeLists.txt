@@ -54,7 +54,7 @@ cet_test(daqrate PREBUILT NO_AUTO)
 # ----------------------------------------------------------------------
 # Build this project's executables:
 
-find_library( ART_FRAMEWORK_CORE NAMES art_Framework_Core PATHS $ENV{ART_LIB} )
+find_library( ART_FRAMEWORK_CORE NAMES art_Framework_Core PATHS $ENV{ART_OPENMP_LIB} )
 
 set ( common_exec_link_libraries
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
@@ -75,10 +75,10 @@ set ( common_exec_link_libraries
   -ldl
 )
 
-find_library( ART_PERSISTENCY_COMMON_DICT NAMES art_Persistency_Common_dict PATHS $ENV{ART_LIB} )
-find_library( ART_FRAMEWORK_ART NAMES art_Framework_Art PATHS $ENV{ART_LIB} )
-find_library( ART_FRAMEWORK_SERVICES_REGISTRY NAMES art_Framework_Services_Registry PATHS $ENV{ART_LIB} )
-find_library( ART_UTILITIES NAMES art_Utilities PATHS $ENV{ART_LIB} )
+find_library( ART_PERSISTENCY_COMMON_DICT NAMES art_Persistency_Common_dict PATHS $ENV{ART_OPENMP_LIB} )
+find_library( ART_FRAMEWORK_ART NAMES art_Framework_Art PATHS $ENV{ART_OPENMP_LIB} )
+find_library( ART_FRAMEWORK_SERVICES_REGISTRY NAMES art_Framework_Services_Registry PATHS $ENV{ART_OPENMP_LIB} )
+find_library( ART_UTILITIES NAMES art_Utilities PATHS $ENV{ART_OPENMP_LIB} )
 
 
 set ( art_exec_link_libraries
