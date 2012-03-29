@@ -77,11 +77,8 @@ Config::Config(int rank, int total_procs, int argc, char* argv[]):
   event_queue_size_(getArgQueueSize(argc, argv)),
   run_(getArgRun(argc, argv)),
 
-  source_buffer_count_(event_queue_size_ * sinks_),
-  sink_buffer_count_(event_queue_size_ * sources_),
   type_((rank_ < detectors_) ? TaskDetector : ((rank_ < (detectors_ + sources_)) ? TaskSource : TaskSink)),
   offset_(rank_ - ((type_ == TaskDetector) ? detector_start_ : (type_ == TaskSource) ? source_start_ : sink_start_)),
-  barrier_period_(source_buffer_count_),
   node_name_(getProcessorName()),
   art_argc_(getArtArgc(argc, argv)),
   art_argv_(getArtArgv(argc - art_argc_, argv)),
@@ -173,9 +170,7 @@ void Config::printHeader(std::ostream & ost) const
       << "DetectorStart SourceStart SinkStart "
       << "EventQueueSize "
       << "Run "
-      << "SourceBufferCount SinkBufferCount "
       << "Type Offset "
-      << "BarrierPeriod "
       << "Nodename "
       << "StartTime\n";
 }
@@ -191,11 +186,8 @@ void Config::print(std::ostream & ost) const
       << sink_start_ << " "
       << event_queue_size_ << " "
       << run_ << " "
-      << source_buffer_count_ << " "
-      << sink_buffer_count_ << " "
       << typeName() << " "
       << offset_ << " "
-      << barrier_period_ << " "
       << node_name_ << " "
       << PerfGetStartTime();
 }

@@ -249,6 +249,7 @@ def main():
 
 	cmd ="mpirun_rsh -rsh -hostfile %s "%(nodes_file,)
 	cmd+="-n %d "%(num_det+num_src+num_sink,)
+        cmd+=" FHICL_FILE_PATH=\"$FHICL_FILE_PATH\" "
 	cmd+=builder[:-1]
 	cmd+=" %d %d "%(num_det,num_sink)
 	cmd+="%d %d"%(queue_size, run_number)
@@ -257,6 +258,7 @@ def main():
 	os.system(cmd)
     else:
 	cmd ="mpirun -n %d "%(num_det+num_src+num_sink,)
+        cmd+=" FHICL_FILE_PATH=\"$FHICL_FILE_PATH\" "
 	cmd+=builder[:-1]
 	cmd+=" %d %d "%(num_det,num_sink)
 	cmd+="%d %d"%(queue_size, run_number)

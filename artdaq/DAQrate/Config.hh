@@ -45,11 +45,8 @@ public:
   int run_;
 
   // calculated parameters
-  int source_buffer_count_;
-  int sink_buffer_count_;
   TaskType type_;
   int offset_;
-  int barrier_period_;
   std::string node_name_;
 
   int  art_argc_;

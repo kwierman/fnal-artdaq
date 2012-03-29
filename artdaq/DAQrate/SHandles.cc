@@ -9,12 +9,6 @@
 
 #include <algorithm>
 
-// size_ = number of buffers
-// fragment_size_ = number of longs in a fragment of an event
-//
-// be careful about the event/fragment size - hardwired to sizeof(long)
-// and should be determined from the FragmentPool
-
 artdaq::SHandles::SHandles(size_t buffer_count,
                            uint64_t max_initial_send_words,
                            size_t dest_count,

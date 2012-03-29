@@ -46,6 +46,10 @@ int main(int argc, char* argv[])
   }
   std::vector<char> data(500);
   ifstream infile(argv[1], ifstream::binary);
+  if (!infile) {
+    std::cerr << "Unable to open file " << argv[1] << ".\n";
+    exit(1);
+  }
   while (1) {
     infile.read(&data[0], sizeof(Header));
     if (infile.eof()) { break; }

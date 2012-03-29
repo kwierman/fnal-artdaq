@@ -46,6 +46,8 @@ private:
 
   Config conf_;
   bool want_sink_;
+  size_t source_buffers_;
+  size_t sink_buffers_;
   fhicl::ParameterSet daq_control_ps_;
   MPI_Comm local_group_comm_;
 };
@@ -64,6 +66,8 @@ Program::Program(int argc, char * argv[]):
   MPIProg(argc, argv),
   conf_(rank_, procs_, argc, argv),
   want_sink_(true),
+  source_buffers_(0),
+  sink_buffers_(0),
   daq_control_ps_(),
   local_group_comm_()
 {
@@ -96,6 +100,8 @@ Program::Program(int argc, char * argv[]):
                            lookup_policy, pset);
   daq_control_ps_ = pset.get<fhicl::ParameterSet>("daq");
   daq_control_ps_.get_if_present("wantSink", want_sink_);
+  source_buffers_ = daq_control_ps_.get<size_t>("source_buffers", 10);
+  sink_buffers_ = daq_control_ps_.get<size_t>("sink_buffers", 10);
   PerfConfigure(conf_, 0); // Don't know how many events.
 }
 
@@ -124,11 +130,11 @@ void Program::source()
   printHost("source");
   // needs to get data from the detectors and send it to the sinks
   artdaq::Fragment frag;
-  artdaq::RHandles from_d(conf_.source_buffer_count_,
+  artdaq::RHandles from_d(source_buffers_,
                           conf_.max_initial_send_words_,
                           1, // Direct.
                           conf_.getSrcFriend());
-  artdaq::SHandles to_r(conf_.sink_buffer_count_,
+  artdaq::SHandles to_r(sink_buffers_,
                         conf_.max_initial_send_words_,
                         conf_.sinks_,
                         conf_.sink_start_);
@@ -181,7 +187,7 @@ void Program::detector()
      detectors[detector_rank]:
      detectors[0]);
   std::unique_ptr<artdaq::FragmentGenerator> const gen(make_generator(det_ps));
-  artdaq::SHandles h(conf_.source_buffer_count_,
+  artdaq::SHandles h(source_buffers_,
                      conf_.max_initial_send_words_,
                      1, // Direct.
                      conf_.getDestFriend());
@@ -243,7 +249,7 @@ void Program::sink()
                               conf_.art_argc_,
                               conf_.art_argv_,
                               reader);
-    artdaq::RHandles h(conf_.sink_buffer_count_,
+    artdaq::RHandles h(sink_buffers_ * conf_.sources_ / conf_.sinks_,
                        conf_.max_initial_send_words_,
                        conf_.sources_,
                        conf_.source_start_);
