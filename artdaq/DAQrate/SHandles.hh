@@ -40,10 +40,10 @@ private:
   int dest(Fragment::sequence_id_t) const;
   int findAvailable();
 
-  size_t buffer_count_;
-  uint64_t max_initial_send_words_;
-  int dest_count_;
-  int dest_start_;
+  size_t const buffer_count_;
+  uint64_t const max_initial_send_words_;
+  int const dest_count_;
+  int const dest_start_;
   int pos_; // next slot to check
 
   Requests reqs_;
