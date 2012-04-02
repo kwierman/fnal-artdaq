@@ -57,7 +57,7 @@ void artdaq::SHandles::sendFragment(Fragment && frag)
   Fragment::sequence_id_t sequence_id = curfrag.sequenceID();
   int const mpi_to = dest(sequence_id);
   int rank;
-  assert(MPI_Comm_rank(MPI_COMM_WORLD, &rank) == MPI_SUCCESS);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (curfrag.size() > max_initial_send_words_) {
     if (buffer_count_ > 1) {
       throw cet::exception("unimplemented")
