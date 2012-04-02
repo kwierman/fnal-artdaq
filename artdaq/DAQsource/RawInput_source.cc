@@ -1,27 +1,9 @@
-#include "artdaq/DAQdata/Fragment.hh"
-#include "artdaq/DAQrate/ConcurrentQueue.hh"
-#include "artdaq/DAQrate/GlobalQueue.hh"
-#include "art/Framework/Core/Frameworkfwd.h"
-#include "art/Framework/Core/FileBlock.h"
-#include "art/Framework/Core/InputSourceMacros.h"
-#include "art/Framework/Core/ProductRegistryHelper.h"
 #include "art/Framework/IO/Sources/ReaderSource.h"
-#include "art/Framework/IO/Sources/put_product_in_principal.h"
-#include "art/Persistency/Provenance/FileFormatVersion.h"
-#include "art/Utilities/Exception.h"
-#include "fhiclcpp/ParameterSet.h"
-#include "messagefacility/MessageLogger/MessageLogger.h"
-
-#include <memory>
-#include <vector>
-#include <string>
-
-
-using std::string;
-using std::vector;
-using std::auto_ptr;
+#include "artdaq/DAQsource/detail/RawEventQueueReader.hh"
+#include "art/Framework/Core/InputSourceMacros.h"
 
 namespace artdaq {
+
   namespace detail {
     struct RawEventQueueReader {
       RawEventQueueReader(RawEventQueueReader const&) = delete;

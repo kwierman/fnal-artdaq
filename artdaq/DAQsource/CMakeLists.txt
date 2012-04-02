@@ -1,6 +1,5 @@
-project(artdaq_test)
-
-simple_plugin(RawInput "source" artdaq_DAQrate)
+add_library(artdaq_DAQsource SHARED detail/RawEventQueueReader.cc)
+simple_plugin(RawInput "source" artdaq_DAQsource)
 
 add_executable(driver driver.cc)
 
@@ -13,7 +12,30 @@ find_library( ART_UTILITIES NAMES art_Utilities PATHS $ENV{ART_OPENMP_LIB} )
 find_library( FHICLCPP NAMES fhicl_cpp PATHS $ENV{FHICLCPP_LIB} )
 find_library( SIGC    NAMES sigc-2.0  PATHS $ENV{LIBSIGCPP_LIB} NO_DEFAULT_PATH )
 
+target_link_libraries(artdaq_DAQsource
+  artdaq_DAQrate
+  artdaq_DAQdata
+  ${CETLIB}
+  ${FHICLCPP}
+  ${ART_FRAMEWORK_SERVICES_REGISTRY}
+  ${ART_FRAMEWORK_CORE}
+  ${ROOT_CINTEX}
+  ${ROOT_PHYSICS}
+  ${ROOTSYS}/lib/libGraf.so
+  ${ROOT_TREE}
+  ${ROOT_HIST}
+  ${ROOT_MATRIX}
+  ${ROOT_NET}
+  ${ROOT_MATHCORE}
+  ${ROOT_RIO}
+  ${ROOT_THREAD}
+  ${ROOT_CORE}
+  ${ROOT_CINT}
+  ${ROOT_REFLEX}
+)
+
 target_link_libraries(driver
+  artdaq_DAQsource
   artdaq_DAQrate
   artdaq_DAQdata
   ${CETLIB}
