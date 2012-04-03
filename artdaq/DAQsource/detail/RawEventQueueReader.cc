@@ -38,6 +38,11 @@ bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal* const & in
                                                    art::SubRunPrincipal* & outSR,
                                                    art::EventPrincipal* & outE)
 {
+  // Establish default 'results'
+  outR = 0;
+  outSR = 0;
+  outE = 0;
+
   RawEvent_ptr popped_event;
 
   // Try to get an event from the queue. We'll continuously loop, either until:
@@ -82,7 +87,7 @@ bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal* const & in
   }
   outE = pmaker.makeEventPrincipal(popped_event->runID(),
                                    popped_event->subrunID(),
-                                   popped_event->eventID(),
+                                   popped_event->sequenceID(),
                                    runstart);
 
   // Finally, grab the Fragments out of the RawEvent, and insert
