@@ -10,8 +10,6 @@
 #include "artdaq/DAQdata/detail/RawFragmentHeader.hh"
 #include "artdaq/DAQdata/features.hh"
 
-class TBuffer;
-
 namespace artdaq {
   typedef detail::RawFragmentHeader::RawDataType RawDataType;
 
@@ -36,10 +34,12 @@ public:
   static sequence_id_t const InvalidSequenceID;
   static fragment_id_t const InvalidFragmentID;
 
-  typedef std::vector<RawDataType>::reference      reference;
-  typedef std::vector<RawDataType>::iterator       iterator;
-  typedef std::vector<RawDataType>::const_iterator const_iterator;
-  typedef std::vector<RawDataType>::value_type     value_type;
+  typedef std::vector<RawDataType>::reference       reference;
+  typedef std::vector<RawDataType>::iterator        iterator;
+  typedef std::vector<RawDataType>::const_iterator  const_iterator;
+  typedef std::vector<RawDataType>::value_type      value_type;
+  typedef std::vector<RawDataType>::difference_type difference_type;
+  typedef std::vector<RawDataType>::size_type       size_type;
 
   // Create a Fragment ready to hold n words of payload, and with
   // all values zeroed.
@@ -90,6 +90,8 @@ public:
   bool empty();
   void reserve(std::size_t cap);
   void swap(Fragment & other);
+
+  static Fragment eodFrag(size_t nFragsToExpect);
 #endif
 
 private:

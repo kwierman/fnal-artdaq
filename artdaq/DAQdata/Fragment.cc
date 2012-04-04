@@ -1,10 +1,6 @@
 #include "artdaq/DAQdata/Fragment.hh"
 
-// See implementation of Streamer() below.
-#ifdef ARTDAQ_WANT_FRAGMENT_STREAMER
-#include "TBuffer.h"
-#endif
-
+#include <cmath>
 #include <iostream>
 
 using artdaq::detail::RawFragmentHeader;
@@ -50,5 +46,15 @@ artdaq::Fragment::print(std::ostream & os) const
      << ", WordCount " << size()
      << ", Event " << sequenceID()
      << '\n';
+}
+
+artdaq::Fragment
+artdaq::Fragment::eodFrag(size_t nFragsToExpect)
+{
+  Fragment result(static_cast<size_t>(ceil(sizeof(nFragsToExpect) /
+                                           static_cast<double>(sizeof(value_type)))));
+  result.setType(Fragment::type_t::END_OF_DATA);
+  *result.dataBegin() = nFragsToExpect;
+  return result;
 }
 #endif
