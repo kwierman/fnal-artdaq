@@ -1,9 +1,12 @@
 #include "artdaq/DAQsource/detail/RawEventQueueReader.hh"
+#include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQrate/GlobalQueue.hh"
 
 #include "art/Framework/Core/FileBlock.h"
 #include "art/Framework/Core/PrincipalMaker.h"
 #include "art/Framework/Core/RootDictionaryManager.h"
+#include "art/Framework/Principal/Event.h"
+#include "art/Framework/Principal/Handle.h"
 #include "art/Framework/Principal/EventPrincipal.h"
 #include "art/Framework/Principal/RunPrincipal.h"
 #include "art/Framework/Principal/SubRunPrincipal.h"
@@ -48,6 +51,7 @@ using art::RunPrincipal;
 using art::SubRunID;
 using art::SubRunPrincipal;
 using art::Timestamp;
+using artdaq::Fragment;
 using artdaq::RawEvent;
 using artdaq::RawEvent_ptr;
 using artdaq::detail::RawEventQueueReader;
@@ -199,20 +203,36 @@ BOOST_FIXTURE_TEST_SUITE(raw_event_queue_reader_t, REQRTestFixture)
 
 BOOST_AUTO_TEST_CASE(nonempty_event) {
   // Prepare our 'previous run/subrun/event'..
-  RunID runid(2112);
-  SubRunID subrunid(2112, 1);
   EventID eventid(2112, 1, 3);
   Timestamp now;
-  std::unique_ptr<RunPrincipal>    run(principal_maker().makeRunPrincipal(runid.run(), now));
-  std::unique_ptr<SubRunPrincipal> subrun(principal_maker().makeSubRunPrincipal(runid.run(), subrunid.subRun(), now));
+  std::unique_ptr<RunPrincipal>    run(principal_maker().makeRunPrincipal(eventid.run(), now));
+  std::unique_ptr<SubRunPrincipal> subrun(principal_maker().makeSubRunPrincipal(eventid.run(), eventid.subRun(), now));
 
-  std::shared_ptr<RawEvent> event(new RawEvent(runid.run(), subrunid.subRun(), eventid.event()));
+  std::shared_ptr<RawEvent> event(new RawEvent(eventid.run(), eventid.subRun(), eventid.event()));
+  std::vector<Fragment::value_type> fakeData { 1, 2, 3, 4 };
+  event->insertFragment(std::move(std::unique_ptr<Fragment>
+                                  (new Fragment(std::move(Fragment::dataFrag(eventid.event(),
+                                                                             0,
+                                                                             fakeData.begin(),
+                                                                             fakeData.end()))))));
   artdaq::getGlobalQueue().enqNowait(event);
   EventPrincipal*  newevent = nullptr;
   SubRunPrincipal* newsubrun = nullptr;
   RunPrincipal*    newrun = nullptr;
   bool rc = reader().readNext(run.get(), subrun.get(), newrun, newsubrun, newevent);
   BOOST_REQUIRE(rc);
+  BOOST_CHECK(newrun == nullptr);
+  BOOST_CHECK(newsubrun == nullptr);
+  BOOST_CHECK(newevent);
+  BOOST_CHECK(newevent->id() == eventid);
+  art::Event e(*newevent, ModuleDescription());
+  art::Handle<std::vector<Fragment>> h;
+  e.getByLabel("daq", h);
+  BOOST_CHECK(h.isValid());
+  BOOST_CHECK(h->size() == 1);
+  BOOST_CHECK(std::equal(fakeData.begin(),
+                         fakeData.end(),
+                         h->front().dataBegin()));
 }
 
 BOOST_AUTO_TEST_CASE(end_of_data) {
