@@ -1,9 +1,11 @@
 #ifndef artdaq_DAQdata_Fragment_hh
 #define artdaq_DAQdata_Fragment_hh
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <iosfwd>
+#include <iterator>
 #include <vector>
 #include <stdint.h>
 
@@ -92,6 +94,14 @@ public:
   void swap(Fragment & other);
 
   static Fragment eodFrag(size_t nFragsToExpect);
+
+  template <class InputIterator>
+  static
+  Fragment
+  dataFrag(sequence_id_t sequenceID,
+           fragment_id_t fragID,
+           InputIterator i,
+           InputIterator e);
 #endif
 
 private:
@@ -261,6 +271,20 @@ void
 artdaq::Fragment::swap(Fragment & other)
 {
   vals_.swap(other.vals_);
+}
+
+template <class InputIterator>
+artdaq::Fragment
+artdaq::Fragment::
+dataFrag(sequence_id_t sequenceID,
+         fragment_id_t fragID,
+         InputIterator i,
+         InputIterator e)
+{
+  Fragment result(sequenceID, fragID);
+  result.vals_.reserve(std::distance(i, e) + detail::RawFragmentHeader::num_words());
+  std::copy(i, e, std::back_inserter(result.vals_));
+  return result;
 }
 
 inline
