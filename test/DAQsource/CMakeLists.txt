@@ -12,7 +12,8 @@ find_library( SIGC    NAMES sigc-2.0  PATHS $ENV{LIBSIGCPP_LIB} NO_DEFAULT_PATH 
 simple_plugin(FragmentSniffer "module" artdaq_DAQdata)
 
 
-cet_test(raw_event_queue_reader_t LIBRARIES artdaq_DAQsource artdaq_DAQdata_dict artdaq_DAQdata)
+cet_test(raw_event_queue_reader_t USE_BOOST_UNIT
+         LIBRARIES artdaq_DAQsource artdaq_DAQdata_dict artdaq_DAQdata)
 
 cet_test(daq_flow_t
          LIBRARIES

@@ -23,6 +23,9 @@
 
 #include "art/Utilities/Exception.h"
 
+#define BOOST_TEST_MODULE(raw_event_queue_reader_t)
+#include "boost/test/auto_unit_test.hpp"
+
 #include <iostream>
 #include <memory>
 #include <string>
@@ -35,6 +38,7 @@ using art::EventID;
 using art::EventPrincipal;
 using art::FileBlock;
 using art::FileFormatVersion;
+using art::ModuleDescription;
 using art::PrincipalMaker;
 using art::PrincipalMaker;
 using art::ProcessConfiguration;
@@ -49,9 +53,6 @@ using artdaq::RawEvent_ptr;
 using artdaq::detail::RawEventQueueReader;
 using fhicl::ParameterSet;
 
-
-
-
 class MPRGlobalTestFixture {
 public:
   MPRGlobalTestFixture();
@@ -61,7 +62,6 @@ public:
   BKmap_t branchKeys_;
   std::map<std::string, art::ProcessConfiguration*> processConfigurations_;
 
-private:
   art::ProcessConfiguration*
   fake_single_module_process(std::string const& tag,
                              std::string const& processName,
@@ -74,10 +74,11 @@ private:
                              std::string const& processName,
                              std::string const& productInstanceName = std::string() );
 
+  void finalize();
+
   art::MasterProductRegistry  productRegistry_;
   art::RootDictionaryManager rdm_;
 };
-
 
 MPRGlobalTestFixture::MPRGlobalTestFixture()
   :
@@ -92,9 +93,17 @@ MPRGlobalTestFixture::MPRGlobalTestFixture()
   productRegistry_.addProduct(fake_single_process_branch("test", "TEST"));
   productRegistry_.addProduct(fake_single_process_branch("user", "USER"));
   productRegistry_.addProduct(fake_single_process_branch("rick", "USER2", "rick"));
-  productRegistry_.setFrozen();
-  art::BranchIDListHelper::updateRegistries(productRegistry_);
-  art::ProductMetaData::create_instance(productRegistry_);
+}
+
+void
+MPRGlobalTestFixture::finalize() {
+  static bool once(true);
+  if (once) {
+    productRegistry_.setFrozen();
+    art::BranchIDListHelper::updateRegistries(productRegistry_);
+    art::ProductMetaData::create_instance(productRegistry_);
+    once = false;
+  }
 }
 
 art::ProcessConfiguration*
@@ -108,7 +117,7 @@ fake_single_module_process(std::string const& tag,
   fhicl::ParameterSet processParams;
   processParams.put(processName, moduleParams);
   processParams.put<std::string>("process_name",
-                                          processName);
+                                 processName);
 
   art::ProcessConfiguration* result =
     new art::ProcessConfiguration(processName, processParams.id(), release, pass);
@@ -145,91 +154,67 @@ fake_single_process_branch(std::string const& tag,
   return std::auto_ptr<art::BranchDescription>(result);
 }
 
-struct EventPrincipalTestFixture {
-  typedef MPRGlobalTestFixture::BKmap_t BKmap_t;
+struct REQRTestFixture {
+  ProductRegistryHelper helper;
+  PrincipalMaker        principal_maker;
+  RawEventQueueReader reader;
 
-  EventPrincipalTestFixture();
+  REQRTestFixture() :
+    helper(),
+    principal_maker(*gf().fake_single_module_process("daq",
+                                                     "TEST",
+                                                     ParameterSet())),
+    reader(ParameterSet(),
+           helper,
+           principal_maker)
+  {
+    ModuleDescription md;
+    // These _xERROR_ strings should never appear in branch names; they
+    // are here as tracers to help identify any failures in coding.
+    md.moduleName_ = "_NAMEERROR_";
+    md.moduleLabel_ = "_LABELERROR_";
+    md.processConfiguration_.processName_ = gf().processConfigurations_["daq"]->processName_;
+    md.parameterSetID_ = ParameterSet().id(); // Dummy
+    helper.registerProducts(gf().productRegistry_, md);
+    gf().finalize();
+  }
 
-  MPRGlobalTestFixture &gf();
-
-  std::auto_ptr<art::EventPrincipal> pEvent_;
+  MPRGlobalTestFixture& gf() {
+    static MPRGlobalTestFixture mpr;
+    return mpr;
+  }
 };
 
-EventPrincipalTestFixture::EventPrincipalTestFixture()
-  :
-  pEvent_()
-{
-  (void) gf(); // Bootstrap MasterProductRegistry creation first time out.
+BOOST_GLOBAL_FIXTURE(REQRTestFixture)
+BOOST_AUTO_TEST_SUITE(raw_event_queue_reader_t)
 
-  art::EventID eventID(101, 87, 20);
-
-  // Making a functional EventPrincipal is not trivial, so we do it
-  // all here.
-
-  // Put products we'll look for into the EventPrincipal.
-  typedef int PRODUCT_TYPE;
-  typedef art::Wrapper<PRODUCT_TYPE> WDP;
-  std::auto_ptr<art::EDProduct>  product(new WDP(std::auto_ptr<PRODUCT_TYPE>(new PRODUCT_TYPE)));
-
-  std::string tag("rick");
-  BKmap_t::const_iterator i(gf().branchKeys_.find(tag));
-  assert(i != gf().branchKeys_.end());
-
-  art::ProductList const& pl = art::ProductMetaData::instance().productList();
-  art::ProductList::const_iterator it = pl.find(i->second);
-
-  art::BranchDescription const& branchFromRegistry(it->second);
-
-  std::shared_ptr<art::Parentage> entryDescriptionPtr(new art::Parentage);
-  std::auto_ptr<art::ProductProvenance const>
-    productProvenancePtr(new art::ProductProvenance(branchFromRegistry.branchID(),
-                                                    art::productstatus::present(),
-                                                    entryDescriptionPtr));
-
-  art::ProcessConfiguration* process = gf().processConfigurations_[tag];
-  assert(process);
-  art::Timestamp now(1234567UL);
-  art::RunAuxiliary runAux(eventID.run(), now, now);
-  std::shared_ptr<art::RunPrincipal> rp(new art::RunPrincipal(runAux, *process));
-  art::SubRunAuxiliary subRunAux(rp->run(), eventID.subRun(), now, now);
-  std::shared_ptr<art::SubRunPrincipal>srp(new art::SubRunPrincipal(subRunAux, *process));
-  srp->setRunPrincipal(rp);
-  art::EventAuxiliary eventAux(eventID, now, true);
-  pEvent_.reset(new art::EventPrincipal(eventAux, *process));
-  pEvent_->setSubRunPrincipal(srp);
-  pEvent_->put(product, branchFromRegistry, productProvenancePtr);
-
-  assert(pEvent_->size() == 1u);
+BOOST_AUTO_TEST_CASE(nonempty_event) {
+  // Prepare our 'previous run/subrun/event'..
+  RunID runid(2112);
+  SubRunID subrunid(2112, 1);
+  EventID eventid(2112, 1, 3);
+  Timestamp now;
+  std::unique_ptr<RunPrincipal>    run(principal_maker.makeRunPrincipal(runid.run(), now));
+  std::unique_ptr<SubRunPrincipal> subrun(principal_maker.makeSubRunPrincipal(runid.run(), subrunid.subRun(), now));
+  
+  std::shared_ptr<RawEvent> event(new RawEvent(runid.run(), subrunid.subRun(), eventid.event()));
+  artdaq::getGlobalQueue().enqNowait(event);
+  EventPrincipal*  newevent = nullptr;
+  SubRunPrincipal* newsubrun = nullptr;
+  RunPrincipal*    newrun = nullptr;
+  bool rc = reader.readNext(run.get(), subrun.get(), newrun, newsubrun, newevent);
+  BOOST_REQUIRE(rc);
 }
 
-MPRGlobalTestFixture &
-EventPrincipalTestFixture::gf() {
-  static MPRGlobalTestFixture gf_s;
-  return gf_s;
-}
-
-
-
-int work()
-{
-  ParameterSet reader_config;
-  
-  ProductRegistryHelper pr_helper;
-  ProcessConfiguration process_config;
-  PrincipalMaker principal_maker(process_config);
-  
-  RawEventQueueReader reader(reader_config,
-                             pr_helper,
-                             principal_maker);
-
+BOOST_AUTO_TEST_CASE(end_of_data) {
   // Tell 'reader' the name of the file we are to read. This is pretty
   // much irrelevant for RawEventQueueReader, but we'll stick to the
   // interface demanded by ReaderSource<T>...
   string const fakeFileName("no such file exists");
-  FileBlock* pFile(0);
+  FileBlock* pFile = nullptr;
   reader.readFile(fakeFileName, pFile);
-  assert(pFile);
-  assert(pFile->fileFormatVersion() == FileFormatVersion(1, "RawEvent2011"));
+  BOOST_CHECK(pFile);
+  BOOST_CHECK(pFile->fileFormatVersion() == FileFormatVersion(1, "RawEvent2011"));
   assert(pFile->tree() == nullptr);
   assert(pFile->metaTree() == nullptr);
   assert(pFile->subRunTree() == nullptr);
@@ -238,13 +223,14 @@ int work()
   assert(pFile->runMetaTree() == nullptr);
   assert(!pFile->fastClonable());
 
-  // Test the end-of-data handling.
-  artdaq::getGlobalQueue().enqNowait(std::shared_ptr<RawEvent>(nullptr)); // insert end-of-data marker
+  // Test the end-of-data handling. Reading an end-of-data should result in readNext() returning false,
+  // and should return null pointers for new-run, -subrun and -event.
+
+  // Prepare our 'previous run/subrun/event'..
   RunID runid(2112);
   SubRunID subrunid(2112, 1);
   EventID eventid(2112, 1, 3);
   Timestamp now;
-
   std::unique_ptr<RunPrincipal>    run(principal_maker.makeRunPrincipal(runid.run(), now));
   std::unique_ptr<SubRunPrincipal> subrun(principal_maker.makeSubRunPrincipal(runid.run(), subrunid.subRun(), now));
   std::unique_ptr<EventPrincipal>  event(principal_maker.makeEventPrincipal(runid.run(),
@@ -252,26 +238,16 @@ int work()
                                                                             eventid.event(),
                                                                             now));
 
-  EventPrincipal*  newevent;
-  SubRunPrincipal* newsubrun;
-  RunPrincipal*    newrun;
+  artdaq::getGlobalQueue().enqNowait(std::shared_ptr<RawEvent>(nullptr)); // insert end-of-data marker
+
+  EventPrincipal*  newevent = nullptr;
+  SubRunPrincipal* newsubrun = nullptr;
+  RunPrincipal*    newrun = nullptr;
   bool rc = reader.readNext(run.get(), subrun.get(), newrun, newsubrun, newevent);
-  assert(!rc);
+  BOOST_CHECK(!rc);
   assert(newrun == nullptr);
   assert(newsubrun == nullptr);
   assert(newevent == nullptr);
-
-  return 0;
 }
 
-int main()
-{
-  MPRGlobalTestFixture mpr_gtf;
-  try {
-    return work();
-  }
-  catch (art::Exception& x) {
-    cerr << x << endl;
-    return 1;
-  }
-}
+
