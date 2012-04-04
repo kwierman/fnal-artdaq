@@ -201,38 +201,91 @@ struct REQRTestFixture {
 
 BOOST_FIXTURE_TEST_SUITE(raw_event_queue_reader_t, REQRTestFixture)
 
+namespace {
+  void basic_test(RawEventQueueReader & reader,
+                  std::unique_ptr<RunPrincipal> && run,
+                  std::unique_ptr<SubRunPrincipal> && subrun,
+                  EventID const & eventid) {
+    BOOST_REQUIRE(run || subrun == nullptr); // Sanity check.
+    std::shared_ptr<RawEvent> event(new RawEvent(eventid.run(), eventid.subRun(), eventid.event()));
+    std::vector<Fragment::value_type> fakeData { 1, 2, 3, 4 };
+    event->insertFragment(std::move(std::unique_ptr<Fragment>
+                                    (new Fragment(std::move(Fragment::dataFrag(eventid.event(),
+                                                                               0,
+                                                                               fakeData.begin(),
+                                                                               fakeData.end()))))));
+    artdaq::getGlobalQueue().enqNowait(event);
+    EventPrincipal*  newevent = nullptr;
+    SubRunPrincipal* newsubrun = nullptr;
+    RunPrincipal*    newrun = nullptr;
+    bool rc = reader.readNext(run.get(), subrun.get(), newrun, newsubrun, newevent);
+    BOOST_REQUIRE(rc);
+    if (run.get() && run->run() == eventid.run()) {
+      BOOST_CHECK(newrun == nullptr);
+    }
+    else {
+      BOOST_CHECK(newrun);
+      BOOST_CHECK(newrun->id() == eventid.runID());
+    }
+    if (!newrun && subrun.get() && subrun->subRun() == eventid.subRun()) {
+      BOOST_CHECK(newsubrun == nullptr);
+    }
+    else {
+      BOOST_CHECK(newsubrun);
+      BOOST_CHECK(newsubrun->id() == eventid.subRunID());
+    }
+    BOOST_CHECK(newevent);
+    BOOST_CHECK(newevent->id() == eventid);
+    art::Event e(*newevent, ModuleDescription());
+    art::Handle<std::vector<Fragment>> h;
+    e.getByLabel("daq", h);
+    BOOST_CHECK(h.isValid());
+    BOOST_CHECK(h->size() == 1);
+    BOOST_CHECK(std::equal(fakeData.begin(),
+                           fakeData.end(),
+                           h->front().dataBegin()));
+    delete(newrun);
+    delete(newsubrun);
+    delete(newevent);
+  }
+}
+
 BOOST_AUTO_TEST_CASE(nonempty_event) {
-  // Prepare our 'previous run/subrun/event'..
   EventID eventid(2112, 1, 3);
   Timestamp now;
-  std::unique_ptr<RunPrincipal>    run(principal_maker().makeRunPrincipal(eventid.run(), now));
-  std::unique_ptr<SubRunPrincipal> subrun(principal_maker().makeSubRunPrincipal(eventid.run(), eventid.subRun(), now));
+  basic_test(reader(),
+             std::unique_ptr<RunPrincipal>(principal_maker().makeRunPrincipal(eventid.run(), now)),
+             std::unique_ptr<SubRunPrincipal>(principal_maker().makeSubRunPrincipal(eventid.run(), eventid.subRun(), now)),
+             eventid);
+}
 
-  std::shared_ptr<RawEvent> event(new RawEvent(eventid.run(), eventid.subRun(), eventid.event()));
-  std::vector<Fragment::value_type> fakeData { 1, 2, 3, 4 };
-  event->insertFragment(std::move(std::unique_ptr<Fragment>
-                                  (new Fragment(std::move(Fragment::dataFrag(eventid.event(),
-                                                                             0,
-                                                                             fakeData.begin(),
-                                                                             fakeData.end()))))));
-  artdaq::getGlobalQueue().enqNowait(event);
-  EventPrincipal*  newevent = nullptr;
-  SubRunPrincipal* newsubrun = nullptr;
-  RunPrincipal*    newrun = nullptr;
-  bool rc = reader().readNext(run.get(), subrun.get(), newrun, newsubrun, newevent);
-  BOOST_REQUIRE(rc);
-  BOOST_CHECK(newrun == nullptr);
-  BOOST_CHECK(newsubrun == nullptr);
-  BOOST_CHECK(newevent);
-  BOOST_CHECK(newevent->id() == eventid);
-  art::Event e(*newevent, ModuleDescription());
-  art::Handle<std::vector<Fragment>> h;
-  e.getByLabel("daq", h);
-  BOOST_CHECK(h.isValid());
-  BOOST_CHECK(h->size() == 1);
-  BOOST_CHECK(std::equal(fakeData.begin(),
-                         fakeData.end(),
-                         h->front().dataBegin()));
+BOOST_AUTO_TEST_CASE(first_event) {
+  EventID eventid(2112, 1, 3);
+  Timestamp now;
+  basic_test(reader(),
+             nullptr,
+             nullptr,
+             eventid);
+}
+
+BOOST_AUTO_TEST_CASE(new_subrun) {
+  EventID eventid(2112, 1, 3);
+  Timestamp now;
+  basic_test(reader(),
+             std::unique_ptr<RunPrincipal>(principal_maker().makeRunPrincipal(eventid.run(), now)),
+             std::unique_ptr<SubRunPrincipal>(principal_maker().makeSubRunPrincipal(eventid.run(), 0, now)),
+             eventid);
+}
+
+BOOST_AUTO_TEST_CASE(new_run) {
+  EventID eventid(2112, 1, 3);
+  Timestamp now;
+  basic_test(reader(),
+             std::unique_ptr<RunPrincipal>(principal_maker().makeRunPrincipal(eventid.run() - 1, now)),
+             std::unique_ptr<SubRunPrincipal>(principal_maker().makeSubRunPrincipal(eventid.run() - 1,
+                                                                                    eventid.subRun(),
+                                                                                    now)),
+             eventid);
 }
 
 BOOST_AUTO_TEST_CASE(end_of_data) {
