@@ -3,11 +3,13 @@
 #include <cstdint>
 #include <cstring>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <string>
 #include <vector>
 
 #include "artdaq/DAQdata/DS50Board.hh"
+#include "artdaq/DAQrate/Debug.hh"
 #include "cetlib/exception.h"
 #include "fhiclcpp/ParameterSet.h"
 
@@ -27,6 +29,7 @@ artdaq::DS50FragmentReader::~DS50FragmentReader()
 bool
 artdaq::DS50FragmentReader::getNext_(FragmentPtrs & frags)
 {
+  FragmentPtrs::size_type incoming_size = frags.size();
   if (next_point_.first == fileNames_.end()) {
     return false; // Nothing to do..
   }
@@ -125,5 +128,12 @@ artdaq::DS50FragmentReader::getNext_(FragmentPtrs & frags)
   if (in_data.is_open()) {
     next_point_.second = in_data.tellg();
   }
+  Debug << "Read successfully from file "
+        << frags.size() - incoming_size
+        << " fragments in "
+        << std::fixed
+        << std::setprecision(1)
+        << read_bytes / 1024.0 / 1024.0 << " MiB."
+        << flusher;
   return true;
 }
