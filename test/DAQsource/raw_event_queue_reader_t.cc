@@ -23,7 +23,7 @@
 
 #include "art/Utilities/Exception.h"
 
-#define BOOST_TEST_MODULE(raw_event_queue_reader_t)
+#define BOOST_TEST_MODULE ( raw_event_queue_reader_t )
 #include "boost/test/auto_unit_test.hpp"
 
 #include <iostream>
@@ -97,13 +97,9 @@ MPRGlobalTestFixture::MPRGlobalTestFixture()
 
 void
 MPRGlobalTestFixture::finalize() {
-  static bool once(true);
-  if (once) {
-    productRegistry_.setFrozen();
-    art::BranchIDListHelper::updateRegistries(productRegistry_);
-    art::ProductMetaData::create_instance(productRegistry_);
-    once = false;
-  }
+  productRegistry_.setFrozen();
+  art::BranchIDListHelper::updateRegistries(productRegistry_);
+  art::ProductMetaData::create_instance(productRegistry_);
 }
 
 art::ProcessConfiguration*
@@ -155,38 +151,51 @@ fake_single_process_branch(std::string const& tag,
 }
 
 struct REQRTestFixture {
-  ProductRegistryHelper helper;
-  PrincipalMaker        principal_maker;
-  RawEventQueueReader reader;
-
-  REQRTestFixture() :
-    helper(),
-    principal_maker(*gf().fake_single_module_process("daq",
-                                                     "TEST",
-                                                     ParameterSet())),
-    reader(ParameterSet(),
-           helper,
-           principal_maker)
-  {
-    ModuleDescription md;
-    // These _xERROR_ strings should never appear in branch names; they
-    // are here as tracers to help identify any failures in coding.
-    md.moduleName_ = "_NAMEERROR_";
-    md.moduleLabel_ = "_LABELERROR_";
-    md.processConfiguration_.processName_ = gf().processConfigurations_["daq"]->processName_;
-    md.parameterSetID_ = ParameterSet().id(); // Dummy
-    helper.registerProducts(gf().productRegistry_, md);
-    gf().finalize();
+  REQRTestFixture() {
+    static bool once(true);
+    if (once) {
+      (void) reader(); // Force initialization.
+      ModuleDescription md;
+      // These _xERROR_ strings should never appear in branch names; they
+      // are here as tracers to help identify any failures in coding.
+      md.moduleName_ = "_NAMEERROR_";
+      md.moduleLabel_ = "_LABELERROR_";
+      md.processConfiguration_.processName_ = gf().processConfigurations_["daq"]->processName_;
+      md.parameterSetID_ = ParameterSet().id(); // Dummy
+      helper().registerProducts(gf().productRegistry_, md);
+      gf().finalize();
+      once = false;
+    }
   }
 
   MPRGlobalTestFixture& gf() {
     static MPRGlobalTestFixture mpr;
     return mpr;
   }
+
+  ProductRegistryHelper & helper() {
+    static ProductRegistryHelper s_helper;
+    return s_helper;
+  }
+
+  PrincipalMaker & principal_maker() {
+    static PrincipalMaker
+      s_principal_maker(*gf().fake_single_module_process("daq",
+                                                         "TEST",
+                                                         ParameterSet()));
+    return s_principal_maker;
+  }
+
+  RawEventQueueReader & reader() {
+    static RawEventQueueReader
+      s_reader(ParameterSet(),
+               helper(),
+               principal_maker());
+    return s_reader;
+  }
 };
 
-BOOST_GLOBAL_FIXTURE(REQRTestFixture)
-BOOST_AUTO_TEST_SUITE(raw_event_queue_reader_t)
+BOOST_FIXTURE_TEST_SUITE(raw_event_queue_reader_t, REQRTestFixture)
 
 BOOST_AUTO_TEST_CASE(nonempty_event) {
   // Prepare our 'previous run/subrun/event'..
@@ -194,15 +203,15 @@ BOOST_AUTO_TEST_CASE(nonempty_event) {
   SubRunID subrunid(2112, 1);
   EventID eventid(2112, 1, 3);
   Timestamp now;
-  std::unique_ptr<RunPrincipal>    run(principal_maker.makeRunPrincipal(runid.run(), now));
-  std::unique_ptr<SubRunPrincipal> subrun(principal_maker.makeSubRunPrincipal(runid.run(), subrunid.subRun(), now));
-  
+  std::unique_ptr<RunPrincipal>    run(principal_maker().makeRunPrincipal(runid.run(), now));
+  std::unique_ptr<SubRunPrincipal> subrun(principal_maker().makeSubRunPrincipal(runid.run(), subrunid.subRun(), now));
+
   std::shared_ptr<RawEvent> event(new RawEvent(runid.run(), subrunid.subRun(), eventid.event()));
   artdaq::getGlobalQueue().enqNowait(event);
   EventPrincipal*  newevent = nullptr;
   SubRunPrincipal* newsubrun = nullptr;
   RunPrincipal*    newrun = nullptr;
-  bool rc = reader.readNext(run.get(), subrun.get(), newrun, newsubrun, newevent);
+  bool rc = reader().readNext(run.get(), subrun.get(), newrun, newsubrun, newevent);
   BOOST_REQUIRE(rc);
 }
 
@@ -212,16 +221,16 @@ BOOST_AUTO_TEST_CASE(end_of_data) {
   // interface demanded by ReaderSource<T>...
   string const fakeFileName("no such file exists");
   FileBlock* pFile = nullptr;
-  reader.readFile(fakeFileName, pFile);
+  reader().readFile(fakeFileName, pFile);
   BOOST_CHECK(pFile);
   BOOST_CHECK(pFile->fileFormatVersion() == FileFormatVersion(1, "RawEvent2011"));
-  assert(pFile->tree() == nullptr);
-  assert(pFile->metaTree() == nullptr);
-  assert(pFile->subRunTree() == nullptr);
-  assert(pFile->subRunMetaTree() == nullptr);
-  assert(pFile->runTree() == nullptr);
-  assert(pFile->runMetaTree() == nullptr);
-  assert(!pFile->fastClonable());
+  BOOST_CHECK(pFile->tree() == nullptr);
+  BOOST_CHECK(pFile->metaTree() == nullptr);
+  BOOST_CHECK(pFile->subRunTree() == nullptr);
+  BOOST_CHECK(pFile->subRunMetaTree() == nullptr);
+  BOOST_CHECK(pFile->runTree() == nullptr);
+  BOOST_CHECK(pFile->runMetaTree() == nullptr);
+  BOOST_CHECK(!pFile->fastClonable());
 
   // Test the end-of-data handling. Reading an end-of-data should result in readNext() returning false,
   // and should return null pointers for new-run, -subrun and -event.
@@ -231,9 +240,9 @@ BOOST_AUTO_TEST_CASE(end_of_data) {
   SubRunID subrunid(2112, 1);
   EventID eventid(2112, 1, 3);
   Timestamp now;
-  std::unique_ptr<RunPrincipal>    run(principal_maker.makeRunPrincipal(runid.run(), now));
-  std::unique_ptr<SubRunPrincipal> subrun(principal_maker.makeSubRunPrincipal(runid.run(), subrunid.subRun(), now));
-  std::unique_ptr<EventPrincipal>  event(principal_maker.makeEventPrincipal(runid.run(),
+  std::unique_ptr<RunPrincipal>    run(principal_maker().makeRunPrincipal(runid.run(), now));
+  std::unique_ptr<SubRunPrincipal> subrun(principal_maker().makeSubRunPrincipal(runid.run(), subrunid.subRun(), now));
+  std::unique_ptr<EventPrincipal>  event(principal_maker().makeEventPrincipal(runid.run(),
                                                                             subrunid.subRun(),
                                                                             eventid.event(),
                                                                             now));
@@ -243,11 +252,11 @@ BOOST_AUTO_TEST_CASE(end_of_data) {
   EventPrincipal*  newevent = nullptr;
   SubRunPrincipal* newsubrun = nullptr;
   RunPrincipal*    newrun = nullptr;
-  bool rc = reader.readNext(run.get(), subrun.get(), newrun, newsubrun, newevent);
+  bool rc = reader().readNext(run.get(), subrun.get(), newrun, newsubrun, newevent);
   BOOST_CHECK(!rc);
-  assert(newrun == nullptr);
-  assert(newsubrun == nullptr);
-  assert(newevent == nullptr);
+  BOOST_CHECK(newrun == nullptr);
+  BOOST_CHECK(newsubrun == nullptr);
+  BOOST_CHECK(newevent == nullptr);
 }
 
-
+BOOST_AUTO_TEST_SUITE_END()
