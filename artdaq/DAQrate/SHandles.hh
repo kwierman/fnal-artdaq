@@ -3,6 +3,7 @@
 
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/Fragments.hh"
+#include "artdaq/DAQrate/MPITag.hh"
 
 #include <vector>
 
@@ -32,13 +33,17 @@ public:
            size_t dest_count,
            size_t dest_start);
 
-  void sendFragment(Fragment &&);
+  size_t sendFragment(Fragment &&); // Return dest.
+  void sendEODFrag(int dest, size_t nFragments);
+
   void waitAll();
 
 private:
 
-  int dest(Fragment::sequence_id_t) const;
+  int calcDest(Fragment::sequence_id_t) const;
   int findAvailable();
+  void sendFragTo(Fragment && frag,
+                  int dest);
 
   size_t const buffer_count_;
   uint64_t const max_initial_send_words_;
