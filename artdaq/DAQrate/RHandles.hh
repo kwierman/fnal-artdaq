@@ -33,7 +33,7 @@ public:
 
   // will take the data on the send (not copy),
   // will replace the data on recv (not copy)
-  void recvFragment(Fragment &);
+  size_t recvFragment(Fragment &); // Return rank of source of fragment.
   void waitAll();
 
 private:
@@ -45,7 +45,6 @@ private:
   int src_start_; // start of the source ranks
 
   Requests reqs_;
-  MPI_Status status_;
   Flags flags_;
   int last_source_posted_;
 
