@@ -21,7 +21,6 @@ artdaq::detail::RawEventQueueReader::RawEventQueueReader(fhicl::ParameterSet con
   help.reconstitutes<Fragments, art::InEvent>(pretend_module_name);
 }
 
-inline
 void artdaq::detail::RawEventQueueReader::closeCurrentFile()
 {
 }
