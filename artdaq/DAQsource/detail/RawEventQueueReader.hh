@@ -20,7 +20,7 @@ namespace artdaq {
       RawEventQueueReader(RawEventQueueReader const&) = delete;
       RawEventQueueReader& operator=(RawEventQueueReader const&) = delete;
 
-      art::PrincipalMaker const & pmaker;
+      art::PrincipalMaker const   pmaker;
       RawEventQueue &             incoming_events;
       daqrate::seconds            waiting_time;
       bool                        resume_after_timeout;
