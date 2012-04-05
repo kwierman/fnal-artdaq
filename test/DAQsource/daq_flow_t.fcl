@@ -8,7 +8,7 @@ process_name: dftest
 source:
 {
   module_type: RawInput
-  fileNames: []
+  fileNames: [ "" ]
   waiting_time: 3 # waiting time, in seconds, for queue timeout
   resume_after_timeout: false
 }
@@ -42,12 +42,11 @@ services:
               'FileInPathError','FileOpenError','FileReadError','FatalRootError',
               'MismatchedInputFiles','ProductDoesNotSupportViews',
               'ProductDoesNotSupportPtr','NotFound']
-    wantSummary: true
+#    wantSummary: true
     wantTracer: true
     handleEmptyRuns: true
     handleEmptySubRuns: true
     enableSigInt: true
   }
   Timing: { }
-  MessageLogger: {}
 }
