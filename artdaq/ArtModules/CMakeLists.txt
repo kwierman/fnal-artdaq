@@ -1,7 +1,7 @@
 project(artdaq_bladder)
 
 # simple_plugin(RawInput "source" artdaq_DAQrate)
-simple_plugin(DS50Compression "module" artdaq_DAQdata )
+simple_plugin(DS50Compression "module" artdaq_Compression artdaq_DAQdata)
 
 # add_executable(driver.cc )
 
