@@ -43,7 +43,6 @@ using art::FileBlock;
 using art::FileFormatVersion;
 using art::ModuleDescription;
 using art::PrincipalMaker;
-using art::PrincipalMaker;
 using art::ProcessConfiguration;
 using art::ProductRegistryHelper;
 using art::RunID;
