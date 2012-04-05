@@ -22,6 +22,7 @@
 namespace  bpo = boost::program_options;
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <memory>
 #include <utility>
@@ -307,7 +308,7 @@ void Program::sink()
                               conf_.art_argc_,
                               conf_.art_argv_,
                               reader);
-    artdaq::RHandles h(sink_buffers_ * conf_.sources_ / conf_.sinks_,
+    artdaq::RHandles h(sink_buffers_ * std::ceil(1.0 * conf_.sources_ / conf_.sinks_),
                        conf_.max_initial_send_words_,
                        conf_.sources_,
                        conf_.source_start_);
