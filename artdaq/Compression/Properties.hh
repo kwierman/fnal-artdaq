@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 namespace ds50 {
-  Constexpr uint64_t reg_size_bits = (sizeof(reg_type)*sizeof(char));
+  Constexpr uint64_t reg_size_bits = (sizeof(reg_type) * 8);
   Constexpr uint64_t chunk_size_bytes = 1 << 16;
   Constexpr uint64_t chunk_size_counts = chunk_size_bytes / sizeof(adc_type);
   Constexpr uint64_t chunk_size_regs = chunk_size_bytes / sizeof(reg_type);
