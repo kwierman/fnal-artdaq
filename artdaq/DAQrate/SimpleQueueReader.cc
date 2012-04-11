@@ -6,7 +6,7 @@
 
 namespace artdaq {
 
-  int simpleQueueReaderApp(int, char**)
+  int simpleQueueReaderApp(int, char **)
   {
     try {
       SimpleQueueReader reader;
@@ -32,7 +32,7 @@ namespace artdaq {
   void SimpleQueueReader::run()
   {
     std::size_t eventsSeen = 0;
-    char* doPrint = getenv("VERBOSE_QUEUE_READING");
+    char * doPrint = getenv("VERBOSE_QUEUE_READING");
     while (true) {
       RawEvent_ptr rawEventPtr;
       if (queue_.deqNowait(rawEventPtr)) {
@@ -40,7 +40,7 @@ namespace artdaq {
         if (!rawEventPtr) { break; }
         ++eventsSeen;
         // Otherwise, do our work ...
-        if (doPrint) std::cout << *rawEventPtr << std::endl;
+        if (doPrint) { std::cout << *rawEventPtr << std::endl; }
       }
       else {
         usleep(250000);

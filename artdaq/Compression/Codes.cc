@@ -16,7 +16,7 @@ void readTrainingSet(istream & ifs, ADCCountVec & out, size_t max_samples)
   const size_t sz = sizeof(adc_type);
   while (forever || max_samples > 0) {
     adc_type data;
-    ifs.read((char*)&data, sz);
+    ifs.read((char *)&data, sz);
     if (ifs.eof()) { break; }
     out.push_back(data);
     --max_samples;
@@ -81,7 +81,7 @@ Code pod(code_type n)
 
 // ------------------------------
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
   if (argc < 2) {
     cerr << "Usage: "

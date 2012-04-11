@@ -14,7 +14,7 @@ std::ostream & getStream(int rank)
   return of;
 }
 
-void writeData(int rank, const char* d, int size)
+void writeData(int rank, const char * d, int size)
 {
   ostream & ost = getStream(rank);
   ost.write(d, size);

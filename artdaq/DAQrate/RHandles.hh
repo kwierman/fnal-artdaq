@@ -53,7 +53,8 @@ private:
 
 inline
 int
-artdaq::RHandles::nextSource_() {
+artdaq::RHandles::nextSource_()
+{
   return ++last_source_posted_ % src_count_ + src_start_;
 }
 

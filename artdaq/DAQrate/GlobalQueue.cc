@@ -7,7 +7,8 @@ namespace artdaq {
   // between threads for the creation of 'theQueue'.
   // in C++11, this is thread-safe. See C++11 6.7p4.
 
-  RawEventQueue& getGlobalQueue() {
+  RawEventQueue & getGlobalQueue()
+  {
     static RawEventQueue theQueue;
     return theQueue;
   }

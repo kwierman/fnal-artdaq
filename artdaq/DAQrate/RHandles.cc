@@ -89,16 +89,16 @@ recvFragment(Fragment & output)
         << flusher;
   char err_buffer[MPI_MAX_ERROR_STRING];
   int resultlen;
-  switch(wait_result) {
-  case MPI_SUCCESS:
-    break;
-  case MPI_ERR_IN_STATUS:
-    MPI_Error_string(status.MPI_ERROR, err_buffer, &resultlen);
-    std::cerr << "Waitany ERROR: " << err_buffer << "\n";
-    break;
-  default:
-    MPI_Error_string(wait_result, err_buffer, &resultlen);
-    std::cerr << "Waitany ERROR: " << err_buffer << "\n";
+  switch (wait_result) {
+    case MPI_SUCCESS:
+      break;
+    case MPI_ERR_IN_STATUS:
+      MPI_Error_string(status.MPI_ERROR, err_buffer, &resultlen);
+      std::cerr << "Waitany ERROR: " << err_buffer << "\n";
+      break;
+    default:
+      MPI_Error_string(wait_result, err_buffer, &resultlen);
+      std::cerr << "Waitany ERROR: " << err_buffer << "\n";
   }
   // The Fragment at index 'which' is now available.
   // Resize (down) to size to remove trailing garbage.
@@ -138,12 +138,12 @@ void artdaq::RHandles::waitAll()
     }
     else {
       switch (result) {
-      case MPI_ERR_REQUEST:
-        throw "MPI_Cancel returned MPI_ERR_REQUEST";
-      case MPI_ERR_ARG:
-        throw "MPI_Cancel returned MPI_ERR_ARG";
-      default:
-        throw "MPI_Cancel returned unknown error code.";
+        case MPI_ERR_REQUEST:
+          throw "MPI_Cancel returned MPI_ERR_REQUEST";
+        case MPI_ERR_ARG:
+          throw "MPI_Cancel returned MPI_ERR_ARG";
+        default:
+          throw "MPI_Cancel returned unknown error code.";
       }
     }
   }

@@ -9,21 +9,19 @@ namespace ds50 {
   constexpr auto neg_one = ~(0ul);
 }
 
-class ds50::Decoder
-{
+class ds50::Decoder {
 public:
-  Decoder(SymTable const&);
+  Decoder(SymTable const &);
 
-  reg_type operator()(reg_type bit_count, DataVec const& in, ADCCountVec& out);
+  reg_type operator()(reg_type bit_count, DataVec const & in, ADCCountVec & out);
 
-  void printTable(std::ostream& ost) const;
+  void printTable(std::ostream & ost) const;
 
 private:
 
   void buildTable();
 
-  size_t addNode()
-  {
+  size_t addNode() {
     table_.push_back(neg_one);
     table_.push_back(neg_one);
     size_t rc = last_;

@@ -23,7 +23,8 @@ artdaqtest::FragmentGeneratorTest::FragmentGeneratorTest()
 }
 
 bool
-artdaqtest::FragmentGeneratorTest::getNext_(artdaq::FragmentPtrs &frags) {
+artdaqtest::FragmentGeneratorTest::getNext_(artdaq::FragmentPtrs & frags)
+{
   frags.emplace_back(new artdaq::Fragment);
   return true;
 }

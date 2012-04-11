@@ -18,7 +18,7 @@ struct SymCode {
   data_type bit_count_;
 
   void printHex(std::ostream & ost) const {
-    ost << (void*)sym_  << " " << (void*)code_ << " " << bit_count_;
+    ost << (void *)sym_  << " " << (void *)code_ << " " << bit_count_;
   }
 
   void print(std::ostream & ost) const {

@@ -23,7 +23,7 @@
 #define PERF_JOB_END 10
 #define PERF_ID_END 11
 
-const char* PerfGetName(int id);
+const char * PerfGetName(int id);
 
 struct Header {
   Header(): id_(), len_() { }
@@ -38,7 +38,7 @@ struct HeaderMeas {
   HeaderMeas(): head_(T::ID, sizeof(T)), call_(call_count++) { }
   ~HeaderMeas() { }
 
-  const char* id() const { return PerfGetName(head_.id_); }
+  const char * id() const { return PerfGetName(head_.id_); }
   int len() const { return head_.len_; }
 
   Header head_;

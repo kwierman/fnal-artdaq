@@ -54,8 +54,8 @@ sendFragment(Fragment && frag)
   // header information).
   if (frag.type() == Fragment::type_t::END_OF_DATA) {
     throw cet::exception("LogicError")
-      << "EOD fragments should not be sent on as received: "
-      << "use sendEODFrag() instead.";
+        << "EOD fragments should not be sent on as received: "
+        << "use sendEODFrag() instead.";
   }
   int dest = calcDest(frag.sequenceID());
   sendFragTo(std::move(frag), dest);
@@ -81,9 +81,9 @@ sendFragTo(Fragment && frag, int dest)
 {
   if (frag.size() > max_initial_send_words_) {
     throw cet::exception("Unimplemented")
-      << "Current unable to deal with overlarge fragments (size > "
-      << max_initial_send_words_
-      << " words).";
+        << "Current unable to deal with overlarge fragments (size > "
+        << max_initial_send_words_
+        << " words).";
   }
   int buffer_idx = findAvailable();
   Fragment & curfrag = payload_[buffer_idx];

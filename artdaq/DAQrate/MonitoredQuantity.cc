@@ -10,8 +10,8 @@ MonitoredQuantity::MonitoredQuantity
   DURATION_T expectedCalculationInterval,
   DURATION_T timeWindowForRecentResults
 ):
-_enabled(true),
-_expectedCalculationInterval(expectedCalculationInterval)
+  _enabled(true),
+  _expectedCalculationInterval(expectedCalculationInterval)
 {
   setNewTimeWindowForRecentResults(timeWindowForRecentResults);
 }
@@ -19,20 +19,15 @@ _expectedCalculationInterval(expectedCalculationInterval)
 void MonitoredQuantity::addSample(const double value)
 {
   if (! _enabled) {return;}
-
   boost::mutex::scoped_lock sl(_accumulationMutex);
-
   if (_lastCalculationTime <= 0.0) {
     _lastCalculationTime = getCurrentTime();
   }
-
   ++_workingSampleCount;
   _workingValueSum += value;
   _workingValueSumOfSquares += (value * value);
-
-  if (value < _workingValueMin) _workingValueMin = value;
-  if (value > _workingValueMax) _workingValueMax = value;
-
+  if (value < _workingValueMin) { _workingValueMin = value; }
+  if (value > _workingValueMax) { _workingValueMax = value; }
   _workingLastSampleValue = value;
 }
 
@@ -58,7 +53,6 @@ bool MonitoredQuantity::calculateStatistics(TIME_POINT_T currentTime)
   if (currentTime - _lastCalculationTime < _expectedCalculationInterval) {
     return false;
   }
-
   // create local copies of the working values to minimize the
   // time that we could block a thread trying to add a sample.
   // Also, reset the working values.
@@ -71,7 +65,6 @@ bool MonitoredQuantity::calculateStatistics(TIME_POINT_T currentTime)
   double latestLastLatchedSampleValue;
   {
     boost::mutex::scoped_lock sl(_accumulationMutex);
-
     latestSampleCount = _workingSampleCount;
     latestValueSum = _workingValueSum;
     latestValueSumOfSquares = _workingValueSumOfSquares;
@@ -79,7 +72,6 @@ bool MonitoredQuantity::calculateStatistics(TIME_POINT_T currentTime)
     latestValueMax = _workingValueMax;
     latestDuration = currentTime - _lastCalculationTime;
     latestLastLatchedSampleValue = _workingLastSampleValue;
-
     _lastCalculationTime = currentTime;
     _workingSampleCount = 0;
     _workingValueSum = 0.0;
@@ -87,13 +79,11 @@ bool MonitoredQuantity::calculateStatistics(TIME_POINT_T currentTime)
     _workingValueMin =  INFINITY;
     _workingValueMax = -INFINITY;
   }
-
   // lock out any interaction with the results while we update them
   {
     boost::mutex::scoped_lock sl(_resultsMutex);
     _lastLatchedSampleValue = latestLastLatchedSampleValue;
     _lastLatchedCalculationTime = _lastCalculationTime;
-
     // we simply add the latest results to the full set
     _fullSampleCount += latestSampleCount;
     _fullValueSum += latestValueSum;
@@ -101,7 +91,6 @@ bool MonitoredQuantity::calculateStatistics(TIME_POINT_T currentTime)
     if (latestValueMin < _fullValueMin) {_fullValueMin = latestValueMin;}
     if (latestValueMax > _fullValueMax) {_fullValueMax = latestValueMax;}
     _fullDuration += latestDuration;
-
     // for the recent results, we need to replace the contents of
     // the working bin and re-calculate the recent values
     _binSampleCount[_workingBinId] = latestSampleCount;
@@ -111,21 +100,18 @@ bool MonitoredQuantity::calculateStatistics(TIME_POINT_T currentTime)
     _binValueMax[_workingBinId] = latestValueMax;
     _binDuration[_workingBinId] = latestDuration;
     _binEndTime[_workingBinId] = _lastCalculationTime;
-
     if (latestDuration > 0.0) {
       _lastLatchedValueRate = latestValueSum / latestDuration;
     }
     else {
       _lastLatchedValueRate = 0.0;
     }
-
     _recentSampleCount = 0;
     _recentValueSum = 0.0;
     _recentValueSumOfSquares = 0.0;
     _recentValueMin =  INFINITY;
     _recentValueMax = -INFINITY;
     _recentDuration = 0.0;
-
     for (unsigned int idx = 0; idx < _binCount; ++idx) {
       _recentSampleCount += _binSampleCount[idx];
       _recentValueSum += _binValueSum[idx];
@@ -138,12 +124,10 @@ bool MonitoredQuantity::calculateStatistics(TIME_POINT_T currentTime)
       }
       _recentDuration += _binDuration[idx];
     }
-
     // update the working bin ID here so that we are ready for
     // the next calculation request
     ++_workingBinId;
     if (_workingBinId >= _binCount) {_workingBinId = 0;}
-
     // calculate the derived full values
     if (_fullDuration > 0.0) {
       _fullSampleRate = static_cast<double>(_fullSampleCount) / _fullDuration;
@@ -153,14 +137,12 @@ bool MonitoredQuantity::calculateStatistics(TIME_POINT_T currentTime)
       _fullSampleRate = 0.0;
       _fullValueRate = 0.0;
     }
-
     if (_fullSampleCount > 0) {
       _fullValueAverage = _fullValueSum / static_cast<double>(_fullSampleCount);
-
       double squareAvg = _fullValueSumOfSquares / static_cast<double>(_fullSampleCount);
       double avg = _fullValueSum / static_cast<double>(_fullSampleCount);
-      double sigSquared = squareAvg - avg*avg;
-      if(sigSquared > 0.0) {
+      double sigSquared = squareAvg - avg * avg;
+      if (sigSquared > 0.0) {
         _fullValueRMS = sqrt(sigSquared);
       }
       else {
@@ -171,7 +153,6 @@ bool MonitoredQuantity::calculateStatistics(TIME_POINT_T currentTime)
       _fullValueAverage = 0.0;
       _fullValueRMS = 0.0;
     }
-
     // calculate the derived recent values
     if (_recentDuration > 0.0) {
       _recentSampleRate = static_cast<double>(_recentSampleCount) / _recentDuration;
@@ -181,15 +162,13 @@ bool MonitoredQuantity::calculateStatistics(TIME_POINT_T currentTime)
       _recentSampleRate = 0.0;
       _recentValueRate = 0.0;
     }
-
     if (_recentSampleCount > 0) {
       _recentValueAverage = _recentValueSum / static_cast<double>(_recentSampleCount);
-
       double squareAvg = _recentValueSumOfSquares /
-        static_cast<double>(_recentSampleCount);
+                         static_cast<double>(_recentSampleCount);
       double avg = _recentValueSum / static_cast<double>(_recentSampleCount);
-      double sigSquared = squareAvg - avg*avg;
-      if(sigSquared > 0.0) {
+      double sigSquared = squareAvg - avg * avg;
+      if (sigSquared > 0.0) {
         _recentValueRMS = sqrt(sigSquared);
       }
       else {
@@ -201,7 +180,6 @@ bool MonitoredQuantity::calculateStatistics(TIME_POINT_T currentTime)
       _recentValueRMS = 0.0;
     }
   }
-
   return true;
 }
 
@@ -228,7 +206,6 @@ void MonitoredQuantity::_reset_results()
     _binDuration[idx] = 0.0;
     _binEndTime[idx] = 0.0;
   }
-
   _fullSampleCount = 0;
   _fullSampleRate = 0.0;
   _fullValueSum = 0.0;
@@ -239,7 +216,6 @@ void MonitoredQuantity::_reset_results()
   _fullValueMax = -INFINITY;
   _fullValueRate = 0.0;
   _fullDuration = 0.0;
-
   _recentSampleCount = 0;
   _recentSampleRate = 0.0;
   _recentValueSum = 0.0;
@@ -260,7 +236,6 @@ void MonitoredQuantity::reset()
     boost::mutex::scoped_lock sl(_accumulationMutex);
     _reset_accumulators();
   }
-
   {
     boost::mutex::scoped_lock sl(_resultsMutex);
     _reset_results();
@@ -288,20 +263,17 @@ void MonitoredQuantity::setNewTimeWindowForRecentResults(DURATION_T interval)
   // bins used for the recent results
   {
     boost::mutex::scoped_lock sl(_resultsMutex);
-
     _intervalForRecentStats = interval;
-
     // determine how many bins we should use in our sliding window
     // by dividing the input time window by the expected calculation
     // interval and rounding to the nearest integer.
-    // In case that the calculation interval is larger then the 
+    // In case that the calculation interval is larger then the
     // interval for recent stats, keep the last one.
     _binCount = std::max(1U,
-      static_cast<unsigned int>(
-        (_intervalForRecentStats / _expectedCalculationInterval) + 0.5
-      )      
-    );
-
+                         static_cast<unsigned int>(
+                           (_intervalForRecentStats / _expectedCalculationInterval) + 0.5
+                         )
+                        );
     // create the vectors for the binned quantities
     _binSampleCount.reserve(_binCount);
     _binValueSum.reserve(_binCount);
@@ -310,15 +282,12 @@ void MonitoredQuantity::setNewTimeWindowForRecentResults(DURATION_T interval)
     _binValueMax.reserve(_binCount);
     _binDuration.reserve(_binCount);
     _binEndTime.reserve(_binCount);
-
     _reset_results();
   }
-
   {
     boost::mutex::scoped_lock sl(_accumulationMutex);
     _reset_accumulators();
   }
-
   // call the reset method to populate the correct initial values
   // for the internal sample data
   //reset();
@@ -331,7 +300,6 @@ waitUntilAccumulatorsHaveBeenFlushed(DURATION_T timeout) const
     boost::mutex::scoped_lock sl(_accumulationMutex);
     if (_workingSampleCount == 0) {return true;}
   }
-
   long sleepTime = static_cast<long>(timeout * 100000.0);
   for (int idx = 0; idx < 10; ++idx) {
     usleep(sleepTime);
@@ -340,15 +308,13 @@ waitUntilAccumulatorsHaveBeenFlushed(DURATION_T timeout) const
       if (_workingSampleCount == 0) {return true;}
     }
   }
-
   return false;
 }
 
 void
-MonitoredQuantity::getStats(Stats& s) const
+MonitoredQuantity::getStats(Stats & s) const
 {
   boost::mutex::scoped_lock results(_resultsMutex);
-
   s.fullSampleCount = _fullSampleCount;
   s.fullSampleRate = _fullSampleRate;
   s.fullValueSum = _fullValueSum;
@@ -359,7 +325,6 @@ MonitoredQuantity::getStats(Stats& s) const
   s.fullValueMax = _fullValueMax;
   s.fullValueRate = _fullValueRate;
   s.fullDuration = _fullDuration;
-
   s.recentSampleCount = _recentSampleCount;
   s.recentSampleRate = _recentSampleRate;
   s.recentValueSum = _recentValueSum;
@@ -370,7 +335,6 @@ MonitoredQuantity::getStats(Stats& s) const
   s.recentValueMax = _recentValueMax;
   s.recentValueRate = _recentValueRate;
   s.recentDuration = _recentDuration;
-
   s.recentBinnedSampleCounts.resize(_binCount);
   s.recentBinnedValueSums.resize(_binCount);
   s.recentBinnedDurations.resize(_binCount);
@@ -384,7 +348,6 @@ MonitoredQuantity::getStats(Stats& s) const
     s.recentBinnedEndTimes[idx] = _binEndTime[sourceBinId];
     ++sourceBinId;
   }
-
   s.lastSampleValue = _lastLatchedSampleValue;
   s.lastValueRate = _lastLatchedValueRate;
   s.lastCalculationTime = _lastLatchedCalculationTime;
@@ -397,7 +360,7 @@ MonitoredQuantity::TIME_POINT_T MonitoredQuantity::getCurrentTime()
   timeval now;
   if (gettimeofday(&now, 0) == 0) {
     result = static_cast<TIME_POINT_T>(now.tv_sec);
-    result += static_cast<TIME_POINT_T>(now.tv_usec)/(1000*1000);
+    result += static_cast<TIME_POINT_T>(now.tv_usec) / (1000 * 1000);
   }
   return result;
 }

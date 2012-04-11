@@ -18,33 +18,33 @@
 
 using namespace std;
 
-static const char* usage = "DetectorsPerNode SinksPerNode Run";
+static const char * usage = "DetectorsPerNode SinksPerNode Run";
 
-static void throwUsage(char* argv0, const string & msg)
+static void throwUsage(char * argv0, const string & msg)
 {
   cerr << argv0 << " " << usage << "\n";
   throw msg;
 }
 
-static double getArgDetectors(int argc, char* argv[])
+static double getArgDetectors(int argc, char * argv[])
 {
   if (argc < 2) { throwUsage(argv[0], "no detectors_per_node argument"); }
   return atof(argv[1]);
 }
 
-static double getArgSinks(int argc, char* argv[])
+static double getArgSinks(int argc, char * argv[])
 {
   if (argc < 3) { throwUsage(argv[0], "no sinks_per_node argument"); }
   return atof(argv[2]);
 }
 
-static int getArgQueueSize(int argc, char* argv[])
+static int getArgQueueSize(int argc, char * argv[])
 {
   if (argc < 4) { throwUsage(argv[0], "no event_queue_size argument"); }
   return atoi(argv[3]);
 }
 
-static int getArgRun(int argc, char* argv[])
+static int getArgRun(int argc, char * argv[])
 {
   if (argc < 5) { throwUsage(argv[0], "no run argument"); }
   return atoi(argv[4]);
@@ -62,7 +62,7 @@ static std::string getProcessorName()
 // remember rank starts at zero
 //run_time_(getArgRuntime(argc,argv)),
 
-Config::Config(int rank, int total_procs, int argc, char* argv[]):
+Config::Config(int rank, int total_procs, int argc, char * argv[]):
   rank_(rank),
   total_procs_(total_procs),
 
@@ -133,7 +133,7 @@ int Config::srcStart() const
 
 std::string Config::typeName() const
 {
-  static const char* names[] = { "Sink", "Source", "Detector" };
+  static const char * names[] = { "Sink", "Source", "Detector" };
   return names[type_];
 }
 
@@ -147,7 +147,7 @@ int Config::getSrcFriend() const
   return offset_ + srcStart();
 }
 
-int Config::getArtArgc(int argc, char* argv[]) const
+int Config::getArtArgc(int argc, char * argv[]) const
 {
   // Find the '--' in argv
   int pos = 0;
@@ -157,7 +157,7 @@ int Config::getArtArgc(int argc, char* argv[]) const
   return argc - pos;
 }
 
-char** Config::getArtArgv(int pos, char** argv) const
+char ** Config::getArtArgv(int pos, char ** argv) const
 {
   return argv + pos;
 }

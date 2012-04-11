@@ -52,7 +52,7 @@ artdaq::Fragment
 artdaq::Fragment::eodFrag(size_t nFragsToExpect)
 {
   Fragment result(static_cast<size_t>(ceil(sizeof(nFragsToExpect) /
-                                           static_cast<double>(sizeof(value_type)))));
+                                      static_cast<double>(sizeof(value_type)))));
   result.setType(Fragment::type_t::END_OF_DATA);
   *result.dataBegin() = nFragsToExpect;
   return result;

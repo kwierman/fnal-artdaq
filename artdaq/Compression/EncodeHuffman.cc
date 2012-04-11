@@ -18,7 +18,7 @@
 using namespace std;
 using namespace ds50;
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
   if (argc < 4) {
     cerr << "Usage: " << argv[0] << " huff_table data_file_in data_file_out\n";
@@ -35,8 +35,8 @@ int main(int argc, char* argv[])
   size_t word_count = 0;
   while ((word_count = br.next(in))) {
     reg_type bit_count = en(in, out);
-    data_ofs.write((const char*)&bit_count, sizeof(reg_type));
-    data_ofs.write((const char*)&out[0], bitCountToBytes(bit_count));
+    data_ofs.write((const char *)&bit_count, sizeof(reg_type));
+    data_ofs.write((const char *)&out[0], bitCountToBytes(bit_count));
   }
   return 0;
 }

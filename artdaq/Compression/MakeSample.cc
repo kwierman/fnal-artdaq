@@ -33,7 +33,7 @@ using namespace ds50;
  */
 
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
   if (argc < 4) {
     cerr << "usage: " << argv[0] << " noise_mean noise_sd total_samples out_file\n\n";
@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
   double mean = atof(argv[1]);
   double sd = atof(argv[2]);
   unsigned long total_samples = strtoul(argv[3], 0, 10);
-  const char* fname = argv[4];
+  const char * fname = argv[4];
   string fname2 = string(fname) + "2";
   //time_t seed;
   //time(&seed);
@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
   for_each(adc_samples.cbegin(),
            adc_samples.cend(),
            [&](ADCCountVec::value_type s)
-  { ost.write((char*)&s, sizeof(s)); ost2 << s << '\n';}
+  { ost.write((char *)&s, sizeof(s)); ost2 << s << '\n';}
           );
   return 0;
 }

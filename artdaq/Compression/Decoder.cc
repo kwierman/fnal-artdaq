@@ -62,7 +62,7 @@ reg_type Decoder::operator()(reg_type bit_count, DataVec const & in, ADCCountVec
   out.clear();
   ADCCountVec tmp;
   size_t curr = head_;
-  reg_type const* pos = &in[0];
+  reg_type const * pos = &in[0];
   reg_type val = *pos;
   for (reg_type i = 0; i < bit_count; ++i) {
     auto inc = (i % 64 + 1) / 64;

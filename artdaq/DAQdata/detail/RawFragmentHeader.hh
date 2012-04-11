@@ -23,7 +23,7 @@ struct artdaq::detail::RawFragmentHeader {
 #if USE_MODERN_FEATURES
   typedef uint16_t version_t;
   typedef uint64_t sequence_id_t;
-  enum type_t : uint8_t {
+enum type_t : uint8_t {
     DATA = 0,
     END_OF_DATA,
     INVALID = 0xFF

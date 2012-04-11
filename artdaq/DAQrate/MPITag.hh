@@ -9,7 +9,7 @@ namespace artdaq {
   // want enum class because we need to be able to convert to integral
   // types easily for use with MPI.
   namespace detail {
-    enum MPITag : uint8_t { FINAL = 1, INCOMPLETE = 2};
+  enum MPITag : uint8_t { FINAL = 1, INCOMPLETE = 2};
   }
 
   typedef detail::MPITag MPITag;

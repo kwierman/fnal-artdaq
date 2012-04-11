@@ -2,10 +2,9 @@
 #include <ostream>
 
 
-namespace artdaq
-{
-  
-  void RawEvent::print(std::ostream& os) const
+namespace artdaq {
+
+  void RawEvent::print(std::ostream & os) const
   {
     os << "Run " << runID()
        << ", Subrun " << subrunID()
@@ -13,8 +12,7 @@ namespace artdaq
        << ", FragCount " << numFragments()
        << ", WordCount " << wordCount()
        << '\n';
-
-    for (auto const& frag : fragments_) os << *frag << '\n';
+  for (auto const & frag : fragments_) { os << *frag << '\n'; }
   }
 
 }

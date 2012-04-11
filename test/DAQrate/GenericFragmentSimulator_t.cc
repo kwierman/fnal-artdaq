@@ -24,22 +24,19 @@ BOOST_AUTO_TEST_CASE(Simple)
   sim_config.put("run_number", RUN_ID);
   sim_config.put("want_random_fragment_size", false);
   sim_config.put("fragment_size", FRAGMENT_SIZE);
-
   artdaq::GenericFragmentSimulator sim(sim_config);
   artdaq::FragmentPtrs fragments;
   std::size_t num_events_seen = 0;
-
   while (fragments.clear(), sim.getNext(fragments)) {
     ++num_events_seen;
     BOOST_REQUIRE_EQUAL(fragments.size(), NUM_FRAGS_PER_EVENT);
-    for (auto&& fragptr : fragments) {
+  for (auto && fragptr : fragments) {
       BOOST_CHECK(fragptr.get());
       BOOST_CHECK_EQUAL(fragptr->sequenceID(), num_events_seen);
-      BOOST_CHECK_EQUAL(fragptr->size(), FRAGMENT_SIZE+artdaq::detail::RawFragmentHeader::num_words());
+      BOOST_CHECK_EQUAL(fragptr->size(), FRAGMENT_SIZE + artdaq::detail::RawFragmentHeader::num_words());
       BOOST_CHECK_EQUAL(fragptr->dataSize(), FRAGMENT_SIZE);
     }
   }
-
   BOOST_REQUIRE_EQUAL(num_events_seen, NUM_EVENTS);
 }
 

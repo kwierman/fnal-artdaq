@@ -10,8 +10,8 @@
 using std::string;
 
 artdaq::detail::RawEventQueueReader::RawEventQueueReader(fhicl::ParameterSet const & ps,
-                                                         art::ProductRegistryHelper & help,
-                                                         art::PrincipalMaker const & pm):
+    art::ProductRegistryHelper & help,
+    art::PrincipalMaker const & pm):
   pmaker(pm),
   incoming_events(getGlobalQueue()),
   waiting_time(ps.get<double>("waiting_time", std::numeric_limits<double>::infinity())),
@@ -26,24 +26,22 @@ void artdaq::detail::RawEventQueueReader::closeCurrentFile()
 }
 
 void artdaq::detail::RawEventQueueReader::readFile(string const &,
-                                                   art::FileBlock* & fb)
+    art::FileBlock *& fb)
 {
   fb = new art::FileBlock(art::FileFormatVersion(1, "RawEvent2011"), "nothing");
 }
 
-bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal* const & inR,
-                                                   art::SubRunPrincipal* const & inSR,
-                                                   art::RunPrincipal* & outR,
-                                                   art::SubRunPrincipal* & outSR,
-                                                   art::EventPrincipal* & outE)
+bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal * const & inR,
+    art::SubRunPrincipal * const & inSR,
+    art::RunPrincipal *& outR,
+    art::SubRunPrincipal *& outSR,
+    art::EventPrincipal *& outE)
 {
   // Establish default 'results'
   outR = 0;
   outSR = 0;
   outE = 0;
-
   RawEvent_ptr popped_event;
-
   // Try to get an event from the queue. We'll continuously loop, either until:
   //   1) we have read a RawEvent off the queue, or
   //   2) we have timed out, AND we are told the when we timeout we
@@ -51,26 +49,21 @@ bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal* const & in
   // In any case, if we time out, we emit an informational message.
   bool keep_looping = true;
   bool got_event = false;
-  while (keep_looping)
-    {
-      keep_looping = false;
-      got_event = incoming_events.deqTimedWait(popped_event, waiting_time);
-      if (!got_event) {
-        mf::LogInfo("InputFailure")
+  while (keep_looping) {
+    keep_looping = false;
+    got_event = incoming_events.deqTimedWait(popped_event, waiting_time);
+    if (!got_event) {
+      mf::LogInfo("InputFailure")
           << "Reading timed out in RawEventQueueReader::readNext()";
-        keep_looping = resume_after_timeout;
-      }
+      keep_looping = resume_after_timeout;
     }
-
+  }
   // We return false, indicating we're done reading, if:
-
   //   1) we did not obtain an event, because we timed out and were
   //      configured NOT to keep trying after a timeout, or
   //   2) the event we read was the end-of-data marker: a null
   //      pointer
-
-  if (!got_event || !popped_event) return false;
-
+  if (!got_event || !popped_event) { return false; }
   art::Timestamp runstart;
   // make new runs or subruns if in* are 0 or if the run/subrun
   // have changed
@@ -88,7 +81,6 @@ bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal* const & in
                                    popped_event->subrunID(),
                                    popped_event->sequenceID(),
                                    runstart);
-
   // Finally, grab the Fragments out of the RawEvent, and insert
   // them into the EventPrincipal.
   put_product_in_principal(popped_event->releaseProduct(),

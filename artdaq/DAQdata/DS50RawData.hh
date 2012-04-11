@@ -14,18 +14,16 @@
 
 #include <vector>
 
-namespace ds50
-{
-  class DS50RawData
-  {
+namespace ds50 {
+  class DS50RawData {
   public:
     DS50RawData() { }
     // will set up the headers and the sizes given a set of fragments
-    explicit DS50RawData(std::vector<artdaq::Fragment> const& init);
+    explicit DS50RawData(std::vector<artdaq::Fragment> const & init);
 
-    DataVec& fragment(size_t which)
+    DataVec & fragment(size_t which)
     { return compressed_fragments_.at(which); }
-    DataVec const& fragment(size_t which) const
+    DataVec const & fragment(size_t which) const
     { return compressed_fragments_.at(which); }
 
     reg_type fragmentBitCount(size_t which) const

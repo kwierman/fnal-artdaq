@@ -17,11 +17,11 @@
 namespace artdaq {
   namespace detail {
     struct RawEventQueueReader {
-      RawEventQueueReader(RawEventQueueReader const&) = delete;
-      RawEventQueueReader& operator=(RawEventQueueReader const&) = delete;
+      RawEventQueueReader(RawEventQueueReader const &) = delete;
+      RawEventQueueReader & operator=(RawEventQueueReader const &) = delete;
 
       art::PrincipalMaker const   pmaker;
-      RawEventQueue &             incoming_events;
+      RawEventQueue       &       incoming_events;
       daqrate::seconds            waiting_time;
       bool                        resume_after_timeout;
       std::string                 pretend_module_name;
@@ -31,13 +31,13 @@ namespace artdaq {
                           art::PrincipalMaker const & pm);
 
       void closeCurrentFile();
-      void readFile(std::string const & name, art::FileBlock* & fb);
+      void readFile(std::string const & name, art::FileBlock *& fb);
 
-      bool readNext(art::RunPrincipal* const & inR,
-                    art::SubRunPrincipal* const & inSR,
-                    art::RunPrincipal* & outR,
-                    art::SubRunPrincipal* & outSR,
-                    art::EventPrincipal* & outE);
+      bool readNext(art::RunPrincipal * const & inR,
+                    art::SubRunPrincipal * const & inSR,
+                    art::RunPrincipal *& outR,
+                    art::SubRunPrincipal *& outSR,
+                    art::EventPrincipal *& outE);
     };
 
   }

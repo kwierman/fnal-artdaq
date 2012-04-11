@@ -28,7 +28,7 @@ public:
   explicit GenericFragmentSimulator(fhicl::ParameterSet const & ps);
   virtual ~GenericFragmentSimulator();
 
-  enum class content_selector_t : uint8_t {
+enum class content_selector_t : uint8_t {
     EMPTY = 0,
     FRAG_ID,
     RANDOM,
@@ -54,7 +54,7 @@ private:
   RawDataType const run_number_;
   bool const want_random_fragment_size_;
 
-// State
+  // State
   std::size_t current_event_num_;
   CLHEP::HepJamesRandom engine_;
   CLHEP::RandPoissonT fragment_size_generator_;

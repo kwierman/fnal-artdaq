@@ -15,18 +15,16 @@
 
 #include <string>
 
-namespace artdaq
-{
+namespace artdaq {
 
-  class FragmentSniffer : public art::EDAnalyzer
-  {
+  class FragmentSniffer : public art::EDAnalyzer {
   public:
-    explicit FragmentSniffer( fhicl::ParameterSet const& p );
+    explicit FragmentSniffer(fhicl::ParameterSet const & p);
     virtual ~FragmentSniffer() { };
 
-    virtual void analyze(art::Event const& e);
-    virtual void endSubRun(art::SubRun const& sr);
-    virtual void endRun(art::Run const& r);
+    virtual void analyze(art::Event const & e);
+    virtual void endSubRun(art::SubRun const & sr);
+    virtual void endRun(art::Run const & r);
     virtual void endJob();
 
   private:
@@ -36,15 +34,15 @@ namespace artdaq
     std::size_t num_events_processed_;
   };
 
-  FragmentSniffer::FragmentSniffer( fhicl::ParameterSet const& p ) :
-    raw_label_( p.get<std::string>("raw_label") ),
+  FragmentSniffer::FragmentSniffer(fhicl::ParameterSet const & p) :
+    raw_label_(p.get<std::string>("raw_label")),
     num_frags_per_event_(p.get<size_t>("num_frags_per_event")),
     num_events_expected_(p.get<size_t>("num_events_expected")),
     num_events_processed_()
   {
   }
 
-  void FragmentSniffer::analyze(art::Event const& e)
+  void FragmentSniffer::analyze(art::Event const & e)
   {
     art::Handle<Fragments> handle;
     e.getByLabel(raw_label_, handle);
@@ -53,8 +51,8 @@ namespace artdaq
     ++num_events_processed_;
   }
 
-  void FragmentSniffer::endSubRun(art::SubRun const&) { }
-  void FragmentSniffer::endRun(art::Run const&) { }
+  void FragmentSniffer::endSubRun(art::SubRun const &) { }
+  void FragmentSniffer::endRun(art::Run const &) { }
   void FragmentSniffer::endJob()
   {
     mf::LogInfo("Progress") << "events processed: "

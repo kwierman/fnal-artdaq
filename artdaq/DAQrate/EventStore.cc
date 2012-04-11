@@ -16,23 +16,22 @@
 
 using namespace std;
 
-namespace artdaq
-{
+namespace artdaq {
   const std::string EventStore::EVENT_RATE_STAT_KEY("EventStoreEventRate");
 
-//   inline int get_mpi_rank()
-//   {
-//     int rk(0);
-//     MPI_Comm_rank(MPI_COMM_WORLD, &rk);
-//     return rk;
-//   }
+  //   inline int get_mpi_rank()
+  //   {
+  //     int rk(0);
+  //     MPI_Comm_rank(MPI_COMM_WORLD, &rk);
+  //     return rk;
+  //   }
 
   EventStore::EventStore(size_t num_fragments_per_event,
                          run_id_t run,
                          int store_id,
                          int argc,
-                         char* argv[],
-                         ARTFUL_FCN* reader) :
+                         char * argv[],
+                         ARTFUL_FCN * reader) :
     id_(store_id),
     num_fragments_per_event_(num_fragments_per_event),
     run_id_(run),
@@ -48,24 +47,24 @@ namespace artdaq
     // constructor of the MonitoredQuantity being made?
     MonitoredQuantityPtr mqPtr(new MonitoredQuantity(1.0, 60.0));
     StatisticsCollection::getInstance().
-      addMonitoredQuantity(EVENT_RATE_STAT_KEY, mqPtr);
+    addMonitoredQuantity(EVENT_RATE_STAT_KEY, mqPtr);
   }
 
-//   EventStore::EventStore(size_t num_fragments_per_event,
-//                          run_id_t run,
-//                          ARTFUL_FCN* reader) :
-//     id_(get_mpi_rank()),
-//     num_fragments_per_event_(num_fragments_per_event),
-//     run_id_(run),
-//     subrun_id_(0),
-//     events_(),
-//     queue_(getGlobalQueue()),
-//     reader_thread_(reader, 0, nullptr)
-//   {
-//     MonitoredQuantityPtr mqPtr(new MonitoredQuantity(1.0, 60.0));
-//     StatisticsCollection::getInstance().
-//       addMonitoredQuantity(EVENT_RATE_STAT_KEY, mqPtr);
-//   }
+  //   EventStore::EventStore(size_t num_fragments_per_event,
+  //                          run_id_t run,
+  //                          ARTFUL_FCN* reader) :
+  //     id_(get_mpi_rank()),
+  //     num_fragments_per_event_(num_fragments_per_event),
+  //     run_id_(run),
+  //     subrun_id_(0),
+  //     events_(),
+  //     queue_(getGlobalQueue()),
+  //     reader_thread_(reader, 0, nullptr)
+  //   {
+  //     MonitoredQuantityPtr mqPtr(new MonitoredQuantity(1.0, 60.0));
+  //     StatisticsCollection::getInstance().
+  //       addMonitoredQuantity(EVENT_RATE_STAT_KEY, mqPtr);
+  //   }
 
 
   void EventStore::insert(FragmentPtr pfrag)
@@ -74,52 +73,43 @@ namespace artdaq
     // Fragment without a good fragment ID.
     assert(pfrag != nullptr);
     assert(pfrag->fragmentID() != Fragment::InvalidFragmentID);
-
     // find the event being built and put the fragment into it,
     // start new event if not already present
     // if the event is complete, delete it and report timing
-
     //RawFragmentHeader* fh = pfrag->fragmentHeader();
     Fragment::sequence_id_t sequence_id = pfrag->sequenceID();
-
     // The fragmentID is expected to be correct in the incoming
     // fragment; the EventStore has no business changing it in the
     // current design.
     //     // update the fragment ID (up to this point, it has been set to the
     //     // detector rank or the source rank, but now we just want a simple index)
     //     fh->fragment_id_ -= fragmentIdOffset_;
-
     // Find if the right event id is already known to events_ and, if so, where
     // it is.
     EventMap::iterator loc = events_.lower_bound(sequence_id);
-    if (loc == events_.end() || events_.key_comp()(sequence_id, loc->first))
-      {
-        // We don't have an event with this id; create one an insert it at loc,
-        // and ajust loc to point to the newly inserted event.
-        RawEvent_ptr newevent(new RawEvent(run_id_, subrun_id_, sequence_id));
-        loc = 
-          events_.insert(loc, EventMap::value_type(sequence_id, newevent));
-      }
-
+    if (loc == events_.end() || events_.key_comp()(sequence_id, loc->first)) {
+      // We don't have an event with this id; create one an insert it at loc,
+      // and ajust loc to point to the newly inserted event.
+      RawEvent_ptr newevent(new RawEvent(run_id_, subrun_id_, sequence_id));
+      loc =
+        events_.insert(loc, EventMap::value_type(sequence_id, newevent));
+    }
     // Now insert the fragment into the event we have located.
     loc->second->insertFragment(std::move(pfrag));
-
-    if (loc->second->numFragments() == num_fragments_per_event_)
-      {
-        // This RawEvent is complete; capture it, remove it from the
-        // map, report on statistics, and put the shared pointer onto
-        // the event queue.
-        RawEvent_ptr complete_event(loc->second);
-        PerfWriteEvent(EventMeas::END,sequence_id);
-        events_.erase(loc);
-        queue_.enqNowait(complete_event);
-
-        MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
-          getMonitoredQuantity(EVENT_RATE_STAT_KEY);
-        if (mqPtr.get() != 0) {
-          mqPtr->addSample(complete_event->wordCount());
-        }
+    if (loc->second->numFragments() == num_fragments_per_event_) {
+      // This RawEvent is complete; capture it, remove it from the
+      // map, report on statistics, and put the shared pointer onto
+      // the event queue.
+      RawEvent_ptr complete_event(loc->second);
+      PerfWriteEvent(EventMeas::END, sequence_id);
+      events_.erase(loc);
+      queue_.enqNowait(complete_event);
+      MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
+                                   getMonitoredQuantity(EVENT_RATE_STAT_KEY);
+      if (mqPtr.get() != 0) {
+        mqPtr->addSample(complete_event->wordCount());
       }
+    }
   }
 
   int
@@ -134,14 +124,13 @@ namespace artdaq
   EventStore::reportStatistics_()
   {
     MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
-      getMonitoredQuantity(EVENT_RATE_STAT_KEY);
+                                 getMonitoredQuantity(EVENT_RATE_STAT_KEY);
     if (mqPtr.get() != 0) {
       ostringstream oss;
       oss << EVENT_RATE_STAT_KEY << "_" << setfill('0') << setw(4) << run_id_
           << "_" << setfill('0') << setw(4) << id_ << ".txt";
       std::string filename = oss.str();
       ofstream outStream(filename.c_str());
-
       mqPtr->waitUntilAccumulatorsHaveBeenFlushed(1.0);
       artdaq::MonitoredQuantity::Stats stats;
       mqPtr->getStats(stats);

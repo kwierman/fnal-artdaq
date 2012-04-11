@@ -55,22 +55,21 @@ artdaq::DS50FragmentReader::getNext_(FragmentPtrs & frags)
                    std::ios::in | std::ios::binary);
       if (!in_data) {
         throw cet::exception("FileOpenFailure")
-          << "Unable to open file "
-          << *next_point_.first
-          << ".";
+            << "Unable to open file "
+            << *next_point_.first
+            << ".";
       }
       // Find where we left off.
       in_data.seekg(next_point_.second);
       if (!in_data) {
         throw cet::exception("FileSeekFailure")
-          << "Unable to seek to last known point "
-          << next_point_.second
-          << " in file "
-          << *next_point_.first
-          << ".";
+            << "Unable to seek to last known point "
+            << next_point_.second
+            << " in file "
+            << *next_point_.first
+            << ".";
       }
     }
-
     // Read DS50 header.
     char * buf_ptr = reinterpret_cast<char *>(&*header_frag.dataBegin());
     in_data.read(buf_ptr, header_size_bytes);
@@ -82,14 +81,15 @@ artdaq::DS50FragmentReader::getNext_(FragmentPtrs & frags)
         ++next_point_.first;
         next_point_.second = 0;
         continue;
-      } else {
+      }
+      else {
         // Failed stream.
         throw cet::exception("FileReadFailure")
-        << "Unable to read header from file "
-        << *next_point_.first
-        << " after "
-        << read_bytes
-        << " bytes.";
+            << "Unable to read header from file "
+            << *next_point_.first
+            << " after "
+            << read_bytes
+            << " bytes.";
       }
     }
     read_bytes += header_size_bytes;
@@ -111,11 +111,11 @@ artdaq::DS50FragmentReader::getNext_(FragmentPtrs & frags)
     in_data.read(buf_ptr, bytes_left_to_read);
     if (!in_data) {
       throw cet::exception("FileReadFailure")
-        << "Unable to read data from file "
-        << *next_point_.first
-        << " after "
-        << read_bytes
-        << " bytes.";
+          << "Unable to read data from file "
+          << *next_point_.first
+          << " after "
+          << read_bytes
+          << " bytes.";
     }
     assert((frag.dataEnd() - frag.dataBegin()) * sizeof(RawDataType) ==
            bytes_left_to_read + header_size_bytes);

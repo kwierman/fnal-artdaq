@@ -27,8 +27,8 @@ namespace ds50 {
     trigger_time_tag_t trigger_time_tag() const;
 
     size_t total_adc_values() const;
-    adc_type const* dataBegin() const;
-    adc_type const* dataEnd() const;
+    adc_type const * dataBegin() const;
+    adc_type const * dataEnd() const;
 
     static constexpr size_t header_size_words();
 
@@ -50,12 +50,12 @@ namespace ds50 {
   inline size_t Board::total_adc_values() const
   { return event_size() * 2; }
 
-  inline adc_type const* Board::dataBegin() const
-  { 
-    return reinterpret_cast<adc_type const*>(header_()) + header_size_words();
+  inline adc_type const * Board::dataBegin() const
+  {
+    return reinterpret_cast<adc_type const *>(header_()) + header_size_words();
   }
 
-  inline adc_type const* Board::dataEnd() const
+  inline adc_type const * Board::dataEnd() const
   {
     return dataBegin() + total_adc_values();
   }
@@ -87,8 +87,8 @@ namespace ds50 {
   constexpr
   size_t
   Board::header_size_words()
- {
-   return detail::Header::size_words;
- }
+  {
+    return detail::Header::size_words;
+  }
 }
 #endif /* artdaq_DAQdata_DS50Board_hh */

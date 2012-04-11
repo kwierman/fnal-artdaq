@@ -46,7 +46,7 @@ public:
   void detector();
 
 private:
-  enum Color_t : int { DETECTOR, SOURCE, SINK };
+enum Color_t : int { DETECTOR, SOURCE, SINK };
 
   void printHost(const std::string & functionName) const;
 
@@ -70,8 +70,8 @@ make_generator(fhicl::ParameterSet const & ps)
 class FragCounter {
 public:
   explicit FragCounter(size_t nSlots);
-  void operator () (size_t slot);
-  void operator () (size_t slot, size_t inc);
+  void operator()(size_t slot);
+  void operator()(size_t slot, size_t inc);
 
   size_t total() const;
   size_t total(size_t slot) const;
@@ -82,7 +82,7 @@ private:
 
 inline
 FragCounter::FragCounter(size_t nSlots)
-:
+  :
   receipts_(nSlots, 0)
 {
 }
@@ -90,7 +90,7 @@ FragCounter::FragCounter(size_t nSlots)
 inline
 void
 FragCounter::
-operator () (size_t slot)
+operator()(size_t slot)
 {
   ++receipts_[slot];
 }
@@ -98,9 +98,9 @@ operator () (size_t slot)
 inline
 void
 FragCounter::
-operator () (size_t slot, size_t inc)
+operator()(size_t slot, size_t inc)
 {
- receipts_[slot] += inc;
+  receipts_[slot] += inc;
 }
 
 inline
@@ -241,21 +241,20 @@ void Program::detector()
   int detector_rank;
   // Should be zero-based, detectors only.
   MPI_Comm_rank(local_group_comm_, &detector_rank);
-  assert(!(detector_rank < 0 ));
+  assert(!(detector_rank < 0));
   std::ostringstream det_ps_name_loc;
   std::vector<std::string> detectors;
-
   size_t detectors_size = 0;
   if (!(daq_control_ps_.get_if_present("detectors", detectors) &&
         (detectors_size = detectors.size()))) {
     throw cet::exception("Configuration")
-      << "Unable to find required sequence of detector "
-      << "parameter set names, \"detectors\".";
+        << "Unable to find required sequence of detector "
+        << "parameter set names, \"detectors\".";
   }
   fhicl::ParameterSet det_ps =
     daq_control_ps_.get<fhicl::ParameterSet>
-    ((detectors_size > static_cast<size_t>(detector_rank))?
-     detectors[detector_rank]:
+    ((detectors_size > static_cast<size_t>(detector_rank)) ?
+     detectors[detector_rank] :
      detectors[0]);
   std::unique_ptr<artdaq::FragmentGenerator> const gen(make_generator(det_ps));
   artdaq::SHandles h(source_buffers_,
@@ -276,7 +275,7 @@ void Program::detector()
       // firehoses.
       MPI_Barrier(local_group_comm_);
     }
-    for (auto & fragPtr : frags) {
+  for (auto & fragPtr : frags) {
       h.sendFragment(std::move(*fragPtr));
       if (++fragments_sent == fragments_per_source) { break; }
       if ((fragments_sent % 100) == 0) {
@@ -302,9 +301,9 @@ void Program::sink()
     // This scope exists to control the lifetime of 'events'
     int sink_rank;
     MPI_Comm_rank(local_group_comm_, &sink_rank);
-    artdaq::EventStore::ARTFUL_FCN *reader =
-      (daq_control_ps_.get<bool>("useArt", false))?
-      &artapp:
+    artdaq::EventStore::ARTFUL_FCN * reader =
+      (daq_control_ps_.get<bool>("useArt", false)) ?
+      &artapp :
       &artdaq::simpleQueueReaderApp;
     artdaq::EventStore events(conf_.detectors_,
                               conf_.run_,
@@ -339,16 +338,13 @@ void Program::sink()
             << fragments_expected - fragments_received
             << " fragments." << flusher,
             fragments_received < fragments_expected));
-
     // Now we are done collecting fragments, so we can shut down the
     // receive handles.
     h.waitAll();
-
     // Make the reader application finish, and capture its return
     // status.
     int rc = events.endOfData();
     Debug << "Sink: reader is done, exit status was: " << rc << flusher;
-
   } // end of lifetime of 'events'
   Debug << "Sink done " << conf_.rank_ << flusher;
   MPI_Barrier(MPI_COMM_WORLD);

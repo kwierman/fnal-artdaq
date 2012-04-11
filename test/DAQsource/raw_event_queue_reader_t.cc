@@ -63,19 +63,19 @@ public:
   typedef std::map<std::string, art::BranchKey> BKmap_t;
 
   BKmap_t branchKeys_;
-  std::map<std::string, art::ProcessConfiguration*> processConfigurations_;
+  std::map<std::string, art::ProcessConfiguration *> processConfigurations_;
 
-  art::ProcessConfiguration*
-  fake_single_module_process(std::string const& tag,
-                             std::string const& processName,
-                             fhicl::ParameterSet const& moduleParams,
-                             std::string const& release = art::getReleaseVersion(),
-                             std::string const& pass = art::getPassID() );
+  art::ProcessConfiguration *
+  fake_single_module_process(std::string const & tag,
+                             std::string const & processName,
+                             fhicl::ParameterSet const & moduleParams,
+                             std::string const & release = art::getReleaseVersion(),
+                             std::string const & pass = art::getPassID());
 
   std::auto_ptr<art::BranchDescription>
-  fake_single_process_branch(std::string const& tag,
-                             std::string const& processName,
-                             std::string const& productInstanceName = std::string() );
+  fake_single_process_branch(std::string const & tag,
+                             std::string const & processName,
+                             std::string const & productInstanceName = std::string());
 
   void finalize();
 
@@ -99,26 +99,26 @@ MPRGlobalTestFixture::MPRGlobalTestFixture()
 }
 
 void
-MPRGlobalTestFixture::finalize() {
+MPRGlobalTestFixture::finalize()
+{
   productRegistry_.setFrozen();
   art::BranchIDListHelper::updateRegistries(productRegistry_);
   art::ProductMetaData::create_instance(productRegistry_);
 }
 
-art::ProcessConfiguration*
+art::ProcessConfiguration *
 MPRGlobalTestFixture::
-fake_single_module_process(std::string const& tag,
-                           std::string const& processName,
-                           fhicl::ParameterSet const& moduleParams,
-                           std::string const& release,
-                           std::string const& pass)
+fake_single_module_process(std::string const & tag,
+                           std::string const & processName,
+                           fhicl::ParameterSet const & moduleParams,
+                           std::string const & release,
+                           std::string const & pass)
 {
   fhicl::ParameterSet processParams;
   processParams.put(processName, moduleParams);
   processParams.put<std::string>("process_name",
                                  processName);
-
-  art::ProcessConfiguration* result =
+  art::ProcessConfiguration * result =
     new art::ProcessConfiguration(processName, processParams.id(), release, pass);
   processConfigurations_[tag] = result;
   return result;
@@ -126,9 +126,9 @@ fake_single_module_process(std::string const& tag,
 
 std::auto_ptr<art::BranchDescription>
 MPRGlobalTestFixture::
-fake_single_process_branch(std::string const& tag,
-                           std::string const& processName,
-                           std::string const& productInstanceName)
+fake_single_process_branch(std::string const & tag,
+                           std::string const & processName,
+                           std::string const & productInstanceName)
 {
   art::ModuleDescription mod;
   std::string moduleLabel = processName + "dummyMod";
@@ -140,14 +140,13 @@ fake_single_process_branch(std::string const& tag,
   mod.parameterSetID_ = modParams.id();
   mod.moduleName_ = moduleClass;
   mod.moduleLabel_ = moduleLabel;
-  art::ProcessConfiguration* process =
+  art::ProcessConfiguration * process =
     fake_single_module_process(tag, processName, modParams);
   mod.processConfiguration_ = *process;
-
-  art::BranchDescription* result =
+  art::BranchDescription * result =
     new art::BranchDescription(art::TypeLabel(art::InEvent,
-                                              dummyType,
-                                              productInstanceName),
+                               dummyType,
+                               productInstanceName),
                                mod);
   branchKeys_.insert(std::make_pair(tag, art::BranchKey(*result)));
   return std::auto_ptr<art::BranchDescription>(result);
@@ -171,7 +170,7 @@ struct REQRTestFixture {
     }
   }
 
-  MPRGlobalTestFixture& gf() {
+  MPRGlobalTestFixture & gf() {
     static MPRGlobalTestFixture mpr;
     return mpr;
   }
@@ -183,17 +182,17 @@ struct REQRTestFixture {
 
   PrincipalMaker & principal_maker() {
     static PrincipalMaker
-      s_principal_maker(*gf().fake_single_module_process("daq",
-                                                         "TEST",
-                                                         ParameterSet()));
+    s_principal_maker(*gf().fake_single_module_process("daq",
+                      "TEST",
+                      ParameterSet()));
     return s_principal_maker;
   }
 
   RawEventQueueReader & reader() {
     static RawEventQueueReader
-      s_reader(ParameterSet(),
-               helper(),
-               principal_maker());
+    s_reader(ParameterSet(),
+             helper(),
+             principal_maker());
     return s_reader;
   }
 };
@@ -204,19 +203,20 @@ namespace {
   void basic_test(RawEventQueueReader & reader,
                   std::unique_ptr<RunPrincipal> && run,
                   std::unique_ptr<SubRunPrincipal> && subrun,
-                  EventID const & eventid) {
+                  EventID const & eventid)
+  {
     BOOST_REQUIRE(run || subrun == nullptr); // Sanity check.
     std::shared_ptr<RawEvent> event(new RawEvent(eventid.run(), eventid.subRun(), eventid.event()));
     std::vector<Fragment::value_type> fakeData { 1, 2, 3, 4 };
     event->insertFragment(std::move(std::unique_ptr<Fragment>
                                     (new Fragment(std::move(Fragment::dataFrag(eventid.event(),
-                                                                               0,
-                                                                               fakeData.begin(),
-                                                                               fakeData.end()))))));
+                                        0,
+                                        fakeData.begin(),
+                                        fakeData.end()))))));
     artdaq::getGlobalQueue().enqNowait(event);
-    EventPrincipal*  newevent = nullptr;
-    SubRunPrincipal* newsubrun = nullptr;
-    RunPrincipal*    newrun = nullptr;
+    EventPrincipal * newevent = nullptr;
+    SubRunPrincipal * newsubrun = nullptr;
+    RunPrincipal  *  newrun = nullptr;
     bool rc = reader.readNext(run.get(), subrun.get(), newrun, newsubrun, newevent);
     BOOST_REQUIRE(rc);
     if (run.get() && run->run() == eventid.run()) {
@@ -249,7 +249,8 @@ namespace {
   }
 }
 
-BOOST_AUTO_TEST_CASE(nonempty_event) {
+BOOST_AUTO_TEST_CASE(nonempty_event)
+{
   EventID eventid(2112, 1, 3);
   Timestamp now;
   basic_test(reader(),
@@ -258,7 +259,8 @@ BOOST_AUTO_TEST_CASE(nonempty_event) {
              eventid);
 }
 
-BOOST_AUTO_TEST_CASE(first_event) {
+BOOST_AUTO_TEST_CASE(first_event)
+{
   EventID eventid(2112, 1, 3);
   Timestamp now;
   basic_test(reader(),
@@ -267,7 +269,8 @@ BOOST_AUTO_TEST_CASE(first_event) {
              eventid);
 }
 
-BOOST_AUTO_TEST_CASE(new_subrun) {
+BOOST_AUTO_TEST_CASE(new_subrun)
+{
   EventID eventid(2112, 1, 3);
   Timestamp now;
   basic_test(reader(),
@@ -276,23 +279,25 @@ BOOST_AUTO_TEST_CASE(new_subrun) {
              eventid);
 }
 
-BOOST_AUTO_TEST_CASE(new_run) {
+BOOST_AUTO_TEST_CASE(new_run)
+{
   EventID eventid(2112, 1, 3);
   Timestamp now;
   basic_test(reader(),
              std::unique_ptr<RunPrincipal>(principal_maker().makeRunPrincipal(eventid.run() - 1, now)),
              std::unique_ptr<SubRunPrincipal>(principal_maker().makeSubRunPrincipal(eventid.run() - 1,
-                                                                                    eventid.subRun(),
-                                                                                    now)),
+                 eventid.subRun(),
+                 now)),
              eventid);
 }
 
-BOOST_AUTO_TEST_CASE(end_of_data) {
+BOOST_AUTO_TEST_CASE(end_of_data)
+{
   // Tell 'reader' the name of the file we are to read. This is pretty
   // much irrelevant for RawEventQueueReader, but we'll stick to the
   // interface demanded by ReaderSource<T>...
   string const fakeFileName("no such file exists");
-  FileBlock* pFile = nullptr;
+  FileBlock * pFile = nullptr;
   reader().readFile(fakeFileName, pFile);
   BOOST_CHECK(pFile);
   BOOST_CHECK(pFile->fileFormatVersion() == FileFormatVersion(1, "RawEvent2011"));
@@ -303,10 +308,8 @@ BOOST_AUTO_TEST_CASE(end_of_data) {
   BOOST_CHECK(pFile->runTree() == nullptr);
   BOOST_CHECK(pFile->runMetaTree() == nullptr);
   BOOST_CHECK(!pFile->fastClonable());
-
   // Test the end-of-data handling. Reading an end-of-data should result in readNext() returning false,
   // and should return null pointers for new-run, -subrun and -event.
-
   // Prepare our 'previous run/subrun/event'..
   RunID runid(2112);
   SubRunID subrunid(2112, 1);
@@ -315,15 +318,13 @@ BOOST_AUTO_TEST_CASE(end_of_data) {
   std::unique_ptr<RunPrincipal>    run(principal_maker().makeRunPrincipal(runid.run(), now));
   std::unique_ptr<SubRunPrincipal> subrun(principal_maker().makeSubRunPrincipal(runid.run(), subrunid.subRun(), now));
   std::unique_ptr<EventPrincipal>  event(principal_maker().makeEventPrincipal(runid.run(),
-                                                                            subrunid.subRun(),
-                                                                            eventid.event(),
-                                                                            now));
-
+                                         subrunid.subRun(),
+                                         eventid.event(),
+                                         now));
   artdaq::getGlobalQueue().enqNowait(std::shared_ptr<RawEvent>(nullptr)); // insert end-of-data marker
-
-  EventPrincipal*  newevent = nullptr;
-  SubRunPrincipal* newsubrun = nullptr;
-  RunPrincipal*    newrun = nullptr;
+  EventPrincipal * newevent = nullptr;
+  SubRunPrincipal * newsubrun = nullptr;
+  RunPrincipal  *  newrun = nullptr;
   bool rc = reader().readNext(run.get(), subrun.get(), newrun, newsubrun, newevent);
   BOOST_CHECK(!rc);
   BOOST_CHECK(newrun == nullptr);

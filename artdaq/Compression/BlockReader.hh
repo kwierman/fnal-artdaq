@@ -8,16 +8,15 @@ namespace ds50 {
   class BlockReader;
 }
 
-class ds50::BlockReader
-{
+class ds50::BlockReader {
 public:
-  explicit BlockReader(std::istream&);
+  explicit BlockReader(std::istream &);
 
   // number of words read and placed into out is returned
-  reg_type next(ADCCountVec& out);
+  reg_type next(ADCCountVec & out);
 
 private:
-  std::istream* ist_;
+  std::istream * ist_;
   ADCCountVec buffer_;
 };
 

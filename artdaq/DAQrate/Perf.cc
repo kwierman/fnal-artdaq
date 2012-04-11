@@ -13,7 +13,7 @@ using namespace std;
 
 namespace {
 
-  const char* id_names[] = {
+  const char * id_names[] = {
     "none", "send", "found", "sent", "recv",
     "woke", "post", "evtstart", "evtend", "jobstart", "jobend"
   };
@@ -25,7 +25,7 @@ namespace {
     ~Perf();
 
     void configure(Config const &, size_t expected_events);
-    static Perf* instance();
+    static Perf * instance();
 
     template <class T> void write(T const & write_me);
 
@@ -44,11 +44,11 @@ namespace {
       size_t cur = data_.size();
       data_.resize(cur + 50 * 1000 * 1000);
     }
-    std::memcpy((void*)&data_[pos_], (const void*)&w, sizeof(T));
+    std::memcpy((void *)&data_[pos_], (const void *)&w, sizeof(T));
     pos_ += sizeof(T);
   }
 
-  Perf* Perf::instance()
+  Perf * Perf::instance()
   {
     static Perf p;
     return &p;
@@ -61,7 +61,7 @@ namespace {
   {
     // write out the samples
     ofstream ostr(filename_.c_str(), ofstream::binary);
-    ostr.write((const char*)&data_[0], pos_);
+    ostr.write((const char *)&data_[0], pos_);
   }
 
   void Perf::configure(Config const & conf, size_t expected_events)
@@ -156,6 +156,6 @@ EventMeas::~EventMeas()
 { Perf::instance()->write(*this); }
 
 // ---------------
-const char* PerfGetName(int id) { return id < PERF_ID_END ? id_names[id] : "NA"; }
+const char * PerfGetName(int id) { return id < PERF_ID_END ? id_names[id] : "NA"; }
 
 

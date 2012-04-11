@@ -7,11 +7,10 @@
 #include <stdint.h>
 #include <vector>
 
-namespace artdaq
-{
+namespace artdaq {
 
   /**
-   * This class keeps track of statistics for a set of sample values 
+   * This class keeps track of statistics for a set of sample values
    * and provides timing information on the samples.
    *
    * $Author:  $
@@ -19,17 +18,17 @@ namespace artdaq
    * $Date: 2009/10/13 15:08:33 $
    */
 
-  class MonitoredQuantity
-  {
+  class MonitoredQuantity {
   public:
 
     typedef double DURATION_T;
     typedef double TIME_POINT_T;
-    
+
     class Stats;
 
     enum DataSetType { FULL = 0,      // the full data set (all samples)
-                       RECENT = 1 };  // recent data only
+                       RECENT = 1
+                     };  // recent data only
 
     explicit MonitoredQuantity
     (
@@ -64,8 +63,8 @@ namespace artdaq
      * will be called once per interval specified by
      * expectedCalculationInterval
      */
-    bool calculateStatistics(TIME_POINT_T currentTime = 
-                             getCurrentTime());
+    bool calculateStatistics(TIME_POINT_T currentTime =
+                               getCurrentTime());
 
     /**
      * Resets the monitor (zeroes out all counters and restarts the
@@ -103,13 +102,11 @@ namespace artdaq
      * a getDuration(RECENT) call to determine the actual recent
      * time window.)
      */
-    DURATION_T getTimeWindowForRecentResults() const
-    {
+    DURATION_T getTimeWindowForRecentResults() const {
       return _intervalForRecentStats;
     }
 
-    DURATION_T ExpectedCalculationInterval() const
-    {
+    DURATION_T ExpectedCalculationInterval() const {
       return _expectedCalculationInterval;
     }
 
@@ -118,7 +115,7 @@ namespace artdaq
     /**
        Write all our collected statistics into the given Stats struct.
      */
-    void getStats(Stats& stats) const;
+    void getStats(Stats & stats) const;
 
     /**
        Returns the current point in time. A negative value indicates
@@ -130,8 +127,8 @@ namespace artdaq
   private:
 
     // Prevent copying of the MonitoredQuantity
-    MonitoredQuantity(MonitoredQuantity const&);
-    MonitoredQuantity& operator=(MonitoredQuantity const&);
+    MonitoredQuantity(MonitoredQuantity const &);
+    MonitoredQuantity & operator=(MonitoredQuantity const &);
 
     // Helper functions.
     void _reset_accumulators();
@@ -189,8 +186,7 @@ namespace artdaq
     const DURATION_T _expectedCalculationInterval;  // seconds
   };
 
-  struct MonitoredQuantity::Stats
-  {
+  struct MonitoredQuantity::Stats {
     long long fullSampleCount;
     double fullSampleRate;
     double fullValueSum;
@@ -227,13 +223,13 @@ namespace artdaq
     long long getSampleCount(DataSetType t = FULL) const { return t == RECENT ? recentSampleCount : fullSampleCount; }
     double getValueSum(DataSetType t = FULL) const { return t == RECENT ? recentValueSum : fullValueSum; }
     double getValueAverage(DataSetType t = FULL) const { return t == RECENT ? recentValueAverage : fullValueAverage; }
-    double getValueRate(DataSetType t = FULL) const { return t== RECENT ? recentValueRate : fullValueRate; }
+    double getValueRate(DataSetType t = FULL) const { return t == RECENT ? recentValueRate : fullValueRate; }
     double getValueRMS(DataSetType t = FULL) const { return t == RECENT ? recentValueRMS : fullValueRMS; }
     double getValueMin(DataSetType t = FULL) const { return t == RECENT ? recentValueMin : fullValueMin; }
     double getValueMax(DataSetType t = FULL) const { return t == RECENT ? recentValueMax : fullValueMax; }
     DURATION_T getDuration(DataSetType t = FULL) const { return t == RECENT ? recentDuration : fullDuration; }
     double getSampleRate(DataSetType t = FULL) const { return t == RECENT ? recentSampleRate : fullSampleRate; }
-    double getSampleLatency(DataSetType t = FULL) const { double v=getSampleRate(t); return v  ? 1e6/v : INFINITY;}
+    double getSampleLatency(DataSetType t = FULL) const { double v = getSampleRate(t); return v  ? 1e6 / v : INFINITY;}
     double getLastSampleValue() const { return lastSampleValue; }
     double getLastValueRate() const { return lastValueRate; }
     bool   isEnabled() const { return enabled; }

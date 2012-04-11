@@ -13,32 +13,32 @@ State state = NoJob;
 JobStartMeas saved_start;
 
 template <class T>
-void handle_sub(void* d, ostream & ost)
+void handle_sub(void * d, ostream & ost)
 {
-  T* a = (T*)d;
+  T * a = (T *)d;
   if (state == InJob)
   { ost << saved_start.run_ << " " << saved_start.rank_ << " "; }
   ost << *a << "\n";
 }
 
-void handle_start(void* d, ostream & ost)
+void handle_start(void * d, ostream & ost)
 {
-  JobStartMeas* j = (JobStartMeas*)d;
+  JobStartMeas * j = (JobStartMeas *)d;
   state = InJob;
   saved_start = *j;
   ost << *j << "\n";
 }
 
-void handle_end(void* d, ostream & ost)
+void handle_end(void * d, ostream & ost)
 {
-  JobEndMeas* j = (JobEndMeas*)d;
+  JobEndMeas * j = (JobEndMeas *)d;
   if (state == InJob)
   { ost << saved_start.run_ << " " << saved_start.rank_ << " "; }
   ost << *j << "\n";
   state = NoJob;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
   if (argc < 2) {
     cerr << "Argument perf_file missing\n";
@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
   while (1) {
     infile.read(&data[0], sizeof(Header));
     if (infile.eof()) { break; }
-    Header* head = (Header*)&data[0];
+    Header * head = (Header *)&data[0];
     infile.read(&data[sizeof(Header)], head->len_);
     switch (head->id_) {
       case PERF_SEND: handle_sub<SendMeas>(&data[0], cout); break;

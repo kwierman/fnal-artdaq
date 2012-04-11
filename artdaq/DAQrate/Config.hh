@@ -11,12 +11,11 @@
 // Define the environment variable ARTDAQ_DAQRATE_USE_ART to any value
 // to set use_artapp_ to true.
 
-class Config
-{
+class Config {
 public:
-  enum TaskType : int { TaskSink=0, TaskSource=1, TaskDetector=2 };
+enum TaskType : int { TaskSink = 0, TaskSource = 1, TaskDetector = 2 };
 
-  Config(int rank, int nprocs, int argc, char* argv[]);
+  Config(int rank, int nprocs, int argc, char * argv[]);
 
   int destCount() const;
   int destStart() const;
@@ -24,10 +23,10 @@ public:
   int srcStart() const;
   int getDestFriend() const;
   int getSrcFriend() const;
-  int getArtArgc(int argc, char* argv[]) const;
-  char** getArtArgv(int argc, char* argv[]) const;
+  int getArtArgc(int argc, char * argv[]) const;
+  char ** getArtArgv(int argc, char * argv[]) const;
   std::string typeName() const;
-  std::string infoFilename(std::string const& prefix) const;
+  std::string infoFilename(std::string const & prefix) const;
   void writeInfo() const;
 
   // input parameters
@@ -50,16 +49,16 @@ public:
   std::string node_name_;
 
   int  art_argc_;
-  char** art_argv_;
+  char ** art_argv_;
   bool use_artapp_;
 
   static int const max_initial_send_words_ = 512 * 1024;
 
-  void print(std::ostream& ost) const;
-  void printHeader(std::ostream& ost) const;
+  void print(std::ostream & ost) const;
+  void printHeader(std::ostream & ost) const;
 };
 
-inline std::ostream& operator<<(std::ostream& ost, Config const& c)
+inline std::ostream & operator<<(std::ostream & ost, Config const & c)
 {
   c.print(ost);
   return ost;

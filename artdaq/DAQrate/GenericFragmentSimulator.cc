@@ -7,7 +7,7 @@
 
 artdaq::GenericFragmentSimulator::GenericFragmentSimulator(fhicl::ParameterSet const & ps) :
   content_selection_(ps.get<content_selector_t>("content_selection",
-                                                content_selector_t::EMPTY)),
+                     content_selector_t::EMPTY)),
   fragment_size_spec_(ps.get<size_t>("fragment_size", 10240)),
   events_to_generate_(ps.get<size_t>("events_to_generate", 0)),
   fragments_per_event_(ps.get<size_t>("fragments_per_event", 5)),
@@ -37,7 +37,7 @@ artdaq::GenericFragmentSimulator::getNext_(FragmentPtrs & frags)
     frags.emplace_back();
     bool result =
       getNext(current_event_num_, fragID, frags.back());
-    if (!result) return result;
+    if (!result) { return result; }
   }
   return true;
 }
@@ -52,30 +52,30 @@ getNext(Fragment::sequence_id_t sequence_id,
   size_t fragment_size = generateFragmentSize_();
   frag_ptr->resize(fragment_size, 0);
   switch (content_selection_) {
-  case content_selector_t::EMPTY:
-    break; // values are already correct
-  case content_selector_t::FRAG_ID:
-    std::fill_n(frag_ptr->dataBegin(), fragment_size, fragment_id);
-    break;
-  case content_selector_t::RANDOM:
-    std::generate_n(frag_ptr->dataBegin(),
-                    fragment_size,
-                    [&]() -> long {
-                      return
-                        fragment_content_generator_.
-                        fireInt(std::numeric_limits<long>::max());
-                    }
-                   );
-    break;
-  case content_selector_t::DEAD_BEEF:
-    std::fill_n(frag_ptr->dataBegin(),
-                fragment_size,
-                0xDEADBEEFDEADBEEF);
-    break;
-  default:
-    throw cet::exception("UnknownContentSelection")
-      << "Unknown content selection: "
-      << static_cast<uint8_t>(content_selection_);
+    case content_selector_t::EMPTY:
+      break; // values are already correct
+    case content_selector_t::FRAG_ID:
+      std::fill_n(frag_ptr->dataBegin(), fragment_size, fragment_id);
+      break;
+    case content_selector_t::RANDOM:
+      std::generate_n(frag_ptr->dataBegin(),
+                      fragment_size,
+      [&]() -> long {
+        return
+        fragment_content_generator_.
+        fireInt(std::numeric_limits<long>::max());
+      }
+                     );
+      break;
+    case content_selector_t::DEAD_BEEF:
+      std::fill_n(frag_ptr->dataBegin(),
+                  fragment_size,
+                  0xDEADBEEFDEADBEEF);
+      break;
+    default:
+      throw cet::exception("UnknownContentSelection")
+          << "Unknown content selection: "
+          << static_cast<uint8_t>(content_selection_);
   }
   assert(frag_ptr != nullptr);
   return true;
@@ -85,7 +85,7 @@ std::size_t
 artdaq::GenericFragmentSimulator::
 generateFragmentSize_()
 {
-  return want_random_fragment_size_?
-    fragment_size_generator_.fire():
-    fragment_size_spec_;
+  return want_random_fragment_size_ ?
+         fragment_size_generator_.fire() :
+         fragment_size_spec_;
 }

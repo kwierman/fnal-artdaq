@@ -43,28 +43,26 @@ struct TimedLoop {
 
 template <class MapType, class KeyArgType, class ValueArgType>
 typename MapType::iterator
-efficientAddOrUpdate(MapType& m,
-                     KeyArgType const& k,
-                     ValueArgType const& v)
+efficientAddOrUpdate(MapType & m,
+                     KeyArgType const & k,
+                     ValueArgType const & v)
 {
   // Find where 'k' either is, or should be.
   typename MapType::iterator lb = m.lower_bound(k);
-  if (lb != m.end() && !(m.key_comp()(k,lb->first)))
-    {
-      // Update the existing entry in the map
-      lb->second = v;
-    }
-  else
-    {
-      // Add a new entry, using the hint
-      typedef typename MapType::value_type MVT;
-      lb = m.insert(lb, MVT(k, v));
-    }
+  if (lb != m.end() && !(m.key_comp()(k, lb->first))) {
+    // Update the existing entry in the map
+    lb->second = v;
+  }
+  else {
+    // Add a new entry, using the hint
+    typedef typename MapType::value_type MVT;
+    lb = m.insert(lb, MVT(k, v));
+  }
   return lb;
 }
 
 
 std::ostream & getStream(int rank);
-void writeData(int rank, const char* d, int size);
+void writeData(int rank, const char * d, int size);
 
 #endif /* artdaq_DAQrate_Utils_hh */

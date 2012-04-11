@@ -26,13 +26,12 @@ void process_bit(reg_type /* bit */, ADCCountVec & /* values */)
 {
 }
 
-int main(int argc, char* argv[]) try
+int main(int argc, char * argv[]) try
 {
   cerr << "reg_size_bits:     " << reg_size_bits  << '\n';
   cerr << "chunk_size_bytes:  " << chunk_size_bytes << '\n';
   cerr << "chunk_size_counts: " << chunk_size_counts << '\n';
   cerr << "chunk_size_regs:   " << chunk_size_regs << '\n';
-
   if (argc < 4) {
     cerr << "Usage: " << argv[0] << " huff_table data_file_in data_file_out\n";
     return -1;
@@ -51,21 +50,21 @@ int main(int argc, char* argv[]) try
   ADCCountVec adcvals;
   while (1) {
     reg_type bit_count;
-    data_ifs.read((char*)&bit_count, sizeof(reg_type));
+    data_ifs.read((char *)&bit_count, sizeof(reg_type));
     if (data_ifs.eof()) { break; }
     size_t byte_count = bitCountToBytes(bit_count);
     cout << "there are " << bit_count << " bits (" << byte_count << ")" << endl;
     datavals.resize(byte_count);
-    data_ifs.read((char*)&datavals[0], byte_count);
+    data_ifs.read((char *)&datavals[0], byte_count);
     if (data_ifs.eof()) { break; }
     cout << "bytes are ready" << endl;
     dec(bit_count, datavals, adcvals);
-    data_ofs.write((char*)&adcvals[0], adcvals.size()*sizeof(adc_type));
+    data_ofs.write((char *)&adcvals[0], adcvals.size()*sizeof(adc_type));
   }
   cout << "completed decompression" << endl;
   return 0;
 }
-catch (const char* msg)
+catch (const char * msg)
 {
   cerr << "Caught const char*: " << msg << endl;
 }

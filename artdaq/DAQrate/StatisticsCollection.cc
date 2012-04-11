@@ -7,7 +7,7 @@ namespace artdaq {
    *
    * @returns StatisticsCollection instance.
    */
-  StatisticsCollection& StatisticsCollection::getInstance()
+  StatisticsCollection & StatisticsCollection::getInstance()
   {
     static StatisticsCollection singletonInstance;
     return singletonInstance;
@@ -31,7 +31,7 @@ namespace artdaq {
   }
 
   void StatisticsCollection::
-  addMonitoredQuantity(const std::string& name,
+  addMonitoredQuantity(const std::string & name,
                        MonitoredQuantityPtr mqPtr)
   {
     std::lock_guard<std::mutex> scopedLock(map_mutex_);
@@ -39,11 +39,10 @@ namespace artdaq {
   }
 
   MonitoredQuantityPtr
-  StatisticsCollection::getMonitoredQuantity(const std::string& name) const
+  StatisticsCollection::getMonitoredQuantity(const std::string & name) const
   {
     std::lock_guard<std::mutex> scopedLock(map_mutex_);
     MonitoredQuantityPtr emptyResult;
-
     std::map<std::string, MonitoredQuantityPtr>::const_iterator iter;
     iter = monitoredQuantityMap_.find(name);
     if (iter == monitoredQuantityMap_.end()) {return emptyResult;}
@@ -53,7 +52,6 @@ namespace artdaq {
   void StatisticsCollection::reset()
   {
     std::lock_guard<std::mutex> scopedLock(map_mutex_);
-
     std::map<std::string, MonitoredQuantityPtr>::const_iterator iter;
     std::map<std::string, MonitoredQuantityPtr>::const_iterator iterEnd;
     iterEnd = monitoredQuantityMap_.end();
@@ -72,10 +70,8 @@ namespace artdaq {
     while (! thread_stop_requested_) {
       long useconds = static_cast<long>(calculationInterval_ * 1000000);
       usleep(useconds);
-
       {
         std::lock_guard<std::mutex> scopedLock(map_mutex_);
-
         std::map<std::string, MonitoredQuantityPtr>::const_iterator iter;
         std::map<std::string, MonitoredQuantityPtr>::const_iterator iterEnd;
         iterEnd = monitoredQuantityMap_.end();
