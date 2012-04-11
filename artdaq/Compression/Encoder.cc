@@ -5,9 +5,10 @@
 #include "artdaq/Compression/Encoder.hh"
 
 using namespace std;
+using namespace ds50;
 
 namespace {
-  constexpr auto bits_per_word = sizeof(reg_type) * 8;
+  constexpr auto bits_per_word = sizeof(reg_type) * sizeof(char);
 
   struct Accum {
   public:

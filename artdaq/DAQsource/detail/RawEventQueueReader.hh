@@ -43,4 +43,4 @@ namespace artdaq {
   }
 }
 
-#endif
+#endif /* artdaq_DAQsource_detail_RawEventQueueReader_hh */

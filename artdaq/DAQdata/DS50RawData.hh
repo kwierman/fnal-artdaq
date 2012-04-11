@@ -1,5 +1,5 @@
-#ifndef DS50RAWDATA_H
-#define DS50RAWDATA_H 1
+#ifndef artdaq_DAQdata_DS50RawData_hh
+#define artdaq_DAQdata_DS50RawData_hh
 
 // NOTE: the GPU might be more efficient at using 32-bit integers than 64-bit integers,
 // in this case the code below will need to be modified.
@@ -8,7 +8,7 @@
 // Should we also store a vector of compressed fragment lengths? yes, because the
 // total bits returned from the encoders is an important number
 
-#include "artdaq/Compression/Properties.hh"
+#include "artdaq/DAQdata/DS50Types.hh"
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/detail/DS50Header.hh"
 
@@ -19,7 +19,7 @@ namespace ds50
   class DS50RawData
   {
   public:
-    DS50RawData();
+    DS50RawData() { }
     // will set up the headers and the sizes given a set of fragments
     explicit DS50RawData(std::vector<artdaq::Fragment> const& init);
 
@@ -37,18 +37,22 @@ namespace ds50
 
     // since structures for headers are in the details, there is
     // no clean way to present them here to the user.
-    
+
+    // Needs to be public for ROOT persistency: do not use.
+    struct HeaderProxy {
+      detail::Header::data_t hp[detail::Header::size_words];
+    };
+
   private:
-    typedef std::vector<detail::Header> DS50HeaderVec;
-    // typedef std::vector<artdaq::detail::RawFragmentHeader> FragHeaderVec;
+    // ROOT persistency can't handle bitfields.
+    typedef std::vector<HeaderProxy> DS50HeaderVec;
     typedef std::vector<DataVec> CompVec;
     typedef std::vector<reg_type> CountVec;
 
     DS50HeaderVec ds50_headers_;
     CompVec compressed_fragments_;
     CountVec counts_;
-    // FragHeaderVec frag_headers_;
   };
 }
 
-#endif
+#endif /* artdaq_DAQdata_DS50RawData_hh */

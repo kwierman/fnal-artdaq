@@ -4,8 +4,11 @@
 #include "artdaq/Compression/Properties.hh"
 #include <iosfwd>
 
+namespace ds50 {
+  class BlockReader;
+}
 
-class BlockReader
+class ds50::BlockReader
 {
 public:
   explicit BlockReader(std::istream&);

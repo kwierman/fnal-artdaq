@@ -7,6 +7,7 @@
 using std::cerr;
 using std::ifstream;
 using std::string;
+using namespace ds50;
 
 int main(int argc, char* argv[])
 {

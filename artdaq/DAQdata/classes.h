@@ -3,10 +3,13 @@
 #include "art/Persistency/Common/Wrapper.h"
 #include <vector>
 
+template class std::vector<artdaq::Fragment>;
+template class art::Wrapper<std::vector<artdaq::Fragment> >;
+
 namespace {
-  struct dictionary
-  {
-    std::vector<artdaq::Fragment> x3;
-    art::Wrapper<std::vector<artdaq::Fragment> > x4;
+  struct dictionary {
+    ds50::DS50RawData d1;
   };
 }
+
+template class art::Wrapper<ds50::DS50RawData>;

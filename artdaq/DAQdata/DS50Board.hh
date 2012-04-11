@@ -1,7 +1,7 @@
 #ifndef artdaq_DAQdata_DS50Board_hh
 #define artdaq_DAQdata_DS50Board_hh
 
-#include "artdaq/Compression/Properties.hh"
+#include "artdaq/DAQdata/DS50Types.hh"
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/detail/DS50Header.hh"
 

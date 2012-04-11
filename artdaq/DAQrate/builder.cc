@@ -23,6 +23,10 @@ namespace  bpo = boost::program_options;
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
+extern "C" {
+#include <unistd.h>
+}
 #include <iostream>
 #include <memory>
 #include <utility>

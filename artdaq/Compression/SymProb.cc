@@ -8,7 +8,7 @@
 
 using namespace std;
 
-void calculateProbs(ADCCountVec const & d, SymsVec & out, size_t countmax)
+void ds50::calculateProbs(ADCCountVec const & d, SymsVec & out, size_t countmax)
 {
   unsigned int symnum = 0;
   out.clear();
@@ -26,8 +26,8 @@ void calculateProbs(ADCCountVec const & d, SymsVec & out, size_t countmax)
   // copy(out.begin(),out.end(),ostream_iterator<SymProb>(cout,"\n"));
 }
 
-unsigned long calculateRunLengths(ADCCountVec const & d, DataVec & out,
-                                  unsigned long & run_median)
+unsigned long ds50::calculateRunLengths(ADCCountVec const & d, DataVec & out,
+                                        unsigned long & run_median)
 {
   // unsigned int symnum = 0;
   out.clear();

@@ -20,6 +20,7 @@ using std::endl;
 using std::ifstream;
 using std::ofstream;
 using std::sort;
+using namespace ds50;
 
 void process_bit(reg_type /* bit */, ADCCountVec & /* values */)
 {

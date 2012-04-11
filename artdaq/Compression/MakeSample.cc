@@ -12,6 +12,7 @@
 #include "artdaq/Compression/Properties.hh"
 
 using namespace std;
+using namespace ds50;
 
 /*
   []  Capture nothing (or, a scorched earth strategy?)

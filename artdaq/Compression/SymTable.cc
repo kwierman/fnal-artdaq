@@ -6,8 +6,9 @@
 #include <iterator>
 
 using namespace std;
+using namespace ds50;
 
-void readTable(const char* fname, SymTable & out, size_t countmax)
+void ds50::readTable(const char* fname, SymTable & out, size_t countmax)
 {
   std::ifstream ifs(fname);
   out.clear();
@@ -22,13 +23,13 @@ void readTable(const char* fname, SymTable & out, size_t countmax)
   }
 }
 
-void writeTable(const char* fname, SymTable const & in)
+void ds50::writeTable(const char* fname, SymTable const & in)
 {
   ofstream ofs(fname);
   copy(in.cbegin(), in.cend(), ostream_iterator<SymCode>(ofs, "\n"));
 }
 
-void reverseCodes(SymTable & out)
+void ds50::reverseCodes(SymTable & out)
 {
   // reverse the bits
   for (auto cur = out.begin(), end = out.end(); cur != end; ++cur) {

@@ -6,7 +6,15 @@
 
 #include "artdaq/Compression/SymTable.hh"
 
-class Node
+namespace ds50 {
+  class Node;
+  class Leaf;
+  class Branch;
+
+  std::ostream& operator<<(std::ostream& ost, Node const& n);
+}
+
+class ds50::Node
 {
 public:
   typedef unsigned long data_type;
@@ -17,7 +25,7 @@ public:
   virtual void print(std::ostream& ost) const = 0;
 };
 
-class Leaf : public Node
+class ds50::Leaf : public ds50::Node
 {
 public:
   Leaf():count_(0),sym_(0) { }
@@ -54,13 +62,13 @@ private:
   data_type sym_;
 };
 
-inline std::ostream& operator<<(std::ostream& ost, Node const& n)
+inline std::ostream& ds50::operator<<(std::ostream& ost, Node const& n)
 {
   n.print(ost);
   return ost;
 }
 
-class Branch : public Node
+class ds50::Branch : public ds50::Node
 {
 public:
   Branch(): count_(0),left_(0),right_(0) { }

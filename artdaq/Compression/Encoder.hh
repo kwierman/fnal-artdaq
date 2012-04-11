@@ -6,7 +6,11 @@
 #include "artdaq/Compression/Properties.hh"
 #include "artdaq/Compression/SymTable.hh"
 
-class Encoder
+namespace ds50 {
+  class Encoder;
+}
+
+class ds50::Encoder
 {
 public:
   explicit Encoder(SymTable const&);

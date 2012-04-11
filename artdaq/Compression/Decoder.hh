@@ -4,9 +4,12 @@
 #include "artdaq/Compression/Properties.hh"
 #include "artdaq/Compression/SymTable.hh"
 
-constexpr auto neg_one = ~(0ul);
+namespace ds50 {
+  class Decoder;
+  constexpr auto neg_one = ~(0ul);
+}
 
-class Decoder
+class ds50::Decoder
 {
 public:
   Decoder(SymTable const&);

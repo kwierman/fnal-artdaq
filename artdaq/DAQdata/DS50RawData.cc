@@ -1,20 +1,23 @@
 
 #include "artdaq/DAQdata/DS50RawData.hh"
 
+#include <cstring>
+
 namespace ds50
 {
   DS50RawData::DS50RawData(std::vector<artdaq::Fragment> const& init):
     ds50_headers_(init.size()),
-    compressed_fragments_(init_size()),
-    counts_(init.size()),
-    frag_headers_(init.size()),
+    compressed_fragments_(init.size()),
+    counts_(init.size())
   {
-    for(size_t i = 0; i< init.size(); ++i)
-      {
-	// we have no access to the fragment header location,
-	// do we really need it? perhaps not.
-	// frag_headers_[i] = ??
-	ds50_headers_[i] = *((detail::Header*)&(init[i][0]));
-      }
+    size_t index = 0;
+    std::for_each(init.begin(),
+                  init.end(),
+                  [&index, this](artdaq::Fragment const & frag)
+                  {
+                    memcpy(&ds50_headers_[index++],
+                           &*frag.dataBegin(),
+                           sizeof(HeaderProxy));
+                  });
   }
 }

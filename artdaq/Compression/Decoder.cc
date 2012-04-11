@@ -5,9 +5,7 @@
 #include "artdaq/Compression/Decoder.hh"
 
 using namespace std;
-
-namespace {
-}
+using namespace ds50;
 
 Decoder::Decoder(SymTable const & s): syms_(s), table_(), head_(syms_.size())
 {

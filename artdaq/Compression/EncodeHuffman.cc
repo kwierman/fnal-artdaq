@@ -16,6 +16,7 @@
 #include "artdaq/Compression/Encoder.hh"
 
 using namespace std;
+using namespace ds50;
 
 int main(int argc, char* argv[])
 {

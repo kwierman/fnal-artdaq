@@ -2,6 +2,8 @@
 
 #include <istream>
 
+using namespace ds50;
+
 BlockReader::BlockReader(std::istream & ist): ist_(&ist), buffer_(chunk_size_counts)
 { }
 

@@ -12,7 +12,13 @@
 #include "artdaq/Compression/SymCode.hh"
 #include "artdaq/Compression/SymProb.hh"
 
-class HuffmanTable
+namespace ds50 {
+  class HuffmanTable;
+
+  std::ostream& operator<<(std::ostream& ost, HuffmanTable const& h);
+}
+
+class ds50::HuffmanTable
 {
 public:
   typedef std::unique_ptr<Node> Node_ptr;
@@ -53,7 +59,9 @@ private:
   HeadList heads_;
 };
 
-inline std::ostream& operator<<(std::ostream& ost, HuffmanTable const& h)
+inline
+std::ostream&
+ds50::operator<<(std::ostream& ost, HuffmanTable const& h)
 {
   h.print(ost);
   return ost;

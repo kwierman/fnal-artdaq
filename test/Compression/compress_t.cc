@@ -7,6 +7,8 @@
 #include <fstream>
 #include <iostream>
 
+using namespace ds50;
+
 ADCCountVec input_data
 ( {
   484, 311,  342,  497,  373,  466,  547,  538,  421,  384,  552,  505,

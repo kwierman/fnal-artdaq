@@ -8,6 +8,7 @@
 #include "artdaq/Compression/SymProb.hh"
 
 using namespace std;
+using namespace ds50;
 
 namespace {
   void readTrainingSet(istream & ifs, ADCCountVec & out, size_t max_samples)

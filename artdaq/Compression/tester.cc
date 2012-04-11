@@ -8,6 +8,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace ds50;
 
 inline
 void push_n(ADCCountVec & v, ADCCountVec::value_type x, size_t n)
