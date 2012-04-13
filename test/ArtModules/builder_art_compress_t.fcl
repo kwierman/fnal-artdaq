@@ -16,7 +16,7 @@ services:
 {
   scheduler:
   {
-    wantTracer: true
+    # wantTracer: true
   }
   Timing: { }
 }
