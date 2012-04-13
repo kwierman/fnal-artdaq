@@ -62,6 +62,8 @@ namespace ds50 {
     std::auto_ptr<DS50RawData> prod(new DS50RawData(*handle));
     // handle->dataBegin(), handle->dataEnd()
     size_t len = handle->size();
+    #pragma omp parallel for \
+    shared(len, prod, handle)
     for (size_t i = 0; i < len; ++i) {
       mf::LogInfo("Loop") << "Attempting to compress fragment # "
                           << i;
