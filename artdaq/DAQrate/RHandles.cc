@@ -1,6 +1,6 @@
 #include "artdaq/DAQrate/RHandles.hh"
 #include "artdaq/DAQrate/Perf.hh"
-#include "artdaq/DAQrate/Debug.hh"
+#include "artdaq/DAQdata/Debug.hh"
 #include "artdaq/DAQrate/MPITag.hh"
 #include "artdaq/DAQrate/Utils.hh"
 #include "cetlib/container_algorithms.h"

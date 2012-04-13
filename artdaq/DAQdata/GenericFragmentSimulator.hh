@@ -1,12 +1,12 @@
-#ifndef artdaq_DAQrate_GenericFragmentSimulator_hh
-#define artdaq_DAQrate_GenericFragmentSimulator_hh
+#ifndef artdaq_DAQdata_GenericFragmentSimulator_hh
+#define artdaq_DAQdata_GenericFragmentSimulator_hh
 
 #include "CLHEP/Random/JamesRandom.h"
 #include "CLHEP/Random/RandFlat.h"
 #include "CLHEP/Random/RandPoissonT.h"
 
 #include "artdaq/DAQdata/Fragments.hh"
-#include "artdaq/DAQrate/FragmentGenerator.hh"
+#include "artdaq/DAQdata/FragmentGenerator.hh"
 #include "fhiclcpp/fwd.h"
 
 namespace artdaq {
@@ -61,4 +61,4 @@ private:
   CLHEP::RandFlat fragment_content_generator_;
 };
 
-#endif /* artdaq_DAQrate_GenericFragmentSimulator_hh */
+#endif /* artdaq_DAQdata_GenericFragmentSimulator_hh */

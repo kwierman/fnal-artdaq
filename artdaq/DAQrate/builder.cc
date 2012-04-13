@@ -1,11 +1,12 @@
 #include "art/Framework/Art/artapp.h"
 #include "artdaq/DAQdata/Fragments.hh"
+#include "artdaq/DAQdata/DS50Board.hh"
 #include "artdaq/DAQrate/Config.hh"
-#include "artdaq/DAQrate/Debug.hh"
-#include "artdaq/DAQrate/DS50FragmentReader.hh"
-#include "artdaq/DAQrate/DS50FragmentSimulator.hh"
+#include "artdaq/DAQdata/Debug.hh"
+#include "artdaq/DAQdata/DS50FragmentReader.hh"
+#include "artdaq/DAQdata/DS50FragmentSimulator.hh"
 #include "artdaq/DAQrate/EventStore.hh"
-#include "artdaq/DAQrate/FragmentGenerator.hh"
+#include "artdaq/DAQdata/FragmentGenerator.hh"
 #include "artdaq/DAQrate/MPIProg.hh"
 #include "artdaq/DAQrate/Perf.hh"
 #include "artdaq/DAQrate/RHandles.hh"
@@ -62,9 +63,9 @@ artdaq::FragmentGenerator *
 make_generator(fhicl::ParameterSet const & ps)
 {
   if (ps.get<bool>("generate_data"))
-  { return new artdaq::DS50FragmentSimulator(ps); }
+  { return new ds50::FragmentSimulator(ps); }
   else
-  { return new artdaq::DS50FragmentReader(ps); }
+  { return new ds50::FragmentReader(ps); }
 }
 
 class FragCounter {
@@ -131,6 +132,8 @@ Program::Program(int argc, char * argv[]):
   daq_control_ps_(),
   local_group_comm_()
 {
+  char buf[1024];
+  getcwd(buf, 1024);
   conf_.writeInfo();
   configureDebugStream(conf_.rank_, conf_.run_);
   std::ostringstream descstr;
@@ -204,7 +207,6 @@ void Program::source()
   do {
     from_d.recvFragment(frag);
     if (frag.type() == artdaq::Fragment::type_t::END_OF_DATA) {
-      // Debug << "Fragment data: " << *frag.dataBegin() << flusher;
       fragments_expected = *frag.dataBegin();
     }
     else {
@@ -286,7 +288,6 @@ void Program::detector()
     frags.clear();
   }
   h.sendEODFrag(conf_.getDestFriend(), fragments_sent);
-  // Debug << "EOD data = " << *eod_frag.dataBegin() << flusher;
   Debug << "detector waiting " << conf_.rank_ << flusher;
   h.waitAll();
   Debug << "detector done " << conf_.rank_ << flusher;
@@ -324,9 +325,7 @@ void Program::sink()
       if (pfragment->type() == artdaq::Fragment::type_t::END_OF_DATA) {
         --sources_sending;
         // TODO: use GMP to avoid overflow possibility.
-        // Debug << "fragments expected: " << fragments_expected;
         fragments_expected += *pfragment->dataBegin();
-        // Debug << " -> " << fragments_expected << flusher;
       }
       else {
         ++fragments_received;

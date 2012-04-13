@@ -1,22 +1,20 @@
-
 #include "art/Framework/Core/EDProducer.h"
 #include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
+#include "art/Framework/Principal/Handle.h"
 #include "art/Framework/Principal/Run.h"
 #include "art/Framework/Principal/SubRun.h"
-#include "art/Framework/Principal/Handle.h"
 #include "art/Persistency/Provenance/BranchType.h"
-
-#include "cpp0x/memory"
-#include "fhiclcpp/ParameterSet.h"
-
+#include "artdaq/Compression/Encoder.hh"
 #include "artdaq/Compression/Properties.hh"
 #include "artdaq/Compression/SymTable.hh"
-#include "artdaq/Compression/Encoder.hh"
+#include "artdaq/DAQdata/DS50Board.hh"
 #include "artdaq/DAQdata/DS50RawData.hh"
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/Fragments.hh"
-#include "artdaq/DAQdata/DS50Board.hh"
+#include "cpp0x/memory"
+#include "fhiclcpp/ParameterSet.h"
+#include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include <iostream>
 #include <string>
@@ -65,14 +63,21 @@ namespace ds50 {
     // handle->dataBegin(), handle->dataEnd()
     size_t len = handle->size();
     for (size_t i = 0; i < len; ++i) {
+      mf::LogInfo("Loop") << "Attempting to compress fragment # "
+                          << i;
       artdaq::Fragment const & frag = (*handle)[i];
       Board b(frag);
       // start of payload is the DS50 header
+#ifndef NDEBUG
+      b.checkADCData(); // Check data integrity.
+#endif
       auto adc_start = b.dataBegin();
       auto adc_end   = b.dataEnd();
+      prod->fragment(i).resize(frag.dataSize());
       reg_type bit_count  = encode_(adc_start, adc_end, prod->fragment(i));
       prod->setFragmentBitCount(i, bit_count);
     }
+    mf::LogInfo("Progress") << "Putting product in event.";
     e.put(prod);
   }
 

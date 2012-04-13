@@ -5,7 +5,7 @@
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/detail/RawFragmentHeader.hh"
 #include "artdaq/DAQrate/EventStore.hh"
-#include "artdaq/DAQrate/GenericFragmentSimulator.hh"
+#include "artdaq/DAQdata/GenericFragmentSimulator.hh"
 
 #include <cstddef>
 

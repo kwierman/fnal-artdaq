@@ -23,11 +23,6 @@ endif()
 set( LIB_SOURCES 
      GlobalQueue.cc
      Config.cc
-     Debug.cc
-     FragmentGenerator.cc
-     DS50FragmentReader.cc
-     DS50FragmentSimulator.cc
-     GenericFragmentSimulator.cc
      EventStore.cc
      MonitoredQuantity.cc
      MPIProg.cc

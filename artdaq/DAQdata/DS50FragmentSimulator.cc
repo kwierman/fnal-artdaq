@@ -1,18 +1,20 @@
-#include "artdaq/DAQrate/DS50FragmentSimulator.hh"
+#include "artdaq/DAQdata/DS50FragmentSimulator.hh"
 #include "fhiclcpp/ParameterSet.h"
 
-artdaq::DS50FragmentSimulator::DS50FragmentSimulator(fhicl::ParameterSet const & ps) :
+using namespace artdaq;
+
+ds50::FragmentSimulator::FragmentSimulator(fhicl::ParameterSet const & ps) :
   current_event_num_(0),
   events_to_generate_(ps.get<size_t>("events_to_generate", 0)),
   fragments_per_event_(ps.get<size_t>("fragments_per_event", 5)),
   run_number_(ps.get<RawDataType>("run_number"))
 { }
 
-artdaq::DS50FragmentSimulator::~DS50FragmentSimulator()
+ds50::FragmentSimulator::~FragmentSimulator()
 { }
 
 bool
-artdaq::DS50FragmentSimulator::getNext_(FragmentPtrs & frags)
+ds50::FragmentSimulator::getNext_(FragmentPtrs & frags)
 {
   ++current_event_num_;
   if (events_to_generate_ != 0 &&

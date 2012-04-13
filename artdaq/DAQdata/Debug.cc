@@ -1,5 +1,5 @@
 
-#include "artdaq/DAQrate/Debug.hh"
+#include "artdaq/DAQdata/Debug.hh"
 #include <iomanip>
 #include <string>
 #include <sstream>

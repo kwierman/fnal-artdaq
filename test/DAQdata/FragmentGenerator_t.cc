@@ -2,7 +2,7 @@
 #include "boost/test/auto_unit_test.hpp"
 
 #include "artdaq/DAQdata/Fragment.hh"
-#include "artdaq/DAQrate/FragmentGenerator.hh"
+#include "artdaq/DAQdata/FragmentGenerator.hh"
 
 namespace artdaqtest {
   class FragmentGeneratorTest;

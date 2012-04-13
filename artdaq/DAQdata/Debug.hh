@@ -1,5 +1,5 @@
-#ifndef artdaq_DAQrate_Debug_hh
-#define artdaq_DAQrate_Debug_hh
+#ifndef artdaq_DAQdata_Debug_hh
+#define artdaq_DAQdata_Debug_hh
 
 #include <iostream>
 
@@ -27,4 +27,4 @@ inline void configureDebugStream(int, int) { }
 #define flusher (char)0
 #endif
 
-#endif /* artdaq_DAQrate_Debug_hh */
+#endif /* artdaq_DAQdata_Debug_hh */

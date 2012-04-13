@@ -1,1 +1,0 @@
-#error THIS_HEADER_IS_OBSOLETE

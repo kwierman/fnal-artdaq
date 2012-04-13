@@ -13,9 +13,9 @@
 
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQrate/EventStore.hh"
-#include "artdaq/DAQrate/FragmentGenerator.hh"
-#include "artdaq/DAQrate/DS50FragmentReader.hh"
-#include "artdaq/DAQrate/DS50FragmentSimulator.hh"
+#include "artdaq/DAQdata/FragmentGenerator.hh"
+#include "artdaq/DAQdata/DS50FragmentReader.hh"
+#include "artdaq/DAQdata/DS50FragmentSimulator.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/make_ParameterSet.h"
 #include "cetlib/filepath_maker.h"
@@ -34,9 +34,9 @@ namespace  bpo = boost::program_options;
 artdaq::FragmentGenerator * make_generator(ParameterSet const & ps)
 {
   if (ps.get<bool>("generate_data"))
-  { return new artdaq::DS50FragmentSimulator(ps); }
+  { return new ds50::FragmentSimulator(ps); }
   else
-  { return new artdaq::DS50FragmentReader(ps); }
+  { return new ds50::FragmentReader(ps); }
 }
 
 int main(int argc, char * argv[]) try

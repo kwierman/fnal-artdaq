@@ -1,4 +1,4 @@
-#include "artdaq/DAQrate/DS50FragmentReader.hh"
+#include "artdaq/DAQdata/DS50FragmentReader.hh"
 
 #include <cstdint>
 #include <cstring>
@@ -9,29 +9,30 @@
 #include <vector>
 
 #include "artdaq/DAQdata/DS50Board.hh"
-#include "artdaq/DAQrate/Debug.hh"
+#include "artdaq/DAQdata/Debug.hh"
 #include "cetlib/exception.h"
 #include "fhiclcpp/ParameterSet.h"
 
 using fhicl::ParameterSet;
 using ds50::Board;
+using namespace artdaq;
 
-artdaq::DS50FragmentReader::DS50FragmentReader(ParameterSet const & ps)
+ds50::FragmentReader::FragmentReader(ParameterSet const & ps)
   :
   fileNames_(ps.get<std::vector<std::string>>("fileNames")),
   max_set_size_bytes_(ps.get<double>("max_set_size_gib", 14.0) * 1024 * 1024 * 1024),
   next_point_ {fileNames_.begin(), 0} {
 }
 
-artdaq::DS50FragmentReader::~DS50FragmentReader()
+ds50::FragmentReader::~FragmentReader()
 { }
 
 bool
-artdaq::DS50FragmentReader::getNext_(FragmentPtrs & frags)
+ds50::FragmentReader::getNext_(FragmentPtrs & frags)
 {
   FragmentPtrs::size_type incoming_size = frags.size();
   if (next_point_.first == fileNames_.end()) {
-    return false; // Nothing to do..
+    return false; // Nothing to do.
   }
   // Useful constants for byte arithmetic.
   static size_t const ds50_words_per_frag_word =

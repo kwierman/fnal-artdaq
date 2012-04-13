@@ -1,4 +1,4 @@
-#include "artdaq/DAQrate/GenericFragmentSimulator.hh"
+#include "artdaq/DAQdata/GenericFragmentSimulator.hh"
 #include "fhiclcpp/ParameterSet.h"
 
 #include <algorithm>

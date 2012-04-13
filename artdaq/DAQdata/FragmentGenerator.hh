@@ -1,5 +1,5 @@
-#ifndef artdaq_DAQrate_FragmentGenerator_hh
-#define artdaq_DAQrate_FragmentGenerator_hh
+#ifndef artdaq_DAQdata_FragmentGenerator_hh
+#define artdaq_DAQdata_FragmentGenerator_hh
 
 #include "fhiclcpp/fwd.h"
 #include "artdaq/DAQdata/Fragments.hh"
@@ -22,4 +22,4 @@ namespace artdaq {
   };
 }
 
-#endif /* artdaq_DAQrate_FragmentGenerator_hh */
+#endif /* artdaq_DAQdata_FragmentGenerator_hh */

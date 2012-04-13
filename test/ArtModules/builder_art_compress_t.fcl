@@ -14,8 +14,11 @@ daq:
 
 services:
 {
-  wantTracer: true
-#  Timing: { }
+  scheduler:
+  {
+    wantTracer: true
+  }
+  Timing: { }
 }
 
 physics:
@@ -38,7 +41,7 @@ physics:
 source:
 {
   module_type: RawInput
-  waiting_time: 5
+  waiting_time: 20
   resume_after_timeout: true
   fileNames: [ dummy ]
 }

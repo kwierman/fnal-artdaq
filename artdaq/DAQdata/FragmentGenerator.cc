@@ -1,4 +1,4 @@
-#include "artdaq/DAQrate/FragmentGenerator.hh"
+#include "artdaq/DAQdata/FragmentGenerator.hh"
 
 namespace artdaq {
   FragmentGenerator::~FragmentGenerator()
