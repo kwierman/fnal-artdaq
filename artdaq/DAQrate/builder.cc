@@ -175,14 +175,24 @@ void Program::go()
   PerfWriteJobStart();
   MPI_Comm_split(MPI_COMM_WORLD, conf_.type_, 0, &local_group_comm_);
   switch (conf_.type_) {
-    case Config::TaskSink:
-      sink(); break;
-    case Config::TaskSource:
-      source(); break;
-    case Config::TaskDetector:
-      detector(); break;
-    default:
-      throw "No such node type";
+  case Config::TaskSink:
+    if (want_sink_) {
+      sink();
+    }
+    else {
+      std::string
+        msg("WARNING: a sink was instantiated despite want_sink being false:\n"
+            "set nsinks to 0 in invocation of daqrate?\n");
+      std::cerr << msg;
+      MPI_Barrier(MPI_COMM_WORLD);
+    }
+    break;
+  case Config::TaskSource:
+    source(); break;
+  case Config::TaskDetector:
+    detector(); break;
+  default:
+    throw "No such node type";
   }
   // MPI_Barrier(MPI_COMM_WORLD);
   PerfWriteJobEnd();
@@ -298,7 +308,7 @@ void Program::detector()
 void Program::sink()
 {
   printHost("sink");
-  if (want_sink_) {
+  {
     // This scope exists to control the lifetime of 'events'
     int sink_rank;
     MPI_Comm_rank(local_group_comm_, &sink_rank);
