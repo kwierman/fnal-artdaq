@@ -1,5 +1,6 @@
 #include "artdaq/Compression/SymTable.hh"
 #include "artdaq/Compression/Properties.hh"
+#include "cetlib/exception.h"
 
 #include <fstream>
 #include <algorithm>
@@ -11,6 +12,11 @@ using namespace ds50;
 void ds50::readTable(const char * fname, SymTable & out, size_t countmax)
 {
   std::ifstream ifs(fname);
+  if (!ifs) {
+    throw cet::exception("FileOpenError")
+      << "Unable to open file "
+      << fname;
+  }
   out.clear();
   out.resize(countmax);
   // copy(istream_iterator<TableEntry>(ifs),istream_iterator<TableEntry>(),

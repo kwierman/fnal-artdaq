@@ -1,5 +1,6 @@
 
 #include <algorithm>
+#include <cassert>
 #include <iostream>
 
 #include "artdaq/Compression/Decoder.hh"
@@ -57,9 +58,36 @@ void Decoder::printTable(std::ostream & ost) const
   ost << "table size=" << table_.size() << " last=" << last_ << endl;
 }
 
+reg_type Decoder::operator()(reg_type bit_count,
+                             DataVec::const_iterator in,
+                             adc_type * out_ptr,
+                             adc_type const * out_end __attribute__((unused)))
+{
+  adc_type * const start = out_ptr; // Save start position.
+  size_t curr = head_;
+  reg_type const * pos = &*in;
+  reg_type val = *pos;
+  for (reg_type i = 0; i < bit_count; ++i) {
+    auto inc = (i % 64 + 1) / 64;
+    // cout << i << " ";
+    curr = table_[curr + (val & 0x01)];
+    val >>= 1;
+    if (inc) {
+      // cout << "inc" << endl;
+      ++pos;
+      val = *pos;
+    }
+    if (curr < head_) {
+      assert(out_ptr != out_end); // Safety check.
+      *out_ptr++ = (adc_type)syms_[curr].sym_;
+      curr = head_;
+    }
+  }
+  return out_ptr - start; // Result;
+}
+
 reg_type Decoder::operator()(reg_type bit_count, DataVec const & in, ADCCountVec & out)
 {
-  out.clear();
   ADCCountVec tmp;
   size_t curr = head_;
   reg_type const * pos = &in[0];

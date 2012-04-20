@@ -9,48 +9,79 @@
 // total bits returned from the encoders is an important number
 
 #include "artdaq/DAQdata/DS50Types.hh"
+#include "artdaq/DAQdata/features.hh"
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/detail/DS50Header.hh"
 
 #include <vector>
 
 namespace ds50 {
-  class DS50RawData {
-  public:
-    DS50RawData() { }
-    // will set up the headers and the sizes given a set of fragments
-    explicit DS50RawData(std::vector<artdaq::Fragment> const & init);
+  class DS50RawData;
+}
 
-    DataVec & fragment(size_t which)
+class ds50::DS50RawData {
+public:
+  DS50RawData() { }
+  // will set up the headers and the sizes given a set of fragments
+  explicit DS50RawData(std::vector<artdaq::Fragment> const & init);
+
+  DataVec & fragment(size_t which)
     { return compressed_fragments_.at(which); }
-    DataVec const & fragment(size_t which) const
+  DataVec const & fragment(size_t which) const
     { return compressed_fragments_.at(which); }
 
-    reg_type fragmentBitCount(size_t which) const
+  reg_type fragmentBitCount(size_t which) const
     { return counts_.at(which); }
-    void setFragmentBitCount(size_t which, reg_type count)
+  void setFragmentBitCount(size_t which, reg_type count)
     { counts_[which] = count; }
 
-    // return a reference to the entire CompVec? perhaps.
+  size_t size() const { return compressed_fragments_.size(); }
 
-    // since structures for headers are in the details, there is
-    // no clean way to present them here to the user.
+  // return a reference to the entire CompVec? perhaps.
 
-    // Needs to be public for ROOT persistency: do not use.
-    struct HeaderProxy {
-      detail::Header::data_t hp[detail::Header::size_words];
-    };
+#if USE_MODERN_FEATURES
+  // since structures for headers are in the details, there is
+  // no other clean way to present them here to the user.
+  artdaq::Fragment headerOnlyFrag(size_t which) const;
+#endif
 
-  private:
-    // ROOT persistency can't handle bitfields.
-    typedef std::vector<HeaderProxy> DS50HeaderVec;
-    typedef std::vector<DataVec> CompVec;
-    typedef std::vector<reg_type> CountVec;
-
-    DS50HeaderVec ds50_headers_;
-    CompVec compressed_fragments_;
-    CountVec counts_;
+  // Needs to be public for ROOT persistency: do not use.
+  struct HeaderProxy {
+    detail::Header::data_t hp[detail::Header::size_words];
   };
+
+private:
+  // ROOT persistency can't handle bitfields.
+  typedef std::vector<HeaderProxy> DS50HeaderVec;
+  typedef std::vector<DataVec> CompVec;
+  typedef std::vector<reg_type> CountVec;
+
+  DS50HeaderVec ds50_headers_;
+  CompVec compressed_fragments_;
+  CountVec counts_;
+};
+
+#if USE_MODERN_FEATURES
+#include "artdaq/DAQdata/DS50Board.hh"
+
+inline
+artdaq::Fragment
+ds50::DS50RawData::headerOnlyFrag(size_t which) const
+{
+  using artdaq::Fragment;
+  Fragment result
+    (Fragment::dataFrag(Fragment::InvalidSequenceID,
+                        Fragment::InvalidFragmentID,
+                        reinterpret_cast<Fragment::value_type const *>
+                        (&ds50_headers_.at(which)),
+                        reinterpret_cast<Fragment::value_type const *>
+                        (&ds50_headers_.at(which) +
+                         detail::Header::size_words)));
+  ds50::Board b(result);
+  result.setSequenceID(b.event_counter());
+  result.setFragmentID(b.board_id());
+  return result;
 }
+#endif /* USE_MODERN_FEATURES */
 
 #endif /* artdaq_DAQdata_DS50RawData_hh */

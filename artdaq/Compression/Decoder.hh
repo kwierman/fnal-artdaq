@@ -13,7 +13,18 @@ class ds50::Decoder {
 public:
   Decoder(SymTable const &);
 
-  reg_type operator()(reg_type bit_count, DataVec const & in, ADCCountVec & out);
+  // Overwrite vector out with the uncompressed data.
+  reg_type operator()(reg_type bit_count,
+                      DataVec const & in,
+                      ADCCountVec & out);
+
+  // Start writing uncompressed data at out_ptr. Caller's responsibility
+  // to ensure buffer is big enough (by reading header data, for
+  // example) (faster).
+  reg_type operator()(reg_type bit_count,
+                      DataVec::const_iterator in,
+                      adc_type * out_ptr,
+                      adc_type const * out_end);
 
   void printTable(std::ostream & ost) const;
 

@@ -56,17 +56,20 @@ namespace ds50 {
 
   void DS50Compression::produce(art::Event & e)
   {
-    std::cerr << "Hello from DS50Compression produce\n";
     art::Handle<artdaq::Fragments> handle;
     e.getByLabel(raw_label_, handle);
     std::auto_ptr<DS50RawData> prod(new DS50RawData(*handle));
     // handle->dataBegin(), handle->dataEnd()
     size_t len = handle->size();
-    #pragma omp parallel for \
-    shared(len, prod, handle)
+#pragma omp parallel for shared(len, prod, handle)
     for (size_t i = 0; i < len; ++i) {
-      mf::LogInfo("Loop") << "Attempting to compress fragment # "
-                          << i;
+      {
+#ifndef NDEBUG
+        mf::LogDebug("Loop")
+          << "Attempting to compress fragment # "
+          << i;
+#endif
+      }
       artdaq::Fragment const & frag = (*handle)[i];
       Board b(frag);
       // start of payload is the DS50 header
@@ -77,9 +80,9 @@ namespace ds50 {
       auto adc_end   = b.dataEnd();
       prod->fragment(i).resize(frag.dataSize());
       reg_type bit_count  = encode_(adc_start, adc_end, prod->fragment(i));
+      prod->fragment(i).resize(std::ceil(bit_count / (8.0 * sizeof(DataVec::value_type))));
       prod->setFragmentBitCount(i, bit_count);
     }
-    mf::LogInfo("Progress") << "Putting product in event.";
     e.put(prod);
   }
 

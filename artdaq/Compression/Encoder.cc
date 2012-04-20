@@ -2,10 +2,11 @@
 #include "artdaq/Compression/Encoder.hh"
 #include "cetlib/exception.h"
 
-#include <stdexcept>
 #include <algorithm>
+#include <cassert>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 
 using namespace std;
 using namespace ds50;
@@ -50,10 +51,8 @@ namespace {
     curr_pos_ += te.bit_count_;
     total_ += te.bit_count_;
     if (curr_pos_ >= bits_per_word) {
-      if (++curr_word_ == buf_end_) {
-        throw cet::exception("CompressionBufferSize")
-            << "Size of compression buffer exceeded.";
-      }
+      ++curr_word_;
+      assert(curr_word_ != buf_end_); // Safety check.
       curr_pos_ = curr_pos_ - bits_per_word; // leftovers
       *curr_word_ = te.code_ >> (te.bit_count_ - curr_pos_);
     }
