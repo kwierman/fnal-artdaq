@@ -20,19 +20,19 @@ if(BTYPE_UC STREQUAL DEBUG)
   add_definitions(-DDEBUGME)
 endif()
 
-set( LIB_SOURCES 
-     GlobalQueue.cc
-     Config.cc
-     EventStore.cc
-     MonitoredQuantity.cc
-     MPIProg.cc
-     Perf.cc
-     RHandles.cc
-     SHandles.cc
-     SimpleQueueReader.cc
-     StatisticsCollection.cc
-     Utils.cc     
-   )
+set(LIB_SOURCES
+  GlobalQueue.cc
+  Config.cc
+  EventStore.cc
+  MonitoredQuantity.cc
+  MPIProg.cc
+  Perf.cc
+  RHandles.cc
+  SHandles.cc
+  SimpleQueueReader.cc
+  StatisticsCollection.cc
+  Utils.cc
+  )
 
 add_library( ${LIB_NAME} SHARED ${LIB_SOURCES} )
 
@@ -77,7 +77,6 @@ find_library( ART_FRAMEWORK_ART NAMES art_Framework_Art PATHS $ENV{ART_OPENMP_LI
 find_library( ART_FRAMEWORK_SERVICES_REGISTRY NAMES art_Framework_Services_Registry PATHS $ENV{ART_OPENMP_LIB} )
 find_library( ART_UTILITIES NAMES art_Utilities PATHS $ENV{ART_OPENMP_LIB} )
 
-
 set ( art_exec_link_libraries
   ${ART_PERSISTENCY_COMMON_DICT}
   ${ART_FRAMEWORK_ART}
@@ -98,7 +97,7 @@ target_link_libraries(builder
   ${art_exec_link_libraries}
   ${FHICLCPP}
   ${common_exec_link_libraries}
-)
+  )
 
 # ----------------------------------------------------------------------
 # Install this project's headers, sources, library, and executables:
