@@ -45,6 +45,8 @@ target_link_libraries( artdaq_DAQrate
 
 include(CetTest)
 cet_test(daqrate PREBUILT NO_AUTO)
+cet_test(builder.sh PREBUILT NO_AUTO)
+cet_test(numawrap PREBUILT NO_AUTO)
 
 # ----------------------------------------------------------------------
 # Build this project's executables:

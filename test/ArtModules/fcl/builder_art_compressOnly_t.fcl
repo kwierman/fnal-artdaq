@@ -12,15 +12,6 @@ daq:
   useArt: true
 }
 
-services:
-{
-  scheduler:
-  {
-    # wantTracer: true
-  }
-  Timing: { }
-}
-
 physics:
 {
   producers:
@@ -34,7 +25,6 @@ physics:
   }
 
   p1: [ comp ]
-
   trigger_paths: [ p1 ]
 }
 

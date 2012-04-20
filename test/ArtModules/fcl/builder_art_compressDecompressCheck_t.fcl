@@ -1,0 +1,10 @@
+#include "builder_art_compressDecompress_t.fcl"
+
+physics.analyzers.a1:
+{
+  module_type: DS50CompressionChecker
+  raw_label: daq
+  uncompressed_label: uncomp
+}
+physics.e1: [ a1 ]
+physics.end_paths: [ e1 ]
