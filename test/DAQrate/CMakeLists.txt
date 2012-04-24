@@ -31,42 +31,42 @@ cet_test(daqrate_fileread HANDBUILT
   TEST_PROPERTIES RUN_SERIAL true
 )
 
-cet_test(daqrate_perf_nosink_01_t
+cet_test(daqrate_perf_fileread_nosink_01_t
   HANDBUILT
   OPTIONAL_GROUPS PERF;LONG
   TEST_EXEC builder.sh
-  TEST_ARGS -n -d 5 hosts-5-5-0.txt daqrate_perf_nosink.fcl
+  TEST_ARGS -n -d 5 hosts-5-5-0.txt daqrate_perf_fileread_nosink.fcl
   DATAFILES hosts-5-5-0.txt
-  fcl/daqrate_perf_nosink.fcl
+  fcl/daqrate_perf_fileread_nosink.fcl
   TEST_PROPERTIES RUN_SERIAL true
   )
 
-cet_test(daqrate_perf_nosink_02_t
+cet_test(daqrate_perf_fileread_nosink_02_t
   HANDBUILT
   OPTIONAL_GROUPS PERF;LONG
   TEST_EXEC builder.sh
-  TEST_ARGS -n -d 5 hosts-5-5-0-mix.txt daqrate_perf_nosink.fcl
+  TEST_ARGS -n -d 5 hosts-5-5-0-mix.txt daqrate_perf_fileread_nosink.fcl
   DATAFILES hosts-5-5-0-mix.txt
-  fcl/daqrate_perf_nosink.fcl
+  fcl/daqrate_perf_fileread_nosink.fcl
   TEST_PROPERTIES RUN_SERIAL true
   )
 
-cet_test(daqrate_perf_nosink_03_t
+cet_test(daqrate_perf_fileread_nosink_03_t
   HANDBUILT
   OPTIONAL_GROUPS PERF;LONG
   TEST_EXEC builder.sh
-  TEST_ARGS -n -d 1 hosts-1-1-0.txt daqrate_perf_nosink.fcl
+  TEST_ARGS -n -d 1 hosts-1-1-0.txt daqrate_perf_fileread_nosink.fcl
   DATAFILES hosts-1-1-0.txt
-  fcl/daqrate_perf_nosink.fcl
+  fcl/daqrate_perf_fileread_nosink.fcl
   TEST_PROPERTIES RUN_SERIAL true
   )
 
-cet_test(daqrate_perf_nosink_04_t
+cet_test(daqrate_perf_fileread_nosink_04_t
   HANDBUILT
   OPTIONAL_GROUPS PERF;LONG
   TEST_EXEC builder.sh
-  TEST_ARGS -n -d 1 hosts-1-1-0-mix.txt daqrate_perf_nosink.fcl
+  TEST_ARGS -n -d 1 hosts-1-1-0-mix.txt daqrate_perf_fileread_nosink.fcl
   DATAFILES hosts-1-1-0-mix.txt
-  fcl/daqrate_perf_nosink.fcl
+  fcl/daqrate_perf_fileread_nosink.fcl
   TEST_PROPERTIES RUN_SERIAL true
   )
