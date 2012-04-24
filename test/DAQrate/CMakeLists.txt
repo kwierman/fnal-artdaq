@@ -11,7 +11,10 @@ find_package(MPI REQUIRED)
 LIST(REMOVE_AT MPI_LIBRARIES 0)
 include_directories(${MPI_INCLUDE_PATH})
 
-cet_test(cpi_t SOURCES ${MPI_INCLUDE_PATH}/../share/examples_graphics/cpi.c LIBRARIES ${MPI_LIBRARIES})
+set(CPI_SOURCE ${MPI_INCLUDE_PATH}/../share/examples_graphics/cpi.c)
+if (EXISTS ${CPI_SOURCE})
+  cet_test(cpi_t SOURCES ${CPI_SOURCE} LIBRARIES ${MPI_LIBRARIES})
+endif()
 
 cet_test(daqrate_fileread_nosink HANDBUILT
   TEST_EXEC daqrate

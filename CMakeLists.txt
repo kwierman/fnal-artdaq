@@ -108,6 +108,12 @@ SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 #build all executables in a single directory
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
+# Debug streamer.
+string(TOUPPER ${CMAKE_BUILD_TYPE} BTYPE_UC)
+if(BTYPE_UC STREQUAL DEBUG)
+  add_definitions(-DDEBUGME)
+endif()
+
 message(STATUS "Project is ${product} ${version}")
 
 # macros for artdaq_dictionary and simple_plugin

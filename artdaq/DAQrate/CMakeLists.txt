@@ -15,11 +15,6 @@ include_directories(${MPI_INCLUDE_PATH})
 set( LIB_NAME artdaq_DAQrate )
 find_library( FHICLCPP NAMES fhiclcpp PATHS $ENV{FHICLCPP_LIB} )
 
-string(TOUPPER ${CMAKE_BUILD_TYPE} BTYPE_UC)
-if(BTYPE_UC STREQUAL DEBUG)
-  add_definitions(-DDEBUGME)
-endif()
-
 set(LIB_SOURCES
   GlobalQueue.cc
   Config.cc
