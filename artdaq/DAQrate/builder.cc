@@ -282,7 +282,7 @@ void Program::detector()
   daq_control_ps_.get_if_present("fragments_per_source", fragments_per_source);
   artdaq::FragmentPtrs frags;
   size_t fragments_sent = 0;
-  while (gen->getNext(frags) && fragments_sent < fragments_per_source) {
+  while (fragments_sent < fragments_per_source && gen->getNext(frags)) {
     if (!fragments_sent) {
       // Get the detectors lined up first time before we start the
       // firehoses.
