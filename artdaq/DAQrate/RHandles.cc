@@ -79,7 +79,6 @@ recvFragment(Fragment & output)
   Debug << "recv: " << rank
         << " idx=" << which
         << " status_error=" << status.MPI_ERROR
-        << " status_count=" << status.count
         << " source=" << status.MPI_SOURCE
         << " tag=" << status.MPI_TAG
         << " Fragment_sequenceID=" << sequence_id
