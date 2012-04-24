@@ -93,9 +93,17 @@ if (scalar @host_list) {
 }
 
 my @cmd = (defined $wanted_node)?("numactl", "--preferred", "$wanted_node", "--cpunodebind", "$wanted_node", "--"):();
+$ENV{MV2_ENABLE_AFFINITY} = 0
+  if scalar @cmd; # Disable mvapich2's own NUMA affinity handling.
+
 splice @cmd, $#cmd + 1, 0, @ARGV;
 
-print STDERR sprintf("numawrap: executing %s.\n", join(" ", @cmd))
+my $hostname = `hostname -f`;
+chomp $hostname;
+
+print STDERR sprintf("numawrap on host %s: executing %s.\n",
+                     $host_list[$rank] || $hostname || "UNKNOWN",
+                     join(" ", @cmd))
   if $options->{verbose};
 
 exec @cmd or die sprintf("EXEC error $!: could not execute %s", join(" ", @cmd));
