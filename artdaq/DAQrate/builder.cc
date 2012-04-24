@@ -164,7 +164,7 @@ Program::Program(int argc, char * argv[]):
   fhicl::make_ParameterSet(vm["config"].as<std::string>(),
                            lookup_policy, pset);
   daq_control_ps_ = pset.get<fhicl::ParameterSet>("daq");
-  daq_control_ps_.get_if_present("wantSink", want_sink_);
+  daq_control_ps_.get_if_present("want_sink", want_sink_);
   daq_control_ps_.get_if_present("wantPeriodicSync", want_periodic_sync_);
   source_buffers_ = daq_control_ps_.get<size_t>("source_buffers", 10);
   sink_buffers_ = daq_control_ps_.get<size_t>("sink_buffers", 10);
