@@ -53,6 +53,7 @@ enum Color_t : int { DETECTOR, SOURCE, SINK };
 
   Config conf_;
   bool want_sink_;
+  bool want_periodic_sync_;
   size_t source_buffers_;
   size_t sink_buffers_;
   fhicl::ParameterSet daq_control_ps_;
@@ -127,6 +128,7 @@ Program::Program(int argc, char * argv[]):
   MPIProg(argc, argv),
   conf_(rank_, procs_, argc, argv),
   want_sink_(true),
+  want_periodic_sync_(false),
   source_buffers_(0),
   sink_buffers_(0),
   daq_control_ps_(),
@@ -163,6 +165,7 @@ Program::Program(int argc, char * argv[]):
                            lookup_policy, pset);
   daq_control_ps_ = pset.get<fhicl::ParameterSet>("daq");
   daq_control_ps_.get_if_present("wantSink", want_sink_);
+  daq_control_ps_.get_if_present("wantPeriodicSync", want_periodic_sync_);
   source_buffers_ = daq_control_ps_.get<size_t>("source_buffers", 10);
   sink_buffers_ = daq_control_ps_.get<size_t>("sink_buffers", 10);
   PerfConfigure(conf_, 0); // Don't know how many events.
@@ -194,7 +197,6 @@ void Program::go()
   default:
     throw "No such node type";
   }
-  // MPI_Barrier(MPI_COMM_WORLD);
   PerfWriteJobEnd();
 }
 
@@ -274,7 +276,6 @@ void Program::detector()
                      1, // Direct.
                      conf_.getDestFriend());
   MPI_Barrier(local_group_comm_);
-  // MPI_Barrier(MPI_COMM_WORLD);
   // not using the run time method
   // TimedLoop tl(conf_.run_time_);
   size_t fragments_per_source = -1;
@@ -290,7 +291,7 @@ void Program::detector()
   for (auto & fragPtr : frags) {
       h.sendFragment(std::move(*fragPtr));
       if (++fragments_sent == fragments_per_source) { break; }
-      if ((fragments_sent % 100) == 0) {
+      if (want_periodic_sync_ && (fragments_sent % 100) == 0) {
         // Don't get too far out of sync.
         MPI_Barrier(local_group_comm_);
       }
