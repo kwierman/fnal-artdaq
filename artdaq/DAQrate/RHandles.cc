@@ -11,11 +11,11 @@
 #include <sstream>
 
 artdaq::RHandles::RHandles(size_t buffer_count,
-                           uint64_t max_initial_send_words,
+                           uint64_t max_payload_size,
                            size_t src_count,
                            size_t src_start):
   buffer_count_(buffer_count),
-  max_initial_send_words_(max_initial_send_words),
+  max_payload_size_(max_payload_size),
   src_count_(src_count),
   src_start_(src_start),
   reqs_(buffer_count_, MPI_REQUEST_NULL),
@@ -26,12 +26,12 @@ artdaq::RHandles::RHandles(size_t buffer_count,
   // post all the buffers, making sure that the source numbers are correct
   for (int i = 0; i < buffer_count_; ++i) {
     // make sure all buffers are the correct size
-    payload_[i].resize(max_initial_send_words_);
+    payload_[i].resize(max_payload_size_);
     int from = nextSource_();
-    Debug << "Posting buffer " << i << " size=" << max_initial_send_words_
+    Debug << "Posting buffer " << i << " size=" << payload_[i].size()
           << " for receive from=" << from << flusher;
     MPI_Irecv(&*payload_[i].headerBegin(),
-              (max_initial_send_words_ * sizeof(Fragment::value_type)),
+              (payload_[i].size() * sizeof(Fragment::value_type)),
               MPI_BYTE,
               from,
               MPI_ANY_TAG,
@@ -78,6 +78,7 @@ recvFragment(Fragment & output)
   Fragment::sequence_id_t sequence_id = payload_[which].sequenceID();
   Debug << "recv: " << rank
         << " idx=" << which
+        << " Waitany_error=" << wait_result
         << " status_error=" << status.MPI_ERROR
         << " source=" << status.MPI_SOURCE
         << " tag=" << status.MPI_TAG
@@ -105,18 +106,18 @@ recvFragment(Fragment & output)
                          detail::RawFragmentHeader::num_words());;
   output.swap(payload_[which]);
   // Reset our buffer.
-  Fragment tmp(max_initial_send_words_);
+  Fragment tmp(max_payload_size_);
   payload_[which].swap(tmp);
   // Performance measurement.
   rm.woke(sequence_id, which);
   // Repost to receive more data from possibly different sources.
   int from = nextSource_();
   Debug << "Posting buffer " << which
-        << " size=" << max_initial_send_words_
+        << " size=" << payload_[which].size()
         << " for receive from=" << from
         << flusher;
   MPI_Irecv(&*payload_[which].headerBegin(),
-            (max_initial_send_words_ * sizeof(Fragment::value_type)),
+            (payload_[which].size() * sizeof(Fragment::value_type)),
             MPI_BYTE,
             from,
             MPI_ANY_TAG,

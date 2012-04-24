@@ -6,16 +6,17 @@
 #include <functional>
 
 artdaq::GenericFragmentSimulator::GenericFragmentSimulator(fhicl::ParameterSet const & ps) :
-  content_selection_(ps.get<content_selector_t>("content_selection",
-                     content_selector_t::EMPTY)),
-  fragment_size_spec_(ps.get<size_t>("fragment_size", 10240)),
+  content_selection_(static_cast<content_selector_t>
+                     (ps.get<size_t>("content_selection", 0))),
+  payload_size_spec_(ps.get<size_t>("payload_size", 10240)),
   events_to_generate_(ps.get<size_t>("events_to_generate", 0)),
   fragments_per_event_(ps.get<size_t>("fragments_per_event", 5)),
+  starting_fragment_id_(ps.get<size_t>("starting_fragment_id", 0)),
   run_number_(ps.get<RawDataType>("run_number", 1)),
-  want_random_fragment_size_(ps.get<bool>("want_random_fragment_size", true)),
+  want_random_payload_size_(ps.get<bool>("want_random_payload_size", false)),
   current_event_num_(0),
   engine_(ps.get<int64_t>("random_seed", 314159)),
-  fragment_size_generator_(engine_, fragment_size_spec_),
+  payload_size_generator_(engine_, payload_size_spec_),
   fragment_content_generator_(engine_)
 { }
 
@@ -32,7 +33,7 @@ artdaq::GenericFragmentSimulator::getNext_(FragmentPtrs & frags)
   }
   Fragment::fragment_id_t fragID(0);
   frags.reserve(frags.size() + fragments_per_event_);
-  for (size_t i = 0; i < fragments_per_event_; ++i) {
+  for (size_t i = starting_fragment_id_; i < fragments_per_event_; ++i) {
     ++fragID;
     frags.emplace_back();
     bool result =
@@ -49,17 +50,17 @@ getNext(Fragment::sequence_id_t sequence_id,
         FragmentPtr & frag_ptr)
 {
   frag_ptr.reset(new Fragment(sequence_id, fragment_id));
-  size_t fragment_size = generateFragmentSize_();
-  frag_ptr->resize(fragment_size, 0);
+  size_t payload_size = generateFragmentSize_();
+  frag_ptr->resize(payload_size, 0);
   switch (content_selection_) {
     case content_selector_t::EMPTY:
       break; // values are already correct
     case content_selector_t::FRAG_ID:
-      std::fill_n(frag_ptr->dataBegin(), fragment_size, fragment_id);
+      std::fill_n(frag_ptr->dataBegin(), payload_size, fragment_id);
       break;
     case content_selector_t::RANDOM:
       std::generate_n(frag_ptr->dataBegin(),
-                      fragment_size,
+                      payload_size,
       [&]() -> long {
         return
         fragment_content_generator_.
@@ -69,7 +70,7 @@ getNext(Fragment::sequence_id_t sequence_id,
       break;
     case content_selector_t::DEAD_BEEF:
       std::fill_n(frag_ptr->dataBegin(),
-                  fragment_size,
+                  payload_size,
                   0xDEADBEEFDEADBEEF);
       break;
     default:
@@ -85,7 +86,7 @@ std::size_t
 artdaq::GenericFragmentSimulator::
 generateFragmentSize_()
 {
-  return want_random_fragment_size_ ?
-         fragment_size_generator_.fire() :
-         fragment_size_spec_;
+  return want_random_payload_size_ ?
+         payload_size_generator_.fire() :
+         payload_size_spec_;
 }

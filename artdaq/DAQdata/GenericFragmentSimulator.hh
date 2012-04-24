@@ -48,16 +48,17 @@ private:
 
   // Configuration
   content_selector_t const content_selection_;
-  std::size_t const fragment_size_spec_; // Poisson mean if random size wanted.
+  std::size_t const payload_size_spec_; // Poisson mean if random size wanted.
   std::size_t const events_to_generate_; // Go forever if this is 0
   std::size_t const fragments_per_event_;
+  std::size_t const starting_fragment_id_;
   RawDataType const run_number_;
-  bool const want_random_fragment_size_;
+  bool const want_random_payload_size_;
 
   // State
   std::size_t current_event_num_;
   CLHEP::HepJamesRandom engine_;
-  CLHEP::RandPoissonT fragment_size_generator_;
+  CLHEP::RandPoissonT payload_size_generator_;
   CLHEP::RandFlat fragment_content_generator_;
 };
 

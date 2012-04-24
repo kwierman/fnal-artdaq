@@ -5,6 +5,7 @@
 #include "artdaq/DAQdata/Debug.hh"
 #include "artdaq/DAQdata/DS50FragmentReader.hh"
 #include "artdaq/DAQdata/DS50FragmentSimulator.hh"
+#include "artdaq/DAQdata/GenericFragmentSimulator.hh"
 #include "artdaq/DAQrate/EventStore.hh"
 #include "artdaq/DAQdata/FragmentGenerator.hh"
 #include "artdaq/DAQrate/MPIProg.hh"
@@ -49,14 +50,16 @@ public:
 private:
 enum Color_t : int { DETECTOR, SOURCE, SINK };
 
+  fhicl::ParameterSet getPset(char const * progname);
   void printHost(const std::string & functionName) const;
 
   Config conf_;
-  bool want_sink_;
-  bool want_periodic_sync_;
-  size_t source_buffers_;
-  size_t sink_buffers_;
-  fhicl::ParameterSet daq_control_ps_;
+  fhicl::ParameterSet const daq_pset_;
+  bool const want_sink_;
+  bool const want_periodic_sync_;
+  size_t const max_payload_size_words_;
+  size_t const source_buffers_;
+  size_t const sink_buffers_;
   MPI_Comm local_group_comm_;
 };
 
@@ -64,7 +67,7 @@ artdaq::FragmentGenerator *
 make_generator(fhicl::ParameterSet const & ps)
 {
   if (ps.get<bool>("generate_data"))
-  { return new ds50::FragmentSimulator(ps); }
+  { return new artdaq::GenericFragmentSimulator(ps); }
   else
   { return new ds50::FragmentReader(ps); }
 }
@@ -127,47 +130,16 @@ total(size_t slot) const
 Program::Program(int argc, char * argv[]):
   MPIProg(argc, argv),
   conf_(rank_, procs_, argc, argv),
-  want_sink_(true),
-  want_periodic_sync_(false),
-  source_buffers_(0),
-  sink_buffers_(0),
-  daq_control_ps_(),
+  daq_pset_(getPset(argv[0])),
+  want_sink_(daq_pset_.get<bool>("want_sink", true)),
+  want_periodic_sync_(daq_pset_.get<bool>("want_periodic_sync", false)),
+  max_payload_size_words_(daq_pset_.get<size_t>("max_payload_size_words", 512 * 1024)),
+  source_buffers_(daq_pset_.get<size_t>("source_buffers", 10)),
+  sink_buffers_(daq_pset_.get<size_t>("sink_buffers", 10)),
   local_group_comm_()
 {
-  char buf[1024];
-  getcwd(buf, 1024);
   conf_.writeInfo();
   configureDebugStream(conf_.rank_, conf_.run_);
-  std::ostringstream descstr;
-  descstr << argv[0]
-          << " <-c <config-file>>";
-  bpo::options_description desc(descstr.str());
-  desc.add_options()
-  ("config,c", bpo::value<std::string>(), "Configuration file.");
-  bpo::variables_map vm;
-  try {
-    bpo::store(bpo::command_line_parser(conf_.art_argc_, conf_.art_argv_).
-               options(desc).allow_unregistered().run(), vm);
-    bpo::notify(vm);
-  }
-  catch (bpo::error const & e) {
-    std::cerr << "Exception from command line processing in " << argv[0]
-              << ": " << e.what() << "\n";
-    throw "cmdline parsing error.";
-  }
-  if (!vm.count("config")) {
-    std::cerr << "Expected \"-- -c <config-file>\" fhicl file specification.\n";
-    throw "cmdline parsing error.";
-  }
-  fhicl::ParameterSet pset;
-  cet::filepath_lookup lookup_policy("FHICL_FILE_PATH");
-  fhicl::make_ParameterSet(vm["config"].as<std::string>(),
-                           lookup_policy, pset);
-  daq_control_ps_ = pset.get<fhicl::ParameterSet>("daq");
-  daq_control_ps_.get_if_present("want_sink", want_sink_);
-  daq_control_ps_.get_if_present("wantPeriodicSync", want_periodic_sync_);
-  source_buffers_ = daq_control_ps_.get<size_t>("source_buffers", 10);
-  sink_buffers_ = daq_control_ps_.get<size_t>("sink_buffers", 10);
   PerfConfigure(conf_, 0); // Don't know how many events.
 }
 
@@ -206,11 +178,11 @@ void Program::source()
   // needs to get data from the detectors and send it to the sinks
   artdaq::Fragment frag;
   artdaq::RHandles from_d(source_buffers_,
-                          conf_.max_initial_send_words_,
+                          max_payload_size_words_,
                           1, // Direct.
                           conf_.getSrcFriend());
   artdaq::SHandles to_r(sink_buffers_,
-                        conf_.max_initial_send_words_,
+                        max_payload_size_words_,
                         conf_.sinks_,
                         conf_.sink_start_);
   // TODO: For v2.0, use GMP here and in the detector / sink.
@@ -259,27 +231,27 @@ void Program::detector()
   std::ostringstream det_ps_name_loc;
   std::vector<std::string> detectors;
   size_t detectors_size = 0;
-  if (!(daq_control_ps_.get_if_present("detectors", detectors) &&
+  if (!(daq_pset_.get_if_present("detectors", detectors) &&
         (detectors_size = detectors.size()))) {
     throw cet::exception("Configuration")
         << "Unable to find required sequence of detector "
         << "parameter set names, \"detectors\".";
   }
   fhicl::ParameterSet det_ps =
-    daq_control_ps_.get<fhicl::ParameterSet>
+    daq_pset_.get<fhicl::ParameterSet>
     ((detectors_size > static_cast<size_t>(detector_rank)) ?
      detectors[detector_rank] :
      detectors[0]);
   std::unique_ptr<artdaq::FragmentGenerator> const gen(make_generator(det_ps));
   artdaq::SHandles h(source_buffers_,
-                     conf_.max_initial_send_words_,
+                     max_payload_size_words_,
                      1, // Direct.
                      conf_.getDestFriend());
   MPI_Barrier(local_group_comm_);
   // not using the run time method
   // TimedLoop tl(conf_.run_time_);
   size_t fragments_per_source = -1;
-  daq_control_ps_.get_if_present("fragments_per_source", fragments_per_source);
+  daq_pset_.get_if_present("fragments_per_source", fragments_per_source);
   artdaq::FragmentPtrs frags;
   size_t fragments_sent = 0;
   while (fragments_sent < fragments_per_source && gen->getNext(frags)) {
@@ -314,7 +286,7 @@ void Program::sink()
     int sink_rank;
     MPI_Comm_rank(local_group_comm_, &sink_rank);
     artdaq::EventStore::ARTFUL_FCN * reader =
-      (daq_control_ps_.get<bool>("useArt", false)) ?
+      (daq_pset_.get<bool>("useArt", false)) ?
       &artapp :
       &artdaq::simpleQueueReaderApp;
     artdaq::EventStore events(conf_.detectors_,
@@ -324,7 +296,7 @@ void Program::sink()
                               conf_.art_argv_,
                               reader);
     artdaq::RHandles h(sink_buffers_ * std::ceil(1.0 * conf_.sources_ / conf_.sinks_),
-                       conf_.max_initial_send_words_,
+                       max_payload_size_words_,
                        conf_.sources_,
                        conf_.source_start_);
     size_t sources_sending = conf_.sources_;
@@ -358,6 +330,37 @@ void Program::sink()
   } // end of lifetime of 'events'
   Debug << "Sink done " << conf_.rank_ << flusher;
   MPI_Barrier(MPI_COMM_WORLD);
+}
+
+fhicl::ParameterSet
+Program::getPset(char const * progname)
+{
+  std::ostringstream descstr;
+  descstr << progname
+          << " <-c <config-file>>";
+  bpo::options_description desc(descstr.str());
+  desc.add_options()
+    ("config,c", bpo::value<std::string>(), "Configuration file.");
+  bpo::variables_map vm;
+  try {
+    bpo::store(bpo::command_line_parser(conf_.art_argc_, conf_.art_argv_).
+               options(desc).allow_unregistered().run(), vm);
+    bpo::notify(vm);
+  }
+  catch (bpo::error const & e) {
+    std::cerr << "Exception from command line processing in " << progname
+              << ": " << e.what() << "\n";
+    throw "cmdline parsing error.";
+  }
+  if (!vm.count("config")) {
+    std::cerr << "Expected \"-- -c <config-file>\" fhicl file specification.\n";
+    throw "cmdline parsing error.";
+  }
+  fhicl::ParameterSet pset;
+  cet::filepath_lookup lookup_policy("FHICL_FILE_PATH");
+  fhicl::make_ParameterSet(vm["config"].as<std::string>(),
+                           lookup_policy, pset);
+  return pset.get<fhicl::ParameterSet>("daq");
 }
 
 void Program::printHost(const std::string & functionName) const

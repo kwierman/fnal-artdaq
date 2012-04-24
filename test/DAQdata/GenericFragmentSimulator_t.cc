@@ -22,8 +22,8 @@ BOOST_AUTO_TEST_CASE(Simple)
   sim_config.put("events_to_generate", NUM_EVENTS);
   sim_config.put("fragments_per_event", NUM_FRAGS_PER_EVENT);
   sim_config.put("run_number", RUN_ID);
-  sim_config.put("want_random_fragment_size", false);
-  sim_config.put("fragment_size", FRAGMENT_SIZE);
+  sim_config.put("want_random_payload_size", false);
+  sim_config.put("payload_size", FRAGMENT_SIZE);
   artdaq::GenericFragmentSimulator sim(sim_config);
   artdaq::FragmentPtrs fragments;
   std::size_t num_events_seen = 0;

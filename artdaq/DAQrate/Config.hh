@@ -52,8 +52,6 @@ enum TaskType : int { TaskSink = 0, TaskSource = 1, TaskDetector = 2 };
   char ** art_argv_;
   bool use_artapp_;
 
-  static int const max_initial_send_words_ = 512 * 1024;
-
   void print(std::ostream & ost) const;
   void printHeader(std::ostream & ost) const;
 };

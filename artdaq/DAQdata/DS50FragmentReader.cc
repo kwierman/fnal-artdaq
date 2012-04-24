@@ -38,7 +38,7 @@ ds50::FragmentReader::getNext_(FragmentPtrs & frags)
   static size_t const ds50_words_per_frag_word =
     sizeof(Fragment::value_type) /
     sizeof(Board::data_t);
-  static size_t const initial_frag_size =
+  static size_t const initial_payload_size =
     Board::header_size_words() /
     ds50_words_per_frag_word;
   static size_t const header_size_bytes =
@@ -48,7 +48,7 @@ ds50::FragmentReader::getNext_(FragmentPtrs & frags)
   uint64_t read_bytes = 0;
   // Container into which to retrieve the header and interrogate with a
   // Board overlay.
-  Fragment header_frag(initial_frag_size);
+  Fragment header_frag(initial_payload_size);
   while (!((max_set_size_bytes_ < read_bytes) ||
            next_point_.first == fileNames_.end())) {
     if (!in_data.is_open()) {
@@ -95,10 +95,10 @@ ds50::FragmentReader::getNext_(FragmentPtrs & frags)
     }
     read_bytes += header_size_bytes;
     Board const board(header_frag);
-    size_t const final_frag_size =
+    size_t const final_payload_size =
       (board.event_size() + board.event_size() % 2) /
       ds50_words_per_frag_word;
-    frags.emplace_back(new Fragment(final_frag_size));
+    frags.emplace_back(new Fragment(final_payload_size));
     Fragment & frag = *frags.back();
     // Copy the header info in from header_frag.
     memcpy(&*frag.dataBegin(),

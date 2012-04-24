@@ -29,7 +29,7 @@ public:
   typedef std::vector<int> Flags; // busy flags
 
   SHandles(size_t buffer_count,
-           uint64_t max_initial_send_words,
+           uint64_t max_payload_size,
            size_t dest_count,
            size_t dest_start);
 
@@ -46,7 +46,7 @@ private:
                   int dest);
 
   size_t const buffer_count_;
-  uint64_t const max_initial_send_words_;
+  uint64_t const max_payload_size_;
   int const dest_count_;
   int const dest_start_;
   int pos_; // next slot to check

@@ -70,3 +70,23 @@ cet_test(daqrate_perf_fileread_nosink_04_t
   fcl/daqrate_perf_fileread_nosink.fcl
   TEST_PROPERTIES RUN_SERIAL true
   )
+
+cet_test(daqrate_perf_large_frag_nosink_01_t
+  HANDBUILT
+  OPTIONAL_GROUPS PERF;LONG
+  TEST_EXEC builder.sh
+  TEST_ARGS -n -d 1 hosts-1-1-0.txt daqrate_perf_large_frag_nosink.fcl
+  DATAFILES hosts-1-1-0.txt
+  fcl/daqrate_perf_large_frag_nosink.fcl
+  TEST_PROPERTIES RUN_SERIAL true
+  )
+
+cet_test(daqrate_perf_large_frag_nosink_02_t
+  HANDBUILT
+  OPTIONAL_GROUPS PERF;LONG
+  TEST_EXEC builder.sh
+  TEST_ARGS -n -d 1 hosts-1-1-0-mix.txt daqrate_perf_large_frag_nosink.fcl
+  DATAFILES hosts-1-1-0-mix.txt
+  fcl/daqrate_perf_large_frag_nosink.fcl
+  TEST_PROPERTIES RUN_SERIAL true
+  )

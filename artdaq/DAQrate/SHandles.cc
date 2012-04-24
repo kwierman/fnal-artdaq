@@ -10,12 +10,12 @@
 #include <algorithm>
 
 artdaq::SHandles::SHandles(size_t buffer_count,
-                           uint64_t max_initial_send_words,
+                           uint64_t max_payload_size,
                            size_t dest_count,
                            size_t dest_start)
   :
   buffer_count_(buffer_count),
-  max_initial_send_words_(max_initial_send_words),
+  max_payload_size_(max_payload_size),
   dest_count_(dest_count),
   dest_start_(dest_start),
   pos_(),
@@ -79,11 +79,13 @@ void
 artdaq::SHandles::
 sendFragTo(Fragment && frag, int dest)
 {
-  if (frag.size() > max_initial_send_words_) {
+  if (frag.dataSize() > max_payload_size_) {
     throw cet::exception("Unimplemented")
-        << "Current unable to deal with overlarge fragments (size > "
-        << max_initial_send_words_
-        << " words).";
+        << "Currently unable to deal with overlarge fragment payload ("
+        << frag.dataSize()
+        << " words > "
+        << max_payload_size_
+        << ").";
   }
   int buffer_idx = findAvailable();
   Fragment & curfrag = payload_[buffer_idx];

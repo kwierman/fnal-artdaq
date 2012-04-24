@@ -27,7 +27,7 @@ public:
   typedef std::vector<int> Flags; // busy flags
 
   RHandles(size_t buffer_count,
-           uint64_t max_initial_send_words,
+           uint64_t max_payload_size,
            size_t src_count,
            size_t src_start);
 
@@ -40,7 +40,7 @@ private:
   int nextSource_();
 
   int buffer_count_; // was size_
-  int max_initial_send_words_;
+  int max_payload_size_;
   int src_count_; // number of sources
   int src_start_; // start of the source ranks
 
