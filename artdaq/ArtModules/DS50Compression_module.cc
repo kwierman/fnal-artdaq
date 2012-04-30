@@ -9,7 +9,7 @@
 #include "artdaq/Compression/Properties.hh"
 #include "artdaq/Compression/SymTable.hh"
 #include "artdaq/DAQdata/DS50Board.hh"
-#include "artdaq/DAQdata/DS50RawData.hh"
+#include "artdaq/DAQdata/DS50CompressedEvent.hh"
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/Fragments.hh"
 #include "cpp0x/memory"
@@ -50,7 +50,7 @@ namespace ds50 {
       table_(callReadTable(table_file_)),
       encode_(table_)
   {
-    produces<DS50RawData>();
+    produces<CompressedEvent>();
     std::cerr << "Hello from DS50Compression\n";
   }
 
@@ -58,7 +58,7 @@ namespace ds50 {
   {
     art::Handle<artdaq::Fragments> handle;
     e.getByLabel(raw_label_, handle);
-    std::auto_ptr<DS50RawData> prod(new DS50RawData(*handle));
+    std::auto_ptr<CompressedEvent> prod(new CompressedEvent(*handle));
     // handle->dataBegin(), handle->dataEnd()
     size_t len = handle->size();
 #pragma omp parallel for shared(len, prod, handle)

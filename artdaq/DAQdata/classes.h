@@ -1,5 +1,5 @@
 #include "artdaq/DAQdata/Fragment.hh"
-#include "artdaq/DAQdata/DS50RawData.hh"
+#include "artdaq/DAQdata/DS50CompressedEvent.hh"
 #include "art/Persistency/Common/Wrapper.h"
 #include <vector>
 
@@ -8,8 +8,8 @@ template class art::Wrapper<std::vector<artdaq::Fragment> >;
 
 namespace {
   struct dictionary {
-    ds50::DS50RawData d1;
+    ds50::CompressedEvent d1;
   };
 }
 
-template class art::Wrapper<ds50::DS50RawData>;
+template class art::Wrapper<ds50::CompressedEvent>;

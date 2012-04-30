@@ -5,7 +5,7 @@ set(LIB_SOURCES
   DS50FragmentReader.cc
   DS50FragmentSimulator.cc
   DS50Board.cc
-  DS50RawData.cc 
+  DS50CompressedEvent.cc 
   Debug.cc
   Fragment.cc
   FragmentGenerator.cc

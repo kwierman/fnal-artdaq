@@ -5,13 +5,14 @@
   </class>
   <class name="std::vector<artdaq::Fragment>"/>
   <class name="art::Wrapper<std::vector<artdaq::Fragment> >"/>
-  <class name="ds50::DS50RawData::HeaderProxy"/>
-  <class name="ds50::DS50RawData::DS50HeaderVec"/>
+  <class name="ds50::CompressedEvent::HeaderProxy"/>
+  <class name="ds50::CompressedEvent::DS50HeaderVec"/>
   <class name="ds50::DataVec"/>
-  <class name="ds50::DS50RawData::CompVec"/>
-  <class name="ds50::DS50RawData::CountVec"/>
-  <class name="ds50::DS50RawData" ClassVersion="10">
+  <class name="ds50::CompressedEvent::CompVec"/>
+  <class name="ds50::CompressedEvent::CountVec"/>
+  <class name="ds50::CompressedEvent" ClassVersion="11">
+   <version ClassVersion="11" checksum="1248595738"/>
    <version ClassVersion="10" checksum="67982318"/>
   </class>
-  <class name="art::Wrapper<ds50::DS50RawData>"/>
+  <class name="art::Wrapper<ds50::CompressedEvent>"/>
 </lcgdict>

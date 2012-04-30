@@ -1,5 +1,5 @@
-#ifndef artdaq_DAQdata_DS50RawData_hh
-#define artdaq_DAQdata_DS50RawData_hh
+#ifndef artdaq_DAQdata_DS50CompressedEvent_hh
+#define artdaq_DAQdata_DS50CompressedEvent_hh
 
 // NOTE: the GPU might be more efficient at using 32-bit integers than 64-bit integers,
 // in this case the code below will need to be modified.
@@ -16,14 +16,14 @@
 #include <vector>
 
 namespace ds50 {
-  class DS50RawData;
+  class CompressedEvent;
 }
 
-class ds50::DS50RawData {
+class ds50::CompressedEvent {
 public:
-  DS50RawData() { }
+  CompressedEvent() { }
   // will set up the headers and the sizes given a set of fragments
-  explicit DS50RawData(std::vector<artdaq::Fragment> const & init);
+  explicit CompressedEvent(std::vector<artdaq::Fragment> const & init);
 
   DataVec & fragment(size_t which)
     { return compressed_fragments_.at(which); }
@@ -66,7 +66,7 @@ private:
 
 inline
 artdaq::Fragment
-ds50::DS50RawData::headerOnlyFrag(size_t which) const
+ds50::CompressedEvent::headerOnlyFrag(size_t which) const
 {
   using artdaq::Fragment;
   Fragment result
@@ -84,4 +84,4 @@ ds50::DS50RawData::headerOnlyFrag(size_t which) const
 }
 #endif /* USE_MODERN_FEATURES */
 
-#endif /* artdaq_DAQdata_DS50RawData_hh */
+#endif /* artdaq_DAQdata_DS50CompressedEvent_hh */

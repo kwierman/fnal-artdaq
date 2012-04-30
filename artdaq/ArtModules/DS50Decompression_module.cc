@@ -9,7 +9,7 @@
 #include "artdaq/Compression/Properties.hh"
 #include "artdaq/Compression/SymTable.hh"
 #include "artdaq/DAQdata/DS50Board.hh"
-#include "artdaq/DAQdata/DS50RawData.hh"
+#include "artdaq/DAQdata/DS50CompressedEvent.hh"
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/Fragments.hh"
 #include "cpp0x/memory"
@@ -70,7 +70,7 @@ namespace ds50 {
 
   void DS50Decompression::produce(art::Event & e)
   {
-    art::Handle<DS50RawData> handle;
+    art::Handle<CompressedEvent> handle;
     e.getByLabel(compressed_label_, handle);
     // handle->dataBegin(), handle->dataEnd()
     size_t len = handle->size();

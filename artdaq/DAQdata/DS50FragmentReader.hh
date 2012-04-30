@@ -30,4 +30,4 @@ private:
 
 };
 
-#endif /* artdaq_DAQdata_FragmentReader_hh */
+#endif /* artdaq_DAQdata_DS50FragmentReader_hh */

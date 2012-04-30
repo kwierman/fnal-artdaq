@@ -1,10 +1,10 @@
 
-#include "artdaq/DAQdata/DS50RawData.hh"
+#include "artdaq/DAQdata/DS50CompressedEvent.hh"
 
 #include <cstring>
 
 namespace ds50 {
-  DS50RawData::DS50RawData(std::vector<artdaq::Fragment> const & init):
+  CompressedEvent::CompressedEvent(std::vector<artdaq::Fragment> const & init):
     ds50_headers_(init.size()),
     compressed_fragments_(init.size()),
     counts_(init.size())
