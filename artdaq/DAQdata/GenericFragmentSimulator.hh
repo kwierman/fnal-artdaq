@@ -1,13 +1,11 @@
 #ifndef artdaq_DAQdata_GenericFragmentSimulator_hh
 #define artdaq_DAQdata_GenericFragmentSimulator_hh
 
-#include "CLHEP/Random/JamesRandom.h"
-#include "CLHEP/Random/RandFlat.h"
-#include "CLHEP/Random/RandPoissonT.h"
-
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQdata/FragmentGenerator.hh"
 #include "fhiclcpp/fwd.h"
+
+#include <random>
 
 namespace artdaq {
   class GenericFragmentSimulator;
@@ -57,9 +55,9 @@ private:
 
   // State
   std::size_t current_event_num_;
-  CLHEP::HepJamesRandom engine_;
-  CLHEP::RandPoissonT payload_size_generator_;
-  CLHEP::RandFlat fragment_content_generator_;
+  std::mt19937 engine_;
+  std::poisson_distribution<size_t> payload_size_generator_;
+  std::uniform_int_distribution<uint64_t> fragment_content_generator_;
 };
 
 #endif /* artdaq_DAQdata_GenericFragmentSimulator_hh */

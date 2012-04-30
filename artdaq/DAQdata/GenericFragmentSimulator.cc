@@ -16,8 +16,8 @@ artdaq::GenericFragmentSimulator::GenericFragmentSimulator(fhicl::ParameterSet c
   want_random_payload_size_(ps.get<bool>("want_random_payload_size", false)),
   current_event_num_(0),
   engine_(ps.get<int64_t>("random_seed", 314159)),
-  payload_size_generator_(engine_, payload_size_spec_),
-  fragment_content_generator_(engine_)
+  payload_size_generator_(payload_size_spec_),
+  fragment_content_generator_()
 { }
 
 artdaq::GenericFragmentSimulator::~GenericFragmentSimulator()
@@ -61,11 +61,10 @@ getNext(Fragment::sequence_id_t sequence_id,
     case content_selector_t::RANDOM:
       std::generate_n(frag_ptr->dataBegin(),
                       payload_size,
-      [&]() -> long {
-        return
-        fragment_content_generator_.
-        fireInt(std::numeric_limits<long>::max());
-      }
+                      [&]() -> long {
+                        return
+                          fragment_content_generator_(engine_);
+                      }
                      );
       break;
     case content_selector_t::DEAD_BEEF:
@@ -87,6 +86,6 @@ artdaq::GenericFragmentSimulator::
 generateFragmentSize_()
 {
   return want_random_payload_size_ ?
-         payload_size_generator_.fire() :
+         payload_size_generator_(engine_) :
          payload_size_spec_;
 }
