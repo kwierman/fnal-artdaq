@@ -1,0 +1,43 @@
+# The parent line must be the first non-comment line in the file
+# This line defines the product name and version
+parent artdaq	v0_00_01
+defaultqual	e1
+
+# These optional lines define the installed directories where
+# headers, libraries, and executables will be found
+# Use them only if your product does not conform to the defaults
+# Format: directory_type directory_path directory_name
+# The only recognized values of the first field are incdir, libdir, and bindir
+# The only recognized values of the second field are product_dir and fq_dir
+# The third field is not constrained
+# The examples here reflect the defaults
+incdir      product_dir include
+libdir      fq_dir      lib
+bindir      fq_dir      bin
+
+#
+product		version
+gcc		v4_6_1
+art_openmp v0_00_04
+mvapich2 v1_7_0
+
+# list products required ONLY for the build
+# any products here must NOT have qualifiers
+only_for_build	cetbuildtools	v2_00_05
+ 
+# a7  - with gcc 4.6.1 and external clhep 2.1.2.2
+# e1  - with gcc 4.6.1 and -std=c++0x
+# -nq- here means there is no qualifier
+# a - here means the dependent product is not required by the parent and will not be setup
+qualifier	art_openmp	mvapich2	gcc	notes
+e1:debug	e1:debug	-nq-		-nq-	-fopenmp;-std=c++0x;-Wno-deprecated-declarations
+e1:opt		e1:opt		-nq-		-nq-	-fopenmp;-std=c++0x;-Wno-deprecated-declarations
+e1:prof		e1:prof		-nq-		-nq-	-fopenmp;-std=c++0x;-Wno-deprecated-declarations
+
+# Preserve tabs and formatting in emacs and vi / vim:
+
+### Local Variables:
+### tab-width: 8
+### End:
+
+# vi:set ts=8 noexpandtab:
