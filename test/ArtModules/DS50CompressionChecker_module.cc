@@ -56,7 +56,9 @@ void ds50test::DS50CompressionChecker::analyze(art::Event const & e)
   assert(e.getByLabel(raw_label_, raw));
   assert(e.getByLabel(uncompressed_label_, uncomp));
   assert(raw->size() == uncomp->size());
-  for (size_t i = 0; i < raw->size(); ++i) {
+  size_t len = raw->size();
+#pragma omp parallel for shared(len, raw, uncomp)
+  for (size_t i = 0; i < len; ++i) {
     Fragment const & rf ((*raw)[i]);
     Fragment const & uf ((*uncomp)[i]);
     assert(rf.size() == uf.size());
