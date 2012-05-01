@@ -72,11 +72,9 @@ namespace ds50 {
   {
     art::Handle<CompressedEvent> handle;
     e.getByLabel(compressed_label_, handle);
-    // handle->dataBegin(), handle->dataEnd()
     size_t len = handle->size();
     std::auto_ptr<artdaq::Fragments> prod(new artdaq::Fragments(len));
-    #pragma omp parallel for \
-    shared(len, prod, handle)
+#pragma omp parallel for shared(len, prod, handle)
     for (size_t i = 0; i < len; ++i) {
 #ifndef NDEBUG
       mf::LogDebug("Loop")
@@ -101,7 +99,9 @@ namespace ds50 {
                  handle->fragment(i).begin(),
                  adc_start,
                  adc_end));
-      assert(size_check == newfrag.dataSize() - Board::header_size_words());
+      assert(safe_rescale(size_check, sizeof(Board::data_t)) ==
+             (newfrag.dataSize() -
+              safe_rescale(Board::header_size_words(), fToWFactor)));
     }
     e.put(prod);
   }
