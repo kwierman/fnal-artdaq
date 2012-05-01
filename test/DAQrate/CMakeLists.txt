@@ -1,4 +1,3 @@
-include(CetTest)
 
 cet_test(config_t LIBRARIES artdaq_DAQrate artdaq_DAQdata)
 

@@ -1,4 +1,3 @@
-include(CetTest)
 
 find_library( CETLIB NAMES cetlib PATHS $ENV{CETLIB_LIB} )
 find_library( ART_PERSISTENCY_COMMON_DICT NAMES art_Persistency_Common_dict PATHS $ENV{ART_OPENMP_LIB} )

@@ -1,4 +1,3 @@
-include(CetTest)
 
 link_libraries(artdaq_Compression)
 

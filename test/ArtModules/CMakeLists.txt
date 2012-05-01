@@ -1,4 +1,3 @@
-include(CetTest)
 
 simple_plugin(DS50CompressionChecker "module" artdaq_DAQdata NOINSTALL USE_BOOST_UNIT)
 

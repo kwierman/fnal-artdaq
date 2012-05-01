@@ -1,4 +1,3 @@
-include(CetTest)
 
 cet_test(FragmentGenerator_t USE_BOOST_UNIT
   LIBRARIES artdaq_DAQdata

@@ -22,7 +22,7 @@ fcl="$2"
 
 (( np = $(cat "$hosts" | wc -l) ))
 (( nb = np - 2 * nd ))
-declare -a numacmd=("$ARTDAQ_BUILD/bin/numawrap" "-v" "-H" "$hosts" "--ranks=0-$((2 * nd - 1))" "--")
+declare -a numacmd=("numawrap" "-v" "-H" "$hosts" "--ranks=0-$((2 * nd - 1))" "--")
 
 set -x
 mpirun_rsh --rsh -np $np -hostfile "$hosts" \
@@ -30,8 +30,9 @@ mpirun_rsh --rsh -np $np -hostfile "$hosts" \
 "ART_OPENMP_DIR=$ART_OPENMP_DIR" \
 "FHICL_FILE_PATH=\"$FHICL_FILE_PATH\"" \
 "LD_LIBRARY_PATH=\"$LD_LIBRARY_PATH\"" \
+"PATH=\"$PATH\"" \
 "${numacmd[@]}" \
-"$ARTDAQ_BUILD/bin/builder" \
+"builder" \
 $nd $nb 1 1 -- -c "$fcl"
 (( status = $? ))
 set +x
