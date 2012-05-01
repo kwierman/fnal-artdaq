@@ -31,8 +31,8 @@ namespace ds50 {
     virtual void endRun(art::Run & r);
 
   private:
-    std::string raw_label_;
-    std::string table_file_;
+    std::string const raw_label_;
+    std::string const table_file_;
     SymTable table_;
     Encoder encode_;
   };
