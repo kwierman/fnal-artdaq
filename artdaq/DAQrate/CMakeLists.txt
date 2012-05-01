@@ -23,6 +23,12 @@ set(LIB_SOURCES
   Utils.cc
   )
 
+set(LIB_LIBS
+  artdaq_DAQdata
+  ${FHICLCPP}
+  ${CLHEP}
+  )
+
 if(MPI_FOUND)
   list(APPEND LIB_SOURCES
     Config.cc
@@ -32,7 +38,7 @@ if(MPI_FOUND)
     RHandles.cc
     SHandles.cc
     )
-  list(append LIB_LIBS ${MPI_LIBRARIES})
+  list(APPEND LIB_LIBS ${MPI_LIBRARIES})
 endif()
 
 add_library( ${LIB_NAME} SHARED ${LIB_SOURCES} )
