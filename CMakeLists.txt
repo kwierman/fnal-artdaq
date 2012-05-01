@@ -110,17 +110,22 @@ if(BTYPE_UC STREQUAL DEBUG)
   add_definitions(-DDEBUGME)
 endif()
 
+find_package(MPI QUIET)
+if(MPI_FOUND)
+  LIST(REMOVE_AT MPI_LIBRARIES 0)
+endif()
+
 message(STATUS "Project is ${product} ${version}")
 
 # macros for artdaq_dictionary and simple_plugin
 include(ArtDictionary)
 include(BuildPlugins)
 
-# source
-add_subdirectory(artdaq)
-
 # testing
 add_subdirectory(test)
+
+# source
+add_subdirectory(artdaq)
 
 # ups - table and config files
 add_subdirectory(ups)

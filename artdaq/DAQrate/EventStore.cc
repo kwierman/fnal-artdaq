@@ -9,7 +9,6 @@
 #include <sstream>
 
 #include "cetlib/exception.h"
-#include "artdaq/DAQrate/quiet_mpi.hh"
 #include "artdaq/DAQrate/StatisticsCollection.hh"
 #include "artdaq/DAQrate/SimpleQueueReader.hh"
 #include "artdaq/DAQrate/Utils.hh"
@@ -18,13 +17,6 @@ using namespace std;
 
 namespace artdaq {
   const std::string EventStore::EVENT_RATE_STAT_KEY("EventStoreEventRate");
-
-  //   inline int get_mpi_rank()
-  //   {
-  //     int rk(0);
-  //     MPI_Comm_rank(MPI_COMM_WORLD, &rk);
-  //     return rk;
-  //   }
 
   EventStore::EventStore(size_t num_fragments_per_event,
                          run_id_t run,
@@ -49,23 +41,6 @@ namespace artdaq {
     StatisticsCollection::getInstance().
     addMonitoredQuantity(EVENT_RATE_STAT_KEY, mqPtr);
   }
-
-  //   EventStore::EventStore(size_t num_fragments_per_event,
-  //                          run_id_t run,
-  //                          ARTFUL_FCN* reader) :
-  //     id_(get_mpi_rank()),
-  //     num_fragments_per_event_(num_fragments_per_event),
-  //     run_id_(run),
-  //     subrun_id_(0),
-  //     events_(),
-  //     queue_(getGlobalQueue()),
-  //     reader_thread_(reader, 0, nullptr)
-  //   {
-  //     MonitoredQuantityPtr mqPtr(new MonitoredQuantity(1.0, 60.0));
-  //     StatisticsCollection::getInstance().
-  //       addMonitoredQuantity(EVENT_RATE_STAT_KEY, mqPtr);
-  //   }
-
 
   void EventStore::insert(FragmentPtr pfrag)
   {

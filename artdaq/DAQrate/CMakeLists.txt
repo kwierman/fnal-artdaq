@@ -7,40 +7,43 @@
 # ----------------------------------------------------------------------
 # Build this project's library:
 
-find_package(MPI REQUIRED)
-# Remove cxx library -- compiled with wrong version of GCC.
-LIST(REMOVE_AT MPI_LIBRARIES 0)
-include_directories(${MPI_INCLUDE_PATH})
+if(MPI_FOUND) # Have MPI
+  # Remove cxx library -- compiled with wrong version of GCC.
+  include_directories(${MPI_INCLUDE_PATH})
+endif()
 
 set( LIB_NAME artdaq_DAQrate )
 find_library( FHICLCPP NAMES fhiclcpp PATHS $ENV{FHICLCPP_LIB} )
 
 set(LIB_SOURCES
   GlobalQueue.cc
-  Config.cc
-  EventStore.cc
   MonitoredQuantity.cc
-  MPIProg.cc
-  Perf.cc
-  RHandles.cc
-  SHandles.cc
   SimpleQueueReader.cc
   StatisticsCollection.cc
   Utils.cc
   )
 
+if(MPI_FOUND)
+  list(APPEND LIB_SOURCES
+    Config.cc
+    EventStore.cc
+    MPIProg.cc
+    Perf.cc
+    RHandles.cc
+    SHandles.cc
+    )
+  list(append LIB_LIBS ${MPI_LIBRARIES})
+endif()
+
 add_library( ${LIB_NAME} SHARED ${LIB_SOURCES} )
 
-target_link_libraries( artdaq_DAQrate
-  artdaq_DAQdata
-  ${FHICLCPP}
-  ${CLHEP}
-  ${MPI_LIBRARIES}
-  )
+target_link_libraries(artdaq_DAQrate ${LIB_LIBS})
 
 include(CetTest)
-cet_test(daqrate PREBUILT NO_AUTO)
-cet_test(builder.sh PREBUILT NO_AUTO)
+if(MPI_FOUND)
+  cet_test(daqrate PREBUILT NO_AUTO)
+  cet_test(builder.sh PREBUILT NO_AUTO)
+endif()
 cet_test(numawrap PREBUILT NO_AUTO)
 
 # ----------------------------------------------------------------------
@@ -79,20 +82,18 @@ set ( art_exec_link_libraries
   ${Boost_FILESYSTEM_LIBRARY}
 )
 
-#target_link_libraries( artdaq_DAQrate
-#                       ${art_exec_link_libraries}
-#                       ${common_exec_link_libraries} )
+if(MPI_FOUND)
+  add_executable( perfdump perfdump.cc )
+  target_link_libraries(perfdump ${LIB_NAME})
 
-add_executable( perfdump perfdump.cc )
-target_link_libraries(perfdump ${LIB_NAME})
-
-add_executable( builder builder.cc )
-target_link_libraries(builder
-  ${LIB_NAME}
-  ${art_exec_link_libraries}
-  ${FHICLCPP}
-  ${common_exec_link_libraries}
-  )
+  add_executable( builder builder.cc )
+  target_link_libraries(builder
+    ${LIB_NAME}
+    ${art_exec_link_libraries}
+    ${FHICLCPP}
+    ${common_exec_link_libraries}
+    )
+endif()
 
 # ----------------------------------------------------------------------
 # Install this project's headers, sources, library, and executables:
