@@ -74,21 +74,23 @@ unless (defined $total_nodes) {
 
 my $wanted_node;
 
-if (scalar @host_list) {
-  my %nCount = ();
-  for (my $rCount = 0; $rCount < scalar @host_list; ++$rCount) {
-    grep {$_ eq $rCount;} @{$options->{ranks}} or next;
-    if ($rCount == $rank or $host_list[$rCount] eq $host_list[$rank]) {
-      $wanted_node = $nCount{$host_list[$rank]}++ % $total_nodes;
-      last;
+if (grep { $_ eq $rank; } @{$options->{ranks}}) {
+  if (scalar @host_list) {
+    my %nCount = ();
+    for (my $rCount = 0; $rCount < scalar @host_list; ++$rCount) {
+      grep {$_ eq $rCount;} @{$options->{ranks}} or next;
+      if ($rCount == $rank or $host_list[$rCount] eq $host_list[$rank]) {
+        $wanted_node = $nCount{$host_list[$rank]}++ % $total_nodes;
+        last;
+      }
     }
-  }
-} else { # All on one host.
-  foreach my $rCount (grep {$_ eq $rank;} @{$options->{ranks}}) {
-    if ($rCount == $rank) {
-      $wanted_node = $rCount % $total_nodes;
+  } else {                      # All on one host.
+    foreach my $rCount (grep {$_ eq $rank;} @{$options->{ranks}}) {
+      if ($rCount == $rank) {
+        $wanted_node = $rCount % $total_nodes;
+      }
+      ++$rCount;
     }
-    ++$rCount;
   }
 }
 
