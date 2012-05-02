@@ -42,8 +42,11 @@ public:
   void checkADCData() const; // Throws on failure.
 
   static constexpr size_t header_size_words();
+  static constexpr size_t adc_range();
 
 private:
+  static const int daq_adc_bits_ = 12;
+
   detail::Header const * header_() const;
   artdaq::Fragment const & data_;
 };
@@ -142,6 +145,14 @@ size_t
 ds50::Board::header_size_words()
 {
   return detail::Header::size_words;
+}
+
+inline
+constexpr
+size_t
+ds50::Board::adc_range()
+{
+  return (1 << daq_adc_bits_);
 }
 
 inline
