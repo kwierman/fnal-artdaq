@@ -2,8 +2,11 @@
 #define artdaq_DAQdata_DS50FragmentSimulator_hh
 
 #include "fhiclcpp/fwd.h"
+#include "artdaq/DAQdata/DS50Types.hh"
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQdata/FragmentGenerator.hh"
+
+#include <random>
 
 namespace ds50 {
   class FragmentSimulator;
@@ -24,7 +27,12 @@ private:
   std::size_t current_event_num_;
   std::size_t const events_to_generate_; // go forever if this is 0
   std::size_t const fragments_per_event_;
+  std::size_t const starting_fragment_id_;
+  std::size_t const nChannels_;
   artdaq::RawDataType const run_number_;
+  std::mt19937 engine_;
+  std::vector<std::vector<size_t>> adc_freqs_;
+  std::vector<std::discrete_distribution<adc_type>> content_generator_;
 };
 
 #endif /* artdaq_DAQdata_DS50FragmentSimulator_hh */
