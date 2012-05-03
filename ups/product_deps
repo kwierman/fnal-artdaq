@@ -19,12 +19,12 @@ bindir      fq_dir      bin
 product		version
 gcc		v4_6_1
 art_openmp v0_00_04
-mvapich2 v1_7_0
+mvapich2 v1_7_0 optional
 
 # list products required ONLY for the build
 # any products here must NOT have qualifiers
-only_for_build	cetbuildtools	v2_00_05
- 
+only_for_build	cetbuildtools	v2_01_00
+
 # a7  - with gcc 4.6.1 and external clhep 2.1.2.2
 # e1  - with gcc 4.6.1 and -std=c++0x
 # -nq- here means there is no qualifier
