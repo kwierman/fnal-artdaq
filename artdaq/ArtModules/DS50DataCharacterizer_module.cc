@@ -71,6 +71,7 @@ void ds50::DS50DataCharacterizer::analyze(art::Event const & e)
     auto const & frag((*handle)[i]);
     Board b(frag);
     size_t board_id(b.board_id());
+    assert(board_id < data_hist_.size());
     used_board_ids_.insert(board_id);
     auto & hist(data_hist_[board_id]);
     hist.resize(Board::adc_range());

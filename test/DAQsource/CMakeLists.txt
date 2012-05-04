@@ -13,7 +13,7 @@ simple_plugin(FragmentSniffer "module" artdaq_DAQdata)
 cet_test(raw_event_queue_reader_t USE_BOOST_UNIT
          LIBRARIES artdaq_DAQsource artdaq_DAQdata_dict artdaq_DAQdata)
 
-if(MPI_FONUD)
+if(MPI_FOUND)
   cet_test(daq_flow_t
     LIBRARIES
     artdaq_DAQrate
@@ -53,6 +53,7 @@ if(MPI_FONUD)
     TEST_EXEC driver
     TEST_ARGS -c driver_t.fcl
     DATAFILES driver_t.fcl
+    ${CMAKE_SOURCE_DIR}/artdaq/DAQdata/ds50_hist.dat
     )
 endif()
 

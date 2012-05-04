@@ -2,6 +2,34 @@ ds50:
 {
   generate_data: true
   events_to_generate: 400
+  fragments_per_event: 5
+  source_count: 5
   run_number: 10
-  source_count: 1
+  freqs_file: "ds50_hist.dat"
 }
+
+physics:
+{
+  analyzers:
+  {
+    char:
+    {
+      module_type: DS50DataCharacterizer
+      dist_file: "ds50_sim_hist.dat"
+      data_label: daq
+    }
+  }
+
+  a1: [ char ]
+  end_paths: [ a1 ]
+}
+
+source:
+{
+  module_type: RawInput
+  waiting_time: 20
+  resume_after_timeout: true
+  fileNames: [ dummy ]
+}
+
+process_name: DEVEL

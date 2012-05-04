@@ -7,6 +7,7 @@
 #include "artdaq/DAQdata/FragmentGenerator.hh"
 
 #include <random>
+#include <vector>
 
 namespace ds50 {
   class FragmentSimulator;
