@@ -26,7 +26,7 @@ ENDIF()
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Modules 
                       $ENV{CETBUILDTOOLS_DIR}/Modules 
-                      $ENV{ART_OPENMP_DIR}/Modules 
+                      $ENV{ART_DIR}/Modules 
 		      ${CMAKE_MODULE_PATH})
 
 include(CetCMakeEnv)
@@ -41,7 +41,7 @@ cet_report_compiler_flags()
 
 
 # these are minimum required versions, not the actual product versions
-find_ups_product( art_openmp v0_00_03 )
+find_ups_product( art v1_00_12 )
 
 find_ups_product( libsigcpp v2_2_10 )
 find_ups_product( clhep v2_1_1_0 )

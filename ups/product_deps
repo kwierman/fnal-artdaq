@@ -16,10 +16,10 @@ libdir      fq_dir      lib
 bindir      fq_dir      bin
 
 #
-product		version
+product		version		optional
 gcc		v4_6_1
-art_openmp v0_00_04
-mvapich2 v1_7_0 optional
+art		v1_00_12
+mvapich2	v1_7_0		optional
 
 # list products required ONLY for the build
 # any products here must NOT have qualifiers
@@ -29,10 +29,10 @@ only_for_build	cetbuildtools	v2_01_00
 # e1  - with gcc 4.6.1 and -std=c++0x
 # -nq- here means there is no qualifier
 # a - here means the dependent product is not required by the parent and will not be setup
-qualifier	art_openmp	mvapich2	gcc	notes
-e1:debug	e1:debug	-nq-		-nq-	-fopenmp;-std=c++0x;-Wno-deprecated-declarations
-e1:opt		e1:opt		-nq-		-nq-	-fopenmp;-std=c++0x;-Wno-deprecated-declarations
-e1:prof		e1:prof		-nq-		-nq-	-fopenmp;-std=c++0x;-Wno-deprecated-declarations
+qualifier	art		mvapich2	gcc	notes
+e1:debug	e1:debug	-nq-		-nq-	-std=c++0x;-Wno-deprecated-declarations
+e1:opt		e1:opt		-nq-		-nq-	-std=c++0x;-Wno-deprecated-declarations
+e1:prof		e1:prof		-nq-		-nq-	-std=c++0x;-Wno-deprecated-declarations
 
 # Preserve tabs and formatting in emacs and vi / vim:
 
