@@ -16,6 +16,7 @@ set( LIB_NAME artdaq_DAQrate )
 find_library( FHICLCPP NAMES fhiclcpp PATHS $ENV{FHICLCPP_LIB} )
 
 set(LIB_SOURCES
+  EventStore.cc
   GlobalQueue.cc
   MonitoredQuantity.cc
   SimpleQueueReader.cc
@@ -32,13 +33,16 @@ set(LIB_LIBS
 if(MPI_FOUND)
   list(APPEND LIB_SOURCES
     Config.cc
-    EventStore.cc
     MPIProg.cc
     Perf.cc
     RHandles.cc
     SHandles.cc
     )
   list(APPEND LIB_LIBS ${MPI_LIBRARIES})
+else()
+  set_source_files_properties(EventStore.cc
+    PROPERTIES COMPILE_DEFINITIONS ARTDAQ_NO_PERF
+    )
 endif()
 
 add_library( ${LIB_NAME} SHARED ${LIB_SOURCES} )

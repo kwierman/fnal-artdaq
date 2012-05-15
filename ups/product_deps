@@ -1,6 +1,6 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent artdaq	v0_00_01
+parent artdaq	v0_00_02
 defaultqual	e1
 
 # These optional lines define the installed directories where
@@ -33,6 +33,9 @@ qualifier	art		mvapich2	gcc	notes
 e1:debug	e1:debug	-nq-		-nq-	-std=c++0x;-Wno-deprecated-declarations
 e1:opt		e1:opt		-nq-		-nq-	-std=c++0x;-Wno-deprecated-declarations
 e1:prof		e1:prof		-nq-		-nq-	-std=c++0x;-Wno-deprecated-declarations
+e1:nompi:debug	e1:debug	-nq-		-nq-	-std=c++0x;-Wno-deprecated-declarations
+e1:nompi:opt	e1:opt		-nq-		-nq-	-std=c++0x;-Wno-deprecated-declarations
+e1:nompi:prof	e1:prof		-nq-		-nq-	-std=c++0x;-Wno-deprecated-declarations
 
 # Preserve tabs and formatting in emacs and vi / vim:
 

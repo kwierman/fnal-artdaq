@@ -34,7 +34,9 @@ cet_cmake_env()
 
 
 cet_set_compiler_flags(DIAGS VIGILANT WERROR EXTRA_FLAGS -pedantic)
-if ("${qualifier}" STREQUAL "e1")
+string(REPLACE ":" ";" qual_list ${qualifier})
+list(FIND qual_list "e1" e1_index)
+if (e1_index GREATER -1)
   cet_add_compiler_flags(CXX -fopenmp -std=c++0x;-Wno-deprecated-declarations)
 endif()
 cet_report_compiler_flags()
@@ -110,12 +112,16 @@ if(BTYPE_UC STREQUAL DEBUG)
   add_definitions(-DDEBUGME)
 endif()
 
-find_package(MPI QUIET)
-if(MPI_FOUND)
-  LIST(REMOVE_AT MPI_LIBRARIES 0)
+list(FIND qual_list "nompi" nompi_index)
+if(nompi_index EQUAL -1)
+  find_package(MPI QUIET)
+  if(MPI_FOUND)
+    LIST(REMOVE_AT MPI_LIBRARIES 0)
+  endif()
 endif()
 
-message(STATUS "Project is ${product} ${version}")
+message(STATUS "Project is ${product} ${version} ${qualifier}")
+message(STATUS "MPI_FOUND = ${MPI_FOUND}")
 
 # macros for artdaq_dictionary and simple_plugin
 include(ArtDictionary)

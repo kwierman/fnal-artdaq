@@ -1,6 +1,8 @@
 
 #include "artdaq/DAQrate/EventStore.hh"
+#ifndef ARTDAQ_NO_PERF
 #include "artdaq/DAQrate/Perf.hh"
+#endif
 #include <utility>
 #include <cstring>
 #include <dlfcn.h>
@@ -76,7 +78,9 @@ namespace artdaq {
       // map, report on statistics, and put the shared pointer onto
       // the event queue.
       RawEvent_ptr complete_event(loc->second);
+#ifndef ARTDAQ_NO_PERF
       PerfWriteEvent(EventMeas::END, sequence_id);
+#endif
       events_.erase(loc);
       queue_.enqNowait(complete_event);
       MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
