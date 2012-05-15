@@ -19,7 +19,7 @@ bindir      fq_dir      bin
 product		version		optional
 gcc		v4_6_1
 art		v1_00_12
-mvapich2	v1_7_0		optional
+mvapich2	v1_7_0		
 
 # list products required ONLY for the build
 # any products here must NOT have qualifiers
@@ -33,9 +33,9 @@ qualifier	art		mvapich2	gcc	notes
 e1:debug	e1:debug	-nq-		-nq-	-std=c++0x;-Wno-deprecated-declarations
 e1:opt		e1:opt		-nq-		-nq-	-std=c++0x;-Wno-deprecated-declarations
 e1:prof		e1:prof		-nq-		-nq-	-std=c++0x;-Wno-deprecated-declarations
-e1:nompi:debug	e1:debug	-nq-		-nq-	-std=c++0x;-Wno-deprecated-declarations
-e1:nompi:opt	e1:opt		-nq-		-nq-	-std=c++0x;-Wno-deprecated-declarations
-e1:nompi:prof	e1:prof		-nq-		-nq-	-std=c++0x;-Wno-deprecated-declarations
+e1:nompi:debug	e1:debug	-		-nq-	-std=c++0x;-Wno-deprecated-declarations
+e1:nompi:opt	e1:opt		-		-nq-	-std=c++0x;-Wno-deprecated-declarations
+e1:nompi:prof	e1:prof		-		-nq-	-std=c++0x;-Wno-deprecated-declarations
 
 # Preserve tabs and formatting in emacs and vi / vim:
 
