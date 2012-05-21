@@ -5,6 +5,7 @@
 #include "art/Framework/Principal/Run.h"
 #include "art/Framework/Principal/SubRun.h"
 #include "art/Persistency/Provenance/BranchType.h"
+#include "art/Persistency/Provenance/EventID.h"
 #include "artdaq/Compression/Encoder.hh"
 #include "artdaq/Compression/Properties.hh"
 #include "artdaq/Compression/SymTable.hh"
@@ -17,11 +18,42 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include <iostream>
+#include <list>
+#include <ostream>
+#include <fstream>
 #include <string>
+
+namespace {
+
+  struct compression_record {
+    art::EventID                    eid;
+    artdaq::Fragment::fragment_id_t fid;
+    std::size_t                     uncompressed_size;
+    std::size_t                     compressed_size;
+
+    compression_record(art::EventID e,
+                       artdaq::Fragment const& uncomp,
+                       ds50::DataVec const& comp) :
+      eid(e), fid(uncomp.fragmentID()),
+      uncompressed_size(uncomp.dataSize()),
+      compressed_size(comp.size())
+    { }
+  };
+
+  std::ostream& operator<< (std::ostream& os,
+                            compression_record const& r) {
+    os << r.eid << ' '
+       << r.fid << ' '
+       << r.uncompressed_size << ' '
+       << r.compressed_size;
+    return os;
+  }
+}
 
 namespace ds50 {
 
   class DS50Compression : public art::EDProducer {
+    static int const MPI_NOT_USED = -1;
   public:
     explicit DS50Compression(fhicl::ParameterSet const & p);
     virtual ~DS50Compression() { }
@@ -35,6 +67,11 @@ namespace ds50 {
     std::string const table_file_;
     SymTable table_;
     Encoder encode_;
+
+    int mpi_rank_;
+    bool record_compression_;
+    // we use a list to avoid timing glitches from a vector resizing.
+    std::list<compression_record> records_;
   };
 
   static SymTable callReadTable(std::string const & fname)
@@ -48,10 +85,12 @@ namespace ds50 {
     : raw_label_(p.get<std::string>("raw_label")),
       table_file_(p.get<std::string>("table_file")),
       table_(callReadTable(table_file_)),
-      encode_(table_)
+      encode_(table_),
+      mpi_rank_(p.get<int>("mpi_rank", MPI_NOT_USED)),
+      record_compression_(p.get<bool>("record_compression", false)),
+      records_()
   {
     produces<CompressedEvent>();
-    std::cerr << "Hello from DS50Compression\n";
   }
 
   void DS50Compression::produce(art::Event & e)
@@ -60,8 +99,8 @@ namespace ds50 {
     e.getByLabel(raw_label_, handle);
     std::auto_ptr<CompressedEvent> prod(new CompressedEvent(*handle));
     // handle->dataBegin(), handle->dataEnd()
-    size_t len = handle->size();
-#pragma omp parallel for shared(len, prod, handle)
+    size_t const len = handle->size();
+#pragma omp parallel for shared(prod, handle)
     for (size_t i = 0; i < len; ++i) {
       {
 #ifndef NDEBUG
@@ -84,10 +123,23 @@ namespace ds50 {
       prod->setFragmentBitCount(i, bit_count);
     }
     e.put(prod);
+
+    if (record_compression_) {
+      for (size_t i = 0; i < len; ++i) {
+        records_.emplace_back(e.id(), (*handle)[i], prod->fragment(i));
+      }
+    }
   }
 
   void DS50Compression::endSubRun(art::SubRun &) { }
-  void DS50Compression::endRun(art::Run &) { }
+
+  void DS50Compression::endRun(art::Run &) {
+    std::string filename("compression_stats_");
+    filename += std::to_string(mpi_rank_);
+    filename += ".txt";
+    std::ofstream ofs(filename);
+    for (auto const& r : records_) ofs << r << "\n";
+  }
 
   DEFINE_ART_MODULE(DS50Compression)
 }
