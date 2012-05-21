@@ -1,5 +1,3 @@
-project(artdaq_bladder)
-
 simple_plugin(DS50Compression "module" artdaq_Compression artdaq_DAQdata)
 simple_plugin(DS50Decompression "module" artdaq_Compression artdaq_DAQdata)
 simple_plugin(DS50DataCharacterizer "module" artdaq_DAQdata)
