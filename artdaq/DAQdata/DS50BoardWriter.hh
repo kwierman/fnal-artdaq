@@ -108,8 +108,9 @@ void
 ds50::BoardWriter::
 resize(size_t nAdcs)
 {
-  header_()->event_size = calc_event_size_words_(nAdcs);
-  frag_.resize(words_to_frag_words_(event_size()));
+  auto es(calc_event_size_words_(nAdcs));
+  frag_.resize(words_to_frag_words_(es));
+  header_()->event_size = es;
 }
 
 inline

@@ -83,8 +83,7 @@ namespace ds50 {
                  handle->fragment(i).begin(),
                  b.dataBegin(),
                  b.dataEnd()));
-      assert(size_check ==
-             b.total_adc_values() * sizeof(adc_type));
+      assert(size_check == b.total_adc_values());
     }
     e.put(prod);
   }
