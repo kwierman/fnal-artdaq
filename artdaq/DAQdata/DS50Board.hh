@@ -44,10 +44,14 @@ public:
   static constexpr size_t header_size_words();
   static constexpr size_t adc_range();
 
-private:
-  static const int daq_adc_bits_ = 12;
+protected:
+  static constexpr size_t adcs_per_word_();
+  static constexpr size_t words_per_frag_word_();
 
   detail::Header const * header_() const;
+
+private:
+  static const int daq_adc_bits_ = 12;
   artdaq::Fragment const & data_;
 };
 
@@ -104,14 +108,14 @@ inline
 size_t
 ds50::Board::total_adc_values() const
 {
-  return (event_size() - header_size_words()) * 2;
+  return (event_size() - header_size_words()) * adcs_per_word_();
 }
 
 inline
 ds50::adc_type const *
 ds50::Board::dataBegin() const
 {
-  return reinterpret_cast<adc_type const *>(header_()) + header_size_words() * 2;
+  return reinterpret_cast<adc_type const *>(header_() + 1);
 }
 
 inline
@@ -136,7 +140,7 @@ ds50::Board::findBadADC() const
                       dataEnd(),
                       [](adc_type const adc)
                       -> bool
-  { return (adc >> 12); });
+  { return (adc >> daq_adc_bits_); });
 }
 
 inline
@@ -152,7 +156,25 @@ constexpr
 size_t
 ds50::Board::adc_range()
 {
-  return (1 << daq_adc_bits_);
+  return (1ul << daq_adc_bits_);
+}
+
+inline
+constexpr
+size_t
+ds50::Board::
+adcs_per_word_()
+{
+  return sizeof(Board::data_t) / sizeof(adc_type);
+}
+
+inline
+constexpr
+size_t
+ds50::Board::
+words_per_frag_word_()
+{
+  return sizeof(artdaq::Fragment::value_type) / sizeof(Board::data_t);
 }
 
 inline

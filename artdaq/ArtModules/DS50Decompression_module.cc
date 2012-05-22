@@ -8,7 +8,7 @@
 #include "artdaq/Compression/Decoder.hh"
 #include "artdaq/Compression/Properties.hh"
 #include "artdaq/Compression/SymTable.hh"
-#include "artdaq/DAQdata/DS50Board.hh"
+#include "artdaq/DAQdata/DS50BoardWriter.hh"
 #include "artdaq/DAQdata/DS50CompressedEvent.hh"
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/Fragments.hh"
@@ -19,13 +19,6 @@
 #include <cmath>
 #include <iostream>
 #include <string>
-
-namespace {
-  template <class T>
-  T safe_rescale(T num, T div_by) {
-    return ceil(num / (static_cast<double>(div_by)));
-  }
-}
 
 namespace ds50 {
 
@@ -83,25 +76,15 @@ namespace ds50 {
 #endif
       artdaq::Fragment & newfrag = (*prod)[i];
       newfrag = (handle->headerOnlyFrag(i)); // Load in the header
-      Board b(newfrag);
-      static size_t const
-        fToWFactor(sizeof(artdaq::Fragment::value_type) /
-                   sizeof(Board::data_t));
-      newfrag.resize(b.event_size() / fToWFactor); // To hold decompressed data.
-      static size_t const
-        wToAFactor(sizeof(Board::data_t) / sizeof(adc_type));
-      auto adc_start = reinterpret_cast<adc_type *>
-                       (&*newfrag.dataBegin() +
-                        safe_rescale(Board::header_size_words(), wToAFactor));
-      auto adc_end   = b.dataEnd();
+      BoardWriter b(newfrag);
+      b.resize(b.total_adc_values());
       auto size_check __attribute__((unused))
         (decode_(handle->fragmentBitCount(i),
                  handle->fragment(i).begin(),
-                 adc_start,
-                 adc_end));
-      assert(safe_rescale(size_check, sizeof(Board::data_t)) ==
-             (newfrag.dataSize() -
-              safe_rescale(Board::header_size_words(), fToWFactor)));
+                 b.dataBegin(),
+                 b.dataEnd()));
+      assert(size_check ==
+             b.total_adc_values() * sizeof(adc_type));
     }
     e.put(prod);
   }

@@ -1,8 +1,7 @@
 #include "cetlib/exception.h"
 #include "artdaq/DAQdata/DS50FragmentSimulator.hh"
 #include "artdaq/DAQdata/DS50Board.hh"
-#include "artdaq/DAQdata/detail/DS50Header.hh"
-
+#include "artdaq/DAQdata/DS50BoardWriter.hh"
 #include "fhiclcpp/ParameterSet.h"
 
 #include <fstream>
@@ -87,25 +86,12 @@ ds50::FragmentSimulator::getNext_(FragmentPtrs & frags)
 // #pragma omp parallel for shared(fragID, frags)
 // TODO: Allow parallel operation by having multiple engines (with different seeds, of course).
   for (size_t i = 0; i < fragments_per_event_; ++i, ++fragID) {
-    frags.emplace_back(new Fragment(current_event_num_, fragID));
-    auto & newfrag(*frags.back());
-    // TODO: Hide numerology.
-    newfrag.resize((detail::Header::size_words + nChannels_ / 2) / 2);
-    // TODO: Should have a class for this.
-    detail::Header h { static_cast<detail::Header::event_size_t>(detail::Header::size_words + nChannels_ / 2),
-        0,
-        0,
-        0,
-        0,
-        fragID,
-        static_cast<detail::Header::event_counter_t>(current_event_num_),
-        0,
-        0
-        };
-    memcpy(&*newfrag.dataBegin(),
-           &h,
-           sizeof(h));
-    std::generate_n(reinterpret_cast<adc_type*>(&*newfrag.dataBegin() + detail::Header::size_words / 2),
+    frags.emplace_back(new Fragment);
+    BoardWriter newboard(*frags.back());
+    newboard.resize(nChannels_);
+    newboard.setBoardID(fragID);
+    newboard.setEventCounter(current_event_num_);
+    std::generate_n(newboard.dataBegin(),
                     nChannels_,
                     [this, i]() {
                       return static_cast<adc_type>

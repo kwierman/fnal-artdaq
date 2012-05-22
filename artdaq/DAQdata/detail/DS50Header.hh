@@ -29,6 +29,6 @@ struct ds50::detail::Header {
 
   uint32_t trigger_time_tag : 32;
 
-  static size_t const size_words = 4;
+  static size_t const size_words = 4ul;
 };
 #endif /* artdaq_DAQdata_detail_DS50Header_hh */
