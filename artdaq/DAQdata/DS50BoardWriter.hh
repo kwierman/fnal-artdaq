@@ -1,5 +1,11 @@
 #ifndef artdaq_DAQdata_DS50BoardWriter_hh
 #define artdaq_DAQdata_DS50BoardWriter_hh
+////////////////////////////////////////////////////////////////////////
+// DS50BoardWriter
+//
+// Fragment overlay for writing DS50 boards.
+//
+////////////////////////////////////////////////////////////////////////
 
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/FragmentHandle.hh"
@@ -10,6 +16,8 @@ namespace ds50 {
   class BoardWriter;
 }
 
+// Note the inheritance: order is important here (for construction
+// initialization order).
 class ds50::BoardWriter: artdaq::FragmentHandle, public ds50::Board {
 public:
   BoardWriter(artdaq::Fragment &);
@@ -19,6 +27,9 @@ public:
   adc_type * dataBegin();
   adc_type * dataEnd();
 
+// TODO: Render consistent with naming for accessors, one way or the
+// other. Note Fragment getters / setters should be taken into account
+// also.
   void setChannelMask(channel_mask_t mask);
   void setPattern(pattern_t pattern);
   void setBoardID(board_id_t id);
@@ -50,6 +61,7 @@ ds50::adc_type *
 ds50::BoardWriter::
 dataBegin()
 {
+  assert(frag_.dataSize() > words_to_frag_words_(header_size_words()));
   return reinterpret_cast<adc_type *>(header_() + 1);
 }
 
@@ -126,10 +138,10 @@ size_t
 ds50::BoardWriter::
 adcs_to_words_(size_t nAdcs)
 {
-  size_t mod = nAdcs % adcs_per_word_();
-  return mod ?
-    nAdcs / adcs_per_word_() + 1 :
-    nAdcs / adcs_per_word_();
+  auto mod(nAdcs % adcs_per_word_());
+  return (mod == 0) ?
+    nAdcs / adcs_per_word_() :
+    nAdcs / adcs_per_word_() + 1;
 }
 
 inline
@@ -147,6 +159,7 @@ inline
 ds50::detail::Header *
 ds50::BoardWriter::header_()
 {
+  assert(frag_.dataSize() >= words_to_frag_words_(header_size_words()));
   return reinterpret_cast<detail::Header *>(&*frag_.dataBegin());
 }
 
