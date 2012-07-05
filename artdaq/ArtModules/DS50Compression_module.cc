@@ -61,7 +61,6 @@ namespace {
 namespace ds50 {
 
   class DS50Compression : public art::EDProducer {
-    static int const MPI_NOT_USED = -1;
   public:
     explicit DS50Compression(fhicl::ParameterSet const & p);
     virtual ~DS50Compression() { }
