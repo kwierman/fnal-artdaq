@@ -45,19 +45,6 @@ namespace artdaq {
     EventStore(EventStore const &) = delete;
     EventStore & operator=(EventStore const &) = delete;
 
-    // This constructor is obsolete; please modify your code to use
-    // the c'tor below it...
-    EventStore(int, int, int, char **) :
-      id_(),
-      num_fragments_per_event_(),
-      run_id_(),
-      subrun_id_(),
-      events_(),
-      queue_(getGlobalQueue()),
-      reader_thread_() {
-      throw "This constructor is obsolete\n";
-    }
-
     // Create an EventStore that uses 'reader' as the function to be
     // executed by the thread this EventStore will spawn.
     EventStore(size_t num_fragments_per_event, run_id_t run,
