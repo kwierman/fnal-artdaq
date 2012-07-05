@@ -1,5 +1,3 @@
-project(artdaq_bladder)
-
 if(MPI_FOUND) # Have MPI
   # Remove cxx library -- compiled with wrong version of GCC.
   include_directories(${MPI_INCLUDE_PATH})
