@@ -17,6 +17,8 @@
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
+#include "artdaq/DAQrate/quiet_mpi.hh"
+
 #include <iostream>
 #include <list>
 #include <ostream>
@@ -24,6 +26,12 @@
 #include <string>
 
 namespace {
+
+  int my_mpi_rank() {
+    int myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+    return myrank;
+  }
 
   struct compression_record {
     art::EventID                    eid;
@@ -42,7 +50,7 @@ namespace {
 
   std::ostream& operator<< (std::ostream& os,
                             compression_record const& r) {
-    os << r.eid << ' '
+    os << r.eid.run() << ' ' << r.eid.subRun() << ' ' << r.eid.event() << ' '
        << r.fid << ' '
        << r.uncompressed_size << ' '
        << r.compressed_size;
@@ -86,7 +94,7 @@ namespace ds50 {
       table_file_(p.get<std::string>("table_file")),
       table_(callReadTable(table_file_)),
       encode_(table_),
-      mpi_rank_(p.get<int>("mpi_rank", MPI_NOT_USED)),
+      mpi_rank_(my_mpi_rank()),
       record_compression_(p.get<bool>("record_compression", false)),
       records_()
   {
@@ -122,13 +130,14 @@ namespace ds50 {
       prod->fragment(i).resize(std::ceil(bit_count / (8.0 * sizeof(DataVec::value_type))));
       prod->setFragmentBitCount(i, bit_count);
     }
-    e.put(prod);
 
     if (record_compression_) {
       for (size_t i = 0; i < len; ++i) {
         records_.emplace_back(e.id(), (*handle)[i], prod->fragment(i));
       }
     }
+
+    e.put(prod);
   }
 
   void DS50Compression::endSubRun(art::SubRun &) { }
@@ -137,8 +146,17 @@ namespace ds50 {
     std::string filename("compression_stats_");
     filename += std::to_string(mpi_rank_);
     filename += ".txt";
+    std::cerr << "Attempting to open file: " << filename << std::endl;
+
     std::ofstream ofs(filename);
-    for (auto const& r : records_) ofs << r << "\n";
+    if (!ofs) {
+      std::cerr << "Failed to open the output file." << std::endl;
+    }
+
+    for (auto const& r : records_) {
+      ofs << r << "\n";
+    }
+    ofs.close();
   }
 
   DEFINE_ART_MODULE(DS50Compression)

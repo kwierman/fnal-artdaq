@@ -21,6 +21,7 @@ physics:
       module_type: DS50Compression
       raw_label: daq
       table_file: "DS50Run002211.txt"
+      record_compression: true
     }
   }
 
