@@ -8,7 +8,6 @@
 ////////////////////////////////////////////////////////////////////////
 
 #include "artdaq/DAQdata/Fragment.hh"
-#include "artdaq/DAQdata/FragmentHandle.hh"
 #include "artdaq/DAQdata/DS50Board.hh"
 #include "artdaq/DAQdata/detail/DS50Header.hh"
 
@@ -18,7 +17,7 @@ namespace ds50 {
 
 // Note the inheritance: order is important here (for construction
 // initialization order).
-class ds50::BoardWriter: artdaq::FragmentHandle, public ds50::Board {
+class ds50::BoardWriter: public ds50::Board {
 public:
   BoardWriter(artdaq::Fragment &);
 
@@ -45,14 +44,16 @@ private:
   static size_t words_to_frag_words_(size_t nWords);
 
   detail::Header * header_();
+
+  artdaq::Fragment & frag_;
 };
 
 inline
 ds50::BoardWriter::
 BoardWriter(artdaq::Fragment & frag)
   :
-  artdaq::FragmentHandle(frag),
-  Board(frag_)
+  Board(frag),
+  frag_(frag)
 {
 }
 
