@@ -7,8 +7,7 @@
 # ----------------------------------------------------------------------
 # Build this project's library:
 
-if(MPI_FOUND) # Have MPI
-  # Remove cxx library -- compiled with wrong version of GCC.
+if(WANT_MPI)
   include_directories(${MPI_INCLUDE_PATH})
 endif()
 
@@ -29,7 +28,7 @@ set(LIB_LIBS
   ${CLHEP}
   )
 
-if(MPI_FOUND)
+if(WANT_MPI)
   list(APPEND LIB_SOURCES
     Config.cc
     MPIProg.cc
@@ -49,7 +48,7 @@ add_library( ${LIB_NAME} SHARED ${LIB_SOURCES} )
 target_link_libraries(artdaq_DAQrate ${LIB_LIBS})
 
 include(CetTest)
-if(MPI_FOUND)
+if(WANT_MPI)
   cet_test(daqrate PREBUILT NO_AUTO)
   cet_test(builder.sh PREBUILT NO_AUTO)
 endif()
@@ -86,7 +85,7 @@ set ( art_exec_link_libraries
   ${Boost_FILESYSTEM_LIBRARY}
 )
 
-if(MPI_FOUND)
+if(WANT_MPI)
   add_executable( perfdump perfdump.cc )
   target_link_libraries(perfdump ${LIB_NAME})
 

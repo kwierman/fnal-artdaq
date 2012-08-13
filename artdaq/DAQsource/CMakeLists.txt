@@ -23,7 +23,7 @@ target_link_libraries(artdaq_DAQsource
   ${ROOT_REFLEX}
 )
 
-if(MPI_FOUND)
+if(WANT_MPI)
   add_executable(driver driver.cc)
   target_link_libraries(driver
     artdaq_DAQsource

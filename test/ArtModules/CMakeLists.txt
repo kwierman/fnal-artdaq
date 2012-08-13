@@ -1,7 +1,7 @@
 
 simple_plugin(DS50CompressionChecker "module" artdaq_DAQdata NOINSTALL USE_BOOST_UNIT)
 
-if(MPI_FOUND)
+if(WANT_MPI)
   cet_test(builder_art_compressOnly_t
     HANDBUILT
     OPTIONAL_GROUPS PERF;LONG

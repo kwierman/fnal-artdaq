@@ -95,16 +95,20 @@ if(BTYPE_UC STREQUAL DEBUG)
   add_definitions(-DDEBUGME)
 endif()
 
-list(FIND qual_list "nompi" nompi_index)
-if(nompi_index EQUAL -1)
+cet_have_qual( nompi )
+if(NOT ${CET_HAVE_QUAL})
+  set(WANT_MPI TRUE)
+endif()
+
+if(${WANT_MPI})
   find_package(MPI QUIET)
   if(MPI_FOUND)
+    # Remove cxx library -- compiled with wrong version of GCC.
     LIST(REMOVE_AT MPI_LIBRARIES 0)
   endif()
 endif()
 
 message(STATUS "Project is ${product} ${version} ${qualifier}")
-message(STATUS "MPI_FOUND = ${MPI_FOUND}")
 
 # macros for artdaq_dictionary and simple_plugin
 include(ArtDictionary)

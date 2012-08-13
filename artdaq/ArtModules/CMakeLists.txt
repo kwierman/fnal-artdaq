@@ -1,12 +1,6 @@
-if(MPI_FOUND) # Have MPI
-  # Remove cxx library -- compiled with wrong version of GCC.
+if(WANT_MPI)
   include_directories(${MPI_INCLUDE_PATH})
+  simple_plugin(DS50Compression "module" artdaq_Compression artdaq_DAQdata ${MPI_LIBRARIES})
 endif()
 
-set(MAYBE_MPI_LIBS)
-if(MPI_FOUND)
-  list(APPEND MAYBE_MPI_LIBS ${MPI_LIBRARIES})
-endif()
-
-simple_plugin(DS50Compression "module" artdaq_Compression artdaq_DAQdata ${MAYBE_MPI_LIBS})
 simple_plugin(DS50DataCharacterizer "module" artdaq_DAQdata)

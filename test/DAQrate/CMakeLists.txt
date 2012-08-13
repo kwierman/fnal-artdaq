@@ -1,9 +1,6 @@
-if(MPI_FOUND) # Have MPI
-  # Remove cxx library -- compiled with wrong version of GCC.
+if(WANT_MPI)
   include_directories(${MPI_INCLUDE_PATH})
-endif()
 
-if(MPI_FOUND)
   cet_test(config_t LIBRARIES artdaq_DAQrate artdaq_DAQdata)
 
   cet_test(config_with_art_t LIBRARIES artdaq_DAQrate artdaq_DAQdata
