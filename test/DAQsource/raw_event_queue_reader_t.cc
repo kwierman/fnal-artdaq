@@ -72,7 +72,7 @@ public:
                              std::string const & release = art::getReleaseVersion(),
                              std::string const & pass = art::getPassID());
 
-  std::auto_ptr<art::BranchDescription>
+  std::unique_ptr<art::BranchDescription>
   fake_single_process_branch(std::string const & tag,
                              std::string const & processName,
                              std::string const & productInstanceName = std::string());
@@ -124,7 +124,7 @@ fake_single_module_process(std::string const & tag,
   return result;
 }
 
-std::auto_ptr<art::BranchDescription>
+std::unique_ptr<art::BranchDescription>
 MPRGlobalTestFixture::
 fake_single_process_branch(std::string const & tag,
                            std::string const & processName,
@@ -149,7 +149,7 @@ fake_single_process_branch(std::string const & tag,
                                productInstanceName),
                                mod);
   branchKeys_.insert(std::make_pair(tag, art::BranchKey(*result)));
-  return std::auto_ptr<art::BranchDescription>(result);
+  return std::unique_ptr<art::BranchDescription>(result);
 }
 
 struct REQRTestFixture {

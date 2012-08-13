@@ -73,9 +73,9 @@ namespace artdaq {
     void print(std::ostream & os) const;
 
     // Release all the Fragments from this RawEvent, returning them to
-    // the caller through an auto_ptr that manages a vector into which
+    // the caller through a unique_ptr that manages a vector into which
     // the Fragments have been moved.
-    std::auto_ptr<std::vector<Fragment>> releaseProduct();
+    std::unique_ptr<std::vector<Fragment>> releaseProduct();
 
 #endif
 
@@ -126,10 +126,9 @@ namespace artdaq {
   inline RawEvent::sequence_id_t RawEvent::sequenceID() const { return header_.sequence_id; }
 
   inline
-  std::auto_ptr<std::vector<Fragment>>
-                                    RawEvent::releaseProduct()
+  std::unique_ptr<std::vector<Fragment>> RawEvent::releaseProduct()
   {
-    std::auto_ptr<std::vector<Fragment>> result(new std::vector<Fragment>);
+    std::unique_ptr<std::vector<Fragment>> result(new std::vector<Fragment>);
     result->reserve(fragments_.size());
     for (size_t i = 0, sz = fragments_.size(); i < sz; ++i) {
       result->emplace_back(std::move(*fragments_[i]));

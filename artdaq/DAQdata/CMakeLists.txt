@@ -1,4 +1,3 @@
-find_library( FHICLCPP NAMES fhiclcpp PATHS $ENV{FHICLCPP_LIB} )
 
 set(LIB_NAME artdaq_DAQdata)
 set(LIB_SOURCES
@@ -16,8 +15,9 @@ set(LIB_SOURCES
 add_library( ${LIB_NAME} SHARED ${LIB_SOURCES} )
 
 target_link_libraries(${LIB_NAME}
+  ${ART_PERSISTENCY_COMMON}
   ${FHICLCPP}
-  ${CLHEP}
+  ${CETLIB}
   )
 
 art_dictionary(DICTIONARY_LIBRARIES)

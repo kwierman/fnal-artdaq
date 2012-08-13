@@ -4,6 +4,7 @@ simple_plugin(DS50CompressionChecker "module" artdaq_DAQdata NOINSTALL USE_BOOST
 if(MPI_FOUND)
   cet_test(builder_art_compressOnly_t
     HANDBUILT
+    OPTIONAL_GROUPS PERF;LONG
     TEST_EXEC builder.sh
     TEST_ARGS hosts-5-5-5.txt builder_art_compressOnly_t.fcl
     DATAFILES hosts-5-5-5.txt
@@ -15,6 +16,7 @@ if(MPI_FOUND)
 
   cet_test(builder_art_compressOnly_10_t
     HANDBUILT
+    OPTIONAL_GROUPS PERF;LONG
     TEST_EXEC builder.sh
     TEST_ARGS hosts-5-5-10.txt builder_art_compressOnly_t.fcl
     DATAFILES hosts-5-5-10.txt
@@ -26,6 +28,7 @@ if(MPI_FOUND)
 
   cet_test(builder_art_compressOnly_15_t
     HANDBUILT
+    OPTIONAL_GROUPS PERF;LONG
     TEST_EXEC builder.sh
     TEST_ARGS hosts-5-5-15.txt builder_art_compressOnly_t.fcl
     DATAFILES hosts-5-5-15.txt
@@ -37,6 +40,7 @@ if(MPI_FOUND)
 
   cet_test(builder_art_compressOnly_20_t
     HANDBUILT
+    OPTIONAL_GROUPS PERF;LONG
     TEST_EXEC builder.sh
     TEST_ARGS hosts-5-5-20.txt builder_art_compressOnly_t.fcl
     DATAFILES hosts-5-5-20.txt
@@ -48,6 +52,7 @@ if(MPI_FOUND)
 
   cet_test(builder_art_compressDecompress_t
     HANDBUILT
+    OPTIONAL_GROUPS PERF;LONG
     TEST_EXEC builder.sh
     TEST_ARGS hosts-5-5-5.txt builder_art_compressDecompress_t.fcl
     DATAFILES hosts-5-5-5.txt
@@ -60,6 +65,7 @@ if(MPI_FOUND)
 
   cet_test(builder_art_compressDecompressCheck_t
     HANDBUILT
+    OPTIONAL_GROUPS PERF;LONG
     TEST_EXEC builder.sh
     TEST_ARGS hosts-5-5-5.txt builder_art_compressDecompressCheck_t.fcl
     DATAFILES hosts-5-5-5.txt

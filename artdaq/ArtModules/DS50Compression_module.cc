@@ -24,6 +24,7 @@
 #include <ostream>
 #include <fstream>
 #include <string>
+#include <utility>
 
 namespace {
 
@@ -104,7 +105,7 @@ namespace ds50 {
   {
     art::Handle<artdaq::Fragments> handle;
     e.getByLabel(raw_label_, handle);
-    std::auto_ptr<CompressedEvent> prod(new CompressedEvent(*handle));
+    std::unique_ptr<CompressedEvent> prod(new CompressedEvent(*handle));
     // handle->dataBegin(), handle->dataEnd()
     size_t const len = handle->size();
 #pragma omp parallel for shared(prod, handle)
@@ -136,7 +137,7 @@ namespace ds50 {
       }
     }
 
-    e.put(prod);
+    e.put(std::move(prod));
   }
 
   void DS50Compression::endSubRun(art::SubRun &) { }

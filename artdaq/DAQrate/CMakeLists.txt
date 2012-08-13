@@ -13,7 +13,6 @@ if(MPI_FOUND) # Have MPI
 endif()
 
 set( LIB_NAME artdaq_DAQrate )
-find_library( FHICLCPP NAMES fhiclcpp PATHS $ENV{FHICLCPP_LIB} )
 
 set(LIB_SOURCES
   EventStore.cc
@@ -59,7 +58,6 @@ cet_test(numawrap PREBUILT NO_AUTO)
 # ----------------------------------------------------------------------
 # Build this project's executables:
 
-find_library( ART_FRAMEWORK_CORE NAMES art_Framework_Core PATHS $ENV{ART_LIB} )
 
 set ( common_exec_link_libraries
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
@@ -80,10 +78,6 @@ set ( common_exec_link_libraries
   -ldl
 )
 
-find_library( ART_PERSISTENCY_COMMON_DICT NAMES art_Persistency_Common_dict PATHS $ENV{ART_LIB} )
-find_library( ART_FRAMEWORK_ART NAMES art_Framework_Art PATHS $ENV{ART_LIB} )
-find_library( ART_FRAMEWORK_SERVICES_REGISTRY NAMES art_Framework_Services_Registry PATHS $ENV{ART_LIB} )
-find_library( ART_UTILITIES NAMES art_Utilities PATHS $ENV{ART_LIB} )
 
 set ( art_exec_link_libraries
   ${ART_PERSISTENCY_COMMON_DICT}

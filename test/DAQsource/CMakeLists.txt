@@ -1,12 +1,4 @@
 
-find_library( CETLIB NAMES cetlib PATHS $ENV{CETLIB_LIB} )
-find_library( ART_PERSISTENCY_COMMON_DICT NAMES art_Persistency_Common_dict PATHS $ENV{ART_LIB} )
-find_library( ART_FRAMEWORK_ART NAMES art_Framework_Art PATHS $ENV{ART_LIB} )
-find_library( ART_FRAMEWORK_CORE NAMES art_Framework_Core PATHS $ENV{ART_LIB} )
-find_library( ART_FRAMEWORK_SERVICES_REGISTRY NAMES art_Framework_Services_Registry PATHS $ENV{ART_LIB} )
-find_library( ART_UTILITIES NAMES art_Utilities PATHS $ENV{ART_LIB} )
-find_library( FHICLCPP NAMES fhicl_cpp PATHS $ENV{FHICLCPP_LIB} )
-find_library( SIGC    NAMES sigc-2.0  PATHS $ENV{LIBSIGCPP_LIB} NO_DEFAULT_PATH )
 
 simple_plugin(FragmentSniffer "module" artdaq_DAQdata)
 
@@ -58,7 +50,7 @@ if(MPI_FOUND)
 endif()
 
 cet_test(read_files_t HANDBUILT
-         TEST_EXEC art
+         TEST_EXEC art_ut
          TEST_ARGS -c read_files_t.fcl
          DATAFILES read_files_t.fcl
         )

@@ -1,8 +1,10 @@
 #include "artdaq/DAQrate/SimpleQueueReader.hh"
 
-#include <cassert>
+#include <chrono>     // for milliseconds
+#include <cstddef>    // for std::size_t
 #include <iostream>
 #include <string>
+#include <thread>     // for sleep_for
 
 namespace artdaq {
 
@@ -43,7 +45,7 @@ namespace artdaq {
         if (doPrint) { std::cout << *rawEventPtr << std::endl; }
       }
       else {
-        usleep(250000);
+	std::this_thread::sleep_for(std::chrono::milliseconds(250));
       }
     }
     if (expectedEventCount_ && eventsSeen != expectedEventCount_)
