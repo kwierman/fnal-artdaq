@@ -6,8 +6,6 @@ include(CetTest)
 # re-initialize the test environment.
 cet_test_env("FHICL_FILE_PATH=.")
 
-add_subdirectory(ArtModules)
-add_subdirectory(Compression)
 add_subdirectory(DAQdata)
 add_subdirectory(DAQrate)
 add_subdirectory(DAQsource)
