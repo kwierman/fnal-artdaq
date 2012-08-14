@@ -1,10 +1,10 @@
 #include "art/Framework/Art/artapp.h"
 #include "artdaq/DAQdata/Fragments.hh"
-#include "artdaq/DAQdata/DS50Board.hh"
+//#include "artdaq/DAQdata/DS50Board.hh"
 #include "artdaq/DAQrate/Config.hh"
 #include "artdaq/DAQdata/Debug.hh"
-#include "artdaq/DAQdata/DS50FragmentReader.hh"
-#include "artdaq/DAQdata/DS50FragmentSimulator.hh"
+//#include "artdaq/DAQdata/DS50FragmentReader.hh"
+//#include "artdaq/DAQdata/DS50FragmentSimulator.hh"
 #include "artdaq/DAQdata/GenericFragmentSimulator.hh"
 #include "artdaq/DAQrate/EventStore.hh"
 #include "artdaq/DAQdata/FragmentGenerator.hh"
@@ -68,8 +68,8 @@ make_generator(fhicl::ParameterSet const & ps)
 {
   if (ps.get<bool>("generate_data"))
   { return new artdaq::GenericFragmentSimulator(ps); }
-  else
-  { return new ds50::FragmentReader(ps); }
+//  else
+//  { return new ds50::FragmentReader(ps); }
 }
 
 class FragCounter {

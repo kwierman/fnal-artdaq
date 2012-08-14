@@ -1,8 +1,0 @@
-ds50:
-{
-  generate_data: false # Read from file.
-  source_count: 5
-  run_number: 1
-  fileNames: [ "/scratch/greenc/ds50_data/board0.out" ]
-  max_set_size_gib: 1
-}

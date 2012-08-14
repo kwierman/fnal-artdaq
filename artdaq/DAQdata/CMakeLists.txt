@@ -1,10 +1,6 @@
 
 set(LIB_NAME artdaq_DAQdata)
 set(LIB_SOURCES
-  DS50FragmentReader.cc
-  DS50FragmentSimulator.cc
-  DS50Board.cc
-  DS50CompressedEvent.cc 
   Debug.cc
   Fragment.cc
   FragmentGenerator.cc
@@ -19,8 +15,6 @@ target_link_libraries(${LIB_NAME}
   ${FHICLCPP}
   ${CETLIB}
   )
-
-art_dictionary(DICTIONARY_LIBRARIES)
 
 install_headers(SUBDIRS detail)
 install_source()

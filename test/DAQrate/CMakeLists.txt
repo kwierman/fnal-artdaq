@@ -12,20 +12,20 @@ if(WANT_MPI)
     cet_test(cpi_t SOURCES ${CPI_SOURCE} LIBRARIES ${MPI_LIBRARIES})
   endif()
 
-  cet_test(daqrate_fileread_nosink HANDBUILT
-    TEST_EXEC daqrate
-    DATAFILES fcl/daqrate_fileread.fcl
-    fcl/daqrate_fileread_nosink.fcl
-    TEST_ARGS 5 0 3 1 -- -c daqrate_fileread_nosink.fcl HANDBUILT
-    TEST_PROPERTIES RUN_SERIAL true
-    )
+##  cet_test(daqrate_fileread_nosink HANDBUILT
+##    TEST_EXEC daqrate
+##    DATAFILES fcl/daqrate_fileread.fcl
+##    fcl/daqrate_fileread_nosink.fcl
+##    TEST_ARGS 5 0 3 1 -- -c daqrate_fileread_nosink.fcl HANDBUILT
+##    TEST_PROPERTIES RUN_SERIAL true
+##    )
 
-  cet_test(daqrate_fileread HANDBUILT
-    TEST_EXEC daqrate
-    DATAFILES fcl/daqrate_fileread.fcl
-    TEST_ARGS 5 1 3 1 -- -c daqrate_fileread.fcl HANDBUILT
-    TEST_PROPERTIES RUN_SERIAL true
-    )
+##  cet_test(daqrate_fileread HANDBUILT
+##    TEST_EXEC daqrate
+##    DATAFILES fcl/daqrate_fileread.fcl
+##    TEST_ARGS 5 1 3 1 -- -c daqrate_fileread.fcl HANDBUILT
+##    TEST_PROPERTIES RUN_SERIAL true
+##    )
 
   cet_test(daqrate_perf_fileread_nosink_01_t
     HANDBUILT
