@@ -29,12 +29,12 @@ only_for_build	cetbuildtools	v2_01_04
 # -nq- here means there is no qualifier
 # a - here means the dependent product is not required by the parent and will not be setup
 qualifier	art		mvapich2	gcc	notes
-e2:debug	e2:debug	-nq-		-nq-	-std=c++0x;-Wno-deprecated-declarations
-e2:opt		e2:opt		-nq-		-nq-	-std=c++0x;-Wno-deprecated-declarations
-e2:prof		e2:prof		-nq-		-nq-	-std=c++0x;-Wno-deprecated-declarations
-e2:nompi:debug	e2:debug	-		-nq-	-std=c++0x;-Wno-deprecated-declarations
-e2:nompi:opt	e2:opt		-		-nq-	-std=c++0x;-Wno-deprecated-declarations
-e2:nompi:prof	e2:prof		-		-nq-	-std=c++0x;-Wno-deprecated-declarations
+e2:debug	e2:debug	-nq-		-nq-	-std=c++11
+e2:opt		e2:opt		-nq-		-nq-	-std=c++11
+e2:prof		e2:prof		-nq-		-nq-	-std=c++11
+e2:nompi:debug	e2:debug	-		-nq-	-std=c++11
+e2:nompi:opt	e2:opt		-		-nq-	-std=c++11
+e2:nompi:prof	e2:prof		-		-nq-	-std=c++11
 
 # Preserve tabs and formatting in emacs and vi / vim:
 
