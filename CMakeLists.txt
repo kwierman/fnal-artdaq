@@ -117,6 +117,9 @@ include(BuildPlugins)
 # testing
 add_subdirectory(test)
 
+# Modules - temporary
+add_subdirectory(Modules)
+
 # source
 add_subdirectory(artdaq)
 
