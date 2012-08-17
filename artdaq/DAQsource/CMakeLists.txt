@@ -59,4 +59,9 @@ if(WANT_MPI)
 endif()
 
 
+install_headers(SUBDIRS detail)
+install_source()
+install(TARGETS artdaq_DAQsource
+  DESTINATION ${flavorqual_dir}/lib )
+
 

@@ -66,7 +66,7 @@ enum Color_t : int { DETECTOR, SOURCE, SINK };
 artdaq::FragmentGenerator *
 make_generator(fhicl::ParameterSet const & ps)
 {
-  if (ps.get<bool>("generate_data"))
+//  if (ps.get<bool>("generate_data"))
   { return new artdaq::GenericFragmentSimulator(ps); }
 //  else
 //  { return new ds50::FragmentReader(ps); }
