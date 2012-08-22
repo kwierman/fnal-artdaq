@@ -17,6 +17,7 @@ do_a_run "r12"
 do_a_run "r22a"
 do_a_run "r22b"
 do_a_run "r21"
+do_a_run "r21u"
 
 # mpirun_rsh -rsh -config r11_conf_file.txt -hostfile r11_host_file.txt
 # mpirun_rsh -rsh -config r12_conf_file.txt -hostfile r12_host_file.txt
