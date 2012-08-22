@@ -1,4 +1,6 @@
 #include "artdaq/DAQdata/GenericFragmentSimulator.hh"
+
+#include "artdaq/DAQdata/GeneratorMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
 
 #include <algorithm>
@@ -89,3 +91,5 @@ generateFragmentSize_()
          payload_size_generator_(engine_) :
          payload_size_spec_;
 }
+
+DEFINE_ARTDAQ_GENERATOR(artdaq::GenericFragmentSimulator)

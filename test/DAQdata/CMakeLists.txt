@@ -4,5 +4,5 @@ cet_test(FragmentGenerator_t USE_BOOST_UNIT
   )
 
 cet_test(GenericFragmentSimulator_t USE_BOOST_UNIT
-  LIBRARIES artdaq_DAQdata
+  LIBRARIES artdaq_DAQdata_GenericFragmentSimulator_generator
   )

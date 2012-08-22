@@ -1,10 +1,8 @@
-
 set(LIB_NAME artdaq_DAQdata)
 set(LIB_SOURCES
   Debug.cc
   Fragment.cc
   FragmentGenerator.cc
-  GenericFragmentSimulator.cc
   RawEvent.cc
   makeFragmentGenerator.cc
   )
@@ -16,6 +14,8 @@ target_link_libraries(${LIB_NAME}
   ${FHICLCPP}
   ${CETLIB}
   )
+
+simple_plugin(GenericFragmentSimulator "generator" ${LIB_NAME})
 
 install_headers(SUBDIRS detail)
 install_source()
