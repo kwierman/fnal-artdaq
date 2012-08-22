@@ -6,6 +6,7 @@ set(LIB_SOURCES
   FragmentGenerator.cc
   GenericFragmentSimulator.cc
   RawEvent.cc
+  makeFragmentGenerator.cc
   )
 
 add_library( ${LIB_NAME} SHARED ${LIB_SOURCES} )
