@@ -1,4 +1,4 @@
-#include "artdaq/DAQsource/detail/RawEventQueueReader.hh"
+#include "artdaq/ArtModules/detail/RawEventQueueReader.hh"
 
 #include "art/Framework/IO/Sources/put_product_in_principal.h"
 #include "art/Persistency/Provenance/FileFormatVersion.h"

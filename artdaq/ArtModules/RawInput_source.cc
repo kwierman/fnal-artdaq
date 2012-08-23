@@ -1,5 +1,5 @@
 #include "art/Framework/IO/Sources/ReaderSource.h"
-#include "artdaq/DAQsource/detail/RawEventQueueReader.hh"
+#include "artdaq/ArtModules/detail/RawEventQueueReader.hh"
 #include "art/Framework/Core/InputSourceMacros.h"
 
 #include <string>

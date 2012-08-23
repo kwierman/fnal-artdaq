@@ -1,5 +1,5 @@
-#ifndef artdaq_DAQsource_detail_RawEventQueueReader_hh
-#define artdaq_DAQsource_detail_RawEventQueueReader_hh
+#ifndef artdaq_ArtModules_detail_RawEventQueueReader_hh
+#define artdaq_ArtModules_detail_RawEventQueueReader_hh
 
 #include "art/Framework/Core/Frameworkfwd.h"
 
@@ -43,4 +43,4 @@ namespace artdaq {
   }
 }
 
-#endif /* artdaq_DAQsource_detail_RawEventQueueReader_hh */
+#endif /* artdaq_ArtModules_detail_RawEventQueueReader_hh */

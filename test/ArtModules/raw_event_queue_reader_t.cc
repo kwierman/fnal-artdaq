@@ -1,4 +1,4 @@
-#include "artdaq/DAQsource/detail/RawEventQueueReader.hh"
+#include "artdaq/ArtModules/detail/RawEventQueueReader.hh"
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQrate/GlobalQueue.hh"
 

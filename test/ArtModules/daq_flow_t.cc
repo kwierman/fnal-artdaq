@@ -1,9 +1,9 @@
-#include "artdaq/DAQrate/EventStore.hh"
+#include "art/Framework/Art/artapp.h"
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQdata/GenericFragmentSimulator.hh"
-#include "art/Framework/Art/artapp.h"
-#include "fhiclcpp/ParameterSet.h"
+#include "artdaq/DAQrate/EventStore.hh"
 #include "cetlib/exception.h"
+#include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include <cstddef>

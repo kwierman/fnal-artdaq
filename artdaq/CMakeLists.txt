@@ -1,3 +1,3 @@
 add_subdirectory(DAQrate)
 add_subdirectory(DAQdata)
-add_subdirectory(DAQsource)
+add_subdirectory(ArtModules)

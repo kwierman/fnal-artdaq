@@ -57,6 +57,7 @@ find_ups_root( v5_30_02 )
 find_ups_boost( v1_47_0 filesystem
                         program_options
                         regex
+                        system
                         thread
                         unit_test_framework
  )
@@ -73,9 +74,11 @@ include_directories ( $ENV{LIBSIGCPP_LIB}/sigc++-2.0/include )
 #  Find all the libraries needed by our dependent CMakeList.txt files
 find_library( ART_FRAMEWORK_ART NAMES art_Framework_Art PATHS $ENV{ART_LIB} )
 find_library( ART_FRAMEWORK_CORE NAMES art_Framework_Core PATHS $ENV{ART_LIB} )
+find_library( ART_FRAMEWORK_PRINCIPAL NAMES art_Framework_Principal PATHS $ENV{ART_LIB} )
 find_library( ART_FRAMEWORK_SERVICES_REGISTRY NAMES art_Framework_Services_Registry PATHS $ENV{ART_LIB} )
 find_library( ART_PERSISTENCY_COMMON NAMES art_Persistency_Common PATHS $ENV{ART_LIB} )
 find_library( ART_PERSISTENCY_COMMON_DICT NAMES art_Persistency_Common_dict PATHS $ENV{ART_LIB} )
+find_library( ART_PERSISTENCY_PROVENANCE NAMES art_Persistency_Provenance PATHS $ENV{ART_LIB} )
 find_library( ART_UTILITIES NAMES art_Utilities PATHS $ENV{ART_LIB} )
 find_library( CETLIB NAMES cetlib PATHS $ENV{CETLIB_LIB} )
 find_library( CPPUNIT NAMES cppunit   PATHS $ENV{CPPUNIT_LIB}   NO_DEFAULT_PATH )
@@ -122,6 +125,9 @@ add_subdirectory(Modules)
 
 # source
 add_subdirectory(artdaq)
+
+# Scripts and execs.
+add_subdirectory(exe)
 
 # ups - table and config files
 add_subdirectory(ups)
