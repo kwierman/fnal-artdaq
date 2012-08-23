@@ -8,10 +8,15 @@
 
 namespace artdaq {
 
-  int simpleQueueReaderApp(int, char **)
+  int simpleQueueReaderApp(int argc, char **argv)
   {
     try {
-      SimpleQueueReader reader;
+      size_t eec(0);
+      if (argc == 2) {
+        std::istringstream ins(argv[1]);
+        ins >> eec;
+      }
+      SimpleQueueReader reader(eec);
       reader.run();
       return 0;
     }
@@ -45,10 +50,15 @@ namespace artdaq {
         if (doPrint) { std::cout << *rawEventPtr << std::endl; }
       }
       else {
-	std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
       }
     }
     if (expectedEventCount_ && eventsSeen != expectedEventCount_)
-    { throw std::string("Wrong number of events in SimpleQueueReader\n"); }
+    {
+      std::ostringstream os;
+      os << "Wrong number of events in SimpleQueueReader ("
+         << eventsSeen << " != " << expectedEventCount_ << ").\n";
+      throw os.str();
+    }
   }
 }
