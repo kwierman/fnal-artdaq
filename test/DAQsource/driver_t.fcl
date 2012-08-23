@@ -1,40 +1,10 @@
-# Note: we generate very few events, because the generation is
-# currently very slow. We also set a small waiting_time for the
-# RawInput, so that we get some feedback while running.
-#
-
-ds50:
+driver:
 {
-  generate_data: true
+  generator: GenericFragmentSimulator
   events_to_generate: 2
   fragments_per_event: 5
   source_count: 5
   run_number: 10
-  freqs_file: "ds50_hist.dat"
 }
 
-physics:
-{
-  analyzers:
-  {
-    char:
-    {
-      module_type: DS50DataCharacterizer
-      dist_file: "ds50_sim_hist.dat"
-      data_label: daq
-    }
-  }
-
-  a1: [ char ]
-  end_paths: [ a1 ]
-}
-
-source:
-{
-  module_type: RawInput
-  waiting_time: 10
-  resume_after_timeout: true
-  fileNames: [ dummy ]
-}
-
-process_name: DEVEL
+events_expected: @local::driver.events_to_generate

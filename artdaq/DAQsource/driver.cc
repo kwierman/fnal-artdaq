@@ -9,20 +9,18 @@
 // artdaq::EventStore through to the artdaq::RawInput source.
 //
 
-#include "boost/program_options.hpp"
-
-#include "artdaq/DAQdata/Fragments.hh"
-#include "artdaq/DAQrate/EventStore.hh"
 #include "artdaq/DAQdata/FragmentGenerator.hh"
-//#include "artdaq/DAQdata/DS50FragmentReader.hh"
-//#include "artdaq/DAQdata/DS50FragmentSimulator.hh"
+#include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQdata/GenericFragmentSimulator.hh"
+#include "artdaq/DAQdata/makeFragmentGenerator.hh"
+#include "artdaq/DAQrate/EventStore.hh"
+#include "artdaq/DAQrate/SimpleQueueReader.hh"
+#include "cetlib/container_algorithms.h"
+#include "cetlib/filepath_maker.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/make_ParameterSet.h"
-#include "cetlib/filepath_maker.h"
-#include "cetlib/container_algorithms.h"
 
-#include "art/Framework/Art/artapp.h"
+#include "boost/program_options.hpp"
 
 #include <iostream>
 #include <memory>
@@ -31,15 +29,6 @@
 using namespace std;
 using namespace fhicl;
 namespace  bpo = boost::program_options;
-
-artdaq::FragmentGenerator * make_generator(ParameterSet const & ps)
-{
-//  if (ps.get<bool>("generate_data"))
-  { return new artdaq::GenericFragmentSimulator(ps); }
-//  { return new ds50::FragmentSimulator(ps); }
-//  else
-//  { return new ds50::FragmentReader(ps); }
-}
 
 int main(int argc, char * argv[]) try
 {
@@ -76,38 +65,32 @@ int main(int argc, char * argv[]) try
   cet::filepath_lookup lookup_policy("FHICL_FILE_PATH");
   make_ParameterSet(vm["config"].as<std::string>(),
                     lookup_policy, pset);
-  ParameterSet ds_pset = pset.get<ParameterSet>("ds50");
-  std::unique_ptr<artdaq::FragmentGenerator> const gen(make_generator(ds_pset));
-  artdaq::EventStore store(ds_pset.get<size_t>("source_count"),
-                           ds_pset.get<artdaq::EventStore::run_id_t>("run_number"),
-                           1, argc, argv,
-                           &artapp);
+  ParameterSet driver_pset = pset.get<ParameterSet>("driver");
+  std::unique_ptr<artdaq::FragmentGenerator> const
+    gen(artdaq::makeFragmentGenerator(driver_pset.get<std::string>("generator"),
+                                      driver_pset));
+  artdaq::FragmentPtrs frags;
+  while (gen->getNext(frags)) {}
+  std::ostringstream os;
+  os << pset.get<int>("events_expected", 0);
+  std::string oss(os.str());
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wwrite-strings"
+  char* args[2] = { "SimpleQueueReader", const_cast<char *>(oss.c_str()) };
+#pragma GCC diagnostic pop
+  artdaq::EventStore store(driver_pset.get<size_t>("source_count"),
+                           driver_pset.get<artdaq::EventStore::run_id_t>("run_number"),
+                           1, 2, args,
+                           &artdaq::simpleQueueReaderApp
+                           );
   // Read or generate fragments as rapidly as possible, and feed them
   // into the EventStore. The throughput resulting from this design
   // choice is likely to have the fragment reading (or generation)
   // speed as the limiting factor
-  artdaq::FragmentPtrs frags;
-  while (gen->getNext(frags)) {
   for (auto & val : frags) {
-      store.insert(std::move(val));
-    }
-    frags.clear();
+    store.insert(std::move(val));
   }
-#if 0
-  // buffering way
-  vector<FragmentPtrs> event_buffer;
-  int total_events = ds_pset.get<int>("total_events");
-  FragmentPtrs event;
-  while (gen->getNext(event) && total_events > 0) {
-    event_buffer.push_back(event);
-    --total_events;
-  }
-  for_each(event_buffer.begin(), event_buffer.end(),
-  [&](FragmentsPtrs & val) { /* go through each fragment and put it onto the store queue */ }
-          );
-#endif
-  store.endOfData();
-  return 0;
+  return store.endOfData();
 }
 
 catch (std::string & x)
