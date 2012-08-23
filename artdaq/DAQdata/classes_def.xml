@@ -1,0 +1,8 @@
+<lcgdict>
+  <class name="artdaq::RawDataType"/>
+  <class name="artdaq::Fragment" ClassVersion="10">
+   <version ClassVersion="10" checksum="164730940"/>
+  </class>
+  <class name="std::vector<artdaq::Fragment>"/>
+  <class name="art::Wrapper<std::vector<artdaq::Fragment> >"/>
+</lcgdict>
