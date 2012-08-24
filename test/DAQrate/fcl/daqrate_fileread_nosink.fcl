@@ -1,3 +1,0 @@
-#include "daqrate_fileread.fcl"
-
-daq.want_sink: false

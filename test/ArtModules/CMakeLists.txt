@@ -23,6 +23,7 @@ if(WANT_MPI)
   cet_test(daq_flow_t
     LIBRARIES
     ${ART_FRAMEWORK_ART}
+    artdaq_DAQdata_GenericFragmentSimulator_generator
     artdaq_DAQrate
     artdaq_DAQdata
     ${MF_MESSAGELOGGER}

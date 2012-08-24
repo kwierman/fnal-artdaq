@@ -22,6 +22,14 @@ set(LIB_SOURCES
   Utils.cc
   )
 
+set(LIB_LIBS
+  artdaq_DAQdata
+  ${FHICLCPP}
+  ${CLHEP}
+  ${Boost_THREAD_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
+)
+
 if(WANT_MPI)
   list(APPEND LIB_SOURCES
     Config.cc
@@ -39,13 +47,7 @@ endif()
 
 add_library( ${LIB_NAME} SHARED ${LIB_SOURCES})
 
-target_link_libraries(artdaq_DAQrate
-  artdaq_DAQdata
-  ${FHICLCPP}
-  ${CLHEP}
-  ${Boost_THREAD_LIBRARY}
-  ${Boost_SYSTEM_LIBRARY}
-)
+target_link_libraries(artdaq_DAQrate ${LIB_LIBS})
 
 # ----------------------------------------------------------------------
 # Install this project's headers, sources, library, and executables:
