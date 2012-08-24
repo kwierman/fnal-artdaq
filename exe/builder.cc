@@ -1,13 +1,10 @@
 #include "art/Framework/Art/artapp.h"
-#include "artdaq/DAQdata/Fragments.hh"
-//#include "artdaq/DAQdata/DS50Board.hh"
-#include "artdaq/DAQrate/Config.hh"
 #include "artdaq/DAQdata/Debug.hh"
-//#include "artdaq/DAQdata/DS50FragmentReader.hh"
-//#include "artdaq/DAQdata/DS50FragmentSimulator.hh"
-#include "artdaq/DAQdata/GenericFragmentSimulator.hh"
-#include "artdaq/DAQrate/EventStore.hh"
 #include "artdaq/DAQdata/FragmentGenerator.hh"
+#include "artdaq/DAQdata/Fragments.hh"
+#include "artdaq/DAQdata/makeFragmentGenerator.hh"
+#include "artdaq/DAQrate/Config.hh"
+#include "artdaq/DAQrate/EventStore.hh"
 #include "artdaq/DAQrate/MPIProg.hh"
 #include "artdaq/DAQrate/Perf.hh"
 #include "artdaq/DAQrate/RHandles.hh"
@@ -62,15 +59,6 @@ enum Color_t : int { DETECTOR, SOURCE, SINK };
   size_t const sink_buffers_;
   MPI_Comm local_group_comm_;
 };
-
-artdaq::FragmentGenerator *
-make_generator(fhicl::ParameterSet const & ps)
-{
-//  if (ps.get<bool>("generate_data"))
-  { return new artdaq::GenericFragmentSimulator(ps); }
-//  else
-//  { return new ds50::FragmentReader(ps); }
-}
 
 class FragCounter {
 public:
@@ -242,7 +230,10 @@ void Program::detector()
     ((detectors_size > static_cast<size_t>(detector_rank)) ?
      detectors[detector_rank] :
      detectors[0]);
-  std::unique_ptr<artdaq::FragmentGenerator> const gen(make_generator(det_ps));
+  std::unique_ptr<artdaq::FragmentGenerator> const
+    gen(artdaq::makeFragmentGenerator
+        (daq_pset_.get<std::string>("generator"),
+         det_ps));
   artdaq::SHandles h(source_buffers_,
                      max_payload_size_words_,
                      1, // Direct.
@@ -284,16 +275,21 @@ void Program::sink()
   {
     // This scope exists to control the lifetime of 'events'
     int sink_rank;
+    bool useArt = daq_pset_.get<bool>("useArt", false);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wwrite-strings"
+    char * dummyArgs[1] { "SimpleQueueReader" };
+#pragma GCC diagnostic pop
     MPI_Comm_rank(local_group_comm_, &sink_rank);
     artdaq::EventStore::ARTFUL_FCN * reader =
-      (daq_pset_.get<bool>("useArt", false)) ?
+      useArt ?
       &artapp :
       &artdaq::simpleQueueReaderApp;
     artdaq::EventStore events(conf_.detectors_,
                               conf_.run_,
                               sink_rank,
-                              conf_.art_argc_,
-                              conf_.art_argv_,
+                              useArt ? conf_.art_argc_ : 1,
+                              useArt ? conf_.art_argv_ : dummyArgs,
                               reader);
     artdaq::RHandles h(sink_buffers_ * std::ceil(1.0 * conf_.sources_ / conf_.sinks_),
                        max_payload_size_words_,
