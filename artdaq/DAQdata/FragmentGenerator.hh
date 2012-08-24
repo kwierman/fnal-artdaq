@@ -11,7 +11,7 @@ namespace artdaq {
 
   class FragmentGenerator {
   public:
-    virtual ~FragmentGenerator();
+    virtual ~FragmentGenerator() = default;
     // Obtain the next collection of Fragments. Return false to
     // indicate end-of-data. Fragments may or may not be in the same event;
     // Fragments may or may not have the same fragment id.

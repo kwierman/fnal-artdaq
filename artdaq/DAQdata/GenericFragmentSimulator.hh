@@ -24,7 +24,6 @@ namespace artdaq {
 class artdaq::GenericFragmentSimulator : public artdaq::FragmentGenerator {
 public:
   explicit GenericFragmentSimulator(fhicl::ParameterSet const & ps);
-  virtual ~GenericFragmentSimulator();
 
 enum class content_selector_t : uint8_t {
     EMPTY = 0,

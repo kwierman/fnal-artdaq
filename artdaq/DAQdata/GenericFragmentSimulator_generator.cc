@@ -22,9 +22,6 @@ artdaq::GenericFragmentSimulator::GenericFragmentSimulator(fhicl::ParameterSet c
   fragment_content_generator_()
 { }
 
-artdaq::GenericFragmentSimulator::~GenericFragmentSimulator()
-{ }
-
 bool
 artdaq::GenericFragmentSimulator::getNext_(FragmentPtrs & frags)
 {
