@@ -1,5 +1,5 @@
-#ifndef artdaq_DAQdata_FragmentSimulator_hh
-#define artdaq_DAQdata_FragmentSimulator_hh
+#ifndef ds50daq_DAQ_FragmentSimulator_hh
+#define ds50daq_DAQ_FragmentSimulator_hh
 
 #include "fhiclcpp/fwd.h"
 #include "ds50daq/DAQ/DS50Types.hh"
@@ -35,4 +35,4 @@ private:
   std::vector<std::discrete_distribution<adc_type>> content_generator_;
 };
 
-#endif /* artdaq_DAQdata_FragmentSimulator_hh */
+#endif /* ds50daq_DAQ_FragmentSimulator_hh */

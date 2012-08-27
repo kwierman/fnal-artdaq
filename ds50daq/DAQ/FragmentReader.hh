@@ -1,5 +1,5 @@
-#ifndef artdaq_DAQdata_FragmentReader_hh
-#define artdaq_DAQdata_FragmentReader_hh
+#ifndef ds50daq_DAQ_FragmentReader_hh
+#define ds50daq_DAQ_FragmentReader_hh
 
 #include "fhiclcpp/fwd.h"
 #include "artdaq/DAQdata/Fragments.hh"
@@ -29,4 +29,4 @@ private:
 
 };
 
-#endif /* artdaq_DAQdata_FragmentReader_hh */
+#endif /* ds50daq_DAQ_FragmentReader_hh */

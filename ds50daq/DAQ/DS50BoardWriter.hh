@@ -1,5 +1,5 @@
-#ifndef artdaq_DAQdata_DS50BoardWriter_hh
-#define artdaq_DAQdata_DS50BoardWriter_hh
+#ifndef ds50daq_DAQ_DS50BoardWriter_hh
+#define ds50daq_DAQ_DS50BoardWriter_hh
 ////////////////////////////////////////////////////////////////////////
 // DS50BoardWriter
 //
@@ -164,4 +164,4 @@ ds50::BoardWriter::header_()
   return reinterpret_cast<detail::Header *>(&*frag_.dataBegin());
 }
 
-#endif /* artdaq_DAQdata_DS50BoardWriter_hh */
+#endif /* ds50daq_DAQ_DS50BoardWriter_hh */
