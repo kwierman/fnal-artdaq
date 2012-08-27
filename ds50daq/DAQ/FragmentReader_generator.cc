@@ -1,4 +1,4 @@
-#include "ds50daq/DAQ/DS50FragmentReader.hh"
+#include "ds50daq/DAQ/FragmentReader.hh"
 
 #include "artdaq/DAQdata/Debug.hh"
 #include "artdaq/DAQdata/FragmentGeneratorMacros.hh"

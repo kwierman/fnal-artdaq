@@ -1,4 +1,4 @@
-#include "ds50daq/DAQ/DS50FragmentSimulator.hh"
+#include "ds50daq/DAQ/FragmentSimulator.hh"
 
 #include "artdaq/DAQdata/FragmentGeneratorMacros.hh"
 #include "cetlib/exception.h"
