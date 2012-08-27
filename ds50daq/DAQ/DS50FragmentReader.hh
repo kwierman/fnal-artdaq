@@ -16,7 +16,6 @@ namespace ds50 {
 class ds50::FragmentReader : public artdaq::FragmentGenerator {
 public:
   explicit FragmentReader(fhicl::ParameterSet const &);
-  virtual ~FragmentReader();
 
 private:
   virtual bool getNext_(artdaq::FragmentPtrs & output);

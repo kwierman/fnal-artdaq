@@ -1,5 +1,11 @@
 #include "ds50daq/DAQ/DS50FragmentReader.hh"
 
+#include "artdaq/DAQdata/Debug.hh"
+#include "artdaq/DAQdata/FragmentGeneratorMacros.hh"
+#include "cetlib/exception.h"
+#include "ds50daq/DAQ/DS50Board.hh"
+#include "fhiclcpp/ParameterSet.h"
+
 #include <cstdint>
 #include <cstring>
 #include <fstream>
@@ -7,11 +13,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
-#include "ds50daq/DAQ/DS50Board.hh"
-#include "artdaq/DAQdata/Debug.hh"
-#include "cetlib/exception.h"
-#include "fhiclcpp/ParameterSet.h"
 
 using fhicl::ParameterSet;
 using ds50::Board;
@@ -138,3 +139,5 @@ ds50::FragmentReader::getNext_(FragmentPtrs & frags)
         << flusher;
   return true;
 }
+
+DEFINE_ARTDAQ_GENERATOR(ds50::FragmentReader)

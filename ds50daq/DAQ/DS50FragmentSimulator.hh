@@ -20,7 +20,6 @@ namespace ds50 {
 class ds50::FragmentSimulator : public artdaq::FragmentGenerator {
 public:
   explicit FragmentSimulator(fhicl::ParameterSet const & ps);
-  virtual ~FragmentSimulator();
 
 private:
   virtual bool getNext_(artdaq::FragmentPtrs & output);
