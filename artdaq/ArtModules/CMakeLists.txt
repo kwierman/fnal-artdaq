@@ -1,6 +1,7 @@
-add_library(artdaq_ArtModules SHARED detail/RawEventQueueReader.cc)
+set(LIB_NAME artdaq_ArtModules)
+add_library(${LIB_NAME} SHARED detail/RawEventQueueReader.cc)
 
-target_link_libraries(artdaq_ArtModules
+target_link_libraries(${LIB_NAME}
   artdaq_DAQrate
   artdaq_DAQdata
   ${ART_FRAMEWORK_CORE}
@@ -14,3 +15,6 @@ target_link_libraries(artdaq_ArtModules
   )
 
 simple_plugin(RawInput "source" artdaq_ArtModules)
+
+install(TARGETS ${LIB_NAME}
+  DESTINATION ${flavorqual_dir}/lib )
