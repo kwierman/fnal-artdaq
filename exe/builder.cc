@@ -232,7 +232,7 @@ void Program::detector()
      detectors[0]);
   std::unique_ptr<artdaq::FragmentGenerator> const
     gen(artdaq::makeFragmentGenerator
-        (daq_pset_.get<std::string>("generator"),
+        (det_ps.get<std::string>("generator"),
          det_ps));
   artdaq::SHandles h(source_buffers_,
                      max_payload_size_words_,

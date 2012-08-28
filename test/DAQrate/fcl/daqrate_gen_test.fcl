@@ -2,6 +2,7 @@ BEGIN_PROLOG
 payload_size: 10240
 det:
 {
+  generator: GenericFragmentSimulator
   payload_size: @local::payload_size
   run_number: 11
   fragments_per_event: 1
@@ -11,7 +12,6 @@ END_PROLOG
 
 daq:
 {
-  generator: GenericFragmentSimulator
   use_art: false
   max_payload_size: @local::payload_size
   detectors: [ det0, det1, det2, det3, det4 ]
