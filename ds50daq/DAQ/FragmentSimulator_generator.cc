@@ -1,6 +1,6 @@
 #include "ds50daq/DAQ/FragmentSimulator.hh"
 
-#include "artdaq/DAQdata/FragmentGeneratorMacros.hh"
+#include "artdaq/DAQdata/GeneratorMacros.hh"
 #include "cetlib/exception.h"
 #include "ds50daq/DAQ/DS50Board.hh"
 #include "ds50daq/DAQ/DS50BoardWriter.hh"
