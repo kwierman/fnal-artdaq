@@ -1,5 +1,5 @@
-#ifndef artdaq_DAQdata_DS50Board_hh
-#define artdaq_DAQdata_DS50Board_hh
+#ifndef ds50daq_DAQ_DS50Board_hh
+#define ds50daq_DAQ_DS50Board_hh
 
 #include "ds50daq/DAQ/DS50Types.hh"
 #include "artdaq/DAQdata/Fragment.hh"
@@ -183,4 +183,4 @@ ds50::Board::header_() const
 {
   return reinterpret_cast<detail::Header const *>(&*data_.dataBegin());
 }
-#endif /* artdaq_DAQdata_DS50Board_hh */
+#endif /* ds50daq_DAQ_DS50Board_hh */

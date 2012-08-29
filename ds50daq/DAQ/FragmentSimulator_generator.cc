@@ -1,5 +1,7 @@
+#include "ds50daq/DAQ/FragmentSimulator.hh"
+
+#include "artdaq/DAQdata/GeneratorMacros.hh"
 #include "cetlib/exception.h"
-#include "ds50daq/DAQ/DS50FragmentSimulator.hh"
 #include "ds50daq/DAQ/DS50Board.hh"
 #include "ds50daq/DAQ/DS50BoardWriter.hh"
 #include "fhiclcpp/ParameterSet.h"
@@ -71,9 +73,6 @@ ds50::FragmentSimulator::FragmentSimulator(fhicl::ParameterSet const & ps) :
   }
 }
 
-ds50::FragmentSimulator::~FragmentSimulator()
-{ }
-
 bool
 ds50::FragmentSimulator::getNext_(FragmentPtrs & frags)
 {
@@ -101,3 +100,5 @@ ds50::FragmentSimulator::getNext_(FragmentPtrs & frags)
   }
   return true;
 }
+
+DEFINE_ARTDAQ_GENERATOR(ds50::FragmentSimulator)

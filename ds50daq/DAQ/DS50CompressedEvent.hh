@@ -1,5 +1,5 @@
-#ifndef artdaq_DAQdata_DS50CompressedEvent_hh
-#define artdaq_DAQdata_DS50CompressedEvent_hh
+#ifndef ds50daq_DAQ_DS50CompressedEvent_hh
+#define ds50daq_DAQ_DS50CompressedEvent_hh
 
 // NOTE: the GPU might be more efficient at using 32-bit integers than 64-bit integers,
 // in this case the code below will need to be modified.
@@ -84,4 +84,4 @@ ds50::CompressedEvent::headerOnlyFrag(size_t which) const
 }
 #endif /* USE_MODERN_FEATURES */
 
-#endif /* artdaq_DAQdata_DS50CompressedEvent_hh */
+#endif /* ds50daq_DAQ_DS50CompressedEvent_hh */

@@ -1,5 +1,5 @@
-#ifndef artdaq_DAQdata_DS50FragmentSimulator_hh
-#define artdaq_DAQdata_DS50FragmentSimulator_hh
+#ifndef ds50daq_DAQ_FragmentSimulator_hh
+#define ds50daq_DAQ_FragmentSimulator_hh
 
 #include "fhiclcpp/fwd.h"
 #include "ds50daq/DAQ/DS50Types.hh"
@@ -13,14 +13,13 @@ namespace ds50 {
   class FragmentSimulator;
 }
 
-// DS50FragmentSimulator creates simulated DS50 events, with data
+// FragmentSimulator creates simulated DS50 events, with data
 // distributed according to a "histogram" provided in the configuration
 // data.
 
 class ds50::FragmentSimulator : public artdaq::FragmentGenerator {
 public:
   explicit FragmentSimulator(fhicl::ParameterSet const & ps);
-  virtual ~FragmentSimulator();
 
 private:
   virtual bool getNext_(artdaq::FragmentPtrs & output);
@@ -36,4 +35,4 @@ private:
   std::vector<std::discrete_distribution<adc_type>> content_generator_;
 };
 
-#endif /* artdaq_DAQdata_DS50FragmentSimulator_hh */
+#endif /* ds50daq_DAQ_FragmentSimulator_hh */

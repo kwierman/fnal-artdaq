@@ -1,5 +1,5 @@
-#ifndef artdaq_DAQdata_DS50Types_hh
-#define artdaq_DAQdata_DS50Types_hh
+#ifndef ds50daq_DAQ_DS50Types_hh
+#define ds50daq_DAQ_DS50Types_hh
 
 #include <cstddef>
 
@@ -20,4 +20,4 @@ namespace ds50 {
   typedef double signal_type;
   typedef std::vector<signal_type> SignalVec;
 }
-#endif /* artdaq_DAQdata_DS50Types_hh */
+#endif /* ds50daq_DAQ_DS50Types_hh */

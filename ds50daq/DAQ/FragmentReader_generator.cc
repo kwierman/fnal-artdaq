@@ -1,4 +1,10 @@
-#include "ds50daq/DAQ/DS50FragmentReader.hh"
+#include "ds50daq/DAQ/FragmentReader.hh"
+
+#include "artdaq/DAQdata/Debug.hh"
+#include "artdaq/DAQdata/GeneratorMacros.hh"
+#include "cetlib/exception.h"
+#include "ds50daq/DAQ/DS50Board.hh"
+#include "fhiclcpp/ParameterSet.h"
 
 #include <cstdint>
 #include <cstring>
@@ -7,11 +13,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
-#include "ds50daq/DAQ/DS50Board.hh"
-#include "artdaq/DAQdata/Debug.hh"
-#include "cetlib/exception.h"
-#include "fhiclcpp/ParameterSet.h"
 
 using fhicl::ParameterSet;
 using ds50::Board;
@@ -23,9 +24,6 @@ ds50::FragmentReader::FragmentReader(ParameterSet const & ps)
   max_set_size_bytes_(ps.get<double>("max_set_size_gib", 14.0) * 1024 * 1024 * 1024),
   next_point_ {fileNames_.begin(), 0} {
 }
-
-ds50::FragmentReader::~FragmentReader()
-{ }
 
 bool
 ds50::FragmentReader::getNext_(FragmentPtrs & frags)
@@ -138,3 +136,5 @@ ds50::FragmentReader::getNext_(FragmentPtrs & frags)
         << flusher;
   return true;
 }
+
+DEFINE_ARTDAQ_GENERATOR(ds50::FragmentReader)
