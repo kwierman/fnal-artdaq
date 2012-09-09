@@ -1,11 +1,11 @@
-/* High Precision Timing Facility
- *
+/* DarkSide 50 DAQ program
+ * This file add the xmlrpc commander as a client to the SC
  * Author: Alessandro Razeto <Alessandro.Razeto@ge.infn.it>
- *
- * $Id: commander.hh,v 1.1 2012-01-06 15:22:03 razeto Exp $
  */
 #ifndef XMLRPC_COMMANDER_H
 #define XMLRPC_COMMANDER_H
+
+#include "fhiclcpp/ParameterSet.h"
 
 class xmlrpc_commander {
   public:
@@ -17,13 +17,16 @@ class xmlrpc_commander {
     xmlrpc_commander (xmlrpc_commander&&) = delete;
 
     void do_run (int port);
+
+    fhicl::ParameterSet _pset;
+
+    enum state {
+      idle,
+      inited,
+      running,
+      paused
+    };
 };
 
 
 #endif
-/*
- * $Log: commander.hh,v $
- * Revision 1.1  2012-01-06 15:22:03  razeto
- * Added a working basilar commander
- *
- */
