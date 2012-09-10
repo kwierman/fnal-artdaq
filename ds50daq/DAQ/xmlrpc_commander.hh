@@ -9,15 +9,23 @@
 
 class xmlrpc_commander {
   public:
-    static void run (int port) { xmlrpc_commander().do_run (port); }
+    xmlrpc_commander (int port);
+    void operator() ();
+
+    void init (const std::string& config);
+    void start (int run);
+    void pause ();
+    void resume ();
+    void stop ();
+    void abort ();
+    void shutdown ();
+    void reboot ();
 
   private:
-    xmlrpc_commander () = default;
     xmlrpc_commander (const xmlrpc_commander&) = delete;
     xmlrpc_commander (xmlrpc_commander&&) = delete;
 
-    void do_run (int port);
-
+    int _port;
     fhicl::ParameterSet _pset;
 
     enum state {
@@ -25,7 +33,7 @@ class xmlrpc_commander {
       inited,
       running,
       paused
-    };
+    } _state;
 };
 
 

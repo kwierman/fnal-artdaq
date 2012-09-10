@@ -1,10 +1,5 @@
 /* DarkSide 50 DAQ program
- * This file add the xmlrpc commander as a client to the SC; the following
- * commands are available:
- *   init (string config)
- *   start (int run)
- *   stop ()
- *   shutdown (string reason)
+ * This file add the xmlrpc commander as a client to the SC
  * Author: Alessandro Razeto <Alessandro.Razeto@ge.infn.it>
  */
 #include <xmlrpc-c/base.hpp>
@@ -17,64 +12,65 @@
 
 namespace {
   std::string exception_msg (const std::runtime_error &er) { 
-    std::string msg = std::string(er.what ()).substr (2);
+    std::string msg(er.what ()); //std::string(er.what ()).substr (2);
     if (msg[msg.size() - 1] == '\n') msg.erase(msg.size() - 1);
     return msg;
   }
 
-  class init_: public xmlrpc_c::method { 
+  class cmd_: public xmlrpc_c::method {
     public:
-      init_ () { _signature = "s:s"; _help = "initialize the system"; } 
-      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) { 
-	try { 
-	  // DO STUFF
-	  std::cout << "Initing with the following settings: " << paramList.getString (0) << std::endl;
+      cmd_ (xmlrpc_commander& c, const std::string& signature, const std::string& description): _c(c) { _signature = signature; _help = description; }
+    protected:
+      xmlrpc_commander& _c;
+  };
 
-//	  fhicl::make_ParameterSet (paramList.getString (0), _pset);
-	  
-	  *retvalP = xmlrpc_c::value_string ("ok"); 
-	} catch (std::runtime_error &er) { 
-	  *retvalP = xmlrpc_c::value_string (exception_msg (er)); 
-	} 
-      }
+  class init_: public cmd_ {
+    public:
+      init_ (xmlrpc_commander& c): cmd_(c, "s:s", "initialize the system") {}
+      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try {
+	_c.init (paramList.getString (0));
+	*retvalP = xmlrpc_c::value_string ("ok"); 
+      } catch (std::runtime_error &er) { 
+	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
+      } 
   };
   
-  class start_: public xmlrpc_c::method { 
+  class start_: public cmd_ {
     public:
-      start_ () { _signature = "s:i"; _help = "start the run"; } 
-      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) { 
-	try { 
-	  // DO STUFF
-	  std::cout << "starting run " << paramList.getInt (0) << std::endl;
-	  
-	  *retvalP = xmlrpc_c::value_string ("ok"); 
-	} catch (std::runtime_error &er) { 
-	  *retvalP = xmlrpc_c::value_string (exception_msg (er)); 
-	} 
-      }
+      start_ (xmlrpc_commander& c): cmd_(c, "s:i", "start the run") {}
+      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try { 
+	_c.start (paramList.getInt (0));
+	*retvalP = xmlrpc_c::value_string ("ok"); 
+      } catch (std::runtime_error &er) { 
+	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
+      } 
   };
 
-  class stop_: public xmlrpc_c::method { 
-    public:
-      stop_ () { _signature = "s:n"; _help = "stop the run"; } 
-      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) { 
-	try { 
-	  // DO STUFF
-	  std::cout << "stopping current run" << std::endl;
-	  
-	  *retvalP = xmlrpc_c::value_string ("ok"); 
-	} catch (std::runtime_error &er) { 
-	  *retvalP = xmlrpc_c::value_string (exception_msg (er)); 
-	} 
-      }
-  };
+#define generate_noarg_class(name, description) \
+  class name ## _: public cmd_ { \
+    public: \
+      name ## _(xmlrpc_commander& c): cmd_(c, "s:n", description) {} \
+      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try { \
+	_c.name (); \
+	*retvalP = xmlrpc_c::value_string ("ok"); \
+      } catch (std::runtime_error &er) { \
+	*retvalP = xmlrpc_c::value_string (exception_msg (er)); \
+      } \
+  } 
 
+  generate_noarg_class(pause, "pause the run");
+  generate_noarg_class(resume, "resume the run");
+  generate_noarg_class(stop, "stop the run");
+  generate_noarg_class(abort, "abort the system");
+  generate_noarg_class(reboot, "reboot the computer");
+
+#undef generate_noarg_class
 
   class shutdown_: public xmlrpc_c::registry::shutdown {
     public:
       shutdown_ (xmlrpc_c::serverAbyss *server): _server(server) {}
 
-      virtual void doit(const std::string& comment, void*) const {
+      virtual void doit (const std::string& comment, void*) const {
 	_server->terminate ();
       }
     private:
@@ -83,31 +79,51 @@ namespace {
 };
 
 
-void xmlrpc_commander::do_run (int port) {
-  try {
-    xmlrpc_c::registry registry;
+xmlrpc_commander::xmlrpc_commander (int port): _port(port), _state(idle) {}
+
+void xmlrpc_commander::operator() () try {
+  xmlrpc_c::registry registry;
 
 #define register_method(m) \
-    xmlrpc_c::methodPtr const ptr_ ## m(new m ## _);\
-    registry.addMethod ("daqtest." #m, ptr_ ## m);
+  xmlrpc_c::methodPtr const ptr_ ## m(new m ## _(*this));\
+  registry.addMethod ("ds50." #m, ptr_ ## m);
 
-    register_method(init);
-    register_method(start);
-    register_method(stop);
+  register_method(init);
+  register_method(start);
+  register_method(stop);
 
 #undef register_method
 
-    xmlrpc_c::serverAbyss server(xmlrpc_c::serverAbyss::constrOpt ().registryP (&registry).portNumber(port));
+  xmlrpc_c::serverAbyss server(xmlrpc_c::serverAbyss::constrOpt ().registryP (&registry).portNumber (_port));
 
-    shutdown_ shutdown(&server);
-    registry.setShutdown (&shutdown);
+  shutdown_ shutdown_obj(&server);
+  registry.setShutdown (&shutdown_obj);
 
-    server.run();
+  server.run();
 
-  } catch (std::exception const& e) {
-    std::cerr << "xml-rpc error " << e.what() << std::endl;
-    return;
-  }
+  shutdown ();
+} catch (std::exception const& e) {
+  std::cerr << "xml-rpc error " << e.what() << std::endl;
+}
 
-  std::cerr << "exiting" << std::endl;
+
+
+void xmlrpc_commander::init (const std::string& config) {
+  if (_state != idle) throw std::runtime_error("wrong state");
+
+  fhicl::make_ParameterSet (config, _pset);
+
+}
+
+
+void xmlrpc_commander::start (int run) {
+  if (_state != inited) throw std::runtime_error("wrong state");
+}
+
+
+void xmlrpc_commander::stop () {
+  if (_state != running) throw std::runtime_error("wrong state");
+}
+
+void xmlrpc_commander::shutdown () {
 }
