@@ -11,7 +11,6 @@ if(WANT_MPI)
   if (EXISTS ${CPI_SOURCE})
     cet_test(cpi_t SOURCES ${CPI_SOURCE} LIBRARIES ${MPI_LIBRARIES})
   endif()
-endif()
 
 cet_test(daqrate_gen_test HANDBUILT
   TEST_EXEC daqrate
@@ -19,3 +18,4 @@ cet_test(daqrate_gen_test HANDBUILT
   TEST_ARGS 5 1 4 11 -- -c daqrate_gen_test.fcl HANDBUILT
   TEST_PROPERTIES RUN_SERIAL true
   )
+endif()
