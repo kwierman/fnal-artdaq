@@ -44,16 +44,16 @@ endif()
 cet_report_compiler_flags()
 
 # these are minimum required versions, not the actual product versions
-find_ups_product( art v1_00_12 )
+find_ups_product( art v1_01_00 )
 
-find_ups_product( cetbuildtools v2_00_00 )
+find_ups_product( cetbuildtools v2_03_00 )
 
 find_ups_product( cpp0x v1_03_00 )
 find_ups_product( cetlib v1_03_00 )
 find_ups_product( fhiclcpp v2_16_00 )
 find_ups_product( messagefacility v1_10_00 )
 
-find_ups_root( v5_30_02 )
+find_ups_root( v5_34_00 )
 find_ups_boost( v1_47_0 filesystem
                         program_options
                         regex
@@ -65,28 +65,12 @@ find_ups_boost( v1_47_0 filesystem
 cet_check_gcc()
 
 # include search path
-include_directories ("${PROJECT_BINARY_DIR}")
-include_directories ("${PROJECT_SOURCE_DIR}")
 # notice use of ENV to invoke an external variable
 include_directories ( $ENV{LIBSIGCPP_INC}/sigc++-2.0 )
 include_directories ( $ENV{LIBSIGCPP_LIB}/sigc++-2.0/include )
 
 #  Find all the libraries needed by our dependent CMakeList.txt files
-find_library( ART_FRAMEWORK_ART NAMES art_Framework_Art PATHS $ENV{ART_LIB} )
-find_library( ART_FRAMEWORK_CORE NAMES art_Framework_Core PATHS $ENV{ART_LIB} )
-find_library( ART_FRAMEWORK_PRINCIPAL NAMES art_Framework_Principal PATHS $ENV{ART_LIB} )
-find_library( ART_FRAMEWORK_SERVICES_REGISTRY NAMES art_Framework_Services_Registry PATHS $ENV{ART_LIB} )
-find_library( ART_PERSISTENCY_COMMON NAMES art_Persistency_Common PATHS $ENV{ART_LIB} )
-find_library( ART_PERSISTENCY_COMMON_DICT NAMES art_Persistency_Common_dict PATHS $ENV{ART_LIB} )
-find_library( ART_PERSISTENCY_PROVENANCE NAMES art_Persistency_Provenance PATHS $ENV{ART_LIB} )
-find_library( ART_UTILITIES NAMES art_Utilities PATHS $ENV{ART_LIB} )
-find_library( CETLIB NAMES cetlib PATHS $ENV{CETLIB_LIB} )
 find_library( CPPUNIT NAMES cppunit   PATHS $ENV{CPPUNIT_LIB}   NO_DEFAULT_PATH )
-find_library( FHICLCPP NAMES fhiclcpp PATHS $ENV{FHICLCPP_LIB} )
-find_library( MF_EXTENSIONS NAMES MF_ExtModules PATHS $ENV{MESSAGEFACILITY_LIB} )
-find_library( MF_MESSAGELOGGER NAMES MF_MessageLogger PATHS $ENV{MESSAGEFACILITY_LIB} )
-find_library( MF_MESSAGESERVICE NAMES MF_MessageService PATHS $ENV{MESSAGEFACILITY_LIB} )
-find_library( MF_UTILITIES NAMES MF_Utilities PATHS $ENV{MESSAGEFACILITY_LIB} )
 find_library( SIGC    NAMES sigc-2.0  PATHS $ENV{LIBSIGCPP_LIB} NO_DEFAULT_PATH )
 
 # define common flags
