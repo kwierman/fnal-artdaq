@@ -50,7 +50,7 @@ namespace {
   class name ## _: public cmd_ { \
     public: \
       name ## _(xmlrpc_commander& c): cmd_(c, "s:n", description) {} \
-      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try { \
+      void execute (xmlrpc_c::paramList const&, xmlrpc_c::value * const retvalP) try { \
 	_c.name (); \
 	*retvalP = xmlrpc_c::value_string ("ok"); \
       } catch (std::runtime_error &er) { \
@@ -70,13 +70,13 @@ namespace {
     public:
       shutdown_ (xmlrpc_c::serverAbyss *server): _server(server) {}
 
-      virtual void doit (const std::string& comment, void*) const {
+      virtual void doit (const std::string&, void*) const {
 	_server->terminate ();
       }
     private:
       xmlrpc_c::serverAbyss *_server;
   };
-};
+}
 
 
 xmlrpc_commander::xmlrpc_commander (int port): _port(port), _state(idle) {}
@@ -116,7 +116,7 @@ void xmlrpc_commander::init (const std::string& config) {
 }
 
 
-void xmlrpc_commander::start (int run) {
+void xmlrpc_commander::start (int) {
   if (_state != inited) throw std::runtime_error("wrong state");
 }
 
