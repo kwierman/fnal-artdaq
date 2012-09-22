@@ -6,6 +6,7 @@
 #define XMLRPC_COMMANDER_H
 
 #include "fhiclcpp/ParameterSet.h"
+#include <mutex>
 
 class xmlrpc_commander {
   public:
@@ -34,6 +35,15 @@ class xmlrpc_commander {
       running,
       paused
     } _state;
+    
+    enum indirect_cmd {
+      do_stop,
+      do_pause,
+      do_resume,
+      do_abort
+    } _indirect_cmd;
+
+    std::mutex _m;
 };
 
 
