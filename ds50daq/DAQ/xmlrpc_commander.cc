@@ -9,6 +9,7 @@
 #include <iostream>
 #include "xmlrpc_commander.hh"
 #include "fhiclcpp/make_ParameterSet.h"
+#include "messagefacility/MessageLogger/MessageLogger.h"
 
 namespace {
   std::string exception_msg (const std::runtime_error &er) { 
@@ -32,6 +33,7 @@ namespace {
 	*retvalP = xmlrpc_c::value_string ("ok"); 
       } catch (std::runtime_error &er) { 
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
+	mf::LogError ("Command") << er.what ();
       } 
   };
   
@@ -43,6 +45,7 @@ namespace {
 	*retvalP = xmlrpc_c::value_string ("ok"); 
       } catch (std::runtime_error &er) { 
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
+	mf::LogError ("Command") << er.what ();
       } 
   };
 
@@ -55,6 +58,7 @@ namespace {
 	*retvalP = xmlrpc_c::value_string ("ok"); \
       } catch (std::runtime_error &er) { \
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); \
+	mf::LogError ("Command") << er.what (); \
       } \
   } 
 
@@ -99,25 +103,35 @@ void xmlrpc_commander::operator() () try {
   shutdown_ shutdown_obj(&server);
   registry.setShutdown (&shutdown_obj);
 
+  mf::LogDebug ("XMLRPC") << "running server" << std::endl;
+
   server.run();
+
+  mf::LogDebug ("XMLRPC") << "server terminated" << std::endl;
 
   shutdown ();
 } catch (std::exception const& e) {
-  std::cerr << "xml-rpc error " << e.what() << std::endl;
+  std::cerr << "xmlrpc error " << e.what() << std::endl;
 }
 
 
 
 void xmlrpc_commander::init (const std::string& config) {
+  std::lock_guard<std::mutex> lk(_m);
   if (_state != idle) throw std::runtime_error("wrong state");
 
   fhicl::make_ParameterSet (config, _pset);
 
+
+  _state = inited;
 }
 
 
 void xmlrpc_commander::start (int) {
+  std::lock_guard<std::mutex> lk(_m);
   if (_state != inited) throw std::runtime_error("wrong state");
+
+  _state = running;
 }
 
 
