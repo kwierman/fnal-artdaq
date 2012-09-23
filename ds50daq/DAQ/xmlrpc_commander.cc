@@ -110,8 +110,9 @@ void xmlrpc_commander::operator() () try {
   mf::LogDebug ("XMLRPC") << "server terminated" << std::endl;
 
   shutdown ();
-} catch (std::exception const& e) {
-  std::cerr << "xmlrpc error " << e.what() << std::endl;
+} catch (...) {
+  shutdown ();
+  throw;
 }
 
 
