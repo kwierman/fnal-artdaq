@@ -8,10 +8,11 @@
 // Should we also store a vector of compressed fragment lengths? yes, because the
 // total bits returned from the encoders is an important number
 
-#include "ds50daq/DAQ/DS50Types.hh"
 #include "artdaq/DAQdata/features.hh"
 #include "artdaq/DAQdata/Fragment.hh"
-#include "ds50daq/DAQ/detail/DS50Header.hh"
+#if USE_MODERN_FEATURES
+#include "ds50daq/DAQ/V172xFragment.hh"
+#endif
 
 #include <vector>
 
@@ -21,6 +22,9 @@ namespace ds50 {
 
 class ds50::CompressedEvent {
 public:
+  typedef uint64_t reg_type;
+  typedef std::vector<reg_type> DataVec;
+
   CompressedEvent() { }
   // will set up the headers and the sizes given a set of fragments
   explicit CompressedEvent(std::vector<artdaq::Fragment> const & init);
@@ -47,7 +51,9 @@ public:
 
   // Needs to be public for ROOT persistency: do not use.
   struct HeaderProxy {
-    detail::Header::data_t hp[detail::Header::size_words];
+#if USE_MODERN_FEATURES
+    V172xFragment::Header::data_t hp[V172xFragment::Header::size_words];
+#endif
   };
 
 private:
@@ -62,7 +68,6 @@ private:
 };
 
 #if USE_MODERN_FEATURES
-#include "ds50daq/DAQ/DS50Board.hh"
 
 inline
 artdaq::Fragment
@@ -76,8 +81,8 @@ ds50::CompressedEvent::headerOnlyFrag(size_t which) const
                         (&ds50_headers_.at(which)),
                         reinterpret_cast<Fragment::value_type const *>
                         (&ds50_headers_.at(which) +
-                         detail::Header::size_words)));
-  ds50::Board b(result);
+                         V172xFragment::Header::size_words)));
+  ds50::V172xFragment b(result);
   result.setSequenceID(b.event_counter());
   result.setFragmentID(b.board_id());
   return result;
