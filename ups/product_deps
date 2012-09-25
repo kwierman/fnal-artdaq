@@ -1,6 +1,6 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent artdaq	v0_02_01
+parent artdaq	v0_02_02
 defaultqual	e2
 
 # These optional lines define the installed directories where
@@ -18,12 +18,12 @@ bindir      fq_dir      bin
 #
 product		version		optional
 gcc		v4_7_1
-art		v1_02_01
+art		v1_02_03
 mvapich2	v1_7_0		
 
 # list products required ONLY for the build
 # any products here must NOT have qualifiers
-only_for_build	cetbuildtools	v2_03_02
+only_for_build	cetbuildtools	v2_03_03
 
 # e2  - with gcc 4.7.1 and -std=c++11 -fopenmp
 # -nq- here means there is no qualifier
