@@ -24,8 +24,7 @@ IF (NOT CETBUILDTOOLS_VERSION)
     MESSAGE (FATAL_ERROR "ERROR: setup cetbuildtools to get the cmake modules")
 ENDIF()
 
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Modules
-		      $ENV{ART_DIR}/Modules
+set(CMAKE_MODULE_PATH $ENV{ART_DIR}/Modules
 		      $ENV{CETBUILDTOOLS_DIR}/Modules
 		      ${CMAKE_MODULE_PATH})
 
@@ -103,9 +102,6 @@ include(BuildPlugins)
 
 # testing
 add_subdirectory(test)
-
-# Modules - temporary
-add_subdirectory(Modules)
 
 # source
 add_subdirectory(artdaq)
