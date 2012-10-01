@@ -41,15 +41,6 @@ cet_test(read_files_t HANDBUILT
   DATAFILES read_files_t.fcl
   )
 
-add_executable(driver driver.cc)
-target_link_libraries(driver
-  artdaq_DAQrate
-  artdaq_DAQdata
-  ${FHICLCPP}
-  ${CETLIB}
-  ${Boost_PROGRAM_OPTIONS_LIBRARY}
-  )
-
 # Generate several fragments and verify they made it into the store.
 cet_test(driver_t HANDBUILT
   TEST_EXEC driver

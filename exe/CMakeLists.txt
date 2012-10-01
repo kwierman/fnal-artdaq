@@ -13,6 +13,17 @@ cet_test(numawrap PREBUILT NO_AUTO INSTALL_BIN)
 # ----------------------------------------------------------------------
 # Build this project's executables:
 
+# Nominally a test exec (no MPI) but we want this to be available to other packages.
+add_executable(driver driver.cc)
+target_link_libraries(driver
+  artdaq_DAQrate
+  artdaq_DAQdata
+  ${FHICLCPP}
+  ${CETLIB}
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  )
+install(TARGETS driver DESTINATION  ${flavorqual_dir}/bin)
+
 if(WANT_MPI)
   add_executable( perfdump perfdump.cc )
   target_link_libraries(perfdump artdaq_DAQrate)
