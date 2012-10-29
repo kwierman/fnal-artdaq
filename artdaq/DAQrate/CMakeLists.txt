@@ -37,6 +37,7 @@ if(WANT_MPI)
     Perf.cc
     RHandles.cc
     SHandles.cc
+    infoFilename.cc
     )
   list(APPEND LIB_LIBS ${MPI_LIBRARIES})
 else()
