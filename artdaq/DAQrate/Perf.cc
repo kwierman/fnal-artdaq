@@ -1,6 +1,7 @@
 
 #include "artdaq/DAQrate/Perf.hh"
 
+#include "artdaq/DAQrate/infoFilename.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 
 #include <cstring>
@@ -24,7 +25,12 @@ namespace {
     Perf();
     ~Perf();
 
-    void configure(Config const &, size_t expected_events);
+    void configure(int rank,
+                   int run,
+                   int type,
+                   int num_senders,
+                   int num_receivers,
+                   size_t expected_events);
     static Perf * instance();
 
     template <class T> void write(T const & write_me);
@@ -64,24 +70,25 @@ namespace {
     ostr.write((const char *)&data_[0], pos_);
   }
 
-  void Perf::configure(Config const & conf, size_t expected_events)
+  void Perf::configure(int rank,
+                       int run,
+                       int type,
+                       int num_senders,
+                       int num_receivers,
+                       size_t expected_events)
   {
     int res_size = 0;
-    rank_ = conf.rank_;
-    run_ = conf.run_;
-    type_ = conf.type_ == Config::TaskSink ? JobStartMeas::SINK :
-            conf.type_ == Config::TaskSource ? JobStartMeas::SOURCE : JobStartMeas::DETECTOR;
+    rank_ = rank;
+    run_ = run;
+    type_ = type;
     start_ = MPI_Wtime();
-    filename_ = conf.infoFilename("perf_");
-    if (type_ != JobStartMeas::SINK) {
-      res_size += sizeof(SendMeas) * conf.sinks_ * expected_events; // Guess.
-    }
-    if (type_ != JobStartMeas::DETECTOR) {
-      res_size += sizeof(RecvMeas) * conf.sources_ * expected_events; // Guess.
-    }
-    res_size += sizeof(EventMeas) * expected_events;
-    res_size += 1000 * 1000 * 100;
-    data_.reserve(res_size); // Guess -- will reallocate if necessary.
+    filename_ = artdaq::infoFilename("perf_", rank, run);
+    res_size = sizeof(SendMeas) * num_senders;
+    res_size += sizeof(RecvMeas) * num_receivers;
+    res_size += sizeof(EventMeas);
+    res_size *= expected_events;
+    res_size += 1000 * 1000 * 100; // Guess -- will reallocate if necessary.
+    data_.reserve(res_size);
   }
 
 }
@@ -92,8 +99,20 @@ double PerfGetStartTime()
 void PerfSetStartTime()
 { Perf::instance()->start_ = MPI_Wtime(); }
 
-void PerfConfigure(Config const & conf, size_t expected_events)
-{ Perf::instance()->configure(conf, expected_events); }
+void PerfConfigure(int rank,
+                   int run,
+                   int type,
+                   int num_senders,
+                   int num_receivers,
+                   size_t expected_events)
+{
+  Perf::instance()->configure(rank,
+                              run,
+                              type,
+                              num_senders,
+                              num_receivers,
+                              expected_events);
+}
 
 void PerfWriteJobStart()
 { JobStartMeas js; }
@@ -141,7 +160,7 @@ void RecvMeas::woke(int event, int which_buf)
 
 // ------------
 JobStartMeas::JobStartMeas(): run_(Perf::instance()->run_), rank_(Perf::instance()->rank_),
-  which_((Type)Perf::instance()->type_), when_(MPI_Wtime()) { }
+  which_(Perf::instance()->type_), when_(MPI_Wtime()) { }
 JobStartMeas::~JobStartMeas()
 { Perf::instance()->write(*this); }
 

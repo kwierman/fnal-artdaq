@@ -26,7 +26,6 @@ enum TaskType : int { TaskSink = 0, TaskSource = 1, TaskDetector = 2 };
   int getArtArgc(int argc, char * argv[]) const;
   char ** getArtArgv(int argc, char * argv[]) const;
   std::string typeName() const;
-  std::string infoFilename(std::string const & prefix) const;
   void writeInfo() const;
 
   // input parameters

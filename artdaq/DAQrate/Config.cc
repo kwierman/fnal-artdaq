@@ -1,14 +1,13 @@
 
 #include "artdaq/DAQrate/Config.hh"
 #include "artdaq/DAQrate/Perf.hh"
+#include "artdaq/DAQrate/infoFilename.hh"
 #include "artdaq/DAQdata/Fragment.hh"
 
 #include <cstring>
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <string>
-#include <iomanip>
 #include <cstdlib>
 
 #include "artdaq/DAQrate/quiet_mpi.hh"
@@ -94,17 +93,10 @@ Config::Config(int rank, int total_procs, int argc, char * argv[]):
 
 void Config::writeInfo() const
 {
-  string fname = infoFilename("config_");
+  string fname = artdaq::infoFilename("config_", rank_, run_);
   ofstream ostr(fname.c_str());
   printHeader(ostr);
   ostr << *this << "\n";
-}
-
-std::string Config::infoFilename(std::string const & prefix) const
-{
-  ostringstream ost;
-  ost << prefix << setfill('0') << setw(4) << run_ << "_" << setfill('0') << setw(4) << rank_ << ".txt";
-  return ost.str();
 }
 
 int Config::destCount() const

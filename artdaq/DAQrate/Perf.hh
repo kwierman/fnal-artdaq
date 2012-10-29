@@ -1,8 +1,6 @@
 #ifndef artdaq_DAQrate_Perf_hh
 #define artdaq_DAQrate_Perf_hh
 
-#include "artdaq/DAQrate/Config.hh"
-
 #include <vector>
 #include <string>
 #include <ostream>
@@ -131,28 +129,20 @@ inline std::ostream & operator<<(std::ostream & ost, RecvMeas const & h)
 
 struct JobStartMeas : HeaderMeas<JobStartMeas> {
   enum { ID = PERF_JOB_START };
-  enum Type { DETECTOR = 0, SOURCE = 1, SINK = 2 };
 
   JobStartMeas();
   ~JobStartMeas();
 
-  std::string getTypeName(Type t) const {
-    if (t == DETECTOR) { return "det"; }
-    if (t == SOURCE) { return "src"; }
-    if (t == SINK) { return "sink"; }
-    return "NA";
-  }
-
   void print(std::ostream & ost) const {
     ost << run_ << " " << rank_ << " ";
     ost << id() << " " << call_ << " "
-        << getTypeName(which_) << " "
+        << "Type " << which_ << " "
         << std::setprecision(14) << when_;
   }
 
   int run_;
   int rank_;
-  Type which_;
+  int which_;
   double when_;
 };
 
@@ -205,7 +195,12 @@ inline std::ostream & operator<<(std::ostream & ost, EventMeas const & h)
   return ost;
 }
 
-void PerfConfigure(Config const &, size_t expected_events);
+void PerfConfigure(int rank,
+                   int run,
+                   int type,
+                   int num_senders = 0,
+                   int num_receivers = 0,
+                   size_t expected_events = 0);
 void PerfSetStartTime();
 double PerfGetStartTime();
 void PerfWriteJobStart();

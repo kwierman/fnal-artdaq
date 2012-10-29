@@ -128,7 +128,9 @@ Program::Program(int argc, char * argv[]):
 {
   conf_.writeInfo();
   configureDebugStream(conf_.rank_, conf_.run_);
-  PerfConfigure(conf_, 0); // Don't know how many events.
+  PerfConfigure(conf_.rank_,
+                conf_.run_,
+                conf_.type_);
 }
 
 void Program::go()
