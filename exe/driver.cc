@@ -9,6 +9,7 @@
 // artdaq::EventStore through to the artdaq::RawInput source.
 //
 
+#include "art/Framework/Art/artapp.h"
 #include "artdaq/DAQdata/FragmentGenerator.hh"
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQdata/GenericFragmentSimulator.hh"
@@ -71,18 +72,32 @@ int main(int argc, char * argv[]) try
                                       driver_pset));
   artdaq::FragmentPtrs frags;
   while (gen->getNext(frags)) {}
+  //////////////////////////////////////////////////////////////////////
+  // Note: we are constrained to doing all this here rather than
+  // encapsulated neatly in a function due to the lieftime issues
+  // associated with async threads and std::string::c_str().
+  bool const want_artapp(driver_pset.get<bool>("use_art", false));
   std::ostringstream os;
-  os << pset.get<int>("events_expected", 0);
-  std::string oss(os.str());
+  if (!want_artapp) {
+    os << pset.get<int>("events_expected");
+  }
+  std::string const oss(os.str());
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wwrite-strings"
-  char* args[2] = { "SimpleQueueReader", const_cast<char *>(oss.c_str()) };
+  char * args[2] {"SimpleQueueReader", const_cast<char *>(oss.c_str())};
 #pragma GCC diagnostic pop
+  int es_argc(want_artapp?argc:2);
+  char **es_argv (want_artapp?argv:args);
+  artdaq::EventStore::ARTFUL_FCN *
+    es_fcn(want_artapp?&artapp:&artdaq::simpleQueueReaderApp);
   artdaq::EventStore store(driver_pset.get<size_t>("source_count"),
                            driver_pset.get<artdaq::EventStore::run_id_t>("run_number"),
-                           1, 2, args,
-                           &artdaq::simpleQueueReaderApp
-                           );
+                           1,
+                           es_argc,
+                           es_argv,
+                           es_fcn);
+  //////////////////////////////////////////////////////////////////////
+
   // Read or generate fragments as rapidly as possible, and feed them
   // into the EventStore. The throughput resulting from this design
   // choice is likely to have the fragment reading (or generation)
