@@ -40,6 +40,8 @@ artdaq::RHandles::RHandles(size_t buffer_count,
   }
 }
 
+
+#if 0
 static void printError(int rc, int which, MPI_Status &)
 {
   if (rc != MPI_SUCCESS) {
@@ -59,6 +61,7 @@ static void printError(int rc, int which, MPI_Status &)
         << flusher;
 #endif
 }
+#endif
 
 size_t
 artdaq::RHandles::
