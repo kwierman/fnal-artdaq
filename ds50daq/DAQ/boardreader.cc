@@ -1,20 +1,13 @@
-#include "messagefacility/MessageLogger/MessageLogger.h"
+
 #include "xmlrpc_commander.hh"
 #include <boost/program_options.hpp>
 #include <boost/lexical_cast.hpp>
+#include "messagefacility/MessageLogger/MessageLogger.h"
+#include "ds50daq/DAQ/configureMessageFacility.hh"
 
 int main(int argc, char *argv[])
 {
-  // configure and start the message facility
-  mf::StartMessageFacility(mf::MessageFacilityService::MultiThread,
-                           mf::MessageFacilityService::logConsole());
-  //mf::StartMessageFacility(mf::MessageFacilityService::MultiThread,
-  //                         mf::MessageFacilityService::
-  //                         ConfigurationFile("boardreaderMsgFacConfig.fcl",
-  //                                           mf::MessageFacilityService::
-  //                                           logConsole()));
-  mf::SetModuleName("BoardReader::main");
-  mf::SetContext("BoardReader::main");
+  ds50daq::configureMessageFacility("BoardReader::main"); 
 
   // handle the command-line arguments
   std::string usage = std::string(argv[0]) + " -p port_number <other-options>";
