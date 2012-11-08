@@ -8,7 +8,6 @@
 #include <stdexcept>
 #include <iostream>
 #include "xmlrpc_commander.hh"
-#include "fhiclcpp/make_ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 namespace {
@@ -27,10 +26,12 @@ namespace {
 
   class init_: public cmd_ {
     public:
-      init_ (xmlrpc_commander& c): cmd_(c, "s:s", "initialize the system") {}
+      init_ (xmlrpc_commander& c):
+        cmd_(c, "s:s", "initialize the program") {}
       void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try {
-	_c.init (paramList.getString (0));
-	*retvalP = xmlrpc_c::value_string ("ok"); 
+        mf::LogDebug("xmlrpc_commander") << "Parameter list size = " << paramList.size();
+        sleep(1);
+        *retvalP = xmlrpc_c::value_string ("Success"); 
       } catch (std::runtime_error &er) { 
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
 	mf::LogError ("Command") << er.what ();
@@ -39,10 +40,12 @@ namespace {
   
   class start_: public cmd_ {
     public:
-      start_ (xmlrpc_commander& c): cmd_(c, "s:i", "start the run") {}
+      start_ (xmlrpc_commander& c):
+        cmd_(c, "s:i", "start the run") {}
       void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try { 
-	_c.start (paramList.getInt (0));
-	*retvalP = xmlrpc_c::value_string ("ok"); 
+        mf::LogDebug("xmlrpc_commander") << "Parameter list size = " << paramList.size();
+        sleep(1);
+        *retvalP = xmlrpc_c::value_string ("Success"); 
       } catch (std::runtime_error &er) { 
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
 	mf::LogError ("Command") << er.what ();
@@ -52,10 +55,11 @@ namespace {
 #define generate_noarg_class(name, description) \
   class name ## _: public cmd_ { \
     public: \
-      name ## _(xmlrpc_commander& c): cmd_(c, "s:n", description) {} \
+      name ## _(xmlrpc_commander& c):\
+          cmd_(c, "s:n", description) {}\
       void execute (xmlrpc_c::paramList const&, xmlrpc_c::value * const retvalP) try { \
-	_c.name (); \
-	*retvalP = xmlrpc_c::value_string ("ok"); \
+        sleep(1); \
+        *retvalP = xmlrpc_c::value_string ("Success");\
       } catch (std::runtime_error &er) { \
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); \
 	mf::LogError ("Command") << er.what (); \
@@ -65,8 +69,6 @@ namespace {
   generate_noarg_class(pause, "pause the run");
   generate_noarg_class(resume, "resume the run");
   generate_noarg_class(stop, "stop the run");
-  generate_noarg_class(abort, "abort the system");
-  generate_noarg_class(reboot, "reboot the computer");
 
 #undef generate_noarg_class
 
@@ -74,7 +76,8 @@ namespace {
     public:
       shutdown_ (xmlrpc_c::serverAbyss *server): _server(server) {}
 
-      virtual void doit (const std::string&, void*) const {
+      virtual void doit (const std::string& paramString, void*) const {
+        mf::LogDebug("xmlrpc_commander") << paramString;
 	_server->terminate ();
       }
     private:
@@ -83,9 +86,10 @@ namespace {
 }
 
 
-xmlrpc_commander::xmlrpc_commander (int port): _port(port), _state(idle) {}
+xmlrpc_commander::xmlrpc_commander (int port): _port(port)
+{}
 
-void xmlrpc_commander::operator() () try {
+void xmlrpc_commander::run() try {
   xmlrpc_c::registry registry;
 
 #define register_method(m) \
@@ -109,36 +113,6 @@ void xmlrpc_commander::operator() () try {
 
   mf::LogDebug ("XMLRPC") << "server terminated" << std::endl;
 
-  shutdown ();
 } catch (...) {
-  shutdown ();
   throw;
-}
-
-
-
-void xmlrpc_commander::init (const std::string& config) {
-  std::lock_guard<std::mutex> lk(_m);
-  if (_state != idle) throw std::runtime_error("wrong state");
-
-  fhicl::make_ParameterSet (config, _pset);
-
-
-  _state = inited;
-}
-
-
-void xmlrpc_commander::start (int) {
-  std::lock_guard<std::mutex> lk(_m);
-  if (_state != inited) throw std::runtime_error("wrong state");
-
-  _state = running;
-}
-
-
-void xmlrpc_commander::stop () {
-  if (_state != running) throw std::runtime_error("wrong state");
-}
-
-void xmlrpc_commander::shutdown () {
 }

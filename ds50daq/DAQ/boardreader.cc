@@ -49,10 +49,9 @@ int main(int argc, char *argv[])
   //ds50::FragmentReceiver fragRec(requestQueue, responseQueue);
   //std::thread frThread(std::bind(&ds50::FragmentReceiver::run, fragRec));
 
-  //// create the xmlrpc_commander and run it
-  //xmlrpc_commander commander(vm["port"].as<unsigned short> (),
-  //                           requestQueue, responseQueue);
-  //commander.run();
+  // create the xmlrpc_commander and run it
+  xmlrpc_commander commander(vm["port"].as<unsigned short> ());
+  commander.run();
 
   //// cleanup
   //frThread.join();
