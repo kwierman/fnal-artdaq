@@ -7,7 +7,7 @@
 
 int main(int argc, char *argv[])
 {
-  ds50daq::configureMessageFacility("BoardReader::main"); 
+  ds50::configureMessageFacility("BoardReader::main"); 
 
   // handle the command-line arguments
   std::string usage = std::string(argv[0]) + " -p port_number <other-options>";
