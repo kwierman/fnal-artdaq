@@ -9,23 +9,27 @@
 namespace ds50 {
   class DS50FragmentGenerator : public artdaq::FragmentGenerator {
     public:
+      DS50FragmentGenerator();
       virtual ~DS50FragmentGenerator() noexcept = default;
 
-      bool start ();
-      bool stop (); 
-      bool pause ();
-      bool resume ();
+      void start (int run);
+      void stop (); 
+      void pause ();
+      void resume ();
       std::string report ();
 
+      int run_number () const { return run_number_; }
   private:
-      virtual bool start_ () { return true; }
-      virtual bool stop_ () { return true; } 
-      virtual bool pause_ () { return true; }
-      virtual bool resume_ () { return true; }
+      virtual void start_ () {}
+      virtual void stop_ () {}
+      virtual void pause_ () {}
+      virtual void resume_ () {}
       virtual std::string report_ () { return ""; }
 
       virtual bool getNext_ (artdaq::FragmentPtrs & output) final;
       virtual bool getNext__ (artdaq::FragmentPtrs & output) = 0;
+
+      int run_number_;
   protected:
       std::mutex mutex_;
       enum request {
