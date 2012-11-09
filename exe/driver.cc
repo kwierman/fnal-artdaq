@@ -71,7 +71,6 @@ int main(int argc, char * argv[]) try
     gen(artdaq::makeFragmentGenerator(driver_pset.get<std::string>("generator"),
                                       driver_pset));
   artdaq::FragmentPtrs frags;
-  while (gen->getNext(frags)) {}
   //////////////////////////////////////////////////////////////////////
   // Note: we are constrained to doing all this here rather than
   // encapsulated neatly in a function due to the lieftime issues
@@ -102,8 +101,11 @@ int main(int argc, char * argv[]) try
   // into the EventStore. The throughput resulting from this design
   // choice is likely to have the fragment reading (or generation)
   // speed as the limiting factor
-  for (auto & val : frags) {
-    store.insert(std::move(val));
+  while (gen->getNext(frags)) {
+    for (auto & val : frags) {
+      store.insert(std::move(val));
+    }
+    frags.clear();
   }
   return store.endOfData();
 }
