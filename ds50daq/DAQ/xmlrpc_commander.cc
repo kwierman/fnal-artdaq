@@ -7,6 +7,7 @@
 #include <xmlrpc-c/server_abyss.hpp>
 #include <stdexcept>
 #include <iostream>
+#include "art/Persistency/Provenance/RunID.h"
 #include "ds50daq/DAQ/xmlrpc_commander.hh"
 #include "fhiclcpp/make_ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
@@ -33,7 +34,7 @@ namespace {
         if (paramList.size() > 0) {
           std::string configString = paramList.getString(0);
           fhicl::ParameterSet pset;
-          fhicl::makeParameterSet(configString, pset);
+          fhicl::make_ParameterSet(configString, pset);
           if (_c._commandable.initialize(pset)) {
             *retvalP = xmlrpc_c::value_string ("Success"); 
           }
@@ -43,7 +44,7 @@ namespace {
           }
         }
         else {
-          *retvalP = xmlrpc_c::value_string ("The init message requires a single argument which is a string containing the configuration."); 
+          *retvalP = xmlrpc_c::value_string ("The init message requires a single argument that is a string containing the configuration."); 
         }
       } catch (std::runtime_error &er) { 
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
@@ -55,18 +56,22 @@ namespace {
     public:
       start_ (xmlrpc_commander& c):
         cmd_(c, "s:i", "start the run") {}
-      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try { 
+      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try {
         if (paramList.size() > 0) {
-          mf::LogWarning("xmlrpc_commander") << "A start command was sent with "
-                                             << paramList.size() << " arguments "
-                                             << "(no arguments are expected).";
-        }
-        if (_c._commandable.start()) {
-          *retvalP = xmlrpc_c::value_string ("Success"); 
+          std::string runNumberString = paramList.getString(0);
+          art::RunNumber_t runNumber =
+            boost::lexical_cast<art::RunNumber_t>(runNumberString);
+          art::RunID runID(runNumber);
+          if (_c._commandable.start(runID)) {
+            *retvalP = xmlrpc_c::value_string ("Success"); 
+          }
+          else {
+            std::string problemReport = _c._commandable.report("all");
+            *retvalP = xmlrpc_c::value_string (problemReport); 
+          }
         }
         else {
-          std::string problemReport = _c._commandable.report("all");
-          *retvalP = xmlrpc_c::value_string (problemReport); 
+          *retvalP = xmlrpc_c::value_string ("The start message requires a single argument that is an integer containing the run number."); 
         }
       } catch (std::runtime_error &er) { 
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
@@ -99,6 +104,9 @@ namespace {
       shutdown_ (xmlrpc_c::serverAbyss *server): _server(server) {}
 
       virtual void doit (const std::string& paramString, void*) const {
+        mf::LogInfo("xmlrpc_commander") << "A shutdown command was sent "
+                                        << "with parameter "
+                                        << paramString << "\"";
 	_server->terminate ();
       }
     private:
