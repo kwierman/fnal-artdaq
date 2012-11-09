@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 
   mf::SetApplicationName("BoardReader-" + boost::lexical_cast<std::string>(vm["port"].as<unsigned short> ()));
 
-  //// create the fragment receiver thread
+  // create the BoardReaderApp
   //ds50::FragmentReceiver fragRec(requestQueue, responseQueue);
   //std::thread frThread(std::bind(&ds50::FragmentReceiver::run, fragRec));
 
@@ -46,6 +46,6 @@ int main(int argc, char *argv[])
   xmlrpc_commander commander(vm["port"].as<unsigned short> ());
   commander.run();
 
-  //// cleanup
+  // cleanup
   //frThread.join();
 }

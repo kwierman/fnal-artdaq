@@ -5,11 +5,11 @@
 #ifndef XMLRPC_COMMANDER_H
 #define XMLRPC_COMMANDER_H
 
-#include "fhiclcpp/ParameterSet.h"
+#include "ds50daq/DAQ/Commandable.hh"
 
 class xmlrpc_commander {
   public:
-    xmlrpc_commander (int port);
+    xmlrpc_commander (int port, ds50::Commandable& commandable);
     void run();
 
   private:
@@ -17,6 +17,9 @@ class xmlrpc_commander {
     xmlrpc_commander (xmlrpc_commander&&) = delete;
 
     int _port;
+
+  public:
+    ds50::Commandable& _commandable;
 };
 
 #endif

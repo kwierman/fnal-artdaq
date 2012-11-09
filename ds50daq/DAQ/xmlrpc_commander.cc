@@ -7,7 +7,8 @@
 #include <xmlrpc-c/server_abyss.hpp>
 #include <stdexcept>
 #include <iostream>
-#include "xmlrpc_commander.hh"
+#include "ds50daq/DAQ/xmlrpc_commander.hh"
+#include "fhiclcpp/make_ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 namespace {
@@ -29,9 +30,21 @@ namespace {
       init_ (xmlrpc_commander& c):
         cmd_(c, "s:s", "initialize the program") {}
       void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try {
-        mf::LogDebug("xmlrpc_commander") << "Parameter list size = " << paramList.size();
-        sleep(1);
-        *retvalP = xmlrpc_c::value_string ("Success"); 
+        if (paramList.size() > 0) {
+          std::string configString = paramList.getString(0);
+          fhicl::ParameterSet pset;
+          fhicl::makeParameterSet(configString, pset);
+          if (_c._commandable.initialize(pset)) {
+            *retvalP = xmlrpc_c::value_string ("Success"); 
+          }
+          else {
+            std::string problemReport = _c._commandable.report("all");
+            *retvalP = xmlrpc_c::value_string (problemReport); 
+          }
+        }
+        else {
+          *retvalP = xmlrpc_c::value_string ("The init message requires a single argument which is a string containing the configuration."); 
+        }
       } catch (std::runtime_error &er) { 
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
 	mf::LogError ("Command") << er.what ();
@@ -43,9 +56,18 @@ namespace {
       start_ (xmlrpc_commander& c):
         cmd_(c, "s:i", "start the run") {}
       void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try { 
-        mf::LogDebug("xmlrpc_commander") << "Parameter list size = " << paramList.size();
-        sleep(1);
-        *retvalP = xmlrpc_c::value_string ("Success"); 
+        if (paramList.size() > 0) {
+          mf::LogWarning("xmlrpc_commander") << "A start command was sent with "
+                                             << paramList.size() << " arguments "
+                                             << "(no arguments are expected).";
+        }
+        if (_c._commandable.start()) {
+          *retvalP = xmlrpc_c::value_string ("Success"); 
+        }
+        else {
+          std::string problemReport = _c._commandable.report("all");
+          *retvalP = xmlrpc_c::value_string (problemReport); 
+        }
       } catch (std::runtime_error &er) { 
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
 	mf::LogError ("Command") << er.what ();
@@ -77,7 +99,6 @@ namespace {
       shutdown_ (xmlrpc_c::serverAbyss *server): _server(server) {}
 
       virtual void doit (const std::string& paramString, void*) const {
-        mf::LogDebug("xmlrpc_commander") << paramString;
 	_server->terminate ();
       }
     private:
@@ -86,7 +107,8 @@ namespace {
 }
 
 
-xmlrpc_commander::xmlrpc_commander (int port): _port(port)
+xmlrpc_commander::xmlrpc_commander (int port, ds50::Commandable& commandable):
+  _port(port), _commandable(commandable)
 {}
 
 void xmlrpc_commander::run() try {
