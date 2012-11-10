@@ -1,4 +1,4 @@
-
+#include <iostream>
 #include "xmlrpc_commander.hh"
 #include <boost/program_options.hpp>
 #include <boost/lexical_cast.hpp>
