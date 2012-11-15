@@ -78,6 +78,7 @@ Ready
   start  [ctxt.beginRun()]  InRun/push(InRunMap::Running)  {}
   start  nil        {}
   init   pop(init)  {}
+  soft_init  nil  {softInitialize();}
 }
 
 InRun
@@ -119,6 +120,8 @@ Running
   pause  nil        {}
   stop   pop(stop)  {}
   init   pop(init)  {}
+  soft_init  nil  {softInitialize();}
+  reinit  Paused  {reinitialize();}
 }
 
 Paused
@@ -129,6 +132,8 @@ Paused
   resume  nil        {}
   stop    pop(stop)  {}
   init    pop(init)  {}
+  soft_init  nil  {softInitialize();}
+  reinit  Paused  {reinitialize();}
 }
 
 %%

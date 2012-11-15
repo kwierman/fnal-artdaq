@@ -34,6 +34,8 @@ public:
   void BootedEnter();
   void BootedExit();
   bool initialize();
+  bool softInitialize();
+  bool reinitialize();
   void InitializedEnter();
   void InitializedExit();
   bool beginRun();

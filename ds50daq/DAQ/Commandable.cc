@@ -14,6 +14,16 @@ bool ds50::Commandable::initialize()
   return true;
 }
 
+bool ds50::Commandable::softInitialize()
+{
+  return true;
+}
+
+bool ds50::Commandable::reinitialize()
+{
+  return true;
+}
+
 void ds50::Commandable::InitializedEnter()
 {
 }
