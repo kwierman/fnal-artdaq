@@ -30,6 +30,17 @@ public:
   virtual bool perfreset(std::string const& which) = 0;
   virtual bool shutdown() = 0;
   virtual std::vector<std::string> legalCommands() const = 0;
+
+  void BootedEnter();
+  void BootedExit();
+  bool initialize();
+  void InitializedEnter();
+  void InitializedExit();
+  bool beginRun();
+  bool endRun();
+  bool pauseRun();
+  bool resumeRun();
+  void invalidTransitionRequest();
 };
 
 

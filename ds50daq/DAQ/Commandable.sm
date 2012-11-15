@@ -1,0 +1,128 @@
+// The following block is pasted into the generated state machine
+// code. Be careful, because this is likely to make what you write
+// language-specific.
+%{
+
+%}
+
+%class Commandable
+%package ds50
+%header Commandable.hh
+
+
+%start Main::Booted
+%map Main // Use a capital letter to start the map name, to generate valid Ruby.
+
+%%
+
+// Note that Default is called a state, but it really isn't. It is a
+// place to put a bunch of transition rules that will get used in the
+// case of every other state in the map that does *not* provide a 
+// specification for handling that transition. In a sense, the Default
+// transition is a "base class" for all other states, specifying what 
+// should be done if that state doesn't say what to do.
+
+Default
+{
+  init      nil  {invalidTransitionRequest();}
+  start     nil  {invalidTransitionRequest();}
+  stop      nil  {invalidTransitionRequest();}
+  pause     nil  {invalidTransitionRequest();}
+  resume    nil  {invalidTransitionRequest();}
+  shutdown  nil  {invalidTransitionRequest();}
+}
+
+Booted
+//Entry { BootedEnter(); }
+//Exit  { BootedExit(); }
+{
+  init  [ctxt.initialize()]  Initialized/push(InitializedMap::Ready)  {}
+  init  nil  {}
+}
+
+Initialized
+Entry { InitializedEnter(); }
+Exit  { InitializedExit(); }
+{
+  init      [ctxt.initialize()]  Initialized/push(InitializedMap::Ready)  {}
+  init      Booted  {}
+  shutdown  Booted  {}
+}
+
+%%
+
+%map InitializedMap
+
+%%
+
+Default
+{
+  init      nil  {invalidTransitionRequest();}
+  start     nil  {invalidTransitionRequest();}
+  stop      nil  {invalidTransitionRequest();}
+  pause     nil  {invalidTransitionRequest();}
+  resume    nil  {invalidTransitionRequest();}
+  shutdown  nil  {invalidTransitionRequest();}
+}
+
+Ready
+//Entry { ReadyEnter(); }
+//Exit  { ReadyExit(); }
+{
+  start  [ctxt.beginRun()]  InRun/push(InRunMap::Running)  {}
+  start  nil        {}
+  init   pop(init)  {}
+}
+
+InRun
+//Entry { InRunEnter(); }
+//Exit  { InRunExit(); }
+{
+  stop  [ctxt.endRun()]   Ready      {}
+  stop  Error  {}
+  init  [ctxt.endRun()]  pop(init)  {}
+  init  Error  {}
+}
+
+Error
+{
+  init  pop(init)  {}
+}
+
+%%
+
+%map InRunMap
+
+%%
+
+Default
+{
+  init      nil  {invalidTransitionRequest();}
+  start     nil  {invalidTransitionRequest();}
+  stop      nil  {invalidTransitionRequest();}
+  pause     nil  {invalidTransitionRequest();}
+  resume    nil  {invalidTransitionRequest();}
+  shutdown  nil  {invalidTransitionRequest();}
+}
+
+Running
+//Entry { RunningEnter(); }
+//Exit  { RunningExit(); }
+{
+  pause  [ctxt.pauseRun()]  Paused  {}
+  pause  nil        {}
+  stop   pop(stop)  {}
+  init   pop(init)  {}
+}
+
+Paused
+//Entry { PausedEnter(); }
+//Exit  { PausedExit(); }
+{
+  resume  [ctxt.resumeRun()]  Running  {}
+  resume  nil        {}
+  stop    pop(stop)  {}
+  init    pop(init)  {}
+}
+
+%%
