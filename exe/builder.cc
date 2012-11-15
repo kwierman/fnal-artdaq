@@ -11,6 +11,7 @@
 #include "artdaq/DAQrate/SHandles.hh"
 #include "artdaq/DAQrate/SimpleQueueReader.hh"
 #include "artdaq/DAQrate/Utils.hh"
+#include "artdaq/DAQrate/detail/FragCounter.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 #include "cetlib/container_algorithms.h"
 #include "cetlib/filepath_maker.h"
@@ -18,7 +19,7 @@
 #include "fhiclcpp/make_ParameterSet.h"
 
 #include "boost/program_options.hpp"
-namespace  bpo = boost::program_options;
+namespace bpo = boost::program_options;
 
 #include <algorithm>
 #include <cmath>
@@ -34,6 +35,8 @@ extern "C" {
 #include <sys/time.h>
 #include <sys/resource.h>
 }
+
+using artdaq::detail::FragCounter;
 
 // Class Program is our application object.
 class Program : public MPIProg {
@@ -59,61 +62,6 @@ enum Color_t : int { DETECTOR, SOURCE, SINK };
   size_t const sink_buffers_;
   MPI_Comm local_group_comm_;
 };
-
-class FragCounter {
-public:
-  explicit FragCounter(size_t nSlots);
-  void operator()(size_t slot);
-  void operator()(size_t slot, size_t inc);
-
-  size_t total() const;
-  size_t total(size_t slot) const;
-
-private:
-  std::vector<size_t> receipts_;
-};
-
-inline
-FragCounter::FragCounter(size_t nSlots)
-  :
-  receipts_(nSlots, 0)
-{
-}
-
-inline
-void
-FragCounter::
-operator()(size_t slot)
-{
-  ++receipts_[slot];
-}
-
-inline
-void
-FragCounter::
-operator()(size_t slot, size_t inc)
-{
-  receipts_[slot] += inc;
-}
-
-inline
-size_t
-FragCounter::
-total() const
-{
-  return
-    std::accumulate(receipts_.begin(),
-                    receipts_.end(),
-                    0);
-}
-
-inline
-size_t
-FragCounter::
-total(size_t slot) const
-{
-  return receipts_[slot];
-}
 
 Program::Program(int argc, char * argv[]):
   MPIProg(argc, argv),
@@ -184,17 +132,17 @@ void Program::source()
       fragments_expected = *frag.dataBegin();
     }
     else {
-      countIn(0);
+      countIn.incSlot(0);
       if (want_sink_) {
-        countOut(to_r.sendFragment(std::move(frag)) - conf_.sink_start_);
+        countOut.incSlot(to_r.sendFragment(std::move(frag)) - conf_.sink_start_);
       }
     }
   }
   while ((!fragments_expected) ||
          (Debug << "Waiting for "
-          << fragments_expected - countIn.total()
+          << fragments_expected - countIn.count()
           << " fragments." << flusher,
-          countIn.total() < fragments_expected));
+          countIn.count() < fragments_expected));
   Debug << "source waiting " << conf_.rank_ << flusher;
   if (want_sink_) {
     // Send correct EOD fragments to all sinks.
@@ -202,7 +150,7 @@ void Program::source()
          slot < static_cast<size_t>(conf_.sinks_);
          ++slot) {
       to_r.sendEODFrag(slot + conf_.sink_start_,
-                       countOut.total(slot));
+                       countOut.slotCount(slot));
     }
     to_r.waitAll();
   }
