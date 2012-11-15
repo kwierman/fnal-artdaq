@@ -38,7 +38,7 @@ public:
   // Send an EOF Fragment to the receiver at rank dest;
   // the EOF Fragment will report that numFragmentsSent
   // fragments have been sent before this one.
-  void sendEODFrag(int dest, size_t numFragmentsSent);
+  void sendEODFrag(size_t dest, size_t numFragmentsSent);
 
   // Wait for all the data transfers scheduled by calls
   // to MPI_Isend to finish, then return.
@@ -46,16 +46,16 @@ public:
 
 private:
 
-  int calcDest(Fragment::sequence_id_t) const;
-  int findAvailable();
+  size_t calcDest(Fragment::sequence_id_t) const;
+  size_t findAvailable();
   void sendFragTo(Fragment && frag,
-                  int dest);
+                  size_t dest);
 
   size_t const buffer_count_;
   uint64_t const max_payload_size_;
-  int const dest_count_;
-  int const dest_start_;
-  int pos_; // next slot to check
+  size_t const dest_count_;
+  size_t const dest_start_;
+  size_t pos_; // next slot to check
 
   Requests reqs_;
   Statuses stats_;

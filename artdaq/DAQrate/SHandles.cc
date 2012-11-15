@@ -26,15 +26,16 @@ artdaq::SHandles::SHandles(size_t buffer_count,
 {
 }
 
-int artdaq::SHandles::calcDest(Fragment::sequence_id_t sequence_id) const
+
+size_t artdaq::SHandles::calcDest(Fragment::sequence_id_t sequence_id) const
 {
   // Works if dest_count_ == 1
-  return (int)(sequence_id % dest_count_ + dest_start_);
+  return sequence_id % dest_count_ + dest_start_;
 }
 
-int artdaq::SHandles::findAvailable()
+size_t artdaq::SHandles::findAvailable()
 {
-  int use_me = 0;
+  size_t use_me = 0;
   do {
     use_me = pos_;
     MPI_Test(&reqs_[use_me], &flags_[use_me], &stats_[use_me]);
@@ -57,7 +58,7 @@ sendFragment(Fragment && frag)
         << "EOD fragments should not be sent on as received: "
         << "use sendEODFrag() instead.";
   }
-  int dest = calcDest(frag.sequenceID());
+  size_t dest = calcDest(frag.sequenceID());
   sendFragTo(std::move(frag), dest);
   return dest;
 }
@@ -65,7 +66,7 @@ sendFragment(Fragment && frag)
 
 void
 artdaq::SHandles::
-sendEODFrag(int dest, size_t nFragments)
+sendEODFrag(size_t dest, size_t nFragments)
 {
   sendFragTo(Fragment::eodFrag(nFragments), dest);
 }
@@ -77,7 +78,7 @@ void artdaq::SHandles::waitAll()
 
 void
 artdaq::SHandles::
-sendFragTo(Fragment && frag, int dest)
+sendFragTo(Fragment && frag, size_t dest)
 {
   if (frag.dataSize() > max_payload_size_) {
     throw cet::exception("Unimplemented")
@@ -87,18 +88,11 @@ sendFragTo(Fragment && frag, int dest)
         << max_payload_size_
         << ").";
   }
-  int buffer_idx = findAvailable();
+  size_t buffer_idx = findAvailable();
   Fragment & curfrag = payload_[buffer_idx];
   curfrag = std::move(frag);
   SendMeas sm;
   sm.found(curfrag.sequenceID(), buffer_idx, dest);
-  Debug << "send COMPLETE: "
-        << " buffer_idx=" << buffer_idx
-        << " send_size=" << curfrag.size()
-        << " dest=" << dest
-        << " sequenceID=" << curfrag.sequenceID()
-        << " fragID=" << curfrag.fragmentID()
-        << flusher;
   MPI_Isend(&*curfrag.headerBegin(),
             curfrag.size() * sizeof(Fragment::value_type),
             MPI_BYTE,
@@ -106,4 +100,11 @@ sendFragTo(Fragment && frag, int dest)
             MPITag::FINAL,
             MPI_COMM_WORLD,
             &reqs_[buffer_idx]);
+  Debug << "send COMPLETE: "
+        << " buffer_idx=" << buffer_idx
+        << " send_size=" << curfrag.size()
+        << " dest=" << dest
+        << " sequenceID=" << curfrag.sequenceID()
+        << " fragID=" << curfrag.fragmentID()
+        << flusher;
 }
