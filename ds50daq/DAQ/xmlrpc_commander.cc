@@ -48,21 +48,22 @@ namespace {
         }
       } catch (std::runtime_error &er) { 
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
-	mf::LogError ("Command") << er.what ();
+	mf::LogError ("XMLRPC_Commander") << er.what ();
       } 
   };
-  
+
   class start_: public cmd_ {
     public:
       start_ (xmlrpc_commander& c):
         cmd_(c, "s:i", "start the run") {}
       void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try {
-        if (paramList.size() > 0) {
+        if (paramList.size() > 1) {
           std::string runNumberString = paramList.getString(0);
+          std::string runTypeString = paramList.getString(1);
           art::RunNumber_t runNumber =
             boost::lexical_cast<art::RunNumber_t>(runNumberString);
           art::RunID runID(runNumber);
-          if (_c._commandable.start(runID)) {
+          if (_c._commandable.start(runID, runTypeString)) {
             *retvalP = xmlrpc_c::value_string ("Success"); 
           }
           else {
@@ -71,11 +72,11 @@ namespace {
           }
         }
         else {
-          *retvalP = xmlrpc_c::value_string ("The start message requires a single argument that is an integer containing the run number."); 
+          *retvalP = xmlrpc_c::value_string ("The start message requires the run number and the run type as arguments."); 
         }
       } catch (std::runtime_error &er) { 
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
-	mf::LogError ("Command") << er.what ();
+	mf::LogError ("XMLRPC_Commander") << er.what ();
       } 
   };
 
@@ -85,11 +86,16 @@ namespace {
       name ## _(xmlrpc_commander& c):\
           cmd_(c, "s:n", description) {}\
       void execute (xmlrpc_c::paramList const&, xmlrpc_c::value * const retvalP) try { \
-        sleep(1); \
-        *retvalP = xmlrpc_c::value_string ("Success");\
+        if (_c._commandable.name()) { \
+          *retvalP = xmlrpc_c::value_string ("Success"); \
+        } \
+        else { \
+          std::string problemReport = _c._commandable.report("all"); \
+          *retvalP = xmlrpc_c::value_string (problemReport); \
+        } \
       } catch (std::runtime_error &er) { \
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); \
-	mf::LogError ("Command") << er.what (); \
+	mf::LogError ("XMLRPC_Commander") << er.what (); \
       } \
   } 
 
@@ -104,7 +110,7 @@ namespace {
       shutdown_ (xmlrpc_c::serverAbyss *server): _server(server) {}
 
       virtual void doit (const std::string& paramString, void*) const {
-        mf::LogInfo("xmlrpc_commander") << "A shutdown command was sent "
+        mf::LogInfo("XMLRPC_Commander") << "A shutdown command was sent "
                                         << "with parameter "
                                         << paramString << "\"";
 	_server->terminate ();
@@ -129,6 +135,8 @@ void xmlrpc_commander::run() try {
   register_method(init);
   register_method(start);
   register_method(stop);
+  register_method(pause);
+  register_method(resume);
 
 #undef register_method
 
@@ -137,11 +145,11 @@ void xmlrpc_commander::run() try {
   shutdown_ shutdown_obj(&server);
   registry.setShutdown (&shutdown_obj);
 
-  mf::LogDebug ("XMLRPC") << "running server" << std::endl;
+  mf::LogDebug ("XMLRPC_Commander") << "running server" << std::endl;
 
   server.run();
 
-  mf::LogDebug ("XMLRPC") << "server terminated" << std::endl;
+  mf::LogDebug ("XMLRPC_Commander") << "server terminated" << std::endl;
 
 } catch (...) {
   throw;
