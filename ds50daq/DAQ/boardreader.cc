@@ -39,13 +39,11 @@ int main(int argc, char *argv[])
   mf::SetApplicationName("BoardReader-" + boost::lexical_cast<std::string>(vm["port"].as<unsigned short> ()));
 
   // create the BoardReaderApp
-  //ds50::FragmentReceiver fragRec(requestQueue, responseQueue);
-  //std::thread frThread(std::bind(&ds50::FragmentReceiver::run, fragRec));
+  ds50::Commandable brApp;
 
   // create the xmlrpc_commander and run it
-  //xmlrpc_commander commander(vm["port"].as<unsigned short> ());
-  //commander.run();
+  xmlrpc_commander commander(vm["port"].as<unsigned short> (), brApp);
+  commander.run();
 
   // cleanup
-  //frThread.join();
 }
