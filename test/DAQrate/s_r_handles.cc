@@ -21,6 +21,7 @@ void do_receiving(int /*my_rank*/, int num_senders)
                             1024 * 1024, // max_payload_size
                             num_senders,
                             0);
+  receiver.waitAll();
 }
 
 int main(int argc, char * argv[])
