@@ -55,7 +55,7 @@ int main(int argc, char * argv[])
     std::cout << "Number of receiving ranks: " << num_receiving_ranks << std::endl;
   }
   configureDebugStream(my_rank, 0);
-  if (my_rank <= num_sending_ranks)
+  if (my_rank < num_sending_ranks)
   { do_sending(my_rank, num_sending_ranks, num_receiving_ranks); }
   else
   { do_receiving(my_rank, num_sending_ranks); }
