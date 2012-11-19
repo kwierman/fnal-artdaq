@@ -51,6 +51,8 @@ namespace artdaq {
                int store_id, int argc, char * argv[],
                ARTFUL_FCN * reader);
 
+    ~EventStore();
+
     // Give ownership of the Fragment to the EventStore. The pointer
     // we are given must NOT be null, and the Fragment to which it
     // points must NOT be empty; the Fragment must at least contain
