@@ -278,6 +278,7 @@ void Program::sink()
     // This scope exists to control the lifetime of 'events'
     int sink_rank;
     bool useArt = daq_pset_.get<bool>("useArt", false);
+    bool printStats = daq_pset_.get<bool>("print_es_summary_stats", false);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wwrite-strings"
     char * dummyArgs[1] { "SimpleQueueReader" };
@@ -292,7 +293,8 @@ void Program::sink()
                               sink_rank,
                               useArt ? conf_.art_argc_ : 1,
                               useArt ? conf_.art_argv_ : dummyArgs,
-                              reader);
+                              reader,
+                              printStats);
     artdaq::RHandles h(sink_buffers_ * std::ceil(1.0 * conf_.sources_ / conf_.sinks_),
                        max_payload_size_words_,
                        conf_.sources_,
