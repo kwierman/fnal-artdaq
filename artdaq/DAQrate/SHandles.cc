@@ -19,6 +19,7 @@ artdaq::SHandles::SHandles(size_t buffer_count,
   dest_count_(dest_count),
   dest_start_(dest_start),
   pos_(),
+  sent_frag_count_(dest_count, dest_start),
   reqs_(buffer_count_, MPI_REQUEST_NULL),
   stats_(buffer_count_),
   flags_(buffer_count_),
@@ -26,6 +27,17 @@ artdaq::SHandles::SHandles(size_t buffer_count,
 {
 }
 
+artdaq::SHandles::~SHandles()
+{
+  size_t dest_end = dest_start_ + dest_count_;
+  for (size_t dest = dest_start_; dest != dest_end; ++dest) {
+    std::ostringstream os;
+    os << "dest: " << dest << ", count: " << sent_frag_count_.slotCount(dest) << "\n";
+    std::cerr << os.str();
+    sendEODFrag(dest, sent_frag_count_.slotCount(dest));
+  }
+  waitAll();
+}
 
 size_t artdaq::SHandles::calcDest(Fragment::sequence_id_t sequence_id) const
 {
@@ -60,6 +72,7 @@ sendFragment(Fragment && frag)
   }
   size_t dest = calcDest(frag.sequenceID());
   sendFragTo(std::move(frag), dest);
+  sent_frag_count_.incSlot(dest);
   return dest;
 }
 
