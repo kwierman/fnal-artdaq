@@ -44,6 +44,14 @@ namespace artdaq {
     addMonitoredQuantity(EVENT_RATE_STAT_KEY, mqPtr);
   }
 
+  EventStore::~EventStore()
+  {
+    char* doPrint = getenv("PRINT_SUMMARY_STATS");
+    if (doPrint) {
+      reportStatistics_();
+    }
+  }
+
   void EventStore::insert(FragmentPtr pfrag)
   {
     // We should never get a null pointer, nor should we get a
