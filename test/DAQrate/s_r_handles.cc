@@ -8,20 +8,20 @@
 #include <mpi.h>
 #include <stdlib.h> // for putenv
 
-void do_sending(int /*my_rank*/, int num_senders, int num_receivers) 
-{ 
+void do_sending(int /*my_rank*/, int num_senders, int num_receivers)
+{
   artdaq::SHandles sender(10, // buffer_count
-			  1024*1024, // max_payload_size
-			  num_receivers, // dest_count
-			  num_senders+1); // dest_start
-			   
+        1024*1024, // max_payload_size
+        num_receivers, // dest_count
+        num_senders); // dest_start
+
 }
 void do_receiving(int /*my_rank*/, int num_senders)
 {
   artdaq::RHandles receiver(10, // buffer_count
-			    1024*1024, // max_payload_size
-			    num_senders,
-			    0);
+          1024*1024, // max_payload_size
+          num_senders,
+          0);
 }
 
 int main(int argc, char* argv[])
@@ -42,11 +42,11 @@ int main(int argc, char* argv[])
     {
       std::cout << "argc:" << argc << std::endl;
       for (int i = 0; i < argc; ++i)
-	{
-	  std::cout << "argv[" << i << "]: " << argv[i] << std::endl;
-	}
+  {
+    std::cout << "argv[" << i << "]: " << argv[i] << std::endl;
+  }
     }
-  
+
   if (argc != 2)
     {
       std::cerr << argv[0] << " requires 2 arguments, " << argc << " provided\n";
