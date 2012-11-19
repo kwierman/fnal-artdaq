@@ -2,6 +2,19 @@ include(CetTest)
 include(CheckUpsVersion)
  _check_if_version_greater(cetbuildtools ${CETBUILDTOOLS_VERSION} v2_01_05)
 
+macro( install_fcl_files )
+  cet_parse_args( IS "LIST" "" ${ARGN})
+  set(fcl_install_dir ${product}/${version}/fcl )
+  message( STATUS "install_fcl_files: FHICL files will be installed in ${fcl_install_dir}" )
+  if( IS_LIST )
+     INSTALL ( PROGRAMS  ${IS_LIST}
+               DESTINATION ${fcl_install_dir} )
+  else()
+     message( FATAL_ERROR 
+              "ERROR: call install_fcl_files with LIST only")
+  endif()
+endmacro( install_fcl_files )
+
 if(WANT_MPI)
   include_directories(${MPI_INCLUDE_PATH})
   cet_test(daqrate PREBUILT NO_AUTO INSTALL_BIN)
@@ -40,4 +53,6 @@ if(WANT_MPI)
     ${MPI_LIBRARIES}
     )
   install(TARGETS perfdump builder DESTINATION ${flavorqual_dir}/bin)
+
+  install_fcl_files(LIST daqrate_simdata_test.fcl)
 endif()
