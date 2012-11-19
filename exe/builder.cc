@@ -11,6 +11,7 @@
 #include "artdaq/DAQrate/SHandles.hh"
 #include "artdaq/DAQrate/SimpleQueueReader.hh"
 #include "artdaq/DAQrate/Utils.hh"
+#include "artdaq/DAQrate/detail/FragCounter.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 #include "cetlib/container_algorithms.h"
 #include "cetlib/filepath_maker.h"
@@ -18,7 +19,7 @@
 #include "fhiclcpp/make_ParameterSet.h"
 
 #include "boost/program_options.hpp"
-namespace  bpo = boost::program_options;
+namespace bpo = boost::program_options;
 
 #include <algorithm>
 #include <cmath>
@@ -34,6 +35,8 @@ extern "C" {
 #include <sys/time.h>
 #include <sys/resource.h>
 }
+
+using artdaq::detail::FragCounter;
 
 // Class Program is our application object.
 class Program : public MPIProg {
@@ -59,61 +62,6 @@ enum Color_t : int { DETECTOR, SOURCE, SINK };
   size_t const sink_buffers_;
   MPI_Comm local_group_comm_;
 };
-
-class FragCounter {
-public:
-  explicit FragCounter(size_t nSlots);
-  void operator()(size_t slot);
-  void operator()(size_t slot, size_t inc);
-
-  size_t total() const;
-  size_t total(size_t slot) const;
-
-private:
-  std::vector<size_t> receipts_;
-};
-
-inline
-FragCounter::FragCounter(size_t nSlots)
-  :
-  receipts_(nSlots, 0)
-{
-}
-
-inline
-void
-FragCounter::
-operator()(size_t slot)
-{
-  ++receipts_[slot];
-}
-
-inline
-void
-FragCounter::
-operator()(size_t slot, size_t inc)
-{
-  receipts_[slot] += inc;
-}
-
-inline
-size_t
-FragCounter::
-total() const
-{
-  return
-    std::accumulate(receipts_.begin(),
-                    receipts_.end(),
-                    0);
-}
-
-inline
-size_t
-FragCounter::
-total(size_t slot) const
-{
-  return receipts_[slot];
-}
 
 Program::Program(int argc, char * argv[]):
   MPIProg(argc, argv),
@@ -171,40 +119,36 @@ void Program::source()
                           max_payload_size_words_,
                           1, // Direct.
                           conf_.getSrcFriend());
-  artdaq::SHandles to_r(sink_buffers_,
-                        max_payload_size_words_,
-                        conf_.sinks_,
-                        conf_.sink_start_);
-  // TODO: For v2.0, use GMP here and in the detector / sink.
-  FragCounter countIn(1), countOut(conf_.sinks_);
-  size_t fragments_expected = 0;
-  do {
-    from_d.recvFragment(frag);
-    if (frag.type() == artdaq::Fragment::type_t::END_OF_DATA) {
-      fragments_expected = *frag.dataBegin();
-    }
-    else {
-      countIn(0);
-      if (want_sink_) {
-        countOut(to_r.sendFragment(std::move(frag)) - conf_.sink_start_);
+  { // Block to handle lifetime of to_r, below.
+    std::unique_ptr<artdaq::SHandles>
+      to_r(want_sink_?
+           new artdaq::SHandles(sink_buffers_,
+                                max_payload_size_words_,
+                                conf_.sinks_,
+                                conf_.sink_start_) :
+           nullptr
+          );
+    // TODO: For v2.0, use GMP here and in the detector / sink.
+    FragCounter countIn(1), countOut(conf_.sinks_);
+    size_t fragments_expected = 0;
+    do {
+      from_d.recvFragment(frag);
+      if (frag.type() == artdaq::Fragment::type_t::END_OF_DATA) {
+        fragments_expected = *frag.dataBegin();
+      }
+      else {
+        countIn.incSlot(0);
+        if (want_sink_) {
+          to_r->sendFragment(std::move(frag));
+        }
       }
     }
-  }
-  while ((!fragments_expected) ||
-         (Debug << "Waiting for "
-          << fragments_expected - countIn.total()
-          << " fragments." << flusher,
-          countIn.total() < fragments_expected));
-  Debug << "source waiting " << conf_.rank_ << flusher;
-  if (want_sink_) {
-    // Send correct EOD fragments to all sinks.
-    for (size_t slot = 0;
-         slot < static_cast<size_t>(conf_.sinks_);
-         ++slot) {
-      to_r.sendEODFrag(slot + conf_.sink_start_,
-                       countOut.total(slot));
-    }
-    to_r.waitAll();
+    while ((!fragments_expected) ||
+           (Debug << "Waiting for "
+            << fragments_expected - countIn.count()
+            << " fragments." << flusher,
+            countIn.count() < fragments_expected));
+    Debug << "source waiting " << conf_.rank_ << flusher;
   }
   from_d.waitAll();
   Debug << "source done " << conf_.rank_ << flusher;
@@ -236,36 +180,36 @@ void Program::detector()
     gen(artdaq::makeFragmentGenerator
         (det_ps.get<std::string>("generator"),
          det_ps));
-  artdaq::SHandles h(source_buffers_,
-                     max_payload_size_words_,
-                     1, // Direct.
-                     conf_.getDestFriend());
-  MPI_Barrier(local_group_comm_);
-  // not using the run time method
-  // TimedLoop tl(conf_.run_time_);
-  size_t fragments_per_source = -1;
-  daq_pset_.get_if_present("fragments_per_source", fragments_per_source);
-  artdaq::FragmentPtrs frags;
-  size_t fragments_sent = 0;
-  while (fragments_sent < fragments_per_source && gen->getNext(frags)) {
-    if (!fragments_sent) {
-      // Get the detectors lined up first time before we start the
-      // firehoses.
-      MPI_Barrier(local_group_comm_);
-    }
-  for (auto & fragPtr : frags) {
-      h.sendFragment(std::move(*fragPtr));
-      if (++fragments_sent == fragments_per_source) { break; }
-      if (want_periodic_sync_ && (fragments_sent % 100) == 0) {
-        // Don't get too far out of sync.
+  { // Block to handle lifetime of h, below.
+    artdaq::SHandles h(source_buffers_,
+                       max_payload_size_words_,
+                       1, // Direct.
+                       conf_.getDestFriend());
+    MPI_Barrier(local_group_comm_);
+    // not using the run time method
+    // TimedLoop tl(conf_.run_time_);
+    size_t fragments_per_source = -1;
+    daq_pset_.get_if_present("fragments_per_source", fragments_per_source);
+    artdaq::FragmentPtrs frags;
+    size_t fragments_sent = 0;
+    while (fragments_sent < fragments_per_source && gen->getNext(frags)) {
+      if (!fragments_sent) {
+        // Get the detectors lined up first time before we start the
+        // firehoses.
         MPI_Barrier(local_group_comm_);
       }
+      for (auto & fragPtr : frags) {
+        h.sendFragment(std::move(*fragPtr));
+        if (++fragments_sent == fragments_per_source) { break; }
+        if (want_periodic_sync_ && (fragments_sent % 100) == 0) {
+          // Don't get too far out of sync.
+          MPI_Barrier(local_group_comm_);
+        }
+      }
+      frags.clear();
     }
-    frags.clear();
+    Debug << "detector waiting " << conf_.rank_ << flusher;
   }
-  h.sendEODFrag(conf_.getDestFriend(), fragments_sent);
-  Debug << "detector waiting " << conf_.rank_ << flusher;
-  h.waitAll();
   Debug << "detector done " << conf_.rank_ << flusher;
   MPI_Comm_free(&local_group_comm_);
   MPI_Barrier(MPI_COMM_WORLD);
