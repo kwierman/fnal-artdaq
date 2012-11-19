@@ -25,14 +25,16 @@ namespace artdaq {
                          int store_id,
                          int argc,
                          char * argv[],
-                         ARTFUL_FCN * reader) :
+                         ARTFUL_FCN * reader,
+                         bool printSummaryStats) :
     id_(store_id),
     num_fragments_per_event_(num_fragments_per_event),
     run_id_(run),
     subrun_id_(0),
     events_(),
     queue_(getGlobalQueue()),
-    reader_thread_(std::async(std::launch::async, reader, argc, argv))
+    reader_thread_(std::async(std::launch::async, reader, argc, argv)),
+    printSummaryStats_(printSummaryStats)
   {
     // TODO: Consider doing away with the named local mqPtr, and
     // making use of make_shared<MonitoredQuantity> in the call to
@@ -46,8 +48,7 @@ namespace artdaq {
 
   EventStore::~EventStore()
   {
-    char* doPrint = getenv("PRINT_SUMMARY_STATS");
-    if (doPrint) {
+    if (printSummaryStats_) {
       reportStatistics_();
     }
   }
