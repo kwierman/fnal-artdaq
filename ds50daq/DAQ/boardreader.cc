@@ -4,6 +4,7 @@
 #include <boost/lexical_cast.hpp>
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "ds50daq/DAQ/configureMessageFacility.hh"
+#include "ds50daq/DAQ/BoardReaderApp.hh"
 
 int main(int argc, char *argv[])
 {
@@ -39,7 +40,7 @@ int main(int argc, char *argv[])
   mf::SetApplicationName("BoardReader-" + boost::lexical_cast<std::string>(vm["port"].as<unsigned short> ()));
 
   // create the BoardReaderApp
-  ds50::Commandable brApp;
+  ds50::BoardReaderApp brApp;
 
   // create the xmlrpc_commander and run it
   xmlrpc_commander commander(vm["port"].as<unsigned short> (), brApp);
