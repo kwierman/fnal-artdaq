@@ -3,6 +3,7 @@
 #include "artdaq/DAQrate/SHandles.hh"
 
 #include "artdaq/DAQdata/Debug.hh"
+#include "artdaq/DAQdata/Fragment.hh"
 
 #include <iostream>
 #include <mpi.h>
@@ -15,13 +16,17 @@ void do_sending(int /*my_rank*/, int num_senders, int num_receivers)
                           num_receivers, // dest_count
                           num_senders); // dest_start
 }
+
 void do_receiving(int /*my_rank*/, int num_senders)
 {
   artdaq::RHandles receiver(10, // buffer_count
                             1024 * 1024, // max_payload_size
                             num_senders,
                             0);
-  receiver.waitAll();
+  while (receiver.sourcesActive() > 0) {
+    artdaq::Fragment junkFrag;
+    receiver.recvFragment(junkFrag);
+  }
 }
 
 int main(int argc, char * argv[])

@@ -11,7 +11,6 @@
 #include "artdaq/DAQrate/SHandles.hh"
 #include "artdaq/DAQrate/SimpleQueueReader.hh"
 #include "artdaq/DAQrate/Utils.hh"
-#include "artdaq/DAQrate/detail/FragCounter.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 #include "cetlib/container_algorithms.h"
 #include "cetlib/filepath_maker.h"
@@ -35,8 +34,6 @@ extern "C" {
 #include <sys/time.h>
 #include <sys/resource.h>
 }
-
-using artdaq::detail::FragCounter;
 
 // Class Program is our application object.
 class Program : public MPIProg {
@@ -115,11 +112,11 @@ void Program::source()
   printHost("source");
   // needs to get data from the detectors and send it to the sinks
   artdaq::Fragment frag;
-  artdaq::RHandles from_d(source_buffers_,
-                          max_payload_size_words_,
-                          1, // Direct.
-                          conf_.getSrcFriend());
-  { // Block to handle lifetime of to_r, below.
+  { // Block to handle lifetime of to_r and from_d, below.
+    artdaq::RHandles from_d(source_buffers_,
+                            max_payload_size_words_,
+                            1, // Direct.
+                            conf_.getSrcFriend());
     std::unique_ptr<artdaq::SHandles>
       to_r(want_sink_?
            new artdaq::SHandles(sink_buffers_,
@@ -128,29 +125,19 @@ void Program::source()
                                 conf_.sink_start_) :
            nullptr
           );
-    // TODO: For v2.0, use GMP here and in the detector / sink.
-    FragCounter countIn(1), countOut(conf_.sinks_);
-    size_t fragments_expected = 0;
-    do {
+    while (from_d.sourcesActive() > 0) {
       from_d.recvFragment(frag);
-      if (frag.type() == artdaq::Fragment::type_t::END_OF_DATA) {
-        fragments_expected = *frag.dataBegin();
+      if (want_sink_ && frag.type() != artdaq::Fragment::type_t::END_OF_DATA) {
+        to_r->sendFragment(std::move(frag));
       }
-      else {
-        countIn.incSlot(0);
-        if (want_sink_) {
-          to_r->sendFragment(std::move(frag));
-        }
+      if (from_d.sourcesActive() > 0 &&
+          from_d.sourcesActive() == from_d.sourcesPending()) {
+        Debug << "Waiting for in-flight fragments from "
+              << from_d.sourcesPending()
+              << " sources." << flusher;
       }
     }
-    while ((!fragments_expected) ||
-           (Debug << "Waiting for "
-            << fragments_expected - countIn.count()
-            << " fragments." << flusher,
-            countIn.count() < fragments_expected));
-    Debug << "source waiting " << conf_.rank_ << flusher;
   }
-  from_d.waitAll();
   Debug << "source done " << conf_.rank_ << flusher;
   MPI_Barrier(MPI_COMM_WORLD);
 }
@@ -237,34 +224,25 @@ void Program::sink()
                               useArt ? conf_.art_argc_ : 1,
                               useArt ? conf_.art_argv_ : dummyArgs,
                               reader);
-    artdaq::RHandles h(sink_buffers_ * std::ceil(1.0 * conf_.sources_ / conf_.sinks_),
-                       max_payload_size_words_,
-                       conf_.sources_,
-                       conf_.source_start_);
-    size_t sources_sending = conf_.sources_;
-    size_t fragments_expected = 0;
-    size_t fragments_received = 0;
-    do {
-      artdaq::FragmentPtr pfragment(new artdaq::Fragment);
-      h.recvFragment(*pfragment);
-      if (pfragment->type() == artdaq::Fragment::type_t::END_OF_DATA) {
-        --sources_sending;
-        // TODO: use GMP to avoid overflow possibility.
-        fragments_expected += *pfragment->dataBegin();
-      }
-      else {
-        ++fragments_received;
-        events.insert(std::move(pfragment));
+    { // Block to handle scope of h, below.
+      artdaq::RHandles h(sink_buffers_ *
+                         std::ceil(1.0 * conf_.sources_ / conf_.sinks_),
+                         max_payload_size_words_,
+                         conf_.sources_,
+                         conf_.source_start_);
+      while (h.sourcesActive() > 0) {
+        artdaq::FragmentPtr pfragment(new artdaq::Fragment);
+        h.recvFragment(*pfragment);
+        if (pfragment->type() != artdaq::Fragment::type_t::END_OF_DATA) {
+          events.insert(std::move(pfragment));
+        }
+        if (h.sourcesActive() == h.sourcesPending()) {
+          Debug << "Waiting for in-flight fragments from "
+                << h.sourcesPending()
+                << " sources." << flusher;
+        }
       }
     }
-    while (sources_sending ||
-           (Debug << "Waiting for "
-            << fragments_expected - fragments_received
-            << " fragments." << flusher,
-            fragments_received < fragments_expected));
-    // Now we are done collecting fragments, so we can shut down the
-    // receive handles.
-    h.waitAll();
     // Make the reader application finish, and capture its return
     // status.
     int rc = events.endOfData();

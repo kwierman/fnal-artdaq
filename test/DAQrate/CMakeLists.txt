@@ -30,9 +30,9 @@ if(WANT_MPI)
     DATAFILES fcl/daqrate_gen_test.fcl
     TEST_ARGS 5 1 4 11 -- -c daqrate_gen_test.fcl
     TEST_PROPERTIES RUN_SERIAL true
-  )
+    )
 
-cet_test(FragCounter_t USE_BOOST_UNIT
-  LIBRARIES artdaq_DAQrate)
+  cet_test(FragCounter_t USE_BOOST_UNIT
+    LIBRARIES artdaq_DAQrate)
 
 endif()
