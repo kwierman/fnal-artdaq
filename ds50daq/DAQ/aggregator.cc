@@ -5,10 +5,13 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "ds50daq/DAQ/configureMessageFacility.hh"
 #include "ds50daq/DAQ/AggregatorApp.hh"
+#include "artdaq/DAQrate/quiet_mpi.hh"
 
 int main(int argc, char *argv[])
 {
+  // initialization
   ds50::configureMessageFacility("Aggregator::main"); 
+  MPI_Init(&argc, &argv);
 
   // handle the command-line arguments
   std::string usage = std::string(argv[0]) + " -p port_number <other-options>";
@@ -40,11 +43,12 @@ int main(int argc, char *argv[])
   mf::SetApplicationName("Aggregator-" + boost::lexical_cast<std::string>(vm["port"].as<unsigned short> ()));
 
   // create the AggregatorApp
-  ds50::AggregatorApp aggApp;
+  ds50::AggregatorApp agg_app;
 
   // create the xmlrpc_commander and run it
-  xmlrpc_commander commander(vm["port"].as<unsigned short> (), aggApp);
+  xmlrpc_commander commander(vm["port"].as<unsigned short> (), agg_app);
   commander.run();
 
   // cleanup
+  MPI_Finalize();
 }

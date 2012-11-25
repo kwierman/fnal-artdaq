@@ -23,11 +23,11 @@ public:
 
   // these methods define the externally available commands
   bool initialize(fhicl::ParameterSet const&);
-  bool start(art::RunID, std::string const& runtype);
+  bool start(art::RunID, int max_events);
   bool stop();
   bool pause();
   bool resume();
-  /* Report_ptr */ std::string report(std::string const&) const {return reportString_;}
+  /* Report_ptr */ std::string report(std::string const&) const {return report_string_;}
   std::string status() const;
   bool perfreset(std::string const& which) {
     if (which=="fail") {
@@ -43,19 +43,24 @@ public:
   std::vector<std::string> legalCommands() const;
 
   // these methods provide the operations that are used by the state machine
+  virtual void BootedEnter();
   virtual bool do_initialize(fhicl::ParameterSet const&);
-  virtual bool do_start(art::RunID, std::string const&);
-  virtual bool do_stop();
+  virtual bool do_start(art::RunID, int max_events);
   virtual bool do_pause();
   virtual bool do_resume();
+  virtual bool do_stop();
+  virtual void InRunExit();
   virtual bool do_reinitialize(fhicl::ParameterSet const&);
   virtual bool do_softInitialize(fhicl::ParameterSet const&);
   virtual void badTransition(const std::string& );
 
-private:
+protected:
   CommandableContext fsm_;
-  bool externalRequestStatus_;
-  std::string reportString_;
+  bool external_request_status_;
+  std::string report_string_;
+
+  // utility methods
+  bool get_daq_pset(fhicl::ParameterSet const&, fhicl::ParameterSet&);
 };
 
 #endif

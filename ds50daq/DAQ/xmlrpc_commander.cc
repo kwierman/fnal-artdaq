@@ -44,7 +44,7 @@ namespace {
           }
         }
         else {
-          *retvalP = xmlrpc_c::value_string ("The init message requires a single argument that is a string containing the configuration."); 
+          *retvalP = xmlrpc_c::value_string ("The init message requires a single argument that is a string containing the initializtion ParameterSet."); 
         }
       } catch (std::runtime_error &er) { 
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
@@ -58,12 +58,14 @@ namespace {
         cmd_(c, "s:i", "start the run") {}
       void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try {
         if (paramList.size() > 1) {
-          std::string runNumberString = paramList.getString(0);
-          std::string runTypeString = paramList.getString(1);
-          art::RunNumber_t runNumber =
-            boost::lexical_cast<art::RunNumber_t>(runNumberString);
-          art::RunID runID(runNumber);
-          if (_c._commandable.start(runID, runTypeString)) {
+          std::string run_number_string = paramList.getString(0);
+          std::string max_events_string = paramList.getString(1);
+          art::RunNumber_t run_number =
+            boost::lexical_cast<art::RunNumber_t>(run_number_string);
+          art::RunID run_id(run_number);
+          art::RunNumber_t max_events =
+            boost::lexical_cast<int>(max_events_string);
+          if (_c._commandable.start(run_id, max_events)) {
             *retvalP = xmlrpc_c::value_string ("Success"); 
           }
           else {
@@ -73,6 +75,36 @@ namespace {
         }
         else {
           *retvalP = xmlrpc_c::value_string ("The start message requires the run number and the run type as arguments."); 
+        }
+      } catch (std::runtime_error &er) { 
+	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
+	mf::LogError ("XMLRPC_Commander") << er.what ();
+      } 
+  };
+
+  class status_: public cmd_ {
+    public:
+      status_ (xmlrpc_commander& c):
+        cmd_(c, "s:s", "report application state") {}
+      void execute (xmlrpc_c::paramList const&, xmlrpc_c::value * const retvalP) try {
+        *retvalP = xmlrpc_c::value_string (_c._commandable.status());
+      } catch (std::runtime_error &er) { 
+	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
+	mf::LogError ("XMLRPC_Commander") << er.what ();
+      } 
+  };
+
+  class report_: public cmd_ {
+    public:
+      report_ (xmlrpc_commander& c):
+        cmd_(c, "s:s", "report statistics") {}
+      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try {
+        if (paramList.size() > 0) {
+          std::string which = paramList.getString(0);
+          *retvalP = xmlrpc_c::value_string (_c._commandable.report(which));
+        }
+        else {
+          *retvalP = xmlrpc_c::value_string ("The report message requires a single argument that selects the type of statistics to be reported."); 
         }
       } catch (std::runtime_error &er) { 
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
@@ -99,9 +131,9 @@ namespace {
       } \
   } 
 
+  generate_noarg_class(stop, "stop the run");
   generate_noarg_class(pause, "pause the run");
   generate_noarg_class(resume, "resume the run");
-  generate_noarg_class(stop, "stop the run");
 
 #undef generate_noarg_class
 
@@ -137,6 +169,8 @@ void xmlrpc_commander::run() try {
   register_method(stop);
   register_method(pause);
   register_method(resume);
+  register_method(status);
+  register_method(report);
 
 #undef register_method
 

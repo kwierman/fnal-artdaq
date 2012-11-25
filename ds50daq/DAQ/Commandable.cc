@@ -17,39 +17,39 @@ ds50::Commandable::Commandable() : fsm_(*this)
  */
 bool ds50::Commandable::initialize(fhicl::ParameterSet const& pset)
 {
-  externalRequestStatus_ = true;
-  reportString_ = "All is OK.";
+  external_request_status_ = true;
+  report_string_ = "All is OK.";
 
   std::string initialState = fsm_.getState().getName();
   fsm_.init(pset);
-  if (externalRequestStatus_) {
+  if (external_request_status_) {
     std::string finalState = fsm_.getState().getName();
     mf::LogDebug("CommandableInterface")
       << "States before and after an init transition: "
       << initialState << " and " << finalState;
   }
 
-  return (externalRequestStatus_);
+  return (external_request_status_);
 }
 
 /**
  * Processes the start request.
  */
-bool ds50::Commandable::start(art::RunID id, std::string const& runtype)
+bool ds50::Commandable::start(art::RunID id, int max_events)
 {
-  externalRequestStatus_ = true;
-  reportString_ = "All is OK.";
+  external_request_status_ = true;
+  report_string_ = "All is OK.";
 
   std::string initialState = fsm_.getState().getName();
-  fsm_.start(id, runtype);
-  if (externalRequestStatus_) {
+  fsm_.start(id, max_events);
+  if (external_request_status_) {
     std::string finalState = fsm_.getState().getName();
     mf::LogDebug("CommandableInterface")
       << "States before and after a start transition: "
       << initialState << " and " << finalState;
   }
 
-  return (externalRequestStatus_);
+  return (external_request_status_);
 }
 
 /**
@@ -57,19 +57,19 @@ bool ds50::Commandable::start(art::RunID id, std::string const& runtype)
  */
 bool ds50::Commandable::stop()
 {
-  externalRequestStatus_ = true;
-  reportString_ = "All is OK.";
+  external_request_status_ = true;
+  report_string_ = "All is OK.";
 
   std::string initialState = fsm_.getState().getName();
   fsm_.stop();
-  if (externalRequestStatus_) {
+  if (external_request_status_) {
     std::string finalState = fsm_.getState().getName();
     mf::LogDebug("CommandableInterface")
       << "States before and after a stop transition: "
       << initialState << " and " << finalState;
   }
 
-  return (externalRequestStatus_);
+  return (external_request_status_);
 }
 
 /**
@@ -77,19 +77,19 @@ bool ds50::Commandable::stop()
  */
 bool ds50::Commandable::pause()
 {
-  externalRequestStatus_ = true;
-  reportString_ = "All is OK.";
+  external_request_status_ = true;
+  report_string_ = "All is OK.";
 
   std::string initialState = fsm_.getState().getName();
   fsm_.pause();
-  if (externalRequestStatus_) {
+  if (external_request_status_) {
     std::string finalState = fsm_.getState().getName();
     mf::LogDebug("CommandableInterface")
       << "States before and after a pause transition: "
       << initialState << " and " << finalState;
   }
 
-  return (externalRequestStatus_);
+  return (external_request_status_);
 }
 
 /**
@@ -97,19 +97,19 @@ bool ds50::Commandable::pause()
  */
 bool ds50::Commandable::resume()
 {
-  externalRequestStatus_ = true;
-  reportString_ = "All is OK.";
+  external_request_status_ = true;
+  report_string_ = "All is OK.";
 
   std::string initialState = fsm_.getState().getName();
   fsm_.resume();
-  if (externalRequestStatus_) {
+  if (external_request_status_) {
     std::string finalState = fsm_.getState().getName();
     mf::LogDebug("CommandableInterface")
       << "States before and after a resume transition: "
       << initialState << " and " << finalState;
   }
 
-  return (externalRequestStatus_);
+  return (external_request_status_);
 }
 
 /**
@@ -150,55 +150,85 @@ std::vector<std::string> ds50::Commandable::legalCommands() const
 // *** The following methods implement the state machine operations.
 // *******************************************************************
 
+void ds50::Commandable::BootedEnter()
+{
+}
+
 bool ds50::Commandable::do_initialize(fhicl::ParameterSet const&)
 {
-  externalRequestStatus_ = true;
-  return externalRequestStatus_;
+  external_request_status_ = true;
+  return external_request_status_;
 }
 
-bool ds50::Commandable::do_start(art::RunID, std::string const&)
+bool ds50::Commandable::do_start(art::RunID, int)
 {
-  externalRequestStatus_ = true;
-  return externalRequestStatus_;
-}
-
-bool ds50::Commandable::do_stop()
-{
-  externalRequestStatus_ = true;
-  return externalRequestStatus_;
+  external_request_status_ = true;
+  return external_request_status_;
 }
 
 bool ds50::Commandable::do_pause()
 {
-  externalRequestStatus_ = true;
-  return externalRequestStatus_;
+  external_request_status_ = true;
+  return external_request_status_;
 }
 
 bool ds50::Commandable::do_resume()
 {
-  externalRequestStatus_ = true;
-  return externalRequestStatus_;
+  external_request_status_ = true;
+  return external_request_status_;
+}
+
+bool ds50::Commandable::do_stop()
+{
+  external_request_status_ = true;
+  return external_request_status_;
+}
+
+void ds50::Commandable::InRunExit()
+{
+  mf::LogDebug("CommandableInterface") << "InRunExit called.";
 }
 
 bool ds50::Commandable::do_reinitialize(fhicl::ParameterSet const&)
 {
-  externalRequestStatus_ = true;
-  return externalRequestStatus_;
+  external_request_status_ = true;
+  return external_request_status_;
 }
 
 bool ds50::Commandable::do_softInitialize(fhicl::ParameterSet const&)
 {
-  externalRequestStatus_ = true;
-  return externalRequestStatus_;
+  external_request_status_ = true;
+  return external_request_status_;
 }
 
 void ds50::Commandable::badTransition(const std::string& trans)
 {
-  reportString_ = "An invalid transition (";
-  reportString_.append(trans);
-  reportString_.append(") was requested.");
+  report_string_ = "An invalid transition (";
+  report_string_.append(trans);
+  report_string_.append(") was requested.");
 
-  mf::LogWarning("CommandableInterface") << reportString_;
+  mf::LogWarning("CommandableInterface") << report_string_;
 
-  externalRequestStatus_ = false;
+  external_request_status_ = false;
+}
+
+// **********************
+// *** utility methods
+// **********************
+
+/**
+ * Fetches the "daq" part of the initialization parameter set.
+ * Returns true if it was found and false if not.
+ */
+bool ds50::Commandable::
+get_daq_pset(fhicl::ParameterSet const& pset, fhicl::ParameterSet& daq_pset)
+{
+  try {
+    daq_pset = pset.get<fhicl::ParameterSet>("daq");
+  }
+  catch (...) {
+    return false;
+  }
+
+  return true;
 }

@@ -30,7 +30,7 @@
 Default
 {
   init(pset: fhicl::ParameterSet const&) nil  {badTransition(__func__);}
-  start(id: art::RunID, runtype: std::string const&)  nil
+  start(id: art::RunID, max_events: int)  nil
       {badTransition(__func__);}
   stop      nil  {badTransition(__func__);}
   pause     nil  {badTransition(__func__);}
@@ -39,7 +39,7 @@ Default
 }
 
 Booted
-//Entry { BootedEnter(); }
+Entry { BootedEnter(); }
 //Exit  { BootedExit(); }
 {
   init(pset: fhicl::ParameterSet const&)  [ctxt.do_initialize(pset)]
@@ -66,7 +66,7 @@ Initialized
 Default
 {
   init(pset: fhicl::ParameterSet const&)  nil  {badTransition(__func__);}
-  start(id: art::RunID, runtype: std::string const&)  nil
+  start(id: art::RunID, max_events: int)  nil
       {badTransition(__func__);}
   stop      nil  {badTransition(__func__);}
   pause     nil  {badTransition(__func__);}
@@ -78,16 +78,16 @@ Ready
 //Entry { ReadyEnter(); }
 //Exit  { ReadyExit(); }
 {
-  start(id: art::RunID, runtype: std::string const&)
-      [ctxt.do_start(id, runtype)]  InRun/push(InRunMap::Running)  {}
-  start(id: art::RunID, runtype: std::string const&)  nil  {}
+  start(id: art::RunID, max_events: int)
+      [ctxt.do_start(id, max_events)]  InRun/push(InRunMap::Running)  {}
+  start(id: art::RunID, max_events: int)  nil  {}
   init(pset: fhicl::ParameterSet const&)  pop(init, pset)  {}
   soft_init(pset: fhicl::ParameterSet const&)  nil  {do_softInitialize(pset);}
 }
 
 InRun
 //Entry { InRunEnter(); }
-//Exit  { InRunExit(); }
+Exit  { InRunExit(); }
 {
   stop  [ctxt.do_stop()]  Ready  {}
   stop  Error  {}
@@ -109,7 +109,7 @@ Error
 Default
 {
   init(pset: fhicl::ParameterSet const&)  nil  {badTransition(__func__);}
-  start(id: art::RunID, runtype: std::string const&)  nil
+  start(id: art::RunID, max_events: int)  nil
       {badTransition(__func__);}
   stop      nil  {badTransition(__func__);}
   pause     nil  {badTransition(__func__);}

@@ -5,10 +5,18 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "ds50daq/DAQ/configureMessageFacility.hh"
 #include "ds50daq/DAQ/EventBuilderApp.hh"
+#include "artdaq/DAQrate/quiet_mpi.hh"
 
 int main(int argc, char *argv[])
 {
-  ds50::configureMessageFacility("EventBuilder::main"); 
+  // initialization
+  ds50::configureMessageFacility("eventbuilder");
+  MPI_Init(&argc, &argv);
+  int procs_;
+  int rank_;
+  MPI_Comm_size(MPI_COMM_WORLD, &procs_);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
+  mf::LogDebug("EventBuilder::main") << "size = " << procs_ << ", rank = " << rank_;
 
   // handle the command-line arguments
   std::string usage = std::string(argv[0]) + " -p port_number <other-options>";
@@ -40,11 +48,14 @@ int main(int argc, char *argv[])
   mf::SetApplicationName("EventBuilder-" + boost::lexical_cast<std::string>(vm["port"].as<unsigned short> ()));
 
   // create the EventBuilderApp
-  ds50::EventBuilderApp evbApp;
+  ds50::EventBuilderApp evb_app;
 
   // create the xmlrpc_commander and run it
-  xmlrpc_commander commander(vm["port"].as<unsigned short> (), evbApp);
+  xmlrpc_commander commander(vm["port"].as<unsigned short> (), evb_app);
   commander.run();
 
+//xmlrpc http://localhost:5454/RPC2 ds50.init "fragment_receiver: {event_builder_ranks: [3,4]} event_builder: {fragment_receiver_ranks: [1,2,3]}"
+
   // cleanup
+  MPI_Finalize();
 }
