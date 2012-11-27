@@ -1,4 +1,6 @@
 #include "artdaq/DAQrate/RHandles.hh"
+
+#include "art/Utilities/Exception.h"
 #include "artdaq/DAQrate/Perf.hh"
 #include "artdaq/DAQdata/Debug.hh"
 #include "artdaq/DAQrate/MPITag.hh"
@@ -8,7 +10,6 @@
 
 #include <cassert>
 #include <fstream>
-#include <sstream>
 
 artdaq::RHandles::RHandles(size_t buffer_count,
                            uint64_t max_payload_size,
@@ -18,11 +19,18 @@ artdaq::RHandles::RHandles(size_t buffer_count,
   max_payload_size_(max_payload_size),
   src_count_(src_count),
   src_start_(src_start),
+  recv_frag_count_(src_count, src_start),
+  src_status_(src_count, status_t::SENDING),
+  expected_count_(src_count, 0),
   reqs_(buffer_count_, MPI_REQUEST_NULL),
   flags_(buffer_count_),
   last_source_posted_(-1),
   payload_(buffer_count_)
 {
+  Debug << "RHandles construction: "
+        << buffer_count << " buffers, "
+        << src_count << " sources starting at rank "
+        << src_start << flusher;
   // post all the buffers, making sure that the source numbers are correct
   for (int i = 0; i < buffer_count_; ++i) {
     // make sure all buffers are the correct size
@@ -40,28 +48,11 @@ artdaq::RHandles::RHandles(size_t buffer_count,
   }
 }
 
-
-#if 0
-static void printError(int rc, int which, MPI_Status &)
+artdaq::RHandles::
+~RHandles()
 {
-  if (rc != MPI_SUCCESS) {
-    char err_buffer[200];
-    int errclass, reslen = sizeof(err_buffer);
-    MPI_Error_class(rc, &errclass);
-    MPI_Error_string(rc, err_buffer, &reslen);
-    Debug << "rec printError:"
-          << " rc=" << rc
-          << " which=" << which
-          << " err=" << err_buffer
-          << flusher;
-  }
-#if 0
-  Debug << " MPI_ERROR=" << stat.MPI_ERROR
-        << " MPI_SOURCE=" << stat.MPI_SOURCE
-        << flusher;
-#endif
+  waitAll();
 }
-#endif
 
 size_t
 artdaq::RHandles::
@@ -72,6 +63,7 @@ recvFragment(Fragment & output)
   int which;
   MPI_Status status = { 0, 0, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_SUCCESS };
   int wait_result = MPI_Waitany(buffer_count_, &reqs_[0], &which, &status);
+  size_t src_index(indexForSource_(status.MPI_SOURCE));
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (which == MPI_UNDEFINED)
@@ -113,6 +105,39 @@ recvFragment(Fragment & output)
   payload_[which].swap(tmp);
   // Performance measurement.
   rm.woke(sequence_id, which);
+
+  // Fragment accounting.
+  if (output.type() == Fragment::type_t::END_OF_DATA) {
+    src_status_[src_index] = status_t::PENDING;
+    expected_count_[src_index] = *output.dataBegin();
+    Debug << "Received EOD from source " << status.MPI_SOURCE
+          << " (index " << src_index << ") expecting total of "
+          << *output.dataBegin() << " fragments" << flusher;
+  }
+  else {
+    recv_frag_count_.incSlot(status.MPI_SOURCE);
+  }
+  switch (src_status_[src_index]) {
+  case status_t::PENDING:
+    Debug << "Checking received count " << recv_frag_count_.slotCount(status.MPI_SOURCE)
+          << " against expected total " << expected_count_[src_index] << flusher;
+    if (recv_frag_count_.slotCount(status.MPI_SOURCE) == expected_count_[src_index]) {
+      src_status_[src_index] = status_t::DONE;
+    }
+    break;
+  case status_t::DONE:
+    throw art::Exception(art::errors::LogicError, "RHandles")
+      << "Received extra fragments from source "
+      << status.MPI_SOURCE
+      << ".\n";
+  case status_t::SENDING:
+    break;
+  default:
+    throw art::Exception(art::errors::LogicError, "RHandles")
+      << "INTERNAL ERROR: Unrecognized status_t value "
+      << static_cast<int>(src_status_[src_index])
+      << ".\n";
+  }
   // Repost to receive more data from possibly different sources.
   int from = nextSource_();
   Debug << "Posting buffer " << which

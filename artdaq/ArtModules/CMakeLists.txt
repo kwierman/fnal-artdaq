@@ -14,7 +14,11 @@ target_link_libraries(${LIB_NAME}
   ${ROOT_REFLEX}
   )
 
-simple_plugin(RawInput "source" artdaq_ArtModules)
+if (NOT ART_FRAMEWORK_IO_SOURCES)
+  find_library(ART_FRAMEWORK_IO_SOURCES art_Framework_IO_Sources PATHS $ENV{ART_LIB} )
+endif()
+
+simple_plugin(RawInput "source" artdaq_ArtModules ${ART_FRAMEWORK_IO_SOURCES})
 
 install(TARGETS ${LIB_NAME}
   DESTINATION ${flavorqual_dir}/lib )

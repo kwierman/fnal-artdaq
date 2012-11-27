@@ -295,7 +295,7 @@ BOOST_AUTO_TEST_CASE(end_of_data)
 {
   // Tell 'reader' the name of the file we are to read. This is pretty
   // much irrelevant for RawEventQueueReader, but we'll stick to the
-  // interface demanded by ReaderSource<T>...
+  // interface demanded by Source<T>...
   string const fakeFileName("no such file exists");
   FileBlock * pFile = nullptr;
   reader().readFile(fakeFileName, pFile);

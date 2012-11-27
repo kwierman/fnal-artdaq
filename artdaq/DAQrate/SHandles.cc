@@ -19,6 +19,7 @@ artdaq::SHandles::SHandles(size_t buffer_count,
   dest_count_(dest_count),
   dest_start_(dest_start),
   pos_(),
+  sent_frag_count_(dest_count, dest_start),
   reqs_(buffer_count_, MPI_REQUEST_NULL),
   stats_(buffer_count_),
   flags_(buffer_count_),
@@ -26,15 +27,27 @@ artdaq::SHandles::SHandles(size_t buffer_count,
 {
 }
 
-int artdaq::SHandles::calcDest(Fragment::sequence_id_t sequence_id) const
+artdaq::SHandles::~SHandles()
 {
-  // Works if dest_count_ == 1
-  return (int)(sequence_id % dest_count_ + dest_start_);
+  size_t dest_end = dest_start_ + dest_count_;
+  for (size_t dest = dest_start_; dest != dest_end; ++dest) {
+    std::ostringstream os;
+    os << "dest: " << dest << ", count: " << sent_frag_count_.slotCount(dest) << "\n";
+    std::cerr << os.str();
+    sendEODFrag(dest, sent_frag_count_.slotCount(dest));
+  }
+  waitAll();
 }
 
-int artdaq::SHandles::findAvailable()
+size_t artdaq::SHandles::calcDest(Fragment::sequence_id_t sequence_id) const
 {
-  int use_me = 0;
+  // Works if dest_count_ == 1
+  return sequence_id % dest_count_ + dest_start_;
+}
+
+size_t artdaq::SHandles::findAvailable()
+{
+  size_t use_me = 0;
   do {
     use_me = pos_;
     MPI_Test(&reqs_[use_me], &flags_[use_me], &stats_[use_me]);
@@ -57,15 +70,16 @@ sendFragment(Fragment && frag)
         << "EOD fragments should not be sent on as received: "
         << "use sendEODFrag() instead.";
   }
-  int dest = calcDest(frag.sequenceID());
+  size_t dest = calcDest(frag.sequenceID());
   sendFragTo(std::move(frag), dest);
+  sent_frag_count_.incSlot(dest);
   return dest;
 }
 
 
 void
 artdaq::SHandles::
-sendEODFrag(int dest, size_t nFragments)
+sendEODFrag(size_t dest, size_t nFragments)
 {
   sendFragTo(Fragment::eodFrag(nFragments), dest);
 }
@@ -77,28 +91,21 @@ void artdaq::SHandles::waitAll()
 
 void
 artdaq::SHandles::
-sendFragTo(Fragment && frag, int dest)
+sendFragTo(Fragment && frag, size_t dest)
 {
   if (frag.dataSize() > max_payload_size_) {
     throw cet::exception("Unimplemented")
-        << "Currently unable to deal with overlarge fragment payload ("
-        << frag.dataSize()
-        << " words > "
-        << max_payload_size_
-        << ").";
+      << "Currently unable to deal with overlarge fragment payload ("
+      << frag.dataSize()
+      << " words > "
+      << max_payload_size_
+      << ").";
   }
-  int buffer_idx = findAvailable();
+  SendMeas sm;
+  size_t buffer_idx = findAvailable();
+  sm.found(frag.sequenceID(), buffer_idx, dest);
   Fragment & curfrag = payload_[buffer_idx];
   curfrag = std::move(frag);
-  SendMeas sm;
-  sm.found(curfrag.sequenceID(), buffer_idx, dest);
-  Debug << "send COMPLETE: "
-        << " buffer_idx=" << buffer_idx
-        << " send_size=" << curfrag.size()
-        << " dest=" << dest
-        << " sequenceID=" << curfrag.sequenceID()
-        << " fragID=" << curfrag.fragmentID()
-        << flusher;
   MPI_Isend(&*curfrag.headerBegin(),
             curfrag.size() * sizeof(Fragment::value_type),
             MPI_BYTE,
@@ -106,4 +113,11 @@ sendFragTo(Fragment && frag, int dest)
             MPITag::FINAL,
             MPI_COMM_WORLD,
             &reqs_[buffer_idx]);
+  Debug << "send COMPLETE: "
+        << " buffer_idx=" << buffer_idx
+        << " send_size=" << curfrag.size()
+        << " dest=" << dest
+        << " sequenceID=" << curfrag.sequenceID()
+        << " fragID=" << curfrag.fragmentID()
+        << flusher;
 }
