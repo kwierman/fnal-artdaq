@@ -63,7 +63,12 @@ int main(int argc, char * argv[]) try
     return 2;
   }
   ParameterSet pset;
-  cet::filepath_lookup lookup_policy("FHICL_FILE_PATH");
+  if (getenv("FHICL_FILE_PATH") == nullptr) {
+    std::cerr
+      << "INFO: environment variable FHICL_FILE_PATH was not set. Using \".\"\n";
+    setenv("FHICL_FILE_PATH", ".", 0);
+  }
+  cet::filepath_lookup_after1 lookup_policy("FHICL_FILE_PATH");
   make_ParameterSet(vm["config"].as<std::string>(),
                     lookup_policy, pset);
   ParameterSet driver_pset = pset.get<ParameterSet>("driver");
