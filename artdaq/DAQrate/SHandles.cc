@@ -95,17 +95,17 @@ sendFragTo(Fragment && frag, size_t dest)
 {
   if (frag.dataSize() > max_payload_size_) {
     throw cet::exception("Unimplemented")
-        << "Currently unable to deal with overlarge fragment payload ("
-        << frag.dataSize()
-        << " words > "
-        << max_payload_size_
-        << ").";
+      << "Currently unable to deal with overlarge fragment payload ("
+      << frag.dataSize()
+      << " words > "
+      << max_payload_size_
+      << ").";
   }
+  SendMeas sm;
   size_t buffer_idx = findAvailable();
+  sm.found(frag.sequenceID(), buffer_idx, dest);
   Fragment & curfrag = payload_[buffer_idx];
   curfrag = std::move(frag);
-  SendMeas sm;
-  sm.found(curfrag.sequenceID(), buffer_idx, dest);
   MPI_Isend(&*curfrag.headerBegin(),
             curfrag.size() * sizeof(Fragment::value_type),
             MPI_BYTE,
