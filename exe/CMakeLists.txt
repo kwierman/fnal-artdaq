@@ -54,5 +54,5 @@ if(WANT_MPI)
     )
   install(TARGETS perfdump builder DESTINATION ${flavorqual_dir}/bin)
 
-  install_fcl_files(LIST daqrate_simdata_test.fcl)
+  install_fcl_files(LIST daqrate_simdata_noart.fcl)
 endif()
