@@ -49,7 +49,9 @@ namespace artdaq {
     // executed by the thread this EventStore will spawn.
     EventStore(size_t num_fragments_per_event, run_id_t run,
                int store_id, int argc, char * argv[],
-               ARTFUL_FCN * reader);
+               ARTFUL_FCN * reader, bool printSummaryStats = false);
+
+    ~EventStore();
 
     // Give ownership of the Fragment to the EventStore. The pointer
     // we are given must NOT be null, and the Fragment to which it
@@ -72,6 +74,7 @@ namespace artdaq {
     EventMap       events_;
     RawEventQueue & queue_;
     std::future<int> reader_thread_;
+    bool const     printSummaryStats_;
 
     void reportStatistics_();
   };

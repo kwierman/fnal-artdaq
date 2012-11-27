@@ -1,4 +1,4 @@
-#include "art/Framework/IO/Sources/ReaderSource.h"
+#include "art/Framework/IO/Sources/Source.h"
 #include "artdaq/ArtModules/detail/RawEventQueueReader.hh"
 #include "art/Framework/Core/InputSourceMacros.h"
 
@@ -7,7 +7,7 @@ using std::string;
 
 namespace artdaq {
 
-  typedef art::ReaderSource<detail::RawEventQueueReader> RawInput;
+  typedef art::Source<detail::RawEventQueueReader> RawInput;
 }
 
 DEFINE_ART_INPUT_SOURCE(artdaq::RawInput)

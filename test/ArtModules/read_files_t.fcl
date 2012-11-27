@@ -4,8 +4,4 @@ source: {
   module_type: RawInput
   waiting_time: 1.0         // waiting time in seconds
   resume_after_timeout: false
-
-  # Because RawInput is instantiated from ReaderSource, we need a
-  # non-empty vector<string> fileNames.
-  fileNames: [ dummy ]
 }
