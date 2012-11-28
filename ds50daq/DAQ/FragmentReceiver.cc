@@ -141,7 +141,7 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
   return true;
 }
 
-bool ds50::FragmentReceiver::start(art::RunID id, int /*max_events*/)
+bool ds50::FragmentReceiver::start(art::RunID id)
 {
   generator_ptr_->start(id.run());
   return true;

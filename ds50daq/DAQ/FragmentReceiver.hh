@@ -25,7 +25,7 @@ public:
   FragmentReceiver& operator=(FragmentReceiver const&) = delete;
 
   bool initialize(fhicl::ParameterSet const&);
-  bool start(art::RunID, int);
+  bool start(art::RunID);
   bool pause();
   bool resume();
   bool stop();

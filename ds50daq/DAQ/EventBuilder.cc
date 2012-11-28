@@ -97,7 +97,7 @@ bool ds50::EventBuilder::initialize(fhicl::ParameterSet const& pset)
   return true;
 }
 
-bool ds50::EventBuilder::start(art::RunID /*id*/, int /*max_events*/)
+bool ds50::EventBuilder::start(art::RunID /*id*/)
 {
   //generator_ptr_->start(id, max_events);
   return true;

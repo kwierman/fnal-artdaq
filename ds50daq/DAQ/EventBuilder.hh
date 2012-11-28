@@ -24,7 +24,7 @@ public:
   EventBuilder& operator=(EventBuilder const&) = delete;
 
   bool initialize(fhicl::ParameterSet const&);
-  bool start(art::RunID, int);
+  bool start(art::RunID);
   bool pause();
   bool resume();
   bool stop();

@@ -57,15 +57,12 @@ namespace {
       start_ (xmlrpc_commander& c):
         cmd_(c, "s:i", "start the run") {}
       void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try {
-        if (paramList.size() > 1) {
+        if (paramList.size() > 0) {
           std::string run_number_string = paramList.getString(0);
-          std::string max_events_string = paramList.getString(1);
           art::RunNumber_t run_number =
             boost::lexical_cast<art::RunNumber_t>(run_number_string);
           art::RunID run_id(run_number);
-          art::RunNumber_t max_events =
-            boost::lexical_cast<int>(max_events_string);
-          if (_c._commandable.start(run_id, max_events)) {
+          if (_c._commandable.start(run_id)) {
             *retvalP = xmlrpc_c::value_string ("Success"); 
           }
           else {
@@ -74,7 +71,7 @@ namespace {
           }
         }
         else {
-          *retvalP = xmlrpc_c::value_string ("The start message requires the run number and the run type as arguments."); 
+          *retvalP = xmlrpc_c::value_string ("The start message requires the run number as an argument."); 
         }
       } catch (std::runtime_error &er) { 
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 

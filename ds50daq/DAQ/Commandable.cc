@@ -35,13 +35,13 @@ bool ds50::Commandable::initialize(fhicl::ParameterSet const& pset)
 /**
  * Processes the start request.
  */
-bool ds50::Commandable::start(art::RunID id, int max_events)
+bool ds50::Commandable::start(art::RunID id)
 {
   external_request_status_ = true;
   report_string_ = "All is OK.";
 
   std::string initialState = fsm_.getState().getName();
-  fsm_.start(id, max_events);
+  fsm_.start(id);
   if (external_request_status_) {
     std::string finalState = fsm_.getState().getName();
     mf::LogDebug("CommandableInterface")
@@ -160,7 +160,7 @@ bool ds50::Commandable::do_initialize(fhicl::ParameterSet const&)
   return external_request_status_;
 }
 
-bool ds50::Commandable::do_start(art::RunID, int)
+bool ds50::Commandable::do_start(art::RunID)
 {
   external_request_status_ = true;
   return external_request_status_;

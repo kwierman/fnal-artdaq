@@ -52,9 +52,9 @@ bool ds50::EventBuilderApp::do_initialize(fhicl::ParameterSet const& pset)
   return external_request_status_;
 }
 
-bool ds50::EventBuilderApp::do_start(art::RunID id, int max_events)
+bool ds50::EventBuilderApp::do_start(art::RunID id)
 {
-  external_request_status_ = event_builder_ptr_->start(id, max_events);
+  external_request_status_ = event_builder_ptr_->start(id);
   if (! external_request_status_) {
     report_string_ = "Error starting the EventBuilder for run ";
     report_string_.append("number ");

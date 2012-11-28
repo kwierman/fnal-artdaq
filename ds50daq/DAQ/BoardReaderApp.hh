@@ -23,7 +23,7 @@ public:
   // these methods provide the operations that are used by the state machine
   void BootedEnter() override;
   bool do_initialize(fhicl::ParameterSet const&) override;
-  bool do_start(art::RunID, int) override;
+  bool do_start(art::RunID) override;
   bool do_pause() override;
   bool do_resume() override;
   bool do_stop() override;
