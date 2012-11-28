@@ -62,12 +62,9 @@ bool ds50::BoardReaderApp::do_start(art::RunID id, int max_events)
     report_string_.append(".");
   }
 
-  //fragment_processing_future_ =
-  //  std::async(std::launch::async, &fragmentReceiverApp,
-  //             *fragment_receiver_ptr_);
-
-  worker_thread_ = new std::thread(std::bind(&FragmentReceiver::process_events,
-                                             fragment_receiver_ptr_.get()));
+  fragment_processing_future_ =
+    std::async(std::launch::async, &FragmentReceiver::process_events,
+               fragment_receiver_ptr_.get());
 
   return external_request_status_;
 }
@@ -87,10 +84,13 @@ bool ds50::BoardReaderApp::do_stop()
   external_request_status_ = fragment_receiver_ptr_->stop();
   if (! external_request_status_) {
     report_string_ = "Error stopping the FragmentReceiver.";
+    return false;
   }
 
-  worker_thread_->join();
-  delete worker_thread_;
+  int number_of_events_processed = fragment_processing_future_.get();
+  mf::LogDebug("BoardReaderApp::do_stop()")
+    << "Number of events processed = " << number_of_events_processed
+    << ".";
 
   return external_request_status_;
 }

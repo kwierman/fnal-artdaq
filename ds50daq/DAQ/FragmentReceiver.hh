@@ -39,24 +39,4 @@ private:
   std::unique_ptr<artdaq::SHandles> sender_ptr_;
 };
 
-#if 0
-namespace ds50
-{
-  int fragmentReceiverApp(FragmentReceiver& fr)
-  {
-    try {
-      return fr.process_events();
-    }
-    catch (std::string const & msg) {
-      std::cerr << "fragmentReceiverApp failed: "
-                << msg;
-      return -1;
-    }
-    catch (...) {
-      return -1;
-    }
-  }
-}
-#endif
-
 #endif
