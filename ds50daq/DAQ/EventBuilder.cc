@@ -7,7 +7,7 @@
 #include "artdaq/DAQrate/SimpleQueueReader.hh"
 
 /**
- * Default constructor.
+ * Constructor.
  */
 ds50::EventBuilder::EventBuilder(int mpi_rank) : mpi_rank_(mpi_rank),
   local_group_defined_(false), data_sender_count_(0)
@@ -92,6 +92,8 @@ bool ds50::EventBuilder::initialize(fhicl::ParameterSet const& pset)
       << "\".";
     return false;
   }
+
+  // other parameters
   try {use_art_ = evb_pset.get<bool>("useArt");}
   catch (...) {
     mf::LogError("EventBuilder")
@@ -100,6 +102,7 @@ bool ds50::EventBuilder::initialize(fhicl::ParameterSet const& pset)
       << "\".";
     return false;
   }
+  print_event_store_stats_ = evb_pset.get<bool>("print_event_store_stats", false);
 
   return true;
 }
@@ -145,7 +148,7 @@ size_t ds50::EventBuilder::process_fragments()
                             mpi_rank_, 1, dummyArgs,
                             //useArt ? conf_.art_argc_ : 1,
                             //useArt ? conf_.art_argv_ : dummyArgs,
-                            reader);
+                            reader, print_event_store_stats_);
 
   do {
     artdaq::FragmentPtr pfragment(new artdaq::Fragment);

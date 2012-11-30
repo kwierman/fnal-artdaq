@@ -2,7 +2,7 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 /**
- * Default constructor.
+ * Constructor.
  */
 ds50::EventBuilderApp::EventBuilderApp(int mpi_rank) : mpi_rank_(mpi_rank)
 {
