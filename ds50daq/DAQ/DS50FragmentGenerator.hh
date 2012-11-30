@@ -10,7 +10,8 @@
 namespace ds50 {
   class DS50FragmentGenerator : public artdaq::FragmentGenerator {
     public:
-      DS50FragmentGenerator();
+      DS50FragmentGenerator(const fhicl::ParameterSet &);
+      DS50FragmentGenerator(const DS50FragmentGenerator &) = delete;
       virtual ~DS50FragmentGenerator() noexcept = default;
 
       void start (int run);
@@ -21,6 +22,7 @@ namespace ds50 {
       void perfreset ();
 
       int run_number () const { return run_number_; }
+      int fragment_id () const { return fragment_id_; }
   private:
       virtual void start_ () {}
       virtual void pause_ () {}
@@ -33,15 +35,16 @@ namespace ds50 {
       virtual bool getNext__ (artdaq::FragmentPtrs & output) = 0;
 
       int run_number_;
+      int fragment_id_, sleep_us_;
       bool should_stop_;
       std::mutex mutex_;
       std::condition_variable stop_wait_;
 
       struct stats {
-	bool should_stop;
 	int run_number;
 	int call_count;
 	double avg_frag_size;
+	int read_count;
       } stats_;
      
   protected:
