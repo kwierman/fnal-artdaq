@@ -2,11 +2,13 @@
 #include "ds50daq/DAQ/EventBuilder.hh"
 #include "art/Utilities/Exception.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
+#include "artdaq/DAQrate/EventStore.hh"
 
 /**
  * Default constructor.
  */
-ds50::EventBuilder::EventBuilder() : local_group_defined_(false)
+ds50::EventBuilder::EventBuilder() :
+  local_group_defined_(false), data_sender_count_(0)
 {
   mf::LogDebug("EventBuilder") << "Constructor";
 }
@@ -34,6 +36,7 @@ bool ds50::EventBuilder::initialize(fhicl::ParameterSet const& pset)
   // pull out the relevant part of the ParameterSet
   fhicl::ParameterSet evb_pset = pset.get<fhicl::ParameterSet>("event_builder");
 
+#if 0
   // set up an MPI communication group with other EventBuilders
   int status =
     MPI_Comm_split(MPI_COMM_WORLD, ds50::Config::EventBuilderTask, 0,
@@ -50,19 +53,18 @@ bool ds50::EventBuilder::initialize(fhicl::ParameterSet const& pset)
       << "EventBuilders, status code = " << status << ".";
     return false;
   }
+#endif
 
-  // create the data receiver
-  size_t mpi_buffer_count;
-  try {mpi_buffer_count = pset.get<size_t>("event_building_buffer_count");}
+  // determine the data receiver parameters
+  try {mpi_buffer_count_ = pset.get<size_t>("event_building_buffer_count");}
   catch (...) {
     mf::LogError("EventBuilder")
       << "The event_building_buffer_count parameter was not specified "
       << "in the DAQ initialization PSet: \"" << pset.to_string() << "\".";
     return false;
   }
-  uint64_t max_fragment_size_words;
   try {
-    max_fragment_size_words = pset.get<uint64_t>("max_fragment_size_words");
+    max_fragment_size_words_ = pset.get<uint64_t>("max_fragment_size_words");
   }
   catch (...) {
     mf::LogError("EventBuilder")
@@ -70,9 +72,8 @@ bool ds50::EventBuilder::initialize(fhicl::ParameterSet const& pset)
       << "in the DAQ initialization PSet: \"" << pset.to_string() << "\".";
     return false;
   }
-  size_t first_frag_rec_rank;
   try {
-    first_frag_rec_rank = evb_pset.get<size_t>("first_fragment_receiver_rank");
+    first_data_sender_rank_ = evb_pset.get<size_t>("first_fragment_receiver_rank");
   }
   catch (...) {
     mf::LogError("EventBuilder")
@@ -81,8 +82,7 @@ bool ds50::EventBuilder::initialize(fhicl::ParameterSet const& pset)
       << "\".";
     return false;
   }
-  size_t frag_rec_count;
-  try {frag_rec_count = evb_pset.get<size_t>("fragment_receiver_count");}
+  try {data_sender_count_ = evb_pset.get<size_t>("fragment_receiver_count");}
   catch (...) {
     mf::LogError("EventBuilder")
       << "The fragment_receiver_count parameter was not specified "
@@ -90,16 +90,21 @@ bool ds50::EventBuilder::initialize(fhicl::ParameterSet const& pset)
       << "\".";
     return false;
   }
-  receiver_ptr_.reset(new artdaq::RHandles(mpi_buffer_count,
-                                           max_fragment_size_words,
-                                           frag_rec_count,
-                                           first_frag_rec_rank));
+  try {use_art_ = evb_pset.get<bool>("useArt");}
+  catch (...) {
+    mf::LogError("EventBuilder")
+      << "The useArt parameter was not specified "
+      << "in the event_builder initialization PSet: \"" << pset.to_string()
+      << "\".";
+    return false;
+  }
+
   return true;
 }
 
-bool ds50::EventBuilder::start(art::RunID /*id*/)
+bool ds50::EventBuilder::start(art::RunID id)
 {
-  //generator_ptr_->start(id, max_events);
+  run_id_ = id;
   return true;
 }
 
@@ -115,6 +120,59 @@ bool ds50::EventBuilder::resume()
 
 bool ds50::EventBuilder::stop()
 {
-  //generator_ptr_->stop();
   return true;
+}
+
+size_t ds50::EventBuilder::process_fragments()
+{
+  size_t fragments_received = 0;
+  size_t sources_sending = data_sender_count_;
+
+  receiver_ptr_.reset(new artdaq::RHandles(mpi_buffer_count_,
+                                           max_fragment_size_words_,
+                                           data_sender_count_,
+                                           first_data_sender_rank_));
+
+#if 0
+  artdaq::EventStore::ARTFUL_FCN * reader = use_art_ ? &artapp :
+    &artdaq::simpleQueueReaderApp;
+  artdaq::EventStore events(data_sender_count_, run_id_.run(),
+                            sink_rank,
+                            useArt ? conf_.art_argc_ : 1,
+                            useArt ? conf_.art_argv_ : dummyArgs,
+                            reader);
+#endif
+
+  do {
+    artdaq::FragmentPtr pfragment(new artdaq::Fragment);
+    //mf::LogDebug("EventBuilder") << "Before recvFragment call.";
+    receiver_ptr_->recvFragment(*pfragment);
+    //mf::LogDebug("EventBuilder") << "After recvFragment call.";
+    if (pfragment->type() == artdaq::Fragment::type_t::END_OF_DATA) {
+      --sources_sending;
+      mf::LogDebug("EventBuilder")
+        << "Received END_OF_DATA fragment, " << sources_sending
+        << " data senders still remain.";
+    }
+    else {
+      // if ((fragments_received % 200) == 0) {
+        mf::LogDebug("EventBuilder")
+          << "Received fragment " << fragments_received << ".";
+      }
+      ++fragments_received;
+      //events.insert(std::move(pfragment));
+    }
+  }
+  while (sources_sending);
+
+  // Now we are done collecting fragments, so we can shut down the
+  // receive handles.
+  mf::LogDebug("EventBuilder") << "Before RHandles::waitAll() call.";
+  receiver_ptr_->waitAll();
+  mf::LogDebug("EventBuilder") << "After RHandles::waitAll() call.";
+  receiver_ptr_.reset(nullptr);
+
+  //int rc = events.endOfData();
+
+  return fragments_received;
 }

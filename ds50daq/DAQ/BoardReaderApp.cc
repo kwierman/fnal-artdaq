@@ -39,8 +39,8 @@ bool ds50::BoardReaderApp::do_initialize(fhicl::ParameterSet const& pset)
 
   // in the following block, we first destroy the existing FragmentReceiver
   // instance, then create a new one.  Doing it in one step does not
-  // produce the desired result since that creates and new instance and
-  // then deletes the old one.
+  // produce the desired result since that creates a new instance and
+  // then deletes the old one, and we need the opposite order.
   fragment_receiver_ptr_.reset(nullptr);
   fragment_receiver_ptr_.reset(new FragmentReceiver());
   external_request_status_ = fragment_receiver_ptr_->initialize(daq_pset);
@@ -63,7 +63,7 @@ bool ds50::BoardReaderApp::do_start(art::RunID id)
   }
 
   fragment_processing_future_ =
-    std::async(std::launch::async, &FragmentReceiver::process_events,
+    std::async(std::launch::async, &FragmentReceiver::process_fragments,
                fragment_receiver_ptr_.get());
 
   return external_request_status_;
@@ -87,9 +87,9 @@ bool ds50::BoardReaderApp::do_stop()
     return false;
   }
 
-  int number_of_events_processed = fragment_processing_future_.get();
+  int number_of_fragments_processed = fragment_processing_future_.get();
   mf::LogDebug("BoardReaderApp::do_stop()")
-    << "Number of events processed = " << number_of_events_processed
+    << "Number of fragments processed = " << number_of_fragments_processed
     << ".";
 
   return external_request_status_;

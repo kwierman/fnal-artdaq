@@ -39,8 +39,8 @@ bool ds50::EventBuilderApp::do_initialize(fhicl::ParameterSet const& pset)
 
   // in the following block, we first destroy the existing EventBuilder
   // instance, then create a new one.  Doing it in one step does not
-  // produce the desired result since that creates and new instance and
-  // then deletes the old one.
+  // produce the desired result since that creates a new instance and
+  // then deletes the old one, and we need the opposite order.
   event_builder_ptr_.reset(nullptr);
   event_builder_ptr_.reset(new EventBuilder());
   external_request_status_ = event_builder_ptr_->initialize(daq_pset);
@@ -62,6 +62,10 @@ bool ds50::EventBuilderApp::do_start(art::RunID id)
     report_string_.append(".");
   }
 
+  event_building_future_ =
+    std::async(std::launch::async, &EventBuilder::process_fragments,
+               event_builder_ptr_.get());
+
   return external_request_status_;
 }
 
@@ -81,6 +85,11 @@ bool ds50::EventBuilderApp::do_stop()
   if (! external_request_status_) {
     report_string_ = "Error stopping the EventBuilder.";
   }
+
+  int number_of_fragments_processed = event_building_future_.get();
+  mf::LogDebug("EventBuilderApp::do_stop()")
+    << "Number of fragments processed = " << number_of_fragments_processed
+    << ".";
 
   return external_request_status_;
 }

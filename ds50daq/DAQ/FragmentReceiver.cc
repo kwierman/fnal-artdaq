@@ -38,6 +38,7 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
   fhicl::ParameterSet fr_pset =
     pset.get<fhicl::ParameterSet>("fragment_receiver");
 
+#if 0
   // set up an MPI communication group with other FragmentReceivers
   int status =
     MPI_Comm_split(MPI_COMM_WORLD, ds50::Config::FragmentReceiverTask, 0,
@@ -54,6 +55,7 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
       << "FragmentReceivers, status code = " << status << ".";
     return false;
   }
+#endif
 
   // create the requested FragmentGenerator
   std::string frag_gen_name = fr_pset.get<std::string>("generator", "");
@@ -96,18 +98,16 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
     return false;
   }
 
-  // create the data sender
-  size_t mpi_buffer_count;
-  try {mpi_buffer_count = pset.get<size_t>("event_building_buffer_count");}
+  // determine the data sending parameters
+  try {mpi_buffer_count_ = pset.get<size_t>("event_building_buffer_count");}
   catch (...) {
     mf::LogError("FragmentReceiver")
       << "The event_building_buffer_count parameter was not specified "
       << "in the DAQ initialization PSet: \"" << pset.to_string() << "\".";
     return false;
   }
-  uint64_t max_fragment_size_words;
   try {
-    max_fragment_size_words = pset.get<uint64_t>("max_fragment_size_words");
+    max_fragment_size_words_ = pset.get<uint64_t>("max_fragment_size_words");
   }
   catch (...) {
     mf::LogError("FragmentReceiver")
@@ -115,8 +115,7 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
       << "in the DAQ initialization PSet: \"" << pset.to_string() << "\".";
     return false;
   }
-  size_t first_evb_rank;
-  try {first_evb_rank = fr_pset.get<size_t>("first_event_builder_rank");}
+  try {first_evb_rank_ = fr_pset.get<size_t>("first_event_builder_rank");}
   catch (...) {
     mf::LogError("FragmentReceiver")
       << "The first_event_builder_rank parameter was not specified "
@@ -124,8 +123,7 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
       << "\".";
     return false;
   }
-  size_t evb_count;
-  try {evb_count = fr_pset.get<size_t>("event_builder_count");}
+  try {evb_count_ = fr_pset.get<size_t>("event_builder_count");}
   catch (...) {
     mf::LogError("FragmentReceiver")
       << "The event_builder_count parameter was not specified "
@@ -133,10 +131,6 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
       << "\".";
     return false;
   }
-  sender_ptr_.reset(new artdaq::SHandles(mpi_buffer_count,
-                                         max_fragment_size_words,
-                                         evb_count,
-                                         first_evb_rank));
 
   return true;
 }
@@ -163,22 +157,33 @@ bool ds50::FragmentReceiver::stop()
   return true;
 }
 
-int ds50::FragmentReceiver::process_events()
+size_t ds50::FragmentReceiver::process_fragments()
 {
-  int event_count = 0;
+  size_t fragment_count = 0;
+
+  // try-catch block here?
+
+  sender_ptr_.reset(new artdaq::SHandles(mpi_buffer_count_,
+                                         max_fragment_size_words_,
+                                         evb_count_,
+                                         first_evb_rank_));
 
   artdaq::FragmentPtrs frags;
   while (generator_ptr_->getNext(frags)) {
-    mf::LogDebug("FragmentReceiver")
-      << "Processing event " << event_count << " with "
-      << frags.size() << " fragments.";
-    //for (auto & val : frags) {
-    //  store.insert(std::move(val));
-    //}
-    ++event_count;
+    for (auto & fragPtr : frags) {
+      sender_ptr_->sendFragment(std::move(*fragPtr));
+      if ((fragment_count % 200) == 0) {
+        mf::LogDebug("FragmentReceiver")
+          << "Processing fragment " << fragment_count << ".";
+      }
+      ++fragment_count;
+    }
     frags.clear();
-    sleep(1);
+    //sleep(1);
   }
+  sender_ptr_->sendEODFrag(1, 1);
 
-  return event_count;
+  sender_ptr_.reset(nullptr);
+
+  return fragment_count;
 }

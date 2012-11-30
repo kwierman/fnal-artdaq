@@ -29,7 +29,7 @@ public:
 
 private:
   std::unique_ptr<ds50::EventBuilder> event_builder_ptr_;
-  std::future<long> event_building_future_;
+  std::future<size_t> event_building_future_;
 };
 
 #endif

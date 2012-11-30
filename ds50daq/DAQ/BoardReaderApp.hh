@@ -30,7 +30,7 @@ public:
 
 private:
   std::unique_ptr<ds50::FragmentReceiver> fragment_receiver_ptr_;
-  std::future<int> fragment_processing_future_;
+  std::future<size_t> fragment_processing_future_;
 };
 
 #endif
