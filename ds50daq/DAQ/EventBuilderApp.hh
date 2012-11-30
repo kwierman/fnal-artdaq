@@ -14,7 +14,7 @@ namespace ds50
 class ds50::EventBuilderApp : public ds50::Commandable
 {
 public:
-  EventBuilderApp();
+  EventBuilderApp(int mpi_rank);
   EventBuilderApp(EventBuilderApp const&) = delete;
   virtual ~EventBuilderApp() = default;
   EventBuilderApp& operator=(EventBuilderApp const&) = delete;
@@ -28,6 +28,7 @@ public:
   bool do_stop() override;
 
 private:
+  int mpi_rank_;
   std::unique_ptr<ds50::EventBuilder> event_builder_ptr_;
   std::future<size_t> event_building_future_;
 };

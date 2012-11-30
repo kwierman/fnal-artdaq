@@ -3,11 +3,13 @@
 #include "art/Utilities/Exception.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "artdaq/DAQrate/EventStore.hh"
+#include "art/Framework/Art/artapp.h"
+#include "artdaq/DAQrate/SimpleQueueReader.hh"
 
 /**
  * Default constructor.
  */
-ds50::EventBuilder::EventBuilder() :
+ds50::EventBuilder::EventBuilder(int mpi_rank) : mpi_rank_(mpi_rank),
   local_group_defined_(false), data_sender_count_(0)
 {
   mf::LogDebug("EventBuilder") << "Constructor";
@@ -133,15 +135,17 @@ size_t ds50::EventBuilder::process_fragments()
                                            data_sender_count_,
                                            first_data_sender_rank_));
 
-#if 0
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wwrite-strings"
+  char * dummyArgs[1] { "SimpleQueueReader" };
+#pragma GCC diagnostic pop
   artdaq::EventStore::ARTFUL_FCN * reader = use_art_ ? &artapp :
     &artdaq::simpleQueueReaderApp;
   artdaq::EventStore events(data_sender_count_, run_id_.run(),
-                            sink_rank,
-                            useArt ? conf_.art_argc_ : 1,
-                            useArt ? conf_.art_argv_ : dummyArgs,
+                            mpi_rank_, 1, dummyArgs,
+                            //useArt ? conf_.art_argc_ : 1,
+                            //useArt ? conf_.art_argv_ : dummyArgs,
                             reader);
-#endif
 
   do {
     artdaq::FragmentPtr pfragment(new artdaq::Fragment);
@@ -155,24 +159,23 @@ size_t ds50::EventBuilder::process_fragments()
         << " data senders still remain.";
     }
     else {
-      // if ((fragments_received % 200) == 0) {
-        mf::LogDebug("EventBuilder")
-          << "Received fragment " << fragments_received << ".";
-      }
+      mf::LogDebug("EventBuilder")
+        << "Received fragment " << fragments_received << ".";
       ++fragments_received;
-      //events.insert(std::move(pfragment));
+      events.insert(std::move(pfragment));
     }
   }
   while (sources_sending);
 
   // Now we are done collecting fragments, so we can shut down the
   // receive handles.
-  mf::LogDebug("EventBuilder") << "Before RHandles::waitAll() call.";
-  receiver_ptr_->waitAll();
-  mf::LogDebug("EventBuilder") << "After RHandles::waitAll() call.";
+  //mf::LogDebug("EventBuilder") << "Before RHandles::waitAll() call.";
+  //receiver_ptr_->waitAll();
+  //mf::LogDebug("EventBuilder") << "After RHandles::waitAll() call.";
+
   receiver_ptr_.reset(nullptr);
 
-  //int rc = events.endOfData();
+  /*int rc =*/ events.endOfData();
 
   return fragments_received;
 }

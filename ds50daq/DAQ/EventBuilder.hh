@@ -18,7 +18,7 @@ namespace ds50
 class ds50::EventBuilder
 {
 public:
-  EventBuilder();
+  EventBuilder(int mpi_rank);
   EventBuilder(EventBuilder const&) = delete;
   ~EventBuilder();
   EventBuilder& operator=(EventBuilder const&) = delete;
@@ -32,6 +32,7 @@ public:
   size_t process_fragments();
 
 private:
+  int mpi_rank_;
   bool local_group_defined_;
   MPI_Comm local_group_comm_;
 

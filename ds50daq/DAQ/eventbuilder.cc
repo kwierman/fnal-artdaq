@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
   mf::SetApplicationName("EventBuilder-" + boost::lexical_cast<std::string>(vm["port"].as<unsigned short> ()));
 
   // create the EventBuilderApp
-  ds50::EventBuilderApp evb_app;
+  ds50::EventBuilderApp evb_app(rank_);;
 
   // create the xmlrpc_commander and run it
   xmlrpc_commander commander(vm["port"].as<unsigned short> (), evb_app);

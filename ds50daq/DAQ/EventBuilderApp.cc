@@ -4,7 +4,7 @@
 /**
  * Default constructor.
  */
-ds50::EventBuilderApp::EventBuilderApp()
+ds50::EventBuilderApp::EventBuilderApp(int mpi_rank) : mpi_rank_(mpi_rank)
 {
 }
 
@@ -42,7 +42,7 @@ bool ds50::EventBuilderApp::do_initialize(fhicl::ParameterSet const& pset)
   // produce the desired result since that creates a new instance and
   // then deletes the old one, and we need the opposite order.
   event_builder_ptr_.reset(nullptr);
-  event_builder_ptr_.reset(new EventBuilder());
+  event_builder_ptr_.reset(new EventBuilder(mpi_rank_));
   external_request_status_ = event_builder_ptr_->initialize(daq_pset);
   if (! external_request_status_) {
     report_string_ = "Error initializing the EventBuilder with DAQ ";
@@ -81,10 +81,14 @@ bool ds50::EventBuilderApp::do_resume()
 
 bool ds50::EventBuilderApp::do_stop()
 {
+  mf::LogDebug("EventBuilderApp::do_stop()") << __LINE__;
   external_request_status_ = event_builder_ptr_->stop();
+  mf::LogDebug("EventBuilderApp::do_stop()") << __LINE__;
   if (! external_request_status_) {
+  mf::LogDebug("EventBuilderApp::do_stop()") << __LINE__;
     report_string_ = "Error stopping the EventBuilder.";
   }
+  mf::LogDebug("EventBuilderApp::do_stop()") << __LINE__;
 
   int number_of_fragments_processed = event_building_future_.get();
   mf::LogDebug("EventBuilderApp::do_stop()")

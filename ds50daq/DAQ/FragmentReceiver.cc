@@ -172,16 +172,15 @@ size_t ds50::FragmentReceiver::process_fragments()
   while (generator_ptr_->getNext(frags)) {
     for (auto & fragPtr : frags) {
       sender_ptr_->sendFragment(std::move(*fragPtr));
-      if ((fragment_count % 200) == 0) {
-        mf::LogDebug("FragmentReceiver")
-          << "Processing fragment " << fragment_count << ".";
-      }
+      mf::LogDebug("FragmentReceiver")
+        << "Processing fragment " << fragment_count << ".";
       ++fragment_count;
     }
     frags.clear();
     //sleep(1);
   }
-  sender_ptr_->sendEODFrag(1, 1);
+  //sender_ptr_->sendEODFrag(1, 1);
+  //sender_ptr_->waitAll();
 
   sender_ptr_.reset(nullptr);
 
