@@ -54,7 +54,7 @@ target_link_libraries(artdaq_DAQrate ${LIB_LIBS})
 # ----------------------------------------------------------------------
 # Install this project's headers, sources, library, and executables:
 
-install_headers()
+install_headers(SUBDIRS detail)
 install_source()
 install( TARGETS ${LIB_NAME}
          DESTINATION ${flavorqual_dir}/lib )
