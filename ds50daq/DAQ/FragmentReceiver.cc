@@ -177,10 +177,7 @@ size_t ds50::FragmentReceiver::process_fragments()
       ++fragment_count;
     }
     frags.clear();
-    //sleep(1);
   }
-  //sender_ptr_->sendEODFrag(1, 1);
-  //sender_ptr_->waitAll();
 
   sender_ptr_.reset(nullptr);
 

@@ -170,12 +170,6 @@ size_t ds50::EventBuilder::process_fragments()
   }
   while (sources_sending);
 
-  // Now we are done collecting fragments, so we can shut down the
-  // receive handles.
-  //mf::LogDebug("EventBuilder") << "Before RHandles::waitAll() call.";
-  //receiver_ptr_->waitAll();
-  //mf::LogDebug("EventBuilder") << "After RHandles::waitAll() call.";
-
   receiver_ptr_.reset(nullptr);
 
   /*int rc =*/ events.endOfData();
