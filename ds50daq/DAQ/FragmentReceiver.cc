@@ -12,6 +12,27 @@ ds50::FragmentReceiver::FragmentReceiver() :
   local_group_defined_(false), generator_ptr_(nullptr)
 {
   mf::LogDebug("FragmentReceiver") << "Constructor";
+
+  // set up an MPI communication group with other FragmentReceivers
+  int status =
+    MPI_Comm_split(MPI_COMM_WORLD, ds50::Config::FragmentReceiverTask, 0,
+                   &local_group_comm_);
+  if (status == MPI_SUCCESS) {
+    local_group_defined_ = true;
+    int temp_rank;
+    MPI_Comm_rank(local_group_comm_, &temp_rank);
+
+    mf::LogDebug("FragmentReceiver")
+      << "Successfully created local communicator for type "
+      << ds50::Config::FragmentReceiverTask << ", identifier = 0x"
+      << std::hex << local_group_comm_ << std::dec
+      << ", rank = " << temp_rank << ".";
+  }
+  else {
+    mf::LogError("FragmentReceiver")
+      << "Failed to create the local MPI communicator group for "
+      << "FragmentReceivers, status code = " << status << ".";
+  }
 }
 
 /**
@@ -34,28 +55,17 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
                                    << "ParameterSet = " << pset.to_string()
                                    << "\".";
 
+  // verify that the MPI group was set up successfully
+  if (! local_group_defined_) {
+    mf::LogError("FragmentReceiver")
+      << "The necessary MPI group was not created in an earlier step, "
+      << "and initialization can not proceed without that.";
+    return false;
+  }
+
   // pull out the relevant part of the ParameterSet
   fhicl::ParameterSet fr_pset =
     pset.get<fhicl::ParameterSet>("fragment_receiver");
-
-#if 0
-  // set up an MPI communication group with other FragmentReceivers
-  int status =
-    MPI_Comm_split(MPI_COMM_WORLD, ds50::Config::FragmentReceiverTask, 0,
-                   &local_group_comm_);
-  if (status == MPI_SUCCESS) {
-    local_group_defined_ = true;
-    mf::LogDebug("FragmentReceiver")
-      << "Successfully created local communicator with identifier 0x"
-      << std::hex << local_group_comm_ << std::dec << ".";
-  }
-  else {
-    mf::LogError("FragmentReceiver")
-      << "Failed to create the local MPI communicator group for "
-      << "FragmentReceivers, status code = " << status << ".";
-    return false;
-  }
-#endif
 
   // create the requested FragmentGenerator
   std::string frag_gen_name = fr_pset.get<std::string>("generator", "");
@@ -168,6 +178,9 @@ size_t ds50::FragmentReceiver::process_fragments()
                                          evb_count_,
                                          first_evb_rank_));
 
+  MPI_Barrier(local_group_comm_);
+
+  mf::LogDebug("FragmentReceiver") << "Waiting for first fragment.";
   artdaq::FragmentPtrs frags;
   while (generator_ptr_->getNext(frags)) {
     for (auto & fragPtr : frags) {
@@ -177,9 +190,14 @@ size_t ds50::FragmentReceiver::process_fragments()
       ++fragment_count;
     }
     frags.clear();
+    //sleep(5);
   }
 
+  MPI_Barrier(local_group_comm_);
+
+  mf::LogDebug("FragmentReceiver") << "Before destroying sender.";
   sender_ptr_.reset(nullptr);
+  mf::LogDebug("FragmentReceiver") << "After destroying sender.";
 
   return fragment_count;
 }

@@ -81,14 +81,10 @@ bool ds50::EventBuilderApp::do_resume()
 
 bool ds50::EventBuilderApp::do_stop()
 {
-  mf::LogDebug("EventBuilderApp::do_stop()") << __LINE__;
   external_request_status_ = event_builder_ptr_->stop();
-  mf::LogDebug("EventBuilderApp::do_stop()") << __LINE__;
   if (! external_request_status_) {
-  mf::LogDebug("EventBuilderApp::do_stop()") << __LINE__;
     report_string_ = "Error stopping the EventBuilder.";
   }
-  mf::LogDebug("EventBuilderApp::do_stop()") << __LINE__;
 
   int number_of_fragments_processed = event_building_future_.get();
   mf::LogDebug("EventBuilderApp::do_stop()")

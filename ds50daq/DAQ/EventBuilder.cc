@@ -13,6 +13,26 @@ ds50::EventBuilder::EventBuilder(int mpi_rank) : mpi_rank_(mpi_rank),
   local_group_defined_(false), data_sender_count_(0)
 {
   mf::LogDebug("EventBuilder") << "Constructor";
+
+  // set up an MPI communication group with other EventBuilders
+  int status =
+    MPI_Comm_split(MPI_COMM_WORLD, ds50::Config::EventBuilderTask, 0,
+                   &local_group_comm_);
+  if (status == MPI_SUCCESS) {
+    local_group_defined_ = true;
+    int temp_rank;
+    MPI_Comm_rank(local_group_comm_, &temp_rank);
+    mf::LogDebug("EventBuilder")
+      << "Successfully created local communicator for type "
+      << ds50::Config::EventBuilderTask << ", identifier = 0x"
+      << std::hex << local_group_comm_ << std::dec
+      << ", rank = " << temp_rank << ".";
+  }
+  else {
+    mf::LogError("EventBuilder")
+      << "Failed to create the local MPI communicator group for "
+      << "EventBuilders, status code = " << status << ".";
+  }
 }
 
 /**
@@ -38,24 +58,13 @@ bool ds50::EventBuilder::initialize(fhicl::ParameterSet const& pset)
   // pull out the relevant part of the ParameterSet
   fhicl::ParameterSet evb_pset = pset.get<fhicl::ParameterSet>("event_builder");
 
-#if 0
-  // set up an MPI communication group with other EventBuilders
-  int status =
-    MPI_Comm_split(MPI_COMM_WORLD, ds50::Config::EventBuilderTask, 0,
-                   &local_group_comm_);
-  if (status == MPI_SUCCESS) {
-    local_group_defined_ = true;
-    mf::LogDebug("EventBuilder")
-      << "Successfully created local communicator with identifier 0x"
-      << std::hex << local_group_comm_ << std::dec << ".";
-  }
-  else {
+  // verify that the MPI group was set up successfully
+  if (! local_group_defined_) {
     mf::LogError("EventBuilder")
-      << "Failed to create the local MPI communicator group for "
-      << "EventBuilders, status code = " << status << ".";
+      << "The necessary MPI group was not created in an earlier step, "
+      << "and initialization can not proceed without that.";
     return false;
   }
-#endif
 
   // determine the data receiver parameters
   try {mpi_buffer_count_ = pset.get<size_t>("event_building_buffer_count");}
@@ -150,11 +159,14 @@ size_t ds50::EventBuilder::process_fragments()
                             //useArt ? conf_.art_argv_ : dummyArgs,
                             reader, print_event_store_stats_);
 
+  MPI_Barrier(local_group_comm_);
+
+  mf::LogDebug("EventBuilder") << "Waiting for first fragment.";
   do {
     artdaq::FragmentPtr pfragment(new artdaq::Fragment);
-    //mf::LogDebug("EventBuilder") << "Before recvFragment call.";
+    mf::LogDebug("EventBuilder") << "Before recvFragment call.";
     receiver_ptr_->recvFragment(*pfragment);
-    //mf::LogDebug("EventBuilder") << "After recvFragment call.";
+    mf::LogDebug("EventBuilder") << "After recvFragment call.";
     if (pfragment->type() == artdaq::Fragment::type_t::END_OF_DATA) {
       --sources_sending;
       mf::LogDebug("EventBuilder")
@@ -169,6 +181,8 @@ size_t ds50::EventBuilder::process_fragments()
     }
   }
   while (sources_sending);
+
+  //MPI_Barrier(local_group_comm_);
 
   receiver_ptr_.reset(nullptr);
 
