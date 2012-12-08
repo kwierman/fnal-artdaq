@@ -20,8 +20,6 @@ namespace artdaq {
 class artdaq::SHandles {
 public:
   typedef std::vector<MPI_Request> Requests;
-  typedef std::vector<MPI_Status> Statuses;
-  typedef std::vector<int> Flags; // busy flags
 
   // buffer_count is the number of MPI_Request objects that will be used.
   // Fragments with dataSize() greater than max_payload_size will not be sent.
@@ -73,8 +71,6 @@ private:
   detail::FragCounter sent_frag_count_;
 
   Requests reqs_;
-  Statuses stats_;
-  Flags flags_;
   Fragments payload_;
 };
 
