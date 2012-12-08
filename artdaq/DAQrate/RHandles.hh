@@ -43,17 +43,20 @@ public:
   // Number of sources pending (last fragments still in-flight).
   size_t sourcesPending() const;
 
-  // Wait for all in-flight transfers.
-  void waitAll();
-
 private:
   enum class status_t { SENDING, PENDING, DONE };
+
+  void waitAll_();
 
   size_t indexForSource_(size_t src) const;
 
   int nextSource_();
 
-  int buffer_count_;
+  void cancelReq_(size_t buf);
+  void post_(size_t buf, size_t src);
+  void cancelAndRepost_(size_t src);
+
+  size_t buffer_count_;
   int max_payload_size_;
   int src_count_;
   int src_start_; // Start of the source ranks.
@@ -61,8 +64,8 @@ private:
   std::vector<status_t> src_status_; // Status of each sender.
   std::vector<size_t> expected_count_; // After EOD received: expected frags.
 
-  std::vector<MPI_Request> reqs_;
-  std::vector<int> flags_;
+  std::vector<MPI_Request> reqs_; // Request to fill each buffer.
+  std::vector<int> req_sources_; // Source for each request.
   int last_source_posted_;
 
   Fragments payload_;
@@ -75,7 +78,7 @@ sourcesActive() const
 {
   return std::count_if(src_status_.begin(),
                        src_status_.end(),
-                       [](status_t const & s) { return s != status_t::DONE; });
+  [](status_t const & s) { return s != status_t::DONE; });
 }
 
 inline
@@ -101,8 +104,12 @@ int
 artdaq::RHandles::
 nextSource_()
 {
-  return ++last_source_posted_ % src_count_ + src_start_;
+  int result = last_source_posted_;
+  do {
+    result = (result + 1) % src_count_ + src_start_;
+  }
+  while (src_status_[indexForSource_(result)] == status_t::DONE);
+  return result;
 }
 
 #endif /* artdaq_DAQrate_RHandles_hh */
-
