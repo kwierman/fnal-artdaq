@@ -23,7 +23,7 @@ namespace ds50 {
 
       int run_number () const { return run_number_; }
       int fragment_id () const { return fragment_id_; }
-  private:
+  protected:
       virtual void start_ () {}
       virtual void pause_ () {}
       virtual void resume_ () {}
