@@ -67,13 +67,6 @@ bool ds50::EventBuilder::initialize(fhicl::ParameterSet const& pset)
   }
 
   // determine the data receiver parameters
-  try {mpi_buffer_count_ = pset.get<size_t>("event_building_buffer_count");}
-  catch (...) {
-    mf::LogError("EventBuilder")
-      << "The event_building_buffer_count parameter was not specified "
-      << "in the DAQ initialization PSet: \"" << pset.to_string() << "\".";
-    return false;
-  }
   try {
     max_fragment_size_words_ = pset.get<uint64_t>("max_fragment_size_words");
   }
@@ -81,6 +74,14 @@ bool ds50::EventBuilder::initialize(fhicl::ParameterSet const& pset)
     mf::LogError("EventBuilder")
       << "The max_fragment_size_words parameter was not specified "
       << "in the DAQ initialization PSet: \"" << pset.to_string() << "\".";
+    return false;
+  }
+  try {mpi_buffer_count_ = evb_pset.get<size_t>("mpi_buffer_count");}
+  catch (...) {
+    mf::LogError("EventBuilder")
+      << "The  mpi_buffer_count parameter was not specified "
+      << "in the event_builder initialization PSet: \"" << pset.to_string()
+      << "\".";
     return false;
   }
   try {
@@ -140,7 +141,6 @@ bool ds50::EventBuilder::stop()
 size_t ds50::EventBuilder::process_fragments()
 {
   size_t fragments_received = 0;
-  size_t sources_sending = data_sender_count_;
 
   receiver_ptr_.reset(new artdaq::RHandles(mpi_buffer_count_,
                                            max_fragment_size_words_,
@@ -155,32 +155,28 @@ size_t ds50::EventBuilder::process_fragments()
     &artdaq::simpleQueueReaderApp;
   artdaq::EventStore events(data_sender_count_, run_id_.run(),
                             mpi_rank_, 1, dummyArgs,
-                            //useArt ? conf_.art_argc_ : 1,
-                            //useArt ? conf_.art_argv_ : dummyArgs,
+                            //use_art_ ? 3 : 1,
+                            //use_art_ ? artArgs : dummyArgs,
                             reader, print_event_store_stats_);
 
   MPI_Barrier(local_group_comm_);
 
   mf::LogDebug("EventBuilder") << "Waiting for first fragment.";
-  do {
+  while (receiver_ptr_->sourcesActive() > 0) {
     artdaq::FragmentPtr pfragment(new artdaq::Fragment);
-    mf::LogDebug("EventBuilder") << "Before recvFragment call.";
     receiver_ptr_->recvFragment(*pfragment);
-    mf::LogDebug("EventBuilder") << "After recvFragment call.";
-    if (pfragment->type() == artdaq::Fragment::type_t::END_OF_DATA) {
-      --sources_sending;
-      mf::LogDebug("EventBuilder")
-        << "Received END_OF_DATA fragment, " << sources_sending
-        << " data senders still remain.";
-    }
-    else {
-      mf::LogDebug("EventBuilder")
-        << "Received fragment " << fragments_received << ".";
+    if (pfragment->type() != artdaq::Fragment::type_t::END_OF_DATA) {
+      //mf::LogDebug("EventBuilder")
+      //  << "Received fragment " << fragments_received << ".";
       ++fragments_received;
       events.insert(std::move(pfragment));
     }
+    if (receiver_ptr_->sourcesActive() == receiver_ptr_->sourcesPending()) {
+      mf::LogDebug("EventBuilder")
+        << "Waiting for in-flight fragments from "
+        << receiver_ptr_->sourcesPending() << " sources.";
+    }
   }
-  while (sources_sending);
 
   //MPI_Barrier(local_group_comm_);
 

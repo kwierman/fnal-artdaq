@@ -109,13 +109,6 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
   }
 
   // determine the data sending parameters
-  try {mpi_buffer_count_ = pset.get<size_t>("event_building_buffer_count");}
-  catch (...) {
-    mf::LogError("FragmentReceiver")
-      << "The event_building_buffer_count parameter was not specified "
-      << "in the DAQ initialization PSet: \"" << pset.to_string() << "\".";
-    return false;
-  }
   try {
     max_fragment_size_words_ = pset.get<uint64_t>("max_fragment_size_words");
   }
@@ -123,6 +116,14 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
     mf::LogError("FragmentReceiver")
       << "The max_fragment_size_words parameter was not specified "
       << "in the DAQ initialization PSet: \"" << pset.to_string() << "\".";
+    return false;
+  }
+  try {mpi_buffer_count_ = fr_pset.get<size_t>("mpi_buffer_count");}
+  catch (...) {
+    mf::LogError("FragmentReceiver")
+      << "The mpi_buffer_count parameter was not specified "
+      << "in the fragment_receiver initialization PSet: \"" << pset.to_string()
+      << "\".";
     return false;
   }
   try {first_evb_rank_ = fr_pset.get<size_t>("first_event_builder_rank");}
@@ -184,13 +185,15 @@ size_t ds50::FragmentReceiver::process_fragments()
   artdaq::FragmentPtrs frags;
   while (generator_ptr_->getNext(frags)) {
     for (auto & fragPtr : frags) {
+      if ((fragment_count % 250) == 0) {
+        mf::LogDebug("FragmentReceiver")
+          << "Sending fragment " << fragment_count
+          << " with sequence id " << fragPtr->sequenceID() << ".";
+      }
       sender_ptr_->sendFragment(std::move(*fragPtr));
-      mf::LogDebug("FragmentReceiver")
-        << "Processing fragment " << fragment_count << ".";
       ++fragment_count;
     }
     frags.clear();
-    //sleep(5);
   }
 
   MPI_Barrier(local_group_comm_);

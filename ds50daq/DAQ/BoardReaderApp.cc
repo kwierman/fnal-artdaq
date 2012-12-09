@@ -87,9 +87,9 @@ bool ds50::BoardReaderApp::do_stop()
     return false;
   }
 
-  int number_of_fragments_processed = fragment_processing_future_.get();
+  int number_of_fragments_sent = fragment_processing_future_.get();
   mf::LogDebug("BoardReaderApp::do_stop()")
-    << "Number of fragments processed = " << number_of_fragments_processed
+    << "Number of fragments sent = " << number_of_fragments_sent
     << ".";
 
   return external_request_status_;

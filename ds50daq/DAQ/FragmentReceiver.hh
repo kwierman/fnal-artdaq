@@ -37,8 +37,8 @@ private:
   MPI_Comm local_group_comm_;
   std::unique_ptr<DS50FragmentGenerator> generator_ptr_;
 
-  size_t mpi_buffer_count_;
   uint64_t max_fragment_size_words_;
+  size_t mpi_buffer_count_;
   size_t first_evb_rank_;
   size_t evb_count_;
 
