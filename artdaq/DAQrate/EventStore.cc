@@ -41,7 +41,7 @@ namespace artdaq {
     MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
       getMonitoredQuantity(EVENT_RATE_STAT_KEY);
     if (mqPtr.get() == 0) {
-      mqPtr.reset(new MonitoredQuantity(10.0, 600.0));
+      mqPtr.reset(new MonitoredQuantity(3.0, 300.0));
       StatisticsCollection::getInstance().
         addMonitoredQuantity(EVENT_RATE_STAT_KEY, mqPtr);
     }
@@ -50,7 +50,7 @@ namespace artdaq {
     mqPtr = StatisticsCollection::getInstance().
       getMonitoredQuantity(INCOMPLETE_EVENT_STAT_KEY);
     if (mqPtr.get() == 0) {
-      mqPtr.reset(new MonitoredQuantity(10.0, 600.0));
+      mqPtr.reset(new MonitoredQuantity(3.0, 300.0));
       StatisticsCollection::getInstance().
         addMonitoredQuantity(INCOMPLETE_EVENT_STAT_KEY, mqPtr);
     }
@@ -135,7 +135,7 @@ namespace artdaq {
           << "_" << setfill('0') << setw(4) << id_ << ".txt";
       std::string filename = oss.str();
       ofstream outStream(filename.c_str());
-      mqPtr->waitUntilAccumulatorsHaveBeenFlushed(1.0);
+      mqPtr->waitUntilAccumulatorsHaveBeenFlushed(3.0);
       artdaq::MonitoredQuantity::Stats stats;
       mqPtr->getStats(stats);
       outStream << "EventStore rank " << id_ << ": events processed = "
@@ -177,7 +177,7 @@ namespace artdaq {
           << "_" << setfill('0') << setw(4) << id_ << ".txt";
       std::string filename = oss.str();
       ofstream outStream(filename.c_str());
-      mqPtr->waitUntilAccumulatorsHaveBeenFlushed(1.0);
+      mqPtr->waitUntilAccumulatorsHaveBeenFlushed(3.0);
       artdaq::MonitoredQuantity::Stats stats;
       mqPtr->getStats(stats);
       outStream << "EventStore rank " << id_ << ": fragments processed = "
@@ -205,6 +205,7 @@ namespace artdaq {
                     << " sec" << std::endl;
         }
       }
+      outStream << "Incomplete count now = " << events_.size() << std::endl;
       outStream.close();
     }
   }
