@@ -68,7 +68,8 @@ int main(int argc, char * argv[]) try
       << "INFO: environment variable FHICL_FILE_PATH was not set. Using \".\"\n";
     setenv("FHICL_FILE_PATH", ".", 0);
   }
-  art::FirstAbsoluteOrLookupWithDotPolicy lookup_policy("FHICL_FILE_PATH");
+  std::string fhicl_file_path(getenv("FHICL_FILE_PATH"));
+  art::FirstAbsoluteOrLookupWithDotPolicy lookup_policy(fhicl_file_path);
   make_ParameterSet(vm["config"].as<std::string>(),
                     lookup_policy, pset);
   ParameterSet driver_pset = pset.get<ParameterSet>("driver");
