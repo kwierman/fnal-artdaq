@@ -41,6 +41,7 @@ private:
   size_t first_data_sender_rank_;
   size_t data_sender_count_;
   bool use_art_;
+  std::string art_config_file_;
   bool print_event_store_stats_;
   art::RunID run_id_;
 

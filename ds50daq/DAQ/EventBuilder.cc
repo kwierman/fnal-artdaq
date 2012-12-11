@@ -104,14 +104,15 @@ bool ds50::EventBuilder::initialize(fhicl::ParameterSet const& pset)
   }
 
   // other parameters
-  try {use_art_ = evb_pset.get<bool>("useArt");}
+  try {use_art_ = evb_pset.get<bool>("use_art");}
   catch (...) {
     mf::LogError("EventBuilder")
-      << "The useArt parameter was not specified "
+      << "The use_art parameter was not specified "
       << "in the event_builder initialization PSet: \"" << pset.to_string()
       << "\".";
     return false;
   }
+  art_config_file_ = evb_pset.get<std::string>("art_configuration", "");
   print_event_store_stats_ = evb_pset.get<bool>("print_event_store_stats", false);
 
   return true;
@@ -150,13 +151,20 @@ size_t ds50::EventBuilder::process_fragments()
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wwrite-strings"
   char * dummyArgs[1] { "SimpleQueueReader" };
+  char * artArgs[3];
+  std::string artArg1 = "eventbuilder";
+  std::string artArg2 = "-c";
+  std::string artArg3 = art_config_file_;
+  artArgs[0] = (char *) artArg1.c_str();
+  artArgs[1] = (char *) artArg2.c_str();
+  artArgs[2] = (char *) artArg3.c_str();
 #pragma GCC diagnostic pop
   artdaq::EventStore::ARTFUL_FCN * reader = use_art_ ? &artapp :
     &artdaq::simpleQueueReaderApp;
   artdaq::EventStore events(data_sender_count_, run_id_.run(),
-                            mpi_rank_, 1, dummyArgs,
-                            //use_art_ ? 3 : 1,
-                            //use_art_ ? artArgs : dummyArgs,
+                            mpi_rank_,
+                            use_art_ ? 3 : 1,
+                            use_art_ ? artArgs : dummyArgs,
                             reader, print_event_store_stats_);
 
   MPI_Barrier(local_group_comm_);
