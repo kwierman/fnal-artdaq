@@ -17,9 +17,9 @@
 #include "artdaq/DAQrate/EventStore.hh"
 #include "artdaq/DAQrate/SimpleQueueReader.hh"
 #include "cetlib/container_algorithms.h"
-#include "cetlib/filepath_maker.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/make_ParameterSet.h"
+#include "art/Utilities/FirstAbsoluteOrLookupWithDotPolicy.h"
 
 #include "boost/program_options.hpp"
 
@@ -68,7 +68,7 @@ int main(int argc, char * argv[]) try
       << "INFO: environment variable FHICL_FILE_PATH was not set. Using \".\"\n";
     setenv("FHICL_FILE_PATH", ".", 0);
   }
-  cet::filepath_lookup_after1 lookup_policy("FHICL_FILE_PATH");
+  art::FirstAbsoluteOrLookupWithDotPolicy lookup_policy("FHICL_FILE_PATH");
   make_ParameterSet(vm["config"].as<std::string>(),
                     lookup_policy, pset);
   ParameterSet driver_pset = pset.get<ParameterSet>("driver");
