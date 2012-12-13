@@ -102,12 +102,15 @@ namespace artdaq {
       PerfWriteEvent(EventMeas::END, sequence_id);
 #endif
       events_.erase(loc);
-      queue_.enqNowait(complete_event);
+      // 13-Dec-2012, KAB - this monitoring needs to come before
+      // the enqueueing of the event lest it be empty by the 
+      // time that we ask for the word count.
       MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
         getMonitoredQuantity(EVENT_RATE_STAT_KEY);
       if (mqPtr.get() != 0) {
         mqPtr->addSample(complete_event->wordCount());
       }
+      queue_.enqNowait(complete_event);
     }
     MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
       getMonitoredQuantity(INCOMPLETE_EVENT_STAT_KEY);
