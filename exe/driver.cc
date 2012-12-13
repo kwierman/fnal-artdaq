@@ -23,6 +23,7 @@
 
 #include "boost/program_options.hpp"
 
+#include <signal.h>
 #include <iostream>
 #include <memory>
 #include <utility>
@@ -30,6 +31,9 @@
 using namespace std;
 using namespace fhicl;
 namespace  bpo = boost::program_options;
+
+volatile int events_to_generate;
+void sig_handler(int) {events_to_generate = -1;}
 
 int main(int argc, char * argv[]) try
 {
@@ -78,19 +82,20 @@ int main(int argc, char * argv[]) try
     make_ParameterSet(vm["config"].as<std::string>(),
                       lookup_policy2, pset);
   }
-  ParameterSet driver_pset = pset.get<ParameterSet>("driver");
+  ParameterSet fragment_receiver_pset = pset.get<ParameterSet>("fragment_receiver");
   std::unique_ptr<artdaq::FragmentGenerator> const
-    gen(artdaq::makeFragmentGenerator(driver_pset.get<std::string>("generator"),
-                                      driver_pset));
+    gen(artdaq::makeFragmentGenerator(fragment_receiver_pset.get<std::string>("generator"),
+                                      fragment_receiver_pset));
   artdaq::FragmentPtrs frags;
   //////////////////////////////////////////////////////////////////////
   // Note: we are constrained to doing all this here rather than
   // encapsulated neatly in a function due to the lieftime issues
   // associated with async threads and std::string::c_str().
-  bool const want_artapp(driver_pset.get<bool>("use_art", false));
+  ParameterSet event_builder_pset = pset.get<ParameterSet>("event_builder");
+  bool const want_artapp(event_builder_pset.get<bool>("use_art", false));
   std::ostringstream os;
   if (!want_artapp) {
-    os << pset.get<int>("events_expected");
+    os << event_builder_pset.get<int>("events_expected_in_SimpleQueueReader");
   }
   std::string const oss(os.str());
 #pragma GCC diagnostic push
@@ -101,13 +106,16 @@ int main(int argc, char * argv[]) try
   char **es_argv (want_artapp?argv:args);
   artdaq::EventStore::ARTFUL_FCN *
     es_fcn(want_artapp?&artapp:&artdaq::simpleQueueReaderApp);
-  artdaq::EventStore store(driver_pset.get<size_t>("source_count"),
-                           driver_pset.get<artdaq::EventStore::run_id_t>("run_number"),
+  artdaq::EventStore store(event_builder_pset.get<size_t>("expected_fragments_per_event"),
+                           pset.get<artdaq::EventStore::run_id_t>("run_number"),
                            1,
                            es_argc,
                            es_argv,
                            es_fcn);
   //////////////////////////////////////////////////////////////////////
+
+  int events_to_generate = pset.get<int>("events_to_generate", 0);
+  int event_count = 0;
 
   // Read or generate fragments as rapidly as possible, and feed them
   // into the EventStore. The throughput resulting from this design
@@ -118,6 +126,9 @@ int main(int argc, char * argv[]) try
       store.insert(std::move(val));
     }
     frags.clear();
+
+    ++event_count;
+    if (events_to_generate > 0 && event_count >= events_to_generate) {break;}
   }
   return store.endOfData();
 }

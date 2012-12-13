@@ -1,10 +1,15 @@
-driver:
+run_number: 10
+events_to_generate: 2  # zero means infinite
+
+fragment_receiver:
 {
   generator: GenericFragmentSimulator
-  events_to_generate: 2
   fragments_per_event: 5
-  source_count: 5
-  run_number: 10
 }
 
-events_expected: @local::driver.events_to_generate
+event_builder:
+{
+  expected_fragments_per_event: @local::fragment_receiver.fragments_per_event
+  events_expected_in_SimpleQueueReader: @local::events_to_generate
+  use_art: false
+}
