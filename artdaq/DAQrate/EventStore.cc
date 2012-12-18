@@ -146,7 +146,14 @@ namespace artdaq {
                 << " events/sec, date rate = "
                 << (stats.fullValueRate * sizeof(RawDataType)
                     / 1024.0 / 1024.0) << " MB/sec, duration = "
-                << stats.fullDuration << " sec" << std::endl;
+                << stats.fullDuration << " sec" << std::endl
+                << "    minimum event size = "
+                << (stats.fullValueMin * sizeof(RawDataType)
+                    / 1024.0 / 1024.0)
+                << " MB, maximum event size = "
+                << (stats.fullValueMax * sizeof(RawDataType)
+                    / 1024.0 / 1024.0)
+                << " MB" << std::endl;
       bool foundTheStart = false;
       for (int idx = 0; idx < (int) stats.recentBinnedDurations.size(); ++idx) {
         if (stats.recentBinnedDurations[idx] > 0.0) {
@@ -187,7 +194,10 @@ namespace artdaq {
                 << stats.fullSampleCount << " at " << stats.fullSampleRate
                 << " fragments/sec, average incomplete event count = "
                 << stats.fullValueAverage << " duration = "
-                << stats.fullDuration << " sec" << std::endl;
+                << stats.fullDuration << " sec" << std::endl
+                << "    minimum incomplete event count = "
+                << stats.fullValueMin << ", maximum incomplete event count = "
+                << stats.fullValueMax << std::endl;
       bool foundTheStart = false;
       for (int idx = 0; idx < (int) stats.recentBinnedDurations.size(); ++idx) {
         if (stats.recentBinnedDurations[idx] > 0.0) {
