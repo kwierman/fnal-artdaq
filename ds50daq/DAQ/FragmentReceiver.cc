@@ -182,14 +182,26 @@ size_t ds50::FragmentReceiver::process_fragments()
   MPI_Barrier(local_group_comm_);
 
   mf::LogDebug("FragmentReceiver") << "Waiting for first fragment.";
+  artdaq::Fragment::sequence_id_t prev_seq_id = 0;
   artdaq::FragmentPtrs frags;
   while (generator_ptr_->getNext(frags)) {
     for (auto & fragPtr : frags) {
+      artdaq::Fragment::sequence_id_t sequence_id = fragPtr->sequenceID();
       if ((fragment_count % 250) == 0) {
         mf::LogDebug("FragmentReceiver")
           << "Sending fragment " << fragment_count
-          << " with sequence id " << fragPtr->sequenceID() << ".";
+          << " with sequence id " << sequence_id << ".";
       }
+
+      // check for continous sequence IDs
+      if (abs(sequence_id-prev_seq_id) > 1) {
+        mf::LogWarning("FragmentReceiver")
+          << "Missing sequence IDs: current sequence ID = "
+          << sequence_id << ", previous sequence ID = "
+          << prev_seq_id << ".";
+      }
+      prev_seq_id = sequence_id;
+
       sender_ptr_->sendFragment(std::move(*fragPtr));
       ++fragment_count;
     }
