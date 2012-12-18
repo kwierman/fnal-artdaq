@@ -111,11 +111,13 @@ int main(int argc, char * argv[]) try
                            1,
                            es_argc,
                            es_argv,
-                           es_fcn);
+                           es_fcn,
+                           event_builder_pset.get<bool>("print_event_store_stats", false));
   //////////////////////////////////////////////////////////////////////
 
   int events_to_generate = pset.get<int>("events_to_generate", 0);
   int event_count = 0;
+  artdaq::Fragment::sequence_id_t previous_sequence_id = -1;
 
   // Read or generate fragments as rapidly as possible, and feed them
   // into the EventStore. The throughput resulting from this design
@@ -123,12 +125,16 @@ int main(int argc, char * argv[]) try
   // speed as the limiting factor
   while (gen->getNext(frags)) {
     for (auto & val : frags) {
+      if (val->sequenceID() != previous_sequence_id) {
+        ++event_count;
+        previous_sequence_id = val->sequenceID();
+      }
+      if (events_to_generate != 0 && event_count > events_to_generate) {break;}
       store.insert(std::move(val));
     }
     frags.clear();
 
-    ++event_count;
-    if (events_to_generate > 0 && event_count >= events_to_generate) {break;}
+    if (events_to_generate != 0 && event_count >= events_to_generate) {break;}
   }
   return store.endOfData();
 }
