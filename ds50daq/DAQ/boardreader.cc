@@ -11,7 +11,12 @@ int main(int argc, char *argv[])
 {
   // initialization
   ds50::configureMessageFacility("boardreader"); 
-  MPI_Init(&argc, &argv);
+  int threading_result;
+  MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &threading_result);
+  mf::LogDebug("BoardReader::main")
+    << "MPI initialized with requested thread support level of "
+    << MPI_THREAD_FUNNELED << ", actual support level = "
+    << threading_result << ".";
   int procs_;
   int rank_;
   MPI_Comm_size(MPI_COMM_WORLD, &procs_);
