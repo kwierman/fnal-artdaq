@@ -3,6 +3,7 @@
 require "xmlrpc/server"
 require "open3"
 require "tempfile"
+require "logger"
 
 class MPIHandler
   def executables
@@ -37,6 +38,9 @@ class MPIHandler
     #
     # Note that this will immediately spawn a new thread to handle monitoring
     # MPI and return.
+    #
+    # First step is to iterate through all of the configured executables and
+    # make sure that everything is idle and nothing has been started already.
     @executables.each { |host, hostHash|
       hostHash.each { |program, programHash|
         programHash.each { |options, optionsHash|
@@ -46,6 +50,20 @@ class MPIHandler
         }
       }
     }
+
+    # Create a logger object.  This will create log files with the name:
+    #  pmt-yearmondate-hourminsec.log
+    # Where the timestamp is the time that executables were spawned.
+    currentTime = Time.now
+    logFileName = "pmt-%d%02d%02d-%02d%02d%02d.log" % [ currentTime.year, 
+                                                        currentTime.month,
+                                                        currentTime.day,
+                                                        currentTime.hour,
+                                                        currentTime.min,
+                                                        currentTime.sec ]
+    logger = Logger.new(logFileName, 5, 10240000)
+    logger.level = Logger::INFO
+    puts "Log file basename: %s" % logFileName
 
     mpiThread = Thread.new() do
       configFile = Tempfile.new("config")
@@ -68,6 +86,7 @@ class MPIHandler
         hostsFile.rewind
         Open3.popen3(mpiCmd) { |stdin, stdout, stderr|
           stdout.each { |line|
+            logger.info(line)
             parts = line.chomp.split(":")
             if parts.count == 4 and parts[0] == "STARTING"
               @executables[parts[1]][parts[2]][parts[3]]["state"] = "running"
@@ -186,15 +205,17 @@ class PMT
   def initialize(argv)
     # Verify that the command line options are reasonable.  If the user has
     # passed in a config file parse that and load the specified executables
-    # into the MPI handler class.  
-    if argv.count != 1 and argv.count != 2
-      puts "#{$0} <port number> <program definition (optional)>"
+    # into the MPI handler class.
+    if argv.count != 2 and argv.count != 3
+      puts "#{$0} -p <port number> <program definition (optional)>"
       exit
     end
 
+    @rpcThread = nil
+
     @mpiHandler = MPIHandler.new
-    if argv.count == 2
-      IO.foreach(argv[1]) { |definition|
+    if argv.count == 3
+      IO.foreach(argv[2]) { |definition|
         program, host, port = definition.split(" ")
         @mpiHandler.addExecutable(program, host, port)
       }
@@ -202,7 +223,7 @@ class PMT
     
     # Instantiate the RPM handler and then create the RPC server.
     @rpcHandler = PMTRPCHandler.new(@mpiHandler)
-    @rpcServer = XMLRPC::Server.new(port = argv[0])
+    @rpcServer = XMLRPC::Server.new(port = argv[1])
     @rpcServer.add_handler("pmt", @rpcHandler)
 
     # If we've been passed our executable list via the command line we need
@@ -214,13 +235,18 @@ class PMT
 
   def start
     # Startup the RPC server.  This does not return.
-    @rpcServer.serve    
+    @rpcThread = Thread.new() do
+      @rpcServer.serve
     end
+  end
 
   def stop
     # Shutdown the RPC server and prompt the MPI handler class to attempt
     # to clean up.
     @rpcServer.shutdown
+    if @rpcThread != nil
+      @rpcThread.exit
+    end
     @mpiHandler.stop
   end
 end
@@ -228,4 +254,17 @@ end
 if __FILE__ == $0
   pmt = PMT.new(ARGV)
   pmt.start
+
+  signals = %w[INT TERM HUP] & Signal.list.keys
+  signals.each { 
+    |signal| trap(signal) { 
+      puts "Cleaning up..."
+      pmt.stop 
+      exit
+    } 
+  }
+
+  while true
+    sleep(1)
+  end
 end
