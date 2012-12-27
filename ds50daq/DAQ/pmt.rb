@@ -37,6 +37,16 @@ class MPIHandler
     #
     # Note that this will immediately spawn a new thread to handle monitoring
     # MPI and return.
+    @executables.each { |host, hostHash|
+      hostHash.each { |program, programHash|
+        programHash.each { |options, optionsHash|
+          if optionsHash["state"] != "idle":
+              return
+          end
+        }
+      }
+    }
+
     mpiThread = Thread.new() do
       configFile = Tempfile.new("config")
       hostsFile = Tempfile.new("hosts")
@@ -92,7 +102,7 @@ class MPIHandler
   def stop
     # I have yet to find a good way to clean up.  Killing off the mpirun_rsh
     # process does nothing to the child processes.  For the time being we'll use
-    # the sledge hammer approach anduse MPI to submit jobs to kill off everything
+    # the sledge hammer approach and use MPI to submit jobs to kill off everything
     # that we spawned.
     configFile = Tempfile.new("config")
     hostsFile = Tempfile.new("hosts")
@@ -114,7 +124,9 @@ class MPIHandler
       hostsFile.rewind
       Open3.popen3(mpiCmd) { |stdin, stdout, stderr|
         # Block until this is done.
-        stdout.read
+        stdout.each { |line|
+          puts line
+        }
       }
 
       # This isn't the best but after stdout is closed it seems MPI still needs
@@ -192,6 +204,12 @@ class PMT
     @rpcHandler = PMTRPCHandler.new(@mpiHandler)
     @rpcServer = XMLRPC::Server.new(port = argv[0])
     @rpcServer.add_handler("pmt", @rpcHandler)
+
+    # If we've been passed our executable list via the command line we need
+    # to spawn off the MPI processes right away.
+    if @mpiHandler.executables.size > 0:
+        @mpiHandler.start
+    end
   end
 
   def start
