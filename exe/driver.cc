@@ -72,16 +72,8 @@ int main(int argc, char * argv[]) try
       << "INFO: environment variable FHICL_FILE_PATH was not set. Using \".\"\n";
     setenv("FHICL_FILE_PATH", ".", 0);
   }
-  cet::filepath_lookup lookup_policy("FHICL_FILE_PATH");
-  try {
-    make_ParameterSet(vm["config"].as<std::string>(),
-                      lookup_policy, pset);
-  }
-  catch (...) {
-    cet::filepath_lookup_after1 lookup_policy2("FHICL_FILE_PATH");
-    make_ParameterSet(vm["config"].as<std::string>(),
-                      lookup_policy2, pset);
-  }
+  cet::filepath_lookup_after1 lookup_policy("FHICL_FILE_PATH");
+  make_ParameterSet(vm["config"].as<std::string>(), lookup_policy, pset);
   ParameterSet fragment_receiver_pset = pset.get<ParameterSet>("fragment_receiver");
   std::unique_ptr<artdaq::FragmentGenerator> const
     gen(artdaq::makeFragmentGenerator(fragment_receiver_pset.get<std::string>("generator"),
@@ -111,11 +103,13 @@ int main(int argc, char * argv[]) try
                            1,
                            es_argc,
                            es_argv,
-                           es_fcn);
+                           es_fcn,
+                           event_builder_pset.get<bool>("print_event_store_stats", false));
   //////////////////////////////////////////////////////////////////////
 
   int events_to_generate = pset.get<int>("events_to_generate", 0);
   int event_count = 0;
+  artdaq::Fragment::sequence_id_t previous_sequence_id = -1;
 
   // Read or generate fragments as rapidly as possible, and feed them
   // into the EventStore. The throughput resulting from this design
@@ -123,12 +117,16 @@ int main(int argc, char * argv[]) try
   // speed as the limiting factor
   while (gen->getNext(frags)) {
     for (auto & val : frags) {
+      if (val->sequenceID() != previous_sequence_id) {
+        ++event_count;
+        previous_sequence_id = val->sequenceID();
+      }
+      if (events_to_generate != 0 && event_count > events_to_generate) {break;}
       store.insert(std::move(val));
     }
     frags.clear();
 
-    ++event_count;
-    if (events_to_generate > 0 && event_count >= events_to_generate) {break;}
+    if (events_to_generate != 0 && event_count >= events_to_generate) {break;}
   }
   return store.endOfData();
 }
