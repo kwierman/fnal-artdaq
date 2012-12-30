@@ -31,6 +31,7 @@ add_executable(driver driver.cc)
 target_link_libraries(driver
   artdaq_DAQrate
   artdaq_DAQdata
+  artdaq_Utilities
   ${ART_FRAMEWORK_ART}
   ${FHICLCPP}
   ${CETLIB}
@@ -47,6 +48,7 @@ if(WANT_MPI)
     ${ART_FRAMEWORK_ART}
     artdaq_DAQrate
     artdaq_DAQdata
+    artdaq_Utilities
     ${FHICLCPP}
     ${CETLIB}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}

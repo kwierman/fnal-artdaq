@@ -72,16 +72,8 @@ int main(int argc, char * argv[]) try
       << "INFO: environment variable FHICL_FILE_PATH was not set. Using \".\"\n";
     setenv("FHICL_FILE_PATH", ".", 0);
   }
-  cet::filepath_lookup lookup_policy("FHICL_FILE_PATH");
-  try {
-    make_ParameterSet(vm["config"].as<std::string>(),
-                      lookup_policy, pset);
-  }
-  catch (...) {
-    cet::filepath_lookup_after1 lookup_policy2("FHICL_FILE_PATH");
-    make_ParameterSet(vm["config"].as<std::string>(),
-                      lookup_policy2, pset);
-  }
+  cet::filepath_lookup_after1 lookup_policy("FHICL_FILE_PATH");
+  make_ParameterSet(vm["config"].as<std::string>(), lookup_policy, pset);
   ParameterSet fragment_receiver_pset = pset.get<ParameterSet>("fragment_receiver");
   std::unique_ptr<artdaq::FragmentGenerator> const
     gen(artdaq::makeFragmentGenerator(fragment_receiver_pset.get<std::string>("generator"),
