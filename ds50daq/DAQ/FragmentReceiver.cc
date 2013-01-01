@@ -4,6 +4,8 @@
 #include "artdaq/DAQdata/makeFragmentGenerator.hh"
 #include "art/Utilities/Exception.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
+#include <pthread.h>
+#include <sched.h>
 
 /**
  * Default constructor.
@@ -167,7 +169,7 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
       << fr_pset.to_string() << "\".";
     return false;
   }
-  realtime_priority_ = fr_pset.get<int>("realtime_priority", 0);
+  rt_priority_ = fr_pset.get<int>("rt_priority", 0);
 
   return true;
 }
@@ -220,6 +222,16 @@ bool ds50::FragmentReceiver::reinitialize(fhicl::ParameterSet const& pset)
 
 size_t ds50::FragmentReceiver::process_fragments()
 {
+  if (rt_priority_ > 0) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+    sched_param s_param = {}; 
+    s_param.sched_priority = rt_priority_;
+    if (pthread_setschedparam(pthread_self(), SCHED_RR, &s_param))
+      mf::LogWarning("FragmentReceiver") << "setting realtime prioriry failed";
+#pragma GCC diagnostic pop
+  }
+
   size_t fragment_count = 0;
 
   // try-catch block here?
