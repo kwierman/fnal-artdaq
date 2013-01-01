@@ -41,6 +41,7 @@ private:
   size_t mpi_buffer_count_;
   size_t first_evb_rank_;
   size_t evb_count_;
+  int rt_priority_;
 
   std::unique_ptr<artdaq::SHandles> sender_ptr_;
 };
