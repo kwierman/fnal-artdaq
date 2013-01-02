@@ -1,10 +1,10 @@
 #include <iostream>
-#include "xmlrpc_commander.hh"
 #include <boost/program_options.hpp>
 #include <boost/lexical_cast.hpp>
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "ds50daq/DAQ/configureMessageFacility.hh"
 #include "ds50daq/DAQ/EventBuilderApp.hh"
+#include "ds50daq/DAQ/xmlrpc_commander.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 
 int main(int argc, char *argv[])
