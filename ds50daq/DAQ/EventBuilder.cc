@@ -124,6 +124,16 @@ bool ds50::EventBuilder::initialize(fhicl::ParameterSet const& pset)
       << evb_pset.to_string() << "\".";
     return false;
   }
+  try {
+    expected_fragments_per_event_ =
+      evb_pset.get<size_t>("expected_fragments_per_event");}
+  catch (...) {
+    mf::LogError("EventBuilder")
+      << "The expected_fragments_per_event parameter was not specified "
+      << "in the event_builder initialization PSet: \"" << pset.to_string()
+      << "\".";
+    return false;
+  }
 
   // other parameters
   try {use_art_ = evb_pset.get<bool>("use_art");}
@@ -197,14 +207,14 @@ size_t ds50::EventBuilder::process_fragments()
   std::unique_ptr<artdaq::EventStore> events;
   if (use_art_) {
     artdaq::EventStore::ART_CFGSTRING_FCN * reader = &artapp_string_config;
-    events.reset(new artdaq::EventStore(data_sender_count_, run_id_.run(),
-                                        mpi_rank_, init_string_,
+    events.reset(new artdaq::EventStore(expected_fragments_per_event_,
+                                        run_id_.run(), mpi_rank_, init_string_,
                                         reader, print_event_store_stats_));
   }
   else {
     artdaq::EventStore::ART_CMDLINE_FCN * reader = &artdaq::simpleQueueReaderApp;
-    events.reset(new artdaq::EventStore(data_sender_count_, run_id_.run(),
-                                        mpi_rank_, 1, dummyArgs,
+    events.reset(new artdaq::EventStore(expected_fragments_per_event_,
+                                        run_id_.run(), mpi_rank_, 1, dummyArgs,
                                         reader, print_event_store_stats_));
   }
 
