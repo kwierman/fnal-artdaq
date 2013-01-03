@@ -21,8 +21,6 @@ artdaq::SHandles::SHandles(size_t buffer_count,
   pos_(),
   sent_frag_count_(dest_count, dest_start),
   reqs_(buffer_count_, MPI_REQUEST_NULL),
-  stats_(buffer_count_),
-  flags_(buffer_count_),
   payload_(buffer_count_)
 {
 }
@@ -31,9 +29,6 @@ artdaq::SHandles::~SHandles()
 {
   size_t dest_end = dest_start_ + dest_count_;
   for (size_t dest = dest_start_; dest != dest_end; ++dest) {
-    std::ostringstream os;
-    os << "dest: " << dest << ", count: " << sent_frag_count_.slotCount(dest) << "\n";
-    std::cerr << os.str();
     sendEODFrag(dest, sent_frag_count_.slotCount(dest));
   }
   waitAll();
@@ -48,12 +43,13 @@ size_t artdaq::SHandles::calcDest(Fragment::sequence_id_t sequence_id) const
 size_t artdaq::SHandles::findAvailable()
 {
   size_t use_me = 0;
+  int flag;
   do {
     use_me = pos_;
-    MPI_Test(&reqs_[use_me], &flags_[use_me], &stats_[use_me]);
+    MPI_Test(&reqs_[use_me], &flag, MPI_STATUS_IGNORE);
     pos_ = (pos_ + 1) % buffer_count_;
   }
-  while (!flags_[use_me]);
+  while (!flag);
   // pos_ is pointing at the next slot to check
   // use_me is pointing at the slot to use
   return use_me;
@@ -86,7 +82,7 @@ sendEODFrag(size_t dest, size_t nFragments)
 
 void artdaq::SHandles::waitAll()
 {
-  MPI_Waitall(buffer_count_, &reqs_[0], &stats_[0]);
+  MPI_Waitall(buffer_count_, &reqs_[0], MPI_STATUSES_IGNORE);
 }
 
 void
@@ -95,11 +91,11 @@ sendFragTo(Fragment && frag, size_t dest)
 {
   if (frag.dataSize() > max_payload_size_) {
     throw cet::exception("Unimplemented")
-      << "Currently unable to deal with overlarge fragment payload ("
-      << frag.dataSize()
-      << " words > "
-      << max_payload_size_
-      << ").";
+        << "Currently unable to deal with overlarge fragment payload ("
+        << frag.dataSize()
+        << " words > "
+        << max_payload_size_
+        << ").";
   }
   SendMeas sm;
   size_t buffer_idx = findAvailable();

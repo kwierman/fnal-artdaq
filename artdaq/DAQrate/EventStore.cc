@@ -19,6 +19,8 @@ using namespace std;
 
 namespace artdaq {
   const std::string EventStore::EVENT_RATE_STAT_KEY("EventStoreEventRate");
+  const std::string EventStore::
+    INCOMPLETE_EVENT_STAT_KEY("EventStoreIncompleteEvents");
 
   EventStore::EventStore(size_t num_fragments_per_event,
                          run_id_t run,
@@ -36,14 +38,23 @@ namespace artdaq {
     reader_thread_(std::async(std::launch::async, reader, argc, argv)),
     printSummaryStats_(printSummaryStats)
   {
-    // TODO: Consider doing away with the named local mqPtr, and
-    // making use of make_shared<MonitoredQuantity> in the call to
-    // addMonitoredQuantity. Maybe modify addMonitoredQuantity to be a
-    // variadic template that forwards its function arguments to the
-    // constructor of the MonitoredQuantity being made?
-    MonitoredQuantityPtr mqPtr(new MonitoredQuantity(1.0, 60.0));
-    StatisticsCollection::getInstance().
-    addMonitoredQuantity(EVENT_RATE_STAT_KEY, mqPtr);
+    MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
+      getMonitoredQuantity(EVENT_RATE_STAT_KEY);
+    if (mqPtr.get() == 0) {
+      mqPtr.reset(new MonitoredQuantity(3.0, 300.0));
+      StatisticsCollection::getInstance().
+        addMonitoredQuantity(EVENT_RATE_STAT_KEY, mqPtr);
+    }
+    mqPtr->reset();
+
+    mqPtr = StatisticsCollection::getInstance().
+      getMonitoredQuantity(INCOMPLETE_EVENT_STAT_KEY);
+    if (mqPtr.get() == 0) {
+      mqPtr.reset(new MonitoredQuantity(3.0, 300.0));
+      StatisticsCollection::getInstance().
+        addMonitoredQuantity(INCOMPLETE_EVENT_STAT_KEY, mqPtr);
+    }
+    mqPtr->reset();
   }
 
   EventStore::~EventStore()
@@ -91,12 +102,20 @@ namespace artdaq {
       PerfWriteEvent(EventMeas::END, sequence_id);
 #endif
       events_.erase(loc);
-      queue_.enqNowait(complete_event);
+      // 13-Dec-2012, KAB - this monitoring needs to come before
+      // the enqueueing of the event lest it be empty by the 
+      // time that we ask for the word count.
       MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
-                                   getMonitoredQuantity(EVENT_RATE_STAT_KEY);
+        getMonitoredQuantity(EVENT_RATE_STAT_KEY);
       if (mqPtr.get() != 0) {
         mqPtr->addSample(complete_event->wordCount());
       }
+      queue_.enqNowait(complete_event);
+    }
+    MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
+      getMonitoredQuantity(INCOMPLETE_EVENT_STAT_KEY);
+    if (mqPtr.get() != 0) {
+      mqPtr->addSample(events_.size());
     }
   }
 
@@ -112,14 +131,14 @@ namespace artdaq {
   EventStore::reportStatistics_()
   {
     MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
-                                 getMonitoredQuantity(EVENT_RATE_STAT_KEY);
+      getMonitoredQuantity(EVENT_RATE_STAT_KEY);
     if (mqPtr.get() != 0) {
       ostringstream oss;
       oss << EVENT_RATE_STAT_KEY << "_" << setfill('0') << setw(4) << run_id_
           << "_" << setfill('0') << setw(4) << id_ << ".txt";
       std::string filename = oss.str();
       ofstream outStream(filename.c_str());
-      mqPtr->waitUntilAccumulatorsHaveBeenFlushed(1.0);
+      mqPtr->waitUntilAccumulatorsHaveBeenFlushed(3.0);
       artdaq::MonitoredQuantity::Stats stats;
       mqPtr->getStats(stats);
       outStream << "EventStore rank " << id_ << ": events processed = "
@@ -127,7 +146,14 @@ namespace artdaq {
                 << " events/sec, date rate = "
                 << (stats.fullValueRate * sizeof(RawDataType)
                     / 1024.0 / 1024.0) << " MB/sec, duration = "
-                << stats.fullDuration << " sec" << std::endl;
+                << stats.fullDuration << " sec" << std::endl
+                << "    minimum event size = "
+                << (stats.fullValueMin * sizeof(RawDataType)
+                    / 1024.0 / 1024.0)
+                << " MB, maximum event size = "
+                << (stats.fullValueMax * sizeof(RawDataType)
+                    / 1024.0 / 1024.0)
+                << " MB" << std::endl;
       bool foundTheStart = false;
       for (int idx = 0; idx < (int) stats.recentBinnedDurations.size(); ++idx) {
         if (stats.recentBinnedDurations[idx] > 0.0) {
@@ -149,6 +175,50 @@ namespace artdaq {
                     << " sec" << std::endl;
         }
       }
+      outStream.close();
+    }
+
+    mqPtr = StatisticsCollection::getInstance().
+      getMonitoredQuantity(INCOMPLETE_EVENT_STAT_KEY);
+    if (mqPtr.get() != 0) {
+      ostringstream oss;
+      oss << INCOMPLETE_EVENT_STAT_KEY << "_" << setfill('0')
+          << setw(4) << run_id_
+          << "_" << setfill('0') << setw(4) << id_ << ".txt";
+      std::string filename = oss.str();
+      ofstream outStream(filename.c_str());
+      mqPtr->waitUntilAccumulatorsHaveBeenFlushed(3.0);
+      artdaq::MonitoredQuantity::Stats stats;
+      mqPtr->getStats(stats);
+      outStream << "EventStore rank " << id_ << ": fragments processed = "
+                << stats.fullSampleCount << " at " << stats.fullSampleRate
+                << " fragments/sec, average incomplete event count = "
+                << stats.fullValueAverage << " duration = "
+                << stats.fullDuration << " sec" << std::endl
+                << "    minimum incomplete event count = "
+                << stats.fullValueMin << ", maximum incomplete event count = "
+                << stats.fullValueMax << std::endl;
+      bool foundTheStart = false;
+      for (int idx = 0; idx < (int) stats.recentBinnedDurations.size(); ++idx) {
+        if (stats.recentBinnedDurations[idx] > 0.0) {
+          foundTheStart = true;
+        }
+        if (foundTheStart && stats.recentBinnedSampleCounts[idx] > 0.0) {
+          outStream << "  " << std::fixed << std::setprecision(3)
+                    << stats.recentBinnedEndTimes[idx]
+                    << ": " << stats.recentBinnedSampleCounts[idx]
+                    << " fragments at "
+                    << (stats.recentBinnedSampleCounts[idx] /
+                        stats.recentBinnedDurations[idx])
+                    << " fragments/sec, average incomplete event count = "
+                    << (stats.recentBinnedValueSums[idx] /
+                        stats.recentBinnedSampleCounts[idx])
+                    << ", bin size = "
+                    << stats.recentBinnedDurations[idx]
+                    << " sec" << std::endl;
+        }
+      }
+      outStream << "Incomplete count now = " << events_.size() << std::endl;
       outStream.close();
     }
   }

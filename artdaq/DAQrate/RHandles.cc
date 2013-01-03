@@ -8,9 +8,6 @@
 #include "cetlib/container_algorithms.h"
 #include "cetlib/exception.h"
 
-#include <cassert>
-#include <fstream>
-
 artdaq::RHandles::RHandles(size_t buffer_count,
                            uint64_t max_payload_size,
                            size_t src_count,
@@ -23,7 +20,7 @@ artdaq::RHandles::RHandles(size_t buffer_count,
   src_status_(src_count, status_t::SENDING),
   expected_count_(src_count, 0),
   reqs_(buffer_count_, MPI_REQUEST_NULL),
-  flags_(buffer_count_),
+  req_sources_(buffer_count_, MPI_ANY_SOURCE),
   last_source_posted_(-1),
   payload_(buffer_count_)
 {
@@ -31,33 +28,27 @@ artdaq::RHandles::RHandles(size_t buffer_count,
         << buffer_count << " buffers, "
         << src_count << " sources starting at rank "
         << src_start << flusher;
-  // post all the buffers, making sure that the source numbers are correct
-  for (int i = 0; i < buffer_count_; ++i) {
+  // Post all the buffers.
+  for (size_t i = 0; i < buffer_count_; ++i) {
     // make sure all buffers are the correct size
     payload_[i].resize(max_payload_size_);
-    int from = nextSource_();
-    Debug << "Posting buffer " << i << " size=" << payload_[i].size()
-          << " for receive from=" << from << flusher;
-    MPI_Irecv(&*payload_[i].headerBegin(),
-              (payload_[i].size() * sizeof(Fragment::value_type)),
-              MPI_BYTE,
-              from,
-              MPI_ANY_TAG,
-              MPI_COMM_WORLD,
-              &reqs_[i]);
+    post_(i, nextSource_());
   }
 }
 
 artdaq::RHandles::
 ~RHandles()
 {
-  waitAll();
+  waitAll_();
 }
 
 size_t
 artdaq::RHandles::
 recvFragment(Fragment & output)
 {
+  if (sourcesActive() == 0) {
+    return MPI_ANY_SOURCE; // Nothing to do.
+  }
   // Debug << "recv entered" << flusher;
   RecvMeas rm;
   int which;
@@ -105,7 +96,6 @@ recvFragment(Fragment & output)
   payload_[which].swap(tmp);
   // Performance measurement.
   rm.woke(sequence_id, which);
-
   // Fragment accounting.
   if (output.type() == Fragment::type_t::END_OF_DATA) {
     src_status_[src_index] = status_t::PENDING;
@@ -118,60 +108,116 @@ recvFragment(Fragment & output)
     recv_frag_count_.incSlot(status.MPI_SOURCE);
   }
   switch (src_status_[src_index]) {
-  case status_t::PENDING:
-    Debug << "Checking received count " << recv_frag_count_.slotCount(status.MPI_SOURCE)
-          << " against expected total " << expected_count_[src_index] << flusher;
-    if (recv_frag_count_.slotCount(status.MPI_SOURCE) == expected_count_[src_index]) {
-      src_status_[src_index] = status_t::DONE;
-    }
-    break;
-  case status_t::DONE:
-    throw art::Exception(art::errors::LogicError, "RHandles")
-      << "Received extra fragments from source "
-      << status.MPI_SOURCE
-      << ".\n";
-  case status_t::SENDING:
-    break;
-  default:
-    throw art::Exception(art::errors::LogicError, "RHandles")
-      << "INTERNAL ERROR: Unrecognized status_t value "
-      << static_cast<int>(src_status_[src_index])
-      << ".\n";
+    case status_t::PENDING:
+      Debug << "Checking received count "
+            << recv_frag_count_.slotCount(status.MPI_SOURCE)
+            << " against expected total "
+            << expected_count_[src_index]
+            << flusher;
+      if (recv_frag_count_.slotCount(status.MPI_SOURCE) ==
+          expected_count_[src_index]) {
+        src_status_[src_index] = status_t::DONE;
+      }
+      break;
+    case status_t::DONE:
+      throw art::Exception(art::errors::LogicError, "RHandles")
+          << "Received extra fragments from source "
+          << status.MPI_SOURCE
+          << ".\n";
+    case status_t::SENDING:
+      break;
+    default:
+      throw art::Exception(art::errors::LogicError, "RHandles")
+          << "INTERNAL ERROR: Unrecognized status_t value "
+          << static_cast<int>(src_status_[src_index])
+          << ".\n";
   }
-  // Repost to receive more data from possibly different sources.
-  int from = nextSource_();
-  Debug << "Posting buffer " << which
-        << " size=" << payload_[which].size()
-        << " for receive from=" << from
-        << flusher;
-  MPI_Irecv(&*payload_[which].headerBegin(),
-            (payload_[which].size() * sizeof(Fragment::value_type)),
-            MPI_BYTE,
-            from,
-            MPI_ANY_TAG,
-            MPI_COMM_WORLD,
-            &reqs_[which]);
-  rm.post(status.MPI_SOURCE);
+  // Repost to receive more data.
+  if (src_status_[src_index] == status_t::DONE) { // Just happened.
+    if (sourcesActive() > 0) { // Post for input from a still-active source.
+      int nextSource = nextSource_();
+      rm.post(nextSource);
+      post_(which, nextSource); // This buffer doesn't need cancelling.
+    }
+    else {
+      req_sources_[which] = MPI_ANY_SOURCE; // Done with this buffer.
+    }
+    cancelAndRepost_(status.MPI_SOURCE); // Cancel and possibly repost.
+  }
+  else {
+    rm.post(status.MPI_SOURCE);
+    post_(which, status.MPI_SOURCE);
+  }
   return status.MPI_SOURCE;
 }
 
-void artdaq::RHandles::waitAll()
+void
+artdaq::RHandles::
+waitAll_()
 {
   // clean up the remaining buffers
-  for (int i = 0; i < buffer_count_; ++i) {
-    int result = MPI_Cancel(&reqs_[i]);
-    if (result == MPI_SUCCESS) {
-      MPI_Status status;
-      MPI_Wait(&reqs_[i], &status);
+  for (size_t i = 0; i < buffer_count_; ++i) {
+    if (req_sources_[i] != MPI_ANY_SOURCE) {
+      cancelReq_(i);
     }
-    else {
-      switch (result) {
-        case MPI_ERR_REQUEST:
-          throw "MPI_Cancel returned MPI_ERR_REQUEST";
-        case MPI_ERR_ARG:
-          throw "MPI_Cancel returned MPI_ERR_ARG";
-        default:
-          throw "MPI_Cancel returned unknown error code.";
+  }
+}
+
+void
+artdaq::RHandles::
+cancelReq_(size_t buf)
+{
+  Debug << "Cancelling post for buffer "
+        << buf
+        << flusher;
+  int result = MPI_Cancel(&reqs_[buf]);
+  if (result == MPI_SUCCESS) {
+    MPI_Status status;
+    MPI_Wait(&reqs_[buf], &status);
+  }
+  else {
+    switch (result) {
+      case MPI_ERR_REQUEST:
+        throw "MPI_Cancel returned MPI_ERR_REQUEST";
+      case MPI_ERR_ARG:
+        throw "MPI_Cancel returned MPI_ERR_ARG";
+      default:
+        throw "MPI_Cancel returned unknown error code.";
+    }
+  }
+}
+
+void
+artdaq::RHandles::
+post_(size_t buf, size_t src)
+{
+  Debug << "Posting buffer " << buf
+        << " size=" << payload_[buf].size()
+        << " for receive src=" << src
+        << flusher;
+  MPI_Irecv(&*payload_[buf].headerBegin(),
+            (payload_[buf].size() * sizeof(Fragment::value_type)),
+            MPI_BYTE,
+            src,
+            MPI_ANY_TAG,
+            MPI_COMM_WORLD,
+            &reqs_[buf]);
+  req_sources_[buf] = src;
+  last_source_posted_ = src;
+}
+
+void
+artdaq::RHandles::
+cancelAndRepost_(size_t src)
+{
+  for (size_t i = 0; i < buffer_count_; ++i) {
+    if (static_cast<int>(src) == req_sources_[i]) {
+      cancelReq_(i);
+      if (sourcesActive() > 0) { // Still busy.
+        post_(i, nextSource_());
+      }
+      else {
+        req_sources_[i] = MPI_ANY_SOURCE; // Done.
       }
     }
   }

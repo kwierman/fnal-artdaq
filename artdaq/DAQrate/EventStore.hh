@@ -40,6 +40,7 @@ namespace artdaq {
     typedef std::map<sequence_id_t, RawEvent_ptr> EventMap;
 
     static const std::string EVENT_RATE_STAT_KEY;
+    static const std::string INCOMPLETE_EVENT_STAT_KEY;
 
     EventStore() = delete;
     EventStore(EventStore const &) = delete;
