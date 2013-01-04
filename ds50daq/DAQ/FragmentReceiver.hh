@@ -40,7 +40,7 @@ public:
 private:
   bool local_group_defined_;
   MPI_Comm local_group_comm_;
-  std::unique_ptr<DS50FragmentGenerator> generator_ptr_;
+  std::vector<std::shared_ptr<DS50FragmentGenerator>> generator_ptrs_;
 
   uint64_t max_fragment_size_words_;
   size_t mpi_buffer_count_;

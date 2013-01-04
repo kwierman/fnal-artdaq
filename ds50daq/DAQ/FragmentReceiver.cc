@@ -8,8 +8,7 @@
 /**
  * Default constructor.
  */
-ds50::FragmentReceiver::FragmentReceiver() :
-  local_group_defined_(false), generator_ptr_(nullptr)
+ds50::FragmentReceiver::FragmentReceiver() : local_group_defined_(false)
 {
   mf::LogDebug("FragmentReceiver") << "Constructor";
 
@@ -114,24 +113,6 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
     return false;
   }
 
-  generator_ptr_.reset(nullptr);
-  try {
-    DS50FragmentGenerator* tmp_ds50gen_bareptr =
-      dynamic_cast<DS50FragmentGenerator*>(tmp_gen_ptr.get());
-    if (tmp_ds50gen_bareptr) {
-      tmp_gen_ptr.release();
-      generator_ptr_.reset(tmp_ds50gen_bareptr);
-    }
-  }
-  catch (...) {}
-  if (! generator_ptr_) {
-    mf::LogError("FragmentReceiver")
-      << "Error: The requested fragment generator type (" << frag_gen_name
-      << ") is not a DS50FragmentGenerator, and only DS50FragmentGenerators "
-      << "are currently supported.";
-    return false;
-  }
-
   // determine the data sending parameters
   try {
     max_fragment_size_words_ = daq_pset.get<uint64_t>("max_fragment_size_words");
@@ -174,7 +155,9 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
 
 bool ds50::FragmentReceiver::start(art::RunID id)
 {
-  generator_ptr_->start(id.run());
+  for (unsigned int idx = 0; idx < generator_ptrs_.size(); ++idx) {
+    generator_ptrs_[idx]->start(id.run());
+  }
   return true;
 }
 
@@ -246,10 +229,18 @@ size_t ds50::FragmentReceiver::process_fragments()
 
   MPI_Barrier(local_group_comm_);
 
+  // keep track of which generators are active
+  //int active_gen_count = generator_ptrs_.size();
+  //std::vector<bool> active_gen_list;
+  //for (unsigned int idx = 0; idx < generator_ptrs_.size(); ++idx) {
+  //  active_gen_list.push_back(true);
+  //}
+
   mf::LogDebug("FragmentReceiver") << "Waiting for first fragment.";
   artdaq::Fragment::sequence_id_t prev_seq_id = 0;
   artdaq::FragmentPtrs frags;
-  while (generator_ptr_->getNext(frags)) {
+  // TODO - FIXME to handle multiple generators
+  while (generator_ptrs_[0]->getNext(frags)) {
     for (auto & fragPtr : frags) {
       artdaq::Fragment::sequence_id_t sequence_id = fragPtr->sequenceID();
       if ((fragment_count % 250) == 0) {
