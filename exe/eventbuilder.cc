@@ -59,8 +59,6 @@ int main(int argc, char *argv[])
   xmlrpc_commander commander(vm["port"].as<unsigned short> (), evb_app);
   commander.run();
 
-//xmlrpc http://localhost:5454/RPC2 ds50.init "fragment_receiver: {event_builder_ranks: [3,4]} event_builder: {fragment_receiver_ranks: [1,2,3]}"
-
   // cleanup
   MPI_Finalize();
 }

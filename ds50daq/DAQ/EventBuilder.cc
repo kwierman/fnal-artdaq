@@ -5,6 +5,7 @@
 #include "artdaq/DAQrate/EventStore.hh"
 #include "art/Framework/Art/artapp.h"
 #include "artdaq/DAQrate/SimpleQueueReader.hh"
+#include "artdaq/Utilities/SimpleLookupPolicy.h"
 
 /**
  * Constructor.
@@ -114,6 +115,14 @@ bool ds50::EventBuilder::initialize(fhicl::ParameterSet const& pset)
   }
   art_config_file_ = evb_pset.get<std::string>("art_configuration", "");
   print_event_store_stats_ = evb_pset.get<bool>("print_event_store_stats", false);
+
+  std::string filePath("DS50DAQ_CONFIG_PATH");
+  if (getenv(filePath.c_str()) == nullptr) {
+    setenv(filePath.c_str(), ".", 0);
+  }
+  artdaq::SimpleLookupPolicy lookup_policy(filePath);
+  try {art_config_file_ = lookup_policy(art_config_file_);}
+  catch (...) {}
 
   return true;
 }
