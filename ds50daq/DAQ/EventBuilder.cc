@@ -168,7 +168,7 @@ size_t ds50::EventBuilder::process_fragments()
   artArgs[1] = (char *) artArg2.c_str();
   artArgs[2] = (char *) artArg3.c_str();
 #pragma GCC diagnostic pop
-  artdaq::EventStore::ARTFUL_FCN * reader = use_art_ ? &artapp :
+  artdaq::EventStore::ART_CMDLINE_FCN * reader = use_art_ ? &artapp :
     &artdaq::simpleQueueReaderApp;
   artdaq::EventStore events(data_sender_count_, run_id_.run(),
                             mpi_rank_,
