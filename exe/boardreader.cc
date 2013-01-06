@@ -59,10 +59,6 @@ int main(int argc, char *argv[])
   xmlrpc_commander commander(vm["port"].as<unsigned short> (), br_app);
   commander.run();
 
-  //xmlrpc http://localhost:5454/RPC2 ds50.init "daq: {event_building_buffer_count:10 max_fragment_size_words: 524288 fragment_receiver: {generator:V172xSimulator freqs_file: \"/home/biery/nov2012/ds50daq/ds50daq/DAQ/ds50_hist.dat\" run_number: 0 events_to_generate: 3 first_event_builder_rank: 1 event_builder_count: 1} event_builder: {first_fragment_receiver_rank: 0 fragment_receiver_count: 1}}"
-  //xmlrpc http://localhost:5454/RPC2 ds50.start 101
-  //xmlrpc http://localhost:5454/RPC2 ds50.stop
-
   // cleanup
   MPI_Finalize();
 }
