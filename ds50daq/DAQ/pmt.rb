@@ -10,24 +10,106 @@ class MPIHandler
     @executables
   end
 
+  def createLogger()
+    # Create a logger object.  This will create log files with the name:
+    #  pmt-yearmondate-hourminsec.log
+    # Where the timestamp is the time that executables were spawned.
+    currentTime = Time.now
+    logFileName = "pmt-%d%02d%02d-%02d%02d%02d.log" % [ currentTime.year, 
+                                                        currentTime.month,
+                                                        currentTime.day,
+                                                        currentTime.hour,
+                                                        currentTime.min,
+                                                        currentTime.sec ]
+    @logger = Logger.new(logFileName, 5, 10240000)
+    @logger.level = Logger::INFO
+    @logger.formatter = proc do |severity, datetime, progname, msg|
+      "#{datetime}: #{msg}\n"
+    end
+    puts "Log file basename: %s" % logFileName
+  end
+
   def initialize()
     @mpiThread = nil
-    @executables = {}
+    @executables = []
+    self.createLogger
   end
 
   def addExecutable(program, host, options)
     # Add an executable to be managed by PMT.  The executable definitions are
-    # kept in a three level hash to they can more easily be found.
-    if not @executables.keys.include?(host)
-      @executables[host] = {}
-    end
-    if not @executables[host].keys.include?(program)
-      @executables[host][program] = {}
-    end
+    # kept in a list ordered by MPI rank.  The first process added will receive
+    # rank 0.
+    @executables << {"program" => program, "options" => options, "host" => host,
+      "state" => "idle", "exitcode" => -1}
+  end
 
-    @executables[host][program][options] = {"program" => program, 
-      "options" => options, "host" => host, "state" => "idle",
-      "exitcode" => -1}
+  def buildMPICommand(configFileHandle, hostsFileHandle, wrapperScript)
+    @executables.each { |optionsHash|
+      configFileHandle.write("-n 1 : %s " % [wrapperScript])
+      configFileHandle.write(optionsHash["program"] + " ")
+      configFileHandle.write(optionsHash["options"] + "\n")
+      hostsFileHandle.write(optionsHash["host"] + "\n")
+    }
+        
+    disableCpuAffinity = "export MV2_ENABLE_AFFINITY=0;"
+    mpiCmd = "mpirun_rsh -rsh -config %s -hostfile %s" % [configFileHandle.path,
+                                                          hostsFileHandle.path]
+    configFileHandle.rewind
+    hostsFileHandle.rewind
+    return mpiCmd
+  end
+
+  def parseOutput(line)
+    parts = line.chomp.split(":")
+    if parts.count == 4 and parts[0] == "STARTING"
+      @executables.each { |optionsHash|
+        if parts[2] == optionsHash["program"] and parts[1] == optionsHash["host"] and 
+            parts[3] == optionsHash["options"]
+          optionsHash["state"] = "running"
+          puts "%s on %s is starting." % [parts[2], parts[1]]
+          break
+        end
+      }
+    elsif parts.count == 5 and parts[0] == "EXITING"
+      @executables.each { |optionsHash|
+        if parts[2] == optionsHash["program"] and parts[1] == optionsHash["host"] and
+            parts[3] == optionsHash["options"]
+          optionsHash["state"] = "finished"
+          optionsHash["exitcode"] = parts[2]
+          puts "%s on %s is exiting." % [parts[2], parts[1]]
+          break
+        end
+      }
+    end
+  end
+
+  def handleIO(stdoutHandle, stderrHandle)
+    stdBuffers = {}
+    while true
+      readyFDs = IO.select([stdoutHandle, stderrHandle])
+      readyReadFDs = readyFDs[0]
+      readyReadFDs.each do |fd|
+        if not stdBuffers.keys.include?(fd)
+          stdBuffers[fd] = fd.read(1)
+        else
+          stdBuffers[fd] += fd.read(1)
+        end
+        
+        if stdBuffers[fd].count("\n") != 0
+          lines = stdBuffers[fd].split("\n")
+          if stdBuffers[fd][-1].chr == "\n"
+            stdBuffers[fd] = ""
+          else
+            stdBuffers[fd] = lines.pop
+          end
+          
+          lines.each { |line|
+            @logger.info(line.chomp)
+            self.parseOutput(line)
+          }
+        end
+      end
+    end
   end
 
   def start()
@@ -41,62 +123,19 @@ class MPIHandler
     #
     # First step is to iterate through all of the configured executables and
     # make sure that everything is idle and nothing has been started already.
-    @executables.each { |host, hostHash|
-      hostHash.each { |program, programHash|
-        programHash.each { |options, optionsHash|
-          if optionsHash["state"] != "idle":
-              return
-          end
-        }
-      }
+    @executables.each { |optionsHash|
+      if optionsHash["state"] != "idle":
+          return
+      end
     }
-
-    # Create a logger object.  This will create log files with the name:
-    #  pmt-yearmondate-hourminsec.log
-    # Where the timestamp is the time that executables were spawned.
-    currentTime = Time.now
-    logFileName = "pmt-%d%02d%02d-%02d%02d%02d.log" % [ currentTime.year, 
-                                                        currentTime.month,
-                                                        currentTime.day,
-                                                        currentTime.hour,
-                                                        currentTime.min,
-                                                        currentTime.sec ]
-    logger = Logger.new(logFileName, 5, 10240000)
-    logger.level = Logger::INFO
-    puts "Log file basename: %s" % logFileName
 
     mpiThread = Thread.new() do
       configFile = Tempfile.new("config")
       hostsFile = Tempfile.new("hosts")
       begin
-        @executables.each { |host, hostHash|
-          hostHash.each { |program, programHash|
-            programHash.each { |options, optionsHash|
-              configFile.write("-n 1 : mpi_wrapper.sh ")
-              configFile.write(program + " ")
-              configFile.write(options + "\n")
-              hostsFile.write(host + "\n")
-            }
-          }
-        }
-        
-        mpiCmd = "mpirun_rsh -ssh -config %s -hostfile %s" % [configFile.path,
-                                                              hostsFile.path]
-        configFile.rewind
-        hostsFile.rewind
+        mpiCmd = self.buildMPICommand(configFile, hostsFile, "mpi_wrapper.sh")
         Open3.popen3(mpiCmd) { |stdin, stdout, stderr|
-          stdout.each { |line|
-            logger.info(line)
-            parts = line.chomp.split(":")
-            if parts.count == 4 and parts[0] == "STARTING"
-              @executables[parts[1]][parts[2]][parts[3]]["state"] = "running"
-              puts "Something is starting."
-            elsif parts.count == 5 and parts[0] == "EXITING"
-              @executables[parts[1]][parts[3]][parts[4]]["state"] = "finished"
-              @executables[parts[1]][parts[3]][parts[4]]["exitcode"] = parts[2]
-              puts "Something is exiting."
-            end
-          }
+          self.handleIO(stdout, stderr)
         }
       ensure
         configFile.close!
@@ -106,14 +145,10 @@ class MPIHandler
       # If we got here and find applications that are not in the finished state
       # it more than likely means that mpirun_rsh exited and we don't really
       # know what is happening with our MPI application.
-      @executables.each { |host, hostHash|
-        hostHash.each { |program, programHash|
-          programHash.each { |options, optionsHash|
-            if optionsHash["state"] != "finished":
-                optionsHash["state"] = "interrupted"
-            end
-            }
-          }
+      @executables.each { |optionsHash|
+        if optionsHash["state"] != "finished":
+            optionsHash["state"] = "interrupted"
+        end
         }
     end
   end
@@ -126,21 +161,8 @@ class MPIHandler
     configFile = Tempfile.new("config")
     hostsFile = Tempfile.new("hosts")
     begin
-      @executables.each { |host, hostHash|
-        hostHash.each { |program, programHash|
-          programHash.each { |options, optionsHash|
-            configFile.write("-n 1 : mpi_cleaner.sh ")
-            configFile.write(program + " ")
-            configFile.write(options + "\n")
-            hostsFile.write(host + "\n")
-          }
-        }
-      }
-      
-      mpiCmd = "mpirun_rsh -ssh -config %s -hostfile %s" % [configFile.path,
-                                                            hostsFile.path]
-      configFile.rewind
-      hostsFile.rewind
+      mpiCmd = self.buildMPICommand(configFile, hostsFile, "mpi_cleaner.sh")
+
       Open3.popen3(mpiCmd) { |stdin, stdout, stderr|
         # Block until this is done.
         stdout.each { |line|
@@ -173,12 +195,8 @@ class PMTRPCHandler
     # Iterate through all of the executables currently configured and generate
     # a list that can be returned to the caller.
     statusItems = []
-    @mpiHandler.executables.each { |host, hostHash|
-      hostHash.each { |program, programHash|
-        programHash.each { |options, optionsHash|
-          statusItems << optionsHash
-        }
-      }
+    @mpiHandler.executables.each { |optionsHash|
+      statusItems << optionsHash
     }
 
     return statusItems
