@@ -276,7 +276,7 @@ if __FILE__ == $0
   signals = %w[INT TERM HUP] & Signal.list.keys
   signals.each { 
     |signal| trap(signal) { 
-      puts "Cleaning up..."
+      puts "Cleaning up.  Please wait for PMT to exit..."
       pmt.stop 
       exit
     } 
