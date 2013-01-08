@@ -211,24 +211,3 @@ void ds50::Commandable::badTransition(const std::string& trans)
 
   external_request_status_ = false;
 }
-
-// **********************
-// *** utility methods
-// **********************
-
-/**
- * Fetches the "daq" part of the initialization parameter set.
- * Returns true if it was found and false if not.
- */
-bool ds50::Commandable::
-get_daq_pset(fhicl::ParameterSet const& pset, fhicl::ParameterSet& daq_pset)
-{
-  try {
-    daq_pset = pset.get<fhicl::ParameterSet>("daq");
-  }
-  catch (...) {
-    return false;
-  }
-
-  return true;
-}

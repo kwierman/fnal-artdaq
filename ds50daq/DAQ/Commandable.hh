@@ -58,9 +58,6 @@ protected:
   CommandableContext fsm_;
   bool external_request_status_;
   std::string report_string_;
-
-  // utility methods
-  bool get_daq_pset(fhicl::ParameterSet const&, fhicl::ParameterSet&);
 };
 
 #endif
