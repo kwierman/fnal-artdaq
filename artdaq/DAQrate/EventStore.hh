@@ -33,7 +33,8 @@ namespace artdaq {
 
   class EventStore {
   public:
-    typedef int (ARTFUL_FCN)(int, char **);
+    typedef int (ART_CMDLINE_FCN)(int, char **);
+    typedef int (ART_CFGSTRING_FCN)(const std::string&);
     typedef RawEvent::run_id_t      run_id_t;
     typedef RawEvent::subrun_id_t   subrun_id_t;
     typedef Fragment::sequence_id_t    sequence_id_t;
@@ -50,7 +51,10 @@ namespace artdaq {
     // executed by the thread this EventStore will spawn.
     EventStore(size_t num_fragments_per_event, run_id_t run,
                int store_id, int argc, char * argv[],
-               ARTFUL_FCN * reader, bool printSummaryStats = false);
+               ART_CMDLINE_FCN * reader, bool printSummaryStats = false);
+    EventStore(size_t num_fragments_per_event, run_id_t run,
+               int store_id, const std::string& configString,
+               ART_CFGSTRING_FCN * reader, bool printSummaryStats = false);
 
     ~EventStore();
 
@@ -77,6 +81,7 @@ namespace artdaq {
     std::future<int> reader_thread_;
     bool const     printSummaryStats_;
 
+    void initStatistics_();
     void reportStatistics_();
   };
 }

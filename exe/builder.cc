@@ -215,7 +215,7 @@ void Program::sink()
     char * dummyArgs[1] { "SimpleQueueReader" };
 #pragma GCC diagnostic pop
     MPI_Comm_rank(local_group_comm_, &sink_rank);
-    artdaq::EventStore::ARTFUL_FCN * reader =
+    artdaq::EventStore::ART_CMDLINE_FCN * reader =
       useArt ?
       &artapp :
       &artdaq::simpleQueueReaderApp;

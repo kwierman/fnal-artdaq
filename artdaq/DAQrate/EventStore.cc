@@ -27,7 +27,7 @@ namespace artdaq {
                          int store_id,
                          int argc,
                          char * argv[],
-                         ARTFUL_FCN * reader,
+                         ART_CMDLINE_FCN * reader,
                          bool printSummaryStats) :
     id_(store_id),
     num_fragments_per_event_(num_fragments_per_event),
@@ -38,23 +38,25 @@ namespace artdaq {
     reader_thread_(std::async(std::launch::async, reader, argc, argv)),
     printSummaryStats_(printSummaryStats)
   {
-    MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
-      getMonitoredQuantity(EVENT_RATE_STAT_KEY);
-    if (mqPtr.get() == 0) {
-      mqPtr.reset(new MonitoredQuantity(3.0, 300.0));
-      StatisticsCollection::getInstance().
-        addMonitoredQuantity(EVENT_RATE_STAT_KEY, mqPtr);
-    }
-    mqPtr->reset();
+    initStatistics_();
+  }
 
-    mqPtr = StatisticsCollection::getInstance().
-      getMonitoredQuantity(INCOMPLETE_EVENT_STAT_KEY);
-    if (mqPtr.get() == 0) {
-      mqPtr.reset(new MonitoredQuantity(3.0, 300.0));
-      StatisticsCollection::getInstance().
-        addMonitoredQuantity(INCOMPLETE_EVENT_STAT_KEY, mqPtr);
-    }
-    mqPtr->reset();
+  EventStore::EventStore(size_t num_fragments_per_event,
+                         run_id_t run,
+                         int store_id,
+                         const std::string& configString,
+                         ART_CFGSTRING_FCN * reader,
+                         bool printSummaryStats) :
+    id_(store_id),
+    num_fragments_per_event_(num_fragments_per_event),
+    run_id_(run),
+    subrun_id_(0),
+    events_(),
+    queue_(getGlobalQueue()),
+    reader_thread_(std::async(std::launch::async, reader, configString)),
+    printSummaryStats_(printSummaryStats)
+  {
+    initStatistics_();
   }
 
   EventStore::~EventStore()
@@ -125,6 +127,28 @@ namespace artdaq {
     RawEvent_ptr end_of_data(0);
     queue_.enqNowait(end_of_data);
     return reader_thread_.get();
+  }
+
+  void
+  EventStore::initStatistics_()
+  {
+    MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
+      getMonitoredQuantity(EVENT_RATE_STAT_KEY);
+    if (mqPtr.get() == 0) {
+      mqPtr.reset(new MonitoredQuantity(3.0, 300.0));
+      StatisticsCollection::getInstance().
+        addMonitoredQuantity(EVENT_RATE_STAT_KEY, mqPtr);
+    }
+    mqPtr->reset();
+
+    mqPtr = StatisticsCollection::getInstance().
+      getMonitoredQuantity(INCOMPLETE_EVENT_STAT_KEY);
+    if (mqPtr.get() == 0) {
+      mqPtr.reset(new MonitoredQuantity(3.0, 300.0));
+      StatisticsCollection::getInstance().
+        addMonitoredQuantity(INCOMPLETE_EVENT_STAT_KEY, mqPtr);
+    }
+    mqPtr->reset();
   }
 
   void
