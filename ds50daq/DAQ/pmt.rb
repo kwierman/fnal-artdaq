@@ -44,16 +44,21 @@ class MPIHandler
   end
 
   def buildMPICommand(configFileHandle, hostsFileHandle, wrapperScript)
-    @executables.each { |optionsHash|
-      configFileHandle.write("-n 1 : %s " % [wrapperScript])
-      configFileHandle.write(optionsHash["program"] + " ")
-      configFileHandle.write(optionsHash["options"] + "\n")
+    @executables.each_index { |exeIndex|
+      if exeIndex != 0
+        configFileHandle.write(" :\n")
+      end
+      optionsHash = @executables[exeIndex]
+      configFileHandle.write("-host %s -np 1 %s %s %s" % [optionsHash["host"], 
+                                                          wrapperScript, 
+                                                          optionsHash["program"],
+                                                          optionsHash["options"]])
       hostsFileHandle.write(optionsHash["host"] + "\n")
     }
         
     disableCpuAffinity = "export MV2_ENABLE_AFFINITY=0;"
-    mpiCmd = "mpirun_rsh -rsh -config %s -hostfile %s" % [configFileHandle.path,
-                                                          hostsFileHandle.path]
+    mpiCmd = "mpirun -launcher rsh -configfile %s -f %s" % [configFileHandle.path,
+                                                            hostsFileHandle.path]
     configFileHandle.rewind
     hostsFileHandle.rewind
     return mpiCmd
