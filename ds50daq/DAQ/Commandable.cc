@@ -113,6 +113,66 @@ bool ds50::Commandable::resume()
 }
 
 /**
+ * Processes the shutdown request.
+ */
+bool ds50::Commandable::shutdown()
+{
+  external_request_status_ = true;
+  report_string_ = "All is OK.";
+
+  std::string initialState = fsm_.getState().getName();
+  fsm_.shutdown();
+  if (external_request_status_) {
+    std::string finalState = fsm_.getState().getName();
+    mf::LogDebug("CommandableInterface")
+      << "States before and after a shutdown transition: "
+      << initialState << " and " << finalState;
+  }
+
+  return (external_request_status_);
+}
+
+/**
+ * Processes the soft_initialize request.
+ */
+bool ds50::Commandable::soft_initialize(fhicl::ParameterSet const& pset)
+{
+  external_request_status_ = true;
+  report_string_ = "All is OK.";
+
+  std::string initialState = fsm_.getState().getName();
+  fsm_.soft_init(pset);
+  if (external_request_status_) {
+    std::string finalState = fsm_.getState().getName();
+    mf::LogDebug("CommandableInterface")
+      << "States before and after an soft_init transition: "
+      << initialState << " and " << finalState;
+  }
+
+  return (external_request_status_);
+}
+
+/**
+ * Processes the reinitialize request.
+ */
+bool ds50::Commandable::reinitialize(fhicl::ParameterSet const& pset)
+{
+  external_request_status_ = true;
+  report_string_ = "All is OK.";
+
+  std::string initialState = fsm_.getState().getName();
+  fsm_.reinit(pset);
+  if (external_request_status_) {
+    std::string finalState = fsm_.getState().getName();
+    mf::LogDebug("CommandableInterface")
+      << "States before and after an reinit transition: "
+      << initialState << " and " << finalState;
+  }
+
+  return (external_request_status_);
+}
+
+/**
  * Returns the current state.
  */
 std::string ds50::Commandable::status() const
@@ -130,7 +190,7 @@ std::string ds50::Commandable::status() const
 /**
  * Returns the current list of legal commands.
  */
-std::vector<std::string> ds50::Commandable::legalCommands() const
+std::vector<std::string> ds50::Commandable::legal_commands() const
 {
   std::string currentState = this->status();
   if (currentState == "Ready") {
@@ -150,10 +210,6 @@ std::vector<std::string> ds50::Commandable::legalCommands() const
 // *** The following methods implement the state machine operations.
 // *******************************************************************
 
-void ds50::Commandable::BootedEnter()
-{
-}
-
 bool ds50::Commandable::do_initialize(fhicl::ParameterSet const&)
 {
   external_request_status_ = true;
@@ -161,6 +217,12 @@ bool ds50::Commandable::do_initialize(fhicl::ParameterSet const&)
 }
 
 bool ds50::Commandable::do_start(art::RunID)
+{
+  external_request_status_ = true;
+  return external_request_status_;
+}
+
+bool ds50::Commandable::do_stop()
 {
   external_request_status_ = true;
   return external_request_status_;
@@ -178,15 +240,10 @@ bool ds50::Commandable::do_resume()
   return external_request_status_;
 }
 
-bool ds50::Commandable::do_stop()
+bool ds50::Commandable::do_shutdown()
 {
   external_request_status_ = true;
   return external_request_status_;
-}
-
-void ds50::Commandable::InRunExit()
-{
-  mf::LogDebug("CommandableInterface") << "InRunExit called.";
 }
 
 bool ds50::Commandable::do_reinitialize(fhicl::ParameterSet const&)
@@ -195,7 +252,7 @@ bool ds50::Commandable::do_reinitialize(fhicl::ParameterSet const&)
   return external_request_status_;
 }
 
-bool ds50::Commandable::do_softInitialize(fhicl::ParameterSet const&)
+bool ds50::Commandable::do_soft_initialize(fhicl::ParameterSet const&)
 {
   external_request_status_ = true;
   return external_request_status_;
@@ -210,4 +267,14 @@ void ds50::Commandable::badTransition(const std::string& trans)
   mf::LogWarning("CommandableInterface") << report_string_;
 
   external_request_status_ = false;
+}
+
+void ds50::Commandable::BootedEnter()
+{
+  mf::LogDebug("CommandableInterface") << "BootedEnter called.";
+}
+
+void ds50::Commandable::InRunExit()
+{
+  mf::LogDebug("CommandableInterface") << "InRunExit called.";
 }
