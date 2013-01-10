@@ -51,7 +51,7 @@ ds50::FragmentReceiver::~FragmentReceiver()
  */
 bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
 {
-  mf::LogDebug("FragmentReceiver") << "initialize method called with DAQ \""
+  mf::LogDebug("FragmentReceiver") << "initialize method called with \""
                                    << "ParameterSet = " << pset.to_string()
                                    << "\".";
 
@@ -63,9 +63,27 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
     return false;
   }
 
-  // pull out the relevant part of the ParameterSet
-  fhicl::ParameterSet fr_pset =
-    pset.get<fhicl::ParameterSet>("fragment_receiver");
+  // pull out the relevant parts of the ParameterSet
+  fhicl::ParameterSet daq_pset;
+  try {
+    daq_pset = pset.get<fhicl::ParameterSet>("daq");
+  }
+  catch (...) {
+    mf::LogError("FragmentReceiver")
+      << "Unable to find the DAQ parameters in the initialization "
+      << "ParameterSet: \"" + pset.to_string() + "\".";
+    return false;
+  }
+  fhicl::ParameterSet fr_pset;
+  try {
+    fr_pset = daq_pset.get<fhicl::ParameterSet>("fragment_receiver");
+  }
+  catch (...) {
+    mf::LogError("FragmentReceiver")
+      << "Unable to find the fragment_receiver parameters in the DAQ "
+      << "initialization ParameterSet: \"" + daq_pset.to_string() + "\".";
+    return false;
+  }
 
   // create the requested FragmentGenerator
   std::string frag_gen_name = fr_pset.get<std::string>("generator", "");
@@ -73,7 +91,7 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
     mf::LogError("FragmentReceiver")
       << "No fragment generator (parameter name = \"generator\") was "
       << "specified in the fragment_receiver ParameterSet.  The "
-      << "DAQ initialization PSet was \"" << pset.to_string() << "\".";
+      << "DAQ initialization PSet was \"" << daq_pset.to_string() << "\".";
     return false;
   }
 
@@ -116,36 +134,37 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
 
   // determine the data sending parameters
   try {
-    max_fragment_size_words_ = pset.get<uint64_t>("max_fragment_size_words");
+    max_fragment_size_words_ = daq_pset.get<uint64_t>("max_fragment_size_words");
   }
   catch (...) {
     mf::LogError("FragmentReceiver")
       << "The max_fragment_size_words parameter was not specified "
-      << "in the DAQ initialization PSet: \"" << pset.to_string() << "\".";
+      << "in the DAQ initialization PSet: \""
+      << daq_pset.to_string() << "\".";
     return false;
   }
   try {mpi_buffer_count_ = fr_pset.get<size_t>("mpi_buffer_count");}
   catch (...) {
     mf::LogError("FragmentReceiver")
       << "The mpi_buffer_count parameter was not specified "
-      << "in the fragment_receiver initialization PSet: \"" << pset.to_string()
-      << "\".";
+      << "in the fragment_receiver initialization PSet: \""
+      << fr_pset.to_string() << "\".";
     return false;
   }
   try {first_evb_rank_ = fr_pset.get<size_t>("first_event_builder_rank");}
   catch (...) {
     mf::LogError("FragmentReceiver")
       << "The first_event_builder_rank parameter was not specified "
-      << "in the fragment_receiver initialization PSet: \"" << pset.to_string()
-      << "\".";
+      << "in the fragment_receiver initialization PSet: \""
+      << fr_pset.to_string() << "\".";
     return false;
   }
   try {evb_count_ = fr_pset.get<size_t>("event_builder_count");}
   catch (...) {
     mf::LogError("FragmentReceiver")
       << "The event_builder_count parameter was not specified "
-      << "in the fragment_receiver initialization PSet: \"" << pset.to_string()
-      << "\".";
+      << "in the fragment_receiver initialization PSet: \""
+      << fr_pset.to_string() << "\".";
     return false;
   }
 

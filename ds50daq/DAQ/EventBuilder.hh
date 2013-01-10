@@ -36,12 +36,12 @@ private:
   bool local_group_defined_;
   MPI_Comm local_group_comm_;
 
+  std::string init_string_;
   uint64_t max_fragment_size_words_;
   size_t mpi_buffer_count_;
   size_t first_data_sender_rank_;
   size_t data_sender_count_;
   bool use_art_;
-  std::string art_config_file_;
   bool print_event_store_stats_;
   art::RunID run_id_;
 

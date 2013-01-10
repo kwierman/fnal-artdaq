@@ -27,25 +27,15 @@ bool ds50::EventBuilderApp::do_initialize(fhicl::ParameterSet const& pset)
 {
   external_request_status_ = true;
 
-  // pull out the relevant part of the ParameterSet
-  fhicl::ParameterSet daq_pset;
-  if (! get_daq_pset(pset, daq_pset)) {
-    report_string_ = "Unable to find the DAQ parameters in the initialization ";
-    report_string_.append("ParameterSet: \"" + pset.to_string() + "\".");
-    mf::LogError(" EventBuilderApp") << report_string_;
-    external_request_status_ = false;
-    return external_request_status_;
-  }
-
   // in the following block, we first destroy the existing EventBuilder
   // instance, then create a new one.  Doing it in one step does not
   // produce the desired result since that creates a new instance and
   // then deletes the old one, and we need the opposite order.
   event_builder_ptr_.reset(nullptr);
   event_builder_ptr_.reset(new EventBuilder(mpi_rank_));
-  external_request_status_ = event_builder_ptr_->initialize(daq_pset);
+  external_request_status_ = event_builder_ptr_->initialize(pset);
   if (! external_request_status_) {
-    report_string_ = "Error initializing the EventBuilder with DAQ ";
+    report_string_ = "Error initializing the EventBuilder with ";
     report_string_.append("ParameterSet = \"" + pset.to_string() + "\".");
   }
 
