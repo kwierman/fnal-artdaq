@@ -167,6 +167,7 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
       << fr_pset.to_string() << "\".";
     return false;
   }
+  realtime_priority_ = fr_pset.get<int>("realtime_priority", 0);
 
   return true;
 }
@@ -174,6 +175,12 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
 bool ds50::FragmentReceiver::start(art::RunID id)
 {
   generator_ptr_->start(id.run());
+  return true;
+}
+
+bool ds50::FragmentReceiver::stop()
+{
+  generator_ptr_->stop();
   return true;
 }
 
@@ -187,9 +194,19 @@ bool ds50::FragmentReceiver::resume()
   return true;
 }
 
-bool ds50::FragmentReceiver::stop()
+bool ds50::FragmentReceiver::soft_initialize(fhicl::ParameterSet const& pset)
 {
-  generator_ptr_->stop();
+  mf::LogDebug("FragmentReceiver") << "soft_initialize method called with \""
+                                   << "ParameterSet = " << pset.to_string()
+                                   << "\".";
+  return true;
+}
+
+bool ds50::FragmentReceiver::reinitialize(fhicl::ParameterSet const& pset)
+{
+  mf::LogDebug("FragmentReceiver") << "reinitialize method called with \""
+                                   << "ParameterSet = " << pset.to_string()
+                                   << "\".";
   return true;
 }
 
@@ -198,6 +215,21 @@ size_t ds50::FragmentReceiver::process_fragments()
   size_t fragment_count = 0;
 
   // try-catch block here?
+
+  // how to turn RT PRI off?
+  if (realtime_priority_ > 0) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+    sched_param s_param = {};
+    s_param.sched_priority = realtime_priority_;
+    int status = pthread_setschedparam(pthread_self(), SCHED_RR, &s_param);
+    if (status != 0) {
+      mf::LogError("FragmentReceiver")
+        << "Failed to set realtime priority to " << realtime_priority_
+        << ", return code = " << status;
+    }
+#pragma GCC diagnostic pop
+  }
 
   sender_ptr_.reset(new artdaq::SHandles(mpi_buffer_count_,
                                          max_fragment_size_words_,
