@@ -159,6 +159,11 @@ bool ds50::EventBuilder::resume()
   return true;
 }
 
+bool ds50::EventBuilder::shutdown()
+{
+  return true;
+}
+
 bool ds50::EventBuilder::soft_initialize(fhicl::ParameterSet const& pset)
 {
   mf::LogDebug("EventBuilder") << "soft_initialize method called with DAQ \""

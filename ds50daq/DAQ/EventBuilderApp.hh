@@ -26,8 +26,8 @@ public:
   bool do_pause() override;
   bool do_resume() override;
   bool do_shutdown() override;
-  bool do_reinitialize(fhicl::ParameterSet const&) override;
   bool do_soft_initialize(fhicl::ParameterSet const&) override;
+  bool do_reinitialize(fhicl::ParameterSet const&) override;
 
   void BootedEnter() override;
 

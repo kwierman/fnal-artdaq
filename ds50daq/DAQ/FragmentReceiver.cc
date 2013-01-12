@@ -186,11 +186,19 @@ bool ds50::FragmentReceiver::stop()
 
 bool ds50::FragmentReceiver::pause()
 {
+  generator_ptr_->pause();
   return true;
 }
 
 bool ds50::FragmentReceiver::resume()
 {
+  generator_ptr_->resume();
+  return true;
+}
+
+bool ds50::FragmentReceiver::shutdown()
+{
+  generator_ptr_.reset(nullptr);
   return true;
 }
 

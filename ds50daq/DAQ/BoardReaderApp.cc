@@ -66,31 +66,48 @@ bool ds50::BoardReaderApp::do_stop()
 
 bool ds50::BoardReaderApp::do_pause()
 {
-  external_request_status_ = true;
+  external_request_status_ = fragment_receiver_ptr_->pause();
+  if (! external_request_status_) {
+    report_string_ = "Error pausing the FragmentReceiver.";
+  }
   return external_request_status_;
 }
 
 bool ds50::BoardReaderApp::do_resume()
 {
-  external_request_status_ = true;
+  external_request_status_ = fragment_receiver_ptr_->resume();
+  if (! external_request_status_) {
+    report_string_ = "Error resuming the FragmentReceiver.";
+  }
   return external_request_status_;
 }
 
 bool ds50::BoardReaderApp::do_shutdown()
 {
-  external_request_status_ = true;
+  external_request_status_ = fragment_receiver_ptr_->shutdown();
+  if (! external_request_status_) {
+    report_string_ = "Error shutting down the FragmentReceiver.";
+  }
   return external_request_status_;
 }
 
-bool ds50::BoardReaderApp::do_reinitialize(fhicl::ParameterSet const&)
+bool ds50::BoardReaderApp::do_soft_initialize(fhicl::ParameterSet const& pset)
 {
-  external_request_status_ = true;
+  external_request_status_ = fragment_receiver_ptr_->soft_initialize(pset);
+  if (! external_request_status_) {
+    report_string_ = "Error soft-initializing the FragmentReceiver with ";
+    report_string_.append("ParameterSet = \"" + pset.to_string() + "\".");
+  }
   return external_request_status_;
 }
 
-bool ds50::BoardReaderApp::do_soft_initialize(fhicl::ParameterSet const&)
+bool ds50::BoardReaderApp::do_reinitialize(fhicl::ParameterSet const& pset)
 {
-  external_request_status_ = true;
+  external_request_status_ = fragment_receiver_ptr_->reinitialize(pset);
+  if (! external_request_status_) {
+    report_string_ = "Error reinitializing the FragmentReceiver with ";
+    report_string_.append("ParameterSet = \"" + pset.to_string() + "\".");
+  }
   return external_request_status_;
 }
 

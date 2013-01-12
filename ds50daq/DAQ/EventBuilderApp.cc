@@ -65,31 +65,48 @@ bool ds50::EventBuilderApp::do_stop()
 
 bool ds50::EventBuilderApp::do_pause()
 {
-  external_request_status_ = true;
+  external_request_status_ = event_builder_ptr_->pause();
+  if (! external_request_status_) {
+    report_string_ = "Error pausing the EventBuilder.";
+  }
   return external_request_status_;
 }
 
 bool ds50::EventBuilderApp::do_resume()
 {
-  external_request_status_ = true;
+  external_request_status_ = event_builder_ptr_->resume();
+  if (! external_request_status_) {
+    report_string_ = "Error resuming the EventBuilder.";
+  }
   return external_request_status_;
 }
 
 bool ds50::EventBuilderApp::do_shutdown()
 {
-  external_request_status_ = true;
+  external_request_status_ = event_builder_ptr_->shutdown();
+  if (! external_request_status_) {
+    report_string_ = "Error shutting down the EventBuilder.";
+  }
   return external_request_status_;
 }
 
-bool ds50::EventBuilderApp::do_reinitialize(fhicl::ParameterSet const&)
+bool ds50::EventBuilderApp::do_soft_initialize(fhicl::ParameterSet const& pset)
 {
-  external_request_status_ = true;
+  external_request_status_ = event_builder_ptr_->soft_initialize(pset);
+  if (! external_request_status_) {
+    report_string_ = "Error soft-initializing the EventBuilder with ";
+    report_string_.append("ParameterSet = \"" + pset.to_string() + "\".");
+  }
   return external_request_status_;
 }
 
-bool ds50::EventBuilderApp::do_soft_initialize(fhicl::ParameterSet const&)
+bool ds50::EventBuilderApp::do_reinitialize(fhicl::ParameterSet const& pset)
 {
-  external_request_status_ = true;
+  external_request_status_ = event_builder_ptr_->reinitialize(pset);
+  if (! external_request_status_) {
+    report_string_ = "Error reinitializing the EventBuilder with ";
+    report_string_.append("ParameterSet = \"" + pset.to_string() + "\".");
+  }
   return external_request_status_;
 }
 
