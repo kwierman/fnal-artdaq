@@ -12,17 +12,6 @@ ds50::EventBuilderApp::EventBuilderApp(int mpi_rank) : mpi_rank_(mpi_rank)
 // *** The following methods implement the state machine operations.
 // *******************************************************************
 
-void ds50::EventBuilderApp::BootedEnter()
-{
-  mf::LogDebug("EventBuilderApp") << "Booted state entry action called.";
-
-  // the destruction of any existing EventBuilder has to happen in the
-  // Booted Entry action rather than the Initialized Exit action because the
-  // Initialized Exit action is only called after the "init" transition guard
-  // condition is executed.
-  event_builder_ptr_.reset(nullptr);
-}
-
 bool ds50::EventBuilderApp::do_initialize(fhicl::ParameterSet const& pset)
 {
   external_request_status_ = true;
@@ -59,16 +48,6 @@ bool ds50::EventBuilderApp::do_start(art::RunID id)
   return external_request_status_;
 }
 
-bool ds50::EventBuilderApp::do_pause()
-{
-  return true;
-}
-
-bool ds50::EventBuilderApp::do_resume()
-{
-  return true;
-}
-
 bool ds50::EventBuilderApp::do_stop()
 {
   external_request_status_ = event_builder_ptr_->stop();
@@ -82,4 +61,45 @@ bool ds50::EventBuilderApp::do_stop()
     << ".";
 
   return external_request_status_;
+}
+
+bool ds50::EventBuilderApp::do_pause()
+{
+  external_request_status_ = true;
+  return external_request_status_;
+}
+
+bool ds50::EventBuilderApp::do_resume()
+{
+  external_request_status_ = true;
+  return external_request_status_;
+}
+
+bool ds50::EventBuilderApp::do_shutdown()
+{
+  external_request_status_ = true;
+  return external_request_status_;
+}
+
+bool ds50::EventBuilderApp::do_reinitialize(fhicl::ParameterSet const&)
+{
+  external_request_status_ = true;
+  return external_request_status_;
+}
+
+bool ds50::EventBuilderApp::do_soft_initialize(fhicl::ParameterSet const&)
+{
+  external_request_status_ = true;
+  return external_request_status_;
+}
+
+void ds50::EventBuilderApp::BootedEnter()
+{
+  mf::LogDebug("EventBuilderApp") << "Booted state entry action called.";
+
+  // the destruction of any existing EventBuilder has to happen in the
+  // Booted Entry action rather than the Initialized Exit action because the
+  // Initialized Exit action is only called after the "init" transition guard
+  // condition is executed.
+  event_builder_ptr_.reset(nullptr);
 }

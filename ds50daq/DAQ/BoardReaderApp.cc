@@ -12,17 +12,6 @@ ds50::BoardReaderApp::BoardReaderApp()
 // *** The following methods implement the state machine operations.
 // *******************************************************************
 
-void ds50::BoardReaderApp::BootedEnter()
-{
-  mf::LogDebug("BoardReaderApp") << "Booted state entry action called.";
-
-  // the destruction of any existing FragmentReceiver has to happen in the
-  // Booted Entry action rather than the Initialized Exit action because the
-  // Initialized Exit action is only called after the "init" transition guard
-  // condition is executed.
-  fragment_receiver_ptr_.reset(nullptr);
-}
-
 bool ds50::BoardReaderApp::do_initialize(fhicl::ParameterSet const& pset)
 {
   external_request_status_ = true;
@@ -59,16 +48,6 @@ bool ds50::BoardReaderApp::do_start(art::RunID id)
   return external_request_status_;
 }
 
-bool ds50::BoardReaderApp::do_pause()
-{
-  return true;
-}
-
-bool ds50::BoardReaderApp::do_resume()
-{
-  return true;
-}
-
 bool ds50::BoardReaderApp::do_stop()
 {
   external_request_status_ = fragment_receiver_ptr_->stop();
@@ -83,4 +62,45 @@ bool ds50::BoardReaderApp::do_stop()
     << ".";
 
   return external_request_status_;
+}
+
+bool ds50::BoardReaderApp::do_pause()
+{
+  external_request_status_ = true;
+  return external_request_status_;
+}
+
+bool ds50::BoardReaderApp::do_resume()
+{
+  external_request_status_ = true;
+  return external_request_status_;
+}
+
+bool ds50::BoardReaderApp::do_shutdown()
+{
+  external_request_status_ = true;
+  return external_request_status_;
+}
+
+bool ds50::BoardReaderApp::do_reinitialize(fhicl::ParameterSet const&)
+{
+  external_request_status_ = true;
+  return external_request_status_;
+}
+
+bool ds50::BoardReaderApp::do_soft_initialize(fhicl::ParameterSet const&)
+{
+  external_request_status_ = true;
+  return external_request_status_;
+}
+
+void ds50::BoardReaderApp::BootedEnter()
+{
+  mf::LogDebug("BoardReaderApp") << "Booted state entry action called.";
+
+  // the destruction of any existing FragmentReceiver has to happen in the
+  // Booted Entry action rather than the Initialized Exit action because the
+  // Initialized Exit action is only called after the "init" transition guard
+  // condition is executed.
+  fragment_receiver_ptr_.reset(nullptr);
 }

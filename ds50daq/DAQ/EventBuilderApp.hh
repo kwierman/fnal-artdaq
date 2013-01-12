@@ -20,12 +20,16 @@ public:
   EventBuilderApp& operator=(EventBuilderApp const&) = delete;
 
   // these methods provide the operations that are used by the state machine
-  void BootedEnter() override;
   bool do_initialize(fhicl::ParameterSet const&) override;
   bool do_start(art::RunID) override;
+  bool do_stop() override;
   bool do_pause() override;
   bool do_resume() override;
-  bool do_stop() override;
+  bool do_shutdown() override;
+  bool do_reinitialize(fhicl::ParameterSet const&) override;
+  bool do_soft_initialize(fhicl::ParameterSet const&) override;
+
+  void BootedEnter() override;
 
 private:
   int mpi_rank_;

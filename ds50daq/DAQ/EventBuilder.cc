@@ -144,6 +144,11 @@ bool ds50::EventBuilder::start(art::RunID id)
   return true;
 }
 
+bool ds50::EventBuilder::stop()
+{
+  return true;
+}
+
 bool ds50::EventBuilder::pause()
 {
   return true;
@@ -154,8 +159,19 @@ bool ds50::EventBuilder::resume()
   return true;
 }
 
-bool ds50::EventBuilder::stop()
+bool ds50::EventBuilder::soft_initialize(fhicl::ParameterSet const& pset)
 {
+  mf::LogDebug("EventBuilder") << "soft_initialize method called with DAQ \""
+                               << "ParameterSet = " << pset.to_string()
+                               << "\".";
+  return true;
+}
+
+bool ds50::EventBuilder::reinitialize(fhicl::ParameterSet const& pset)
+{
+  mf::LogDebug("EventBuilder") << "reinitialize method called with DAQ \""
+                               << "ParameterSet = " << pset.to_string()
+                               << "\".";
   return true;
 }
 
