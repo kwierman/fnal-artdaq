@@ -281,3 +281,8 @@ size_t ds50::FragmentReceiver::process_fragments()
 
   return fragment_count;
 }
+
+std::string ds50::FragmentReceiver::report(std::string const&) const
+{
+  return "Fragment receiver stats coming soon.";
+}

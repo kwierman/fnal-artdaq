@@ -32,9 +32,11 @@ public:
   bool reinitialize(fhicl::ParameterSet const&);
 
   /* Report_ptr */
-  std::string report(std::string const&) const {return report_string_;}
+  virtual std::string report(std::string const&) const {
+    return report_string_;
+  }
   std::string status() const;
-  bool reset_stats(std::string const& which) {
+  virtual bool reset_stats(std::string const& which) {
     if (which=="fail") {
       return false;
     }

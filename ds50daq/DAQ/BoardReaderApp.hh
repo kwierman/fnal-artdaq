@@ -32,6 +32,9 @@ public:
 
   void BootedEnter() override;
 
+  /* Report_ptr */
+  std::string report(std::string const&) const override;
+
 private:
   std::unique_ptr<ds50::FragmentReceiver> fragment_receiver_ptr_;
   std::future<size_t> fragment_processing_future_;

@@ -35,6 +35,8 @@ public:
 
   size_t process_fragments();
 
+  std::string report(std::string const&) const;
+
 private:
   bool local_group_defined_;
   MPI_Comm local_group_comm_;

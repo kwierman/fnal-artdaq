@@ -14,6 +14,7 @@ ds50::BoardReaderApp::BoardReaderApp()
 
 bool ds50::BoardReaderApp::do_initialize(fhicl::ParameterSet const& pset)
 {
+  report_string_ = "";
   external_request_status_ = true;
 
   // in the following block, we first destroy the existing FragmentReceiver
@@ -33,6 +34,7 @@ bool ds50::BoardReaderApp::do_initialize(fhicl::ParameterSet const& pset)
 
 bool ds50::BoardReaderApp::do_start(art::RunID id)
 {
+  report_string_ = "";
   external_request_status_ = fragment_receiver_ptr_->start(id);
   if (! external_request_status_) {
     report_string_ = "Error starting the FragmentReceiver for run ";
@@ -50,6 +52,7 @@ bool ds50::BoardReaderApp::do_start(art::RunID id)
 
 bool ds50::BoardReaderApp::do_stop()
 {
+  report_string_ = "";
   external_request_status_ = fragment_receiver_ptr_->stop();
   if (! external_request_status_) {
     report_string_ = "Error stopping the FragmentReceiver.";
@@ -66,6 +69,7 @@ bool ds50::BoardReaderApp::do_stop()
 
 bool ds50::BoardReaderApp::do_pause()
 {
+  report_string_ = "";
   external_request_status_ = fragment_receiver_ptr_->pause();
   if (! external_request_status_) {
     report_string_ = "Error pausing the FragmentReceiver.";
@@ -75,6 +79,7 @@ bool ds50::BoardReaderApp::do_pause()
 
 bool ds50::BoardReaderApp::do_resume()
 {
+  report_string_ = "";
   external_request_status_ = fragment_receiver_ptr_->resume();
   if (! external_request_status_) {
     report_string_ = "Error resuming the FragmentReceiver.";
@@ -84,6 +89,7 @@ bool ds50::BoardReaderApp::do_resume()
 
 bool ds50::BoardReaderApp::do_shutdown()
 {
+  report_string_ = "";
   external_request_status_ = fragment_receiver_ptr_->shutdown();
   if (! external_request_status_) {
     report_string_ = "Error shutting down the FragmentReceiver.";
@@ -93,6 +99,7 @@ bool ds50::BoardReaderApp::do_shutdown()
 
 bool ds50::BoardReaderApp::do_soft_initialize(fhicl::ParameterSet const& pset)
 {
+  report_string_ = "";
   external_request_status_ = fragment_receiver_ptr_->soft_initialize(pset);
   if (! external_request_status_) {
     report_string_ = "Error soft-initializing the FragmentReceiver with ";
@@ -120,4 +127,19 @@ void ds50::BoardReaderApp::BootedEnter()
   // Initialized Exit action is only called after the "init" transition guard
   // condition is executed.
   fragment_receiver_ptr_.reset(nullptr);
+}
+
+std::string ds50::BoardReaderApp::report(std::string const& which) const
+{
+  // if there is an outstanding error, return that
+  if (report_string_.length() > 0) {
+    return report_string_;
+  }
+
+  // to-do: act differently depending on the value of "which"
+  std::string tmpString = "Current state = " + status() + "\n";
+  if (fragment_receiver_ptr_.get() != 0) {
+    tmpString.append(fragment_receiver_ptr_->report(which));
+  }
+  return tmpString;
 }

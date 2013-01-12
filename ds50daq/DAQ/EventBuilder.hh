@@ -34,6 +34,8 @@ public:
 
   size_t process_fragments();
 
+  std::string report(std::string const&) const;
+
 private:
   int mpi_rank_;
   bool local_group_defined_;

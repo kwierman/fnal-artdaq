@@ -31,6 +31,9 @@ public:
 
   void BootedEnter() override;
 
+  /* Report_ptr */
+  std::string report(std::string const&) const override;
+
 private:
   int mpi_rank_;
   std::unique_ptr<ds50::EventBuilder> event_builder_ptr_;

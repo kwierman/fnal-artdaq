@@ -10,8 +10,9 @@
 /**
  * Constructor.
  */
-ds50::EventBuilder::EventBuilder(int mpi_rank) : mpi_rank_(mpi_rank),
-  local_group_defined_(false), data_sender_count_(0)
+ds50::EventBuilder::EventBuilder(int mpi_rank) :
+  mpi_rank_(mpi_rank), local_group_defined_(false),
+  data_sender_count_(0), run_id_(0)
 {
   mf::LogDebug("EventBuilder") << "Constructor";
 
@@ -233,4 +234,16 @@ size_t ds50::EventBuilder::process_fragments()
   /*int rc =*/ events->endOfData();
 
   return fragments_received;
+}
+
+std::string ds50::EventBuilder::report(std::string const&) const
+{
+  // lots of cool stuff that we can do here
+  // - report on the number of fragments received and the number
+  //   of events built (in the current or previous run
+  // - report on the number of incomplete events in the EventStore
+  //   (if running)
+  std::string tmpString = "Event Builder run number = ";
+  tmpString.append(boost::lexical_cast<std::string>(run_id_.run()));
+  return tmpString;
 }

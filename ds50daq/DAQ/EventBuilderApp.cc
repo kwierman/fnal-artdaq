@@ -14,6 +14,7 @@ ds50::EventBuilderApp::EventBuilderApp(int mpi_rank) : mpi_rank_(mpi_rank)
 
 bool ds50::EventBuilderApp::do_initialize(fhicl::ParameterSet const& pset)
 {
+  report_string_ = "";
   external_request_status_ = true;
 
   // in the following block, we first destroy the existing EventBuilder
@@ -33,6 +34,7 @@ bool ds50::EventBuilderApp::do_initialize(fhicl::ParameterSet const& pset)
 
 bool ds50::EventBuilderApp::do_start(art::RunID id)
 {
+  report_string_ = "";
   external_request_status_ = event_builder_ptr_->start(id);
   if (! external_request_status_) {
     report_string_ = "Error starting the EventBuilder for run ";
@@ -50,6 +52,7 @@ bool ds50::EventBuilderApp::do_start(art::RunID id)
 
 bool ds50::EventBuilderApp::do_stop()
 {
+  report_string_ = "";
   external_request_status_ = event_builder_ptr_->stop();
   if (! external_request_status_) {
     report_string_ = "Error stopping the EventBuilder.";
@@ -65,6 +68,7 @@ bool ds50::EventBuilderApp::do_stop()
 
 bool ds50::EventBuilderApp::do_pause()
 {
+  report_string_ = "";
   external_request_status_ = event_builder_ptr_->pause();
   if (! external_request_status_) {
     report_string_ = "Error pausing the EventBuilder.";
@@ -74,6 +78,7 @@ bool ds50::EventBuilderApp::do_pause()
 
 bool ds50::EventBuilderApp::do_resume()
 {
+  report_string_ = "";
   external_request_status_ = event_builder_ptr_->resume();
   if (! external_request_status_) {
     report_string_ = "Error resuming the EventBuilder.";
@@ -83,6 +88,7 @@ bool ds50::EventBuilderApp::do_resume()
 
 bool ds50::EventBuilderApp::do_shutdown()
 {
+  report_string_ = "";
   external_request_status_ = event_builder_ptr_->shutdown();
   if (! external_request_status_) {
     report_string_ = "Error shutting down the EventBuilder.";
@@ -92,6 +98,7 @@ bool ds50::EventBuilderApp::do_shutdown()
 
 bool ds50::EventBuilderApp::do_soft_initialize(fhicl::ParameterSet const& pset)
 {
+  report_string_ = "";
   external_request_status_ = event_builder_ptr_->soft_initialize(pset);
   if (! external_request_status_) {
     report_string_ = "Error soft-initializing the EventBuilder with ";
@@ -102,6 +109,7 @@ bool ds50::EventBuilderApp::do_soft_initialize(fhicl::ParameterSet const& pset)
 
 bool ds50::EventBuilderApp::do_reinitialize(fhicl::ParameterSet const& pset)
 {
+  report_string_ = "";
   external_request_status_ = event_builder_ptr_->reinitialize(pset);
   if (! external_request_status_) {
     report_string_ = "Error reinitializing the EventBuilder with ";
@@ -119,4 +127,19 @@ void ds50::EventBuilderApp::BootedEnter()
   // Initialized Exit action is only called after the "init" transition guard
   // condition is executed.
   event_builder_ptr_.reset(nullptr);
+}
+
+std::string ds50::EventBuilderApp::report(std::string const& which) const
+{
+  // if there is an outstanding error, return that
+  if (report_string_.length() > 0) {
+    return report_string_;
+  }
+
+  // to-do: act differently depending on the value of "which"
+  std::string tmpString = "Current state = " + status() + "\n";
+  if (event_builder_ptr_.get() != 0) {
+    tmpString.append(event_builder_ptr_->report(which));
+  }
+  return tmpString;
 }
