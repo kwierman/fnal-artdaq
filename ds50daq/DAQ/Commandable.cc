@@ -194,15 +194,16 @@ std::vector<std::string> ds50::Commandable::legal_commands() const
 {
   std::string currentState = this->status();
   if (currentState == "Ready") {
-    return { "init", "start" };
+    return { "init", "soft_init", "start", "shutdown" };
   }
   if (currentState == "Running") {
-    return { "init", "stop", "pause" };
+    return { "pause", "stop", "init", "soft_init", "reinit" };
   }
   if (currentState == "Paused") {
-    return { "resume", "stop", "init" };
+    return { "resume", "stop", "init", "soft_init", "reinit" };
   }
 
+  // Booted and Error
   return { "init" };
 }
 
