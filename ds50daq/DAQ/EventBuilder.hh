@@ -25,11 +25,16 @@ public:
 
   bool initialize(fhicl::ParameterSet const&);
   bool start(art::RunID);
+  bool stop();
   bool pause();
   bool resume();
-  bool stop();
+  bool shutdown();
+  bool soft_initialize(fhicl::ParameterSet const&);
+  bool reinitialize(fhicl::ParameterSet const&);
 
   size_t process_fragments();
+
+  std::string report(std::string const&) const;
 
 private:
   int mpi_rank_;
