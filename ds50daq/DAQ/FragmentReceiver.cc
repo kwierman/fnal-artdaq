@@ -237,15 +237,15 @@ size_t ds50::FragmentReceiver::process_fragments()
   // try-catch block here?
 
   // how to turn RT PRI off?
-  if (realtime_priority_ > 0) {
+  if (rt_priority_ > 0) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
     sched_param s_param = {};
-    s_param.sched_priority = realtime_priority_;
+    s_param.sched_priority = rt_priority_;
     int status = pthread_setschedparam(pthread_self(), SCHED_RR, &s_param);
     if (status != 0) {
       mf::LogError("FragmentReceiver")
-        << "Failed to set realtime priority to " << realtime_priority_
+        << "Failed to set realtime priority to " << rt_priority_
         << ", return code = " << status;
     }
 #pragma GCC diagnostic pop
