@@ -7,6 +7,7 @@
 ds50::DS50FragmentGenerator::DS50FragmentGenerator(const fhicl::ParameterSet &ps): run_number_(-1) {
   fragment_id_ = ps.get<int> ("fragment_id");
   sleep_us_ = ps.get<int> ("sleep_us", 0);
+  init_only_ = ps.get<bool> ("init_only", false);
 }
 
 void ds50::DS50FragmentGenerator::start (int run) { 
@@ -49,19 +50,30 @@ bool ds50::DS50FragmentGenerator::should_stop () { return should_stop_; } // no 
 
 bool ds50::DS50FragmentGenerator::getNext_ (artdaq::FragmentPtrs & output) { 
   if (run_number_ < 0) start (0);
+  if (init_only_) stop ();
 
   if (sleep_us_ > 0) usleep (sleep_us_);
 
-  std::lock_guard<std::mutex> lk(mutex_);
+  bool r = false;
+  {
+    std::lock_guard<std::mutex> lk(mutex_);
 
-  stats_.read_count -= output.size ();
+    stats_.read_count -= output.size ();
 
-  bool r = getNext__(output); 
+    r = getNext__(output); 
 
-  stats_.avg_frag_size = (stats_.avg_frag_size * stats_.call_count + output.size ()) / (stats_.call_count + 1);
-  stats_.call_count ++;
-  stats_.read_count += output.size ();
+    stats_.avg_frag_size = (stats_.avg_frag_size * stats_.call_count + output.size ()) / (stats_.call_count + 1);
+    stats_.call_count ++;
+    stats_.read_count += output.size ();
 
+  }
+
+  // if the size is zero, sleep for a tiny amount of time to allow
+  // the stop method to get the lock (otherwise, we can get in a
+  // situation where the getNext loop locks out the stop
+  if (output.size() == 0) {
+    usleep(10);
+  }
   return r;
 }
 

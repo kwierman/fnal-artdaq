@@ -1,10 +1,10 @@
 #include <iostream>
-#include "xmlrpc_commander.hh"
 #include <boost/program_options.hpp>
 #include <boost/lexical_cast.hpp>
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "ds50daq/DAQ/configureMessageFacility.hh"
 #include "ds50daq/DAQ/EventBuilderApp.hh"
+#include "ds50daq/DAQ/xmlrpc_commander.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 
 int main(int argc, char *argv[])
@@ -58,8 +58,6 @@ int main(int argc, char *argv[])
   // create the xmlrpc_commander and run it
   xmlrpc_commander commander(vm["port"].as<unsigned short> (), evb_app);
   commander.run();
-
-//xmlrpc http://localhost:5454/RPC2 ds50.init "fragment_receiver: {event_builder_ranks: [3,4]} event_builder: {fragment_receiver_ranks: [1,2,3]}"
 
   // cleanup
   MPI_Finalize();

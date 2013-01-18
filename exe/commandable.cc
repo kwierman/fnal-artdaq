@@ -1,17 +1,27 @@
 #include <iostream>
-#include "xmlrpc_commander.hh"
 #include <boost/program_options.hpp>
 #include <boost/lexical_cast.hpp>
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "ds50daq/DAQ/configureMessageFacility.hh"
-#include "ds50daq/DAQ/AggregatorApp.hh"
+#include "ds50daq/DAQ/Commandable.hh"
+#include "ds50daq/DAQ/xmlrpc_commander.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 
 int main(int argc, char *argv[])
 {
   // initialization
-  ds50::configureMessageFacility("Aggregator::main"); 
-  MPI_Init(&argc, &argv);
+  ds50::configureMessageFacility("commandable");
+  int threading_result;
+  MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &threading_result);
+  mf::LogDebug("Commandable::main")
+    << "MPI initialized with requested thread support level of "
+    << MPI_THREAD_FUNNELED << ", actual support level = "
+    << threading_result << ".";
+  int procs_;
+  int rank_;
+  MPI_Comm_size(MPI_COMM_WORLD, &procs_);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
+  mf::LogDebug("Commandable::main") << "size = " << procs_ << ", rank = " << rank_;
 
   // handle the command-line arguments
   std::string usage = std::string(argv[0]) + " -p port_number <other-options>";
@@ -40,13 +50,13 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  mf::SetApplicationName("Aggregator-" + boost::lexical_cast<std::string>(vm["port"].as<unsigned short> ()));
+  mf::SetApplicationName("Commandable-" + boost::lexical_cast<std::string>(vm["port"].as<unsigned short> ()));
 
-  // create the AggregatorApp
-  ds50::AggregatorApp agg_app;
+  // create the Commandable object
+  ds50::Commandable commandable;
 
   // create the xmlrpc_commander and run it
-  xmlrpc_commander commander(vm["port"].as<unsigned short> (), agg_app);
+  xmlrpc_commander commander(vm["port"].as<unsigned short> (), commandable);
   commander.run();
 
   // cleanup

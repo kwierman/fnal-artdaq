@@ -1,10 +1,10 @@
 #include <iostream>
-#include "xmlrpc_commander.hh"
 #include <boost/program_options.hpp>
 #include <boost/lexical_cast.hpp>
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "ds50daq/DAQ/configureMessageFacility.hh"
 #include "ds50daq/DAQ/BoardReaderApp.hh"
+#include "ds50daq/DAQ/xmlrpc_commander.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 
 int main(int argc, char *argv[])
@@ -58,10 +58,6 @@ int main(int argc, char *argv[])
   // create the xmlrpc_commander and run it
   xmlrpc_commander commander(vm["port"].as<unsigned short> (), br_app);
   commander.run();
-
-  //xmlrpc http://localhost:5454/RPC2 ds50.init "daq: {event_building_buffer_count:10 max_fragment_size_words: 524288 fragment_receiver: {generator:V172xSimulator freqs_file: \"/home/biery/nov2012/ds50daq/ds50daq/DAQ/ds50_hist.dat\" run_number: 0 events_to_generate: 3 first_event_builder_rank: 1 event_builder_count: 1} event_builder: {first_fragment_receiver_rank: 0 fragment_receiver_count: 1}}"
-  //xmlrpc http://localhost:5454/RPC2 ds50.start 101
-  //xmlrpc http://localhost:5454/RPC2 ds50.stop
 
   // cleanup
   MPI_Finalize();

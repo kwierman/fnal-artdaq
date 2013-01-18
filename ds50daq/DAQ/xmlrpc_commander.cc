@@ -44,7 +44,59 @@ namespace {
           }
         }
         else {
-          *retvalP = xmlrpc_c::value_string ("The init message requires a single argument that is a string containing the initializtion ParameterSet."); 
+          *retvalP = xmlrpc_c::value_string ("The init message requires a single argument that is a string containing the initialization ParameterSet."); 
+        }
+      } catch (std::runtime_error &er) { 
+	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
+	mf::LogError ("XMLRPC_Commander") << er.what ();
+      } 
+  };
+
+  class soft_init_: public cmd_ {
+    public:
+      soft_init_ (xmlrpc_commander& c):
+        cmd_(c, "s:s", "initialize software components in the program") {}
+      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try {
+        if (paramList.size() > 0) {
+          std::string configString = paramList.getString(0);
+          fhicl::ParameterSet pset;
+          fhicl::make_ParameterSet(configString, pset);
+          if (_c._commandable.soft_initialize(pset)) {
+           *retvalP = xmlrpc_c::value_string ("Success"); 
+          }
+          else {
+            std::string problemReport = _c._commandable.report("all");
+            *retvalP = xmlrpc_c::value_string (problemReport); 
+          }
+        }
+        else {
+          *retvalP = xmlrpc_c::value_string ("The soft_init message requires a single argument that is a string containing the initialization ParameterSet."); 
+        }
+      } catch (std::runtime_error &er) { 
+	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
+	mf::LogError ("XMLRPC_Commander") << er.what ();
+      } 
+  };
+
+  class reinit_: public cmd_ {
+    public:
+      reinit_ (xmlrpc_commander& c):
+        cmd_(c, "s:s", "re-initialize the program") {}
+      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try {
+        if (paramList.size() > 0) {
+          std::string configString = paramList.getString(0);
+          fhicl::ParameterSet pset;
+          fhicl::make_ParameterSet(configString, pset);
+          if (_c._commandable.reinitialize(pset)) {
+            *retvalP = xmlrpc_c::value_string ("Success"); 
+          }
+          else {
+            std::string problemReport = _c._commandable.report("all");
+            *retvalP = xmlrpc_c::value_string (problemReport); 
+          }
+        }
+        else {
+          *retvalP = xmlrpc_c::value_string ("The reinit message requires a single argument that is a string containing the initialization ParameterSet."); 
         }
       } catch (std::runtime_error &er) { 
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
@@ -82,7 +134,7 @@ namespace {
   class status_: public cmd_ {
     public:
       status_ (xmlrpc_commander& c):
-        cmd_(c, "s:s", "report application state") {}
+        cmd_(c, "s:s", "report the current state") {}
       void execute (xmlrpc_c::paramList const&, xmlrpc_c::value * const retvalP) try {
         *retvalP = xmlrpc_c::value_string (_c._commandable.status());
       } catch (std::runtime_error &er) { 
@@ -103,6 +155,48 @@ namespace {
         else {
           *retvalP = xmlrpc_c::value_string ("The report message requires a single argument that selects the type of statistics to be reported."); 
         }
+      } catch (std::runtime_error &er) { 
+	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
+	mf::LogError ("XMLRPC_Commander") << er.what ();
+      } 
+  };
+
+  class reset_stats_: public cmd_ {
+    public:
+      reset_stats_ (xmlrpc_commander& c):
+        cmd_(c, "s:s", "reset statistics") {}
+      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try {
+        if (paramList.size() > 0) {
+          std::string which = paramList.getString(0);
+          if (_c._commandable.reset_stats(which)) {
+            *retvalP = xmlrpc_c::value_string ("Success"); 
+          }
+          else {
+            std::string problemReport = _c._commandable.report("all");
+            *retvalP = xmlrpc_c::value_string (problemReport); 
+          }
+        }
+        else {
+          *retvalP = xmlrpc_c::value_string ("The reset_stats message requires a single argument that selects the type of statistics to be reset."); 
+        }
+      } catch (std::runtime_error &er) { 
+	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
+	mf::LogError ("XMLRPC_Commander") << er.what ();
+      } 
+  };
+
+  class legal_commands_: public cmd_ {
+    public:
+      legal_commands_ (xmlrpc_commander& c):
+        cmd_(c, "s:s", "return the currently legal commands") {}
+      void execute (xmlrpc_c::paramList const&, xmlrpc_c::value * const retvalP) try {
+        std::vector<std::string> cmdList = _c._commandable.legal_commands();
+        std::string resultString;
+        for (unsigned int idx = 0; idx < cmdList.size(); ++idx) {
+          if (idx > 0) {resultString.append(" ");}
+          resultString.append(cmdList[idx]);
+        }
+        *retvalP = xmlrpc_c::value_string (resultString);
       } catch (std::runtime_error &er) { 
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
 	mf::LogError ("XMLRPC_Commander") << er.what ();
@@ -131,9 +225,11 @@ namespace {
   generate_noarg_class(stop, "stop the run");
   generate_noarg_class(pause, "pause the run");
   generate_noarg_class(resume, "resume the run");
+  generate_noarg_class(shutdown, "shut down the program");
 
 #undef generate_noarg_class
 
+#if 0
   class shutdown_: public xmlrpc_c::registry::shutdown {
     public:
       shutdown_ (xmlrpc_c::serverAbyss *server): _server(server) {}
@@ -147,6 +243,7 @@ namespace {
     private:
       xmlrpc_c::serverAbyss *_server;
   };
+#endif
 }
 
 
@@ -162,19 +259,27 @@ void xmlrpc_commander::run() try {
   registry.addMethod ("ds50." #m, ptr_ ## m);
 
   register_method(init);
+  register_method(soft_init);
+  register_method(reinit);
   register_method(start);
+  register_method(status);
+  register_method(report);
   register_method(stop);
   register_method(pause);
   register_method(resume);
-  register_method(status);
-  register_method(report);
+  register_method(reset_stats);
+  register_method(legal_commands);
+
+  register_method(shutdown);
 
 #undef register_method
 
   xmlrpc_c::serverAbyss server(xmlrpc_c::serverAbyss::constrOpt ().registryP (&registry).portNumber (_port));
 
+#if 0
   shutdown_ shutdown_obj(&server);
   registry.setShutdown (&shutdown_obj);
+#endif
 
   mf::LogDebug ("XMLRPC_Commander") << "running server" << std::endl;
 

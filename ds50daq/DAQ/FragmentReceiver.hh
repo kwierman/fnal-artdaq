@@ -26,11 +26,16 @@ public:
 
   bool initialize(fhicl::ParameterSet const&);
   bool start(art::RunID);
+  bool stop();
   bool pause();
   bool resume();
-  bool stop();
+  bool shutdown();
+  bool soft_initialize(fhicl::ParameterSet const&);
+  bool reinitialize(fhicl::ParameterSet const&);
 
   size_t process_fragments();
+
+  std::string report(std::string const&) const;
 
 private:
   bool local_group_defined_;
@@ -41,6 +46,7 @@ private:
   size_t mpi_buffer_count_;
   size_t first_evb_rank_;
   size_t evb_count_;
+  int rt_priority_;
 
   std::unique_ptr<artdaq::SHandles> sender_ptr_;
 };

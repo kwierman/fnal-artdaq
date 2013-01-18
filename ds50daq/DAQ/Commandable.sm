@@ -35,6 +35,8 @@ Default
   pause     nil  {badTransition(__func__);}
   resume    nil  {badTransition(__func__);}
   shutdown  nil  {badTransition(__func__);}
+  soft_init(pset: fhicl::ParameterSet const&) nil  {badTransition(__func__);}
+  reinit(pset: fhicl::ParameterSet const&)    nil  {badTransition(__func__);}
 }
 
 Booted
@@ -70,6 +72,8 @@ Default
   pause     nil  {badTransition(__func__);}
   resume    nil  {badTransition(__func__);}
   shutdown  nil  {badTransition(__func__);}
+  soft_init(pset: fhicl::ParameterSet const&) nil  {badTransition(__func__);}
+  reinit(pset: fhicl::ParameterSet const&)    nil  {badTransition(__func__);}
 }
 
 Ready
@@ -79,7 +83,8 @@ Ready
   start(id: art::RunID)  [ctxt.do_start(id)]  InRun/push(InRunMap::Running)  {}
   start(id: art::RunID)  nil  {}
   init(pset: fhicl::ParameterSet const&)  pop(init, pset)  {}
-  soft_init(pset: fhicl::ParameterSet const&)  nil  {do_softInitialize(pset);}
+  soft_init(pset: fhicl::ParameterSet const&)  nil  {do_soft_initialize(pset);}
+  shutdown  pop(shutdown)  {}
 }
 
 InRun
@@ -111,6 +116,8 @@ Default
   pause     nil  {badTransition(__func__);}
   resume    nil  {badTransition(__func__);}
   shutdown  nil  {badTransition(__func__);}
+  soft_init(pset: fhicl::ParameterSet const&) nil  {badTransition(__func__);}
+  reinit(pset: fhicl::ParameterSet const&)    nil  {badTransition(__func__);}
 }
 
 Running
@@ -122,7 +129,7 @@ Running
   stop   pop(stop)  {}
   init(pset: fhicl::ParameterSet const&)  pop(init, pset)  {}
   reinit(pset: fhicl::ParameterSet const&)  Paused  {do_reinitialize(pset);}
-  soft_init(pset: fhicl::ParameterSet const&)  nil  {do_softInitialize(pset);}
+  soft_init(pset: fhicl::ParameterSet const&)  nil  {do_soft_initialize(pset);}
 }
 
 Paused
@@ -134,7 +141,7 @@ Paused
   stop    pop(stop)  {}
   init(pset: fhicl::ParameterSet const&)  pop(init, pset)  {}
   reinit(pset: fhicl::ParameterSet const&)  Paused  {do_reinitialize(pset);}
-  soft_init(pset: fhicl::ParameterSet const&)  nil  {do_softInitialize(pset);}
+  soft_init(pset: fhicl::ParameterSet const&)  nil  {do_soft_initialize(pset);}
 }
 
 %%

@@ -27,9 +27,16 @@ public:
   bool stop();
   bool pause();
   bool resume();
-  /* Report_ptr */ std::string report(std::string const&) const {return report_string_;}
+  bool shutdown();
+  bool soft_initialize(fhicl::ParameterSet const&);
+  bool reinitialize(fhicl::ParameterSet const&);
+
+  /* Report_ptr */
+  virtual std::string report(std::string const&) const {
+    return report_string_;
+  }
   std::string status() const;
-  bool perfreset(std::string const& which) {
+  virtual bool reset_stats(std::string const& which) {
     if (which=="fail") {
       return false;
     }
@@ -37,30 +44,26 @@ public:
       return true;
     }
   }
-  bool shutdown() {return true;}
-  bool soft_initialize(fhicl::ParameterSet const&) {return true;}
-  bool reinitialize(fhicl::ParameterSet const&) {return true;}
-  std::vector<std::string> legalCommands() const;
+  std::vector<std::string> legal_commands() const;
 
   // these methods provide the operations that are used by the state machine
-  virtual void BootedEnter();
   virtual bool do_initialize(fhicl::ParameterSet const&);
   virtual bool do_start(art::RunID);
+  virtual bool do_stop();
   virtual bool do_pause();
   virtual bool do_resume();
-  virtual bool do_stop();
-  virtual void InRunExit();
+  virtual bool do_shutdown();
   virtual bool do_reinitialize(fhicl::ParameterSet const&);
-  virtual bool do_softInitialize(fhicl::ParameterSet const&);
+  virtual bool do_soft_initialize(fhicl::ParameterSet const&);
   virtual void badTransition(const std::string& );
+
+  virtual void BootedEnter();
+  virtual void InRunExit();
 
 protected:
   CommandableContext fsm_;
   bool external_request_status_;
   std::string report_string_;
-
-  // utility methods
-  bool get_daq_pset(fhicl::ParameterSet const&, fhicl::ParameterSet&);
 };
 
 #endif
