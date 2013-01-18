@@ -45,6 +45,10 @@ void ds50::DS50FragmentGenerator::perfreset () {
   perfreset_ ();
 }
 
+void ds50::DS50FragmentGenerator::shutdown () { 
+  shutdown_ (); 
+}
+  
 bool ds50::DS50FragmentGenerator::should_stop () { return should_stop_; } // no lock required: modified within a lock and used in getNext__ within a lock
 
 
