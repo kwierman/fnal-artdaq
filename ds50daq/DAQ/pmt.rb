@@ -77,11 +77,11 @@ class MPIHandler
       }
     elsif parts.count == 5 and parts[0] == "EXITING"
       @executables.each { |optionsHash|
-        if parts[2] == optionsHash["program"] and parts[1] == optionsHash["host"] and
-            parts[3] == optionsHash["options"]
+        if parts[3] == optionsHash["program"] and parts[1] == optionsHash["host"] and
+            parts[4] == optionsHash["options"]
           optionsHash["state"] = "finished"
           optionsHash["exitcode"] = parts[2]
-          puts "%s on %s is exiting." % [parts[2], parts[1]]
+          puts "%s on %s is exiting." % [parts[3], parts[1]]
           break
         end
       }
