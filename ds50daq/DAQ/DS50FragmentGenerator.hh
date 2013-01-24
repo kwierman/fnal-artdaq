@@ -20,6 +20,7 @@ namespace ds50 {
       void resume ();
       std::string report ();
       void perfreset ();
+      void shutdown ();
 
       int run_number () const { return run_number_; }
       int fragment_id () const { return fragment_id_; }
@@ -30,6 +31,7 @@ namespace ds50 {
       virtual void stop_ () {}
       virtual std::string report_ () { return ""; }
       virtual void perfreset_ () {}
+      virtual void shutdown_ () {}
 
       virtual bool getNext_ (artdaq::FragmentPtrs & output) final;
       virtual bool getNext__ (artdaq::FragmentPtrs & output) = 0;
