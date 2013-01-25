@@ -46,6 +46,7 @@ private:
   size_t mpi_buffer_count_;
   size_t first_data_sender_rank_;
   size_t data_sender_count_;
+  size_t expected_fragments_per_event_;
   bool use_art_;
   bool print_event_store_stats_;
   art::RunID run_id_;
