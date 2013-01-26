@@ -53,8 +53,8 @@ ds50::FragmentReceiver::~FragmentReceiver()
  */
 bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
 {
-  mf::LogDebug("FragmentReceiver") << "initialize method called with \""
-                                   << "ParameterSet = " << pset.to_string()
+  mf::LogDebug("FragmentReceiver") << "initialize method called with "
+                                   << "ParameterSet = \"" << pset.to_string()
                                    << "\".";
 
   // verify that the MPI group was set up successfully
@@ -206,16 +206,16 @@ bool ds50::FragmentReceiver::shutdown()
 
 bool ds50::FragmentReceiver::soft_initialize(fhicl::ParameterSet const& pset)
 {
-  mf::LogDebug("FragmentReceiver") << "soft_initialize method called with \""
-                                   << "ParameterSet = " << pset.to_string()
+  mf::LogDebug("FragmentReceiver") << "soft_initialize method called with "
+                                   << "ParameterSet = \"" << pset.to_string()
                                    << "\".";
   return true;
 }
 
 bool ds50::FragmentReceiver::reinitialize(fhicl::ParameterSet const& pset)
 {
-  mf::LogDebug("FragmentReceiver") << "reinitialize method called with \""
-                                   << "ParameterSet = " << pset.to_string()
+  mf::LogDebug("FragmentReceiver") << "reinitialize method called with "
+                                   << "ParameterSet = \"" << pset.to_string()
                                    << "\".";
   return true;
 }

@@ -54,8 +54,8 @@ ds50::EventBuilder::~EventBuilder()
 bool ds50::EventBuilder::initialize(fhicl::ParameterSet const& pset)
 {
   init_string_ = pset.to_string();
-  mf::LogDebug("EventBuilder") << "initialize method called with DAQ \""
-                               << "ParameterSet = " << init_string_ << "\".";
+  mf::LogDebug("EventBuilder") << "initialize method called with DAQ "
+                               << "ParameterSet = \"" << init_string_ << "\".";
 
   // pull out the relevant parts of the ParameterSet
   fhicl::ParameterSet daq_pset;
@@ -177,16 +177,16 @@ bool ds50::EventBuilder::shutdown()
 
 bool ds50::EventBuilder::soft_initialize(fhicl::ParameterSet const& pset)
 {
-  mf::LogDebug("EventBuilder") << "soft_initialize method called with DAQ \""
-                               << "ParameterSet = " << pset.to_string()
+  mf::LogDebug("EventBuilder") << "soft_initialize method called with DAQ "
+                               << "ParameterSet = \"" << pset.to_string()
                                << "\".";
   return true;
 }
 
 bool ds50::EventBuilder::reinitialize(fhicl::ParameterSet const& pset)
 {
-  mf::LogDebug("EventBuilder") << "reinitialize method called with DAQ \""
-                               << "ParameterSet = " << pset.to_string()
+  mf::LogDebug("EventBuilder") << "reinitialize method called with DAQ "
+                               << "ParameterSet = \"" << pset.to_string()
                                << "\".";
   return true;
 }
