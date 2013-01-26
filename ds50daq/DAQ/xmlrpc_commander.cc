@@ -256,7 +256,7 @@ void xmlrpc_commander::run() try {
 
 #define register_method(m) \
   xmlrpc_c::methodPtr const ptr_ ## m(new m ## _(*this));\
-  registry.addMethod ("ds50." #m, ptr_ ## m);
+  registry.addMethod ("daq." #m, ptr_ ## m);
 
   register_method(init);
   register_method(soft_init);
