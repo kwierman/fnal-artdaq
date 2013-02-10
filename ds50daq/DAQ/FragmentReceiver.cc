@@ -285,7 +285,10 @@ size_t ds50::FragmentReceiver::process_fragments()
     frags.clear();
   }
 
-  MPI_Barrier(local_group_comm_);
+  // 07-Feb-2013, KAB
+  // removing this barrier so that we can stop the trigger (V1495)
+  // generation and readout before stopping the readout of the other cards
+  //MPI_Barrier(local_group_comm_);
 
   mf::LogDebug("FragmentReceiver") << "Before destroying sender.";
   sender_ptr_.reset(nullptr);

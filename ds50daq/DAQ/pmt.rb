@@ -110,6 +110,9 @@ class MPIHandler
           
           lines.each { |line|
             @logger.info(line.chomp)
+            # 07-Feb-2013, KAB: temporary printout of logfile lines
+            # on the console.
+            puts line.chomp
             self.parseOutput(line)
           }
         end
