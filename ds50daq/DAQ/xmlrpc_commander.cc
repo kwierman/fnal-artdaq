@@ -188,7 +188,7 @@ namespace {
   class legal_commands_: public cmd_ {
     public:
       legal_commands_ (xmlrpc_commander& c):
-        cmd_(c, "s:s", "return the currently legal commands") {}
+        cmd_(c, "s:n", "return the currently legal commands") {}
       void execute (xmlrpc_c::paramList const&, xmlrpc_c::value * const retvalP) try {
         std::vector<std::string> cmdList = _c._commandable.legal_commands();
         std::string resultString;
