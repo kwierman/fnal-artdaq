@@ -3,6 +3,7 @@
 
 #include <mutex>
 #include <condition_variable>
+#include <atomic>
 
 #include "fhiclcpp/fwd.h"
 #include "artdaq/DAQdata/FragmentGenerator.hh"
@@ -24,7 +25,8 @@ namespace ds50 {
 
       int run_number () const { return run_number_; }
       int fragment_id () const { return fragment_id_; }
-  protected:
+      size_t ev_counter () const { return ev_counter_.load (); }
+  private:
       virtual void start_ () {}
       virtual void pause_ () {}
       virtual void resume_ () {}
@@ -36,6 +38,7 @@ namespace ds50 {
       virtual bool getNext_ (artdaq::FragmentPtrs & output) final;
       virtual bool getNext__ (artdaq::FragmentPtrs & output) = 0;
 
+      std::atomic<size_t> ev_counter_;
       int run_number_;
       int fragment_id_, sleep_us_;
       bool init_only_;
@@ -52,6 +55,7 @@ namespace ds50 {
      
   protected:
       bool should_stop ();
+      size_t ev_counter_inc (size_t step = 1) { return ev_counter_.fetch_add (step); } // returns the prev value
   };
 }
 
