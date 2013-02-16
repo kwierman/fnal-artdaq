@@ -13,6 +13,7 @@ ds50::DS50FragmentGenerator::DS50FragmentGenerator(const fhicl::ParameterSet &ps
 void ds50::DS50FragmentGenerator::start (int run) { 
   if (run < 0) throw cet::exception("DS50FragmentGenerator") << "negative run number";
 
+  ev_counter_.store (1);
   should_stop_ = false; // no lock required: thread not started yet
   run_number_ = run; 
 
@@ -53,7 +54,6 @@ bool ds50::DS50FragmentGenerator::should_stop () { return should_stop_; } // no 
 
 
 bool ds50::DS50FragmentGenerator::getNext_ (artdaq::FragmentPtrs & output) { 
-  if (run_number_ < 0) start (0);
   if (init_only_) stop ();
 
   if (sleep_us_ > 0) usleep (sleep_us_);
