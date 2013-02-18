@@ -5,6 +5,7 @@
 // from the user of Fragment, as an implementation detail. The interface
 // of Fragment is intended to be used to access the data.
 
+#include <cstddef>
 #include "artdaq/DAQdata/features.hh"
 
 extern "C" {
@@ -23,12 +24,14 @@ struct artdaq::detail::RawFragmentHeader {
 #if USE_MODERN_FEATURES
   typedef uint16_t version_t;
   typedef uint64_t sequence_id_t;
-enum type_t : uint8_t {
-    DATA = 0,
-    END_OF_DATA,
-    INVALID = 0xFF
-  };
+  typedef uint8_t  type_t;
   typedef uint16_t fragment_id_t;
+
+  // define reserved values for type_t
+  static const type_t InvalidFragmentType = 0;
+  static const type_t EndOfDataFragmentType= 1;
+  static const type_t DataFragmentType = 2;
+  // experiment-specific fragment types: 16-255
 
   // Each of the following invalid values is chosen based on the
   // size of the bitfield in which the corresponding data are
@@ -43,7 +46,7 @@ enum type_t : uint8_t {
   RawDataType type        :  8;
   RawDataType unused      :  8;
 
-  RawDataType sequence_id    : 48;
+  RawDataType sequence_id : 48;
   RawDataType fragment_id : 16;
 
   constexpr static std::size_t num_words();

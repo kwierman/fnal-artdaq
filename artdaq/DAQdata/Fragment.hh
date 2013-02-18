@@ -29,12 +29,16 @@ public:
 #if USE_MODERN_FEATURES
   typedef detail::RawFragmentHeader::version_t     version_t;
   typedef detail::RawFragmentHeader::type_t        type_t;
-  typedef detail::RawFragmentHeader::sequence_id_t    sequence_id_t;
+  typedef detail::RawFragmentHeader::sequence_id_t sequence_id_t;
   typedef detail::RawFragmentHeader::fragment_id_t fragment_id_t;
 
   static version_t const InvalidVersion;
   static sequence_id_t const InvalidSequenceID;
   static fragment_id_t const InvalidFragmentID;
+
+  static type_t const InvalidFragmentType;
+  static type_t const EndOfDataFragmentType;
+  static type_t const DataFragmentType;
 
   typedef std::vector<RawDataType>::reference       reference;
   typedef std::vector<RawDataType>::iterator        iterator;
@@ -51,7 +55,7 @@ public:
   // with no data payload.
   Fragment(sequence_id_t sequenceID,
            fragment_id_t fragID,
-           type_t type = type_t::DATA);
+           type_t type = Fragment::DataFragmentType);
 
   // Print out summary information for this Fragment to the given stream.
   void print(std::ostream & os) const;
@@ -60,7 +64,7 @@ public:
   std::size_t   size() const;
   version_t     version() const;
   type_t        type() const;
-  sequence_id_t    sequenceID() const;
+  sequence_id_t sequenceID() const;
   fragment_id_t fragmentID() const;
 
   // Header setters

@@ -12,6 +12,13 @@ artdaq::Fragment::sequence_id_t const artdaq::Fragment::InvalidSequenceID =
 artdaq::Fragment::fragment_id_t const artdaq::Fragment::InvalidFragmentID =
   detail::RawFragmentHeader::InvalidFragmentID;
 
+artdaq::Fragment::type_t const artdaq::Fragment::InvalidFragmentType =
+  detail::RawFragmentHeader::InvalidFragmentType;
+artdaq::Fragment::type_t const artdaq::Fragment::EndOfDataFragmentType =
+  detail::RawFragmentHeader::EndOfDataFragmentType;
+artdaq::Fragment::type_t const artdaq::Fragment::DataFragmentType =
+  detail::RawFragmentHeader::DataFragmentType;
+
 artdaq::Fragment::Fragment() :
   vals_(RawFragmentHeader::num_words(), 0)
 {
@@ -22,8 +29,8 @@ artdaq::Fragment::Fragment(std::size_t n) :
   vals_(n + RawFragmentHeader::num_words(), 0)
 {
   updateSize_();
-  fragmentHeader()->type        = type_t::INVALID;
-  fragmentHeader()->sequence_id    = Fragment::InvalidSequenceID;
+  fragmentHeader()->type        = Fragment::InvalidFragmentType;
+  fragmentHeader()->sequence_id = Fragment::InvalidSequenceID;
   fragmentHeader()->fragment_id = Fragment::InvalidFragmentID;
 }
 
@@ -34,7 +41,7 @@ artdaq::Fragment::Fragment(sequence_id_t sequenceID,
 {
   updateSize_();
   fragmentHeader()->type        = type;
-  fragmentHeader()->sequence_id    = sequenceID;
+  fragmentHeader()->sequence_id = sequenceID;
   fragmentHeader()->fragment_id = fragID;
 }
 
@@ -53,7 +60,7 @@ artdaq::Fragment::eodFrag(size_t nFragsToExpect)
 {
   Fragment result(static_cast<size_t>(ceil(sizeof(nFragsToExpect) /
                                       static_cast<double>(sizeof(value_type)))));
-  result.setType(Fragment::type_t::END_OF_DATA);
+  result.setType(Fragment::EndOfDataFragmentType);
   *result.dataBegin() = nFragsToExpect;
   return result;
 }

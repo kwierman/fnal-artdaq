@@ -97,7 +97,7 @@ recvFragment(Fragment & output)
   // Performance measurement.
   rm.woke(sequence_id, which);
   // Fragment accounting.
-  if (output.type() == Fragment::type_t::END_OF_DATA) {
+  if (output.type() == Fragment::EndOfDataFragmentType) {
     src_status_[src_index] = status_t::PENDING;
     expected_count_[src_index] = *output.dataBegin();
     Debug << "Received EOD from source " << status.MPI_SOURCE

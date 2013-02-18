@@ -9,6 +9,7 @@
 #include <stddef.h>
 #include <iosfwd>
 #include <memory>
+#include <algorithm>
 
 namespace artdaq {
 
@@ -77,6 +78,17 @@ namespace artdaq {
     // the Fragments have been moved.
     std::unique_ptr<std::vector<Fragment>> releaseProduct();
 
+    // Fills in a list of unique fragment types from this event
+    void fragmentTypes(std::vector<Fragment::type_t>& type_list);
+
+    // Release the Fragments from this RawEvent with the specified
+    // fragment type, returning them to the caller through a unique_ptr
+    // that manages a vector into which the Fragments have been moved.
+    // PLEASE NOTE that releaseProduct and releaseProduct(type_t) can not
+    // both be used on the same RawEvent since each one gives up
+    // ownership of the fragments within the event.
+    std::unique_ptr<std::vector<Fragment>> releaseProduct(Fragment::type_t);
+
 #endif
 
   private:
@@ -137,6 +149,32 @@ namespace artdaq {
     // it full of unique_ptrs to Fragments that have been plundered by
     // the move.
     fragments_.clear();
+    return result;
+  }
+
+  inline
+  void RawEvent::fragmentTypes(std::vector<Fragment::type_t>& type_list)
+  {
+    for (size_t i = 0, sz = fragments_.size(); i < sz; ++i) {
+      Fragment::type_t fragType = fragments_[i]->type();
+      if (std::find(type_list.begin(),type_list.end(),fragType) == type_list.end()) {
+        type_list.push_back(fragType);
+      }
+    }
+    //std::sort(type_list.begin(), type_list.end());
+    //std::unique(type_list.begin(), type_list.end());
+  }
+
+  inline
+  std::unique_ptr<std::vector<Fragment>>
+  RawEvent::releaseProduct(Fragment::type_t fragment_type)
+  {
+    std::unique_ptr<std::vector<Fragment>> result(new std::vector<Fragment>);
+    for (size_t i = 0, sz = fragments_.size(); i < sz; ++i) {
+      if (fragments_[i]->type() == fragment_type) {
+        result->push_back(std::move(*fragments_[i]));
+      }
+    }
     return result;
   }
 

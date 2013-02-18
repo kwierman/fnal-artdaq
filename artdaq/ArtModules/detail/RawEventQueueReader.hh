@@ -14,6 +14,7 @@
 #include "fhiclcpp/ParameterSet.h"
 
 #include <string>
+#include <map>
 
 namespace artdaq {
   namespace detail {
@@ -39,6 +40,8 @@ namespace artdaq {
                     art::RunPrincipal *& outR,
                     art::SubRunPrincipal *& outSR,
                     art::EventPrincipal *& outE);
+
+      std::map<Fragment::type_t, std::string> fragment_type_map_;
     };
 
   } // detail
