@@ -131,6 +131,10 @@ bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal * const & i
       put_product_in_principal(popped_event->releaseProduct(type_list[idx]),
                                *outE,
                                pretend_module_name);
+      mf::LogWarning("UnknownFragmentType")
+        << "The product instance name mapping for fragment type \""
+        << type_list[idx] << "\"is not known. Fragments of this type "
+        << "will be stored in the event without any instance name.";
     }
   }
 
