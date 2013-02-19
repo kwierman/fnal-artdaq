@@ -129,7 +129,7 @@ namespace artdaq {
   size_t RawEvent::wordCount() const
   {
     size_t sum = 0;
-  for (auto const & frag : fragments_) { sum += frag->size(); }
+    for (auto const & frag : fragments_) { sum += frag->size(); }
     return sum;
   }
 
@@ -170,11 +170,16 @@ namespace artdaq {
   RawEvent::releaseProduct(Fragment::type_t fragment_type)
   {
     std::unique_ptr<std::vector<Fragment>> result(new std::vector<Fragment>);
-    for (size_t i = 0, sz = fragments_.size(); i < sz; ++i) {
-      if (fragments_[i]->type() == fragment_type) {
-        result->push_back(std::move(*fragments_[i]));
+    FragmentPtrs::iterator iter = fragments_.begin();
+    do {
+      if ((*iter)->type() == fragment_type) {
+        result->push_back(std::move(*(*iter)));
+        iter = fragments_.erase(iter);
       }
-    }
+      else {
+        ++iter;
+      }
+    } while (iter != fragments_.end());
     return result;
   }
 
