@@ -5,6 +5,7 @@
 #ifndef XMLRPC_COMMANDER_H
 #define XMLRPC_COMMANDER_H
 
+#include <mutex>
 #include "ds50daq/DAQ/Commandable.hh"
 
 class xmlrpc_commander {
@@ -20,6 +21,7 @@ class xmlrpc_commander {
 
   public:
     ds50::Commandable& _commandable;
+    std::mutex mutex_;
 };
 
 #endif

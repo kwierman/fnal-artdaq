@@ -22,15 +22,21 @@ namespace {
   class cmd_: public xmlrpc_c::method {
     public:
       cmd_ (xmlrpc_commander& c, const std::string& signature, const std::string& description): _c(c) { _signature = signature; _help = description; }
+      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) {
+	std::unique_lock<std::mutex> lk(_c.mutex_, std::try_to_lock);
+	if (lk.owns_lock ()) execute_ (paramList, retvalP);
+	else *retvalP = xmlrpc_c::value_string ("busy");
+      }
     protected:
       xmlrpc_commander& _c;
+      virtual void execute_ (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) = 0;
   };
 
   class init_: public cmd_ {
     public:
       init_ (xmlrpc_commander& c):
         cmd_(c, "s:s", "initialize the program") {}
-      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try {
+      void execute_ (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) override try {
         if (paramList.size() > 0) {
           std::string configString = paramList.getString(0);
           fhicl::ParameterSet pset;
@@ -56,7 +62,7 @@ namespace {
     public:
       soft_init_ (xmlrpc_commander& c):
         cmd_(c, "s:s", "initialize software components in the program") {}
-      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try {
+      void execute_ (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) override try {
         if (paramList.size() > 0) {
           std::string configString = paramList.getString(0);
           fhicl::ParameterSet pset;
@@ -82,7 +88,7 @@ namespace {
     public:
       reinit_ (xmlrpc_commander& c):
         cmd_(c, "s:s", "re-initialize the program") {}
-      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try {
+      void execute_ (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) override try {
         if (paramList.size() > 0) {
           std::string configString = paramList.getString(0);
           fhicl::ParameterSet pset;
@@ -108,7 +114,7 @@ namespace {
     public:
       start_ (xmlrpc_commander& c):
         cmd_(c, "s:i", "start the run") {}
-      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try {
+      void execute_ (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) override try {
         if (paramList.size() > 0) {
           std::string run_number_string = paramList.getString(0);
           art::RunNumber_t run_number =
@@ -135,7 +141,7 @@ namespace {
     public:
       status_ (xmlrpc_commander& c):
         cmd_(c, "s:s", "report the current state") {}
-      void execute (xmlrpc_c::paramList const&, xmlrpc_c::value * const retvalP) try {
+      void execute_ (xmlrpc_c::paramList const&, xmlrpc_c::value * const retvalP) override try {
         *retvalP = xmlrpc_c::value_string (_c._commandable.status());
       } catch (std::runtime_error &er) { 
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
@@ -147,7 +153,7 @@ namespace {
     public:
       report_ (xmlrpc_commander& c):
         cmd_(c, "s:s", "report statistics") {}
-      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try {
+      void execute_ (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) override try {
         if (paramList.size() > 0) {
           std::string which = paramList.getString(0);
           *retvalP = xmlrpc_c::value_string (_c._commandable.report(which));
@@ -165,7 +171,7 @@ namespace {
     public:
       reset_stats_ (xmlrpc_commander& c):
         cmd_(c, "s:s", "reset statistics") {}
-      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try {
+      void execute_ (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) override try {
         if (paramList.size() > 0) {
           std::string which = paramList.getString(0);
           if (_c._commandable.reset_stats(which)) {
@@ -189,7 +195,7 @@ namespace {
     public:
       legal_commands_ (xmlrpc_commander& c):
         cmd_(c, "s:n", "return the currently legal commands") {}
-      void execute (xmlrpc_c::paramList const&, xmlrpc_c::value * const retvalP) try {
+      void execute_ (xmlrpc_c::paramList const&, xmlrpc_c::value * const retvalP) override try {
         std::vector<std::string> cmdList = _c._commandable.legal_commands();
         std::string resultString;
         for (unsigned int idx = 0; idx < cmdList.size(); ++idx) {
@@ -208,7 +214,7 @@ namespace {
     public: \
       name ## _(xmlrpc_commander& c):\
           cmd_(c, "s:n", description) {}\
-      void execute (xmlrpc_c::paramList const&, xmlrpc_c::value * const retvalP) try { \
+      void execute_ (xmlrpc_c::paramList const&, xmlrpc_c::value * const retvalP) override try { \
         if (_c._commandable.name()) { \
           *retvalP = xmlrpc_c::value_string ("Success"); \
         } \
