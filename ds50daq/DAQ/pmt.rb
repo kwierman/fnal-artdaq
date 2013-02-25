@@ -369,8 +369,6 @@ if __FILE__ == $0
     exit
   end
 
-  print options
-
   pmt = PMT.new(options.parameterFile, options.portNumber, options.logToStdout)
 
   if options.doCleanup and options.parameterFile == nil
