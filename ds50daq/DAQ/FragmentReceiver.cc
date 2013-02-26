@@ -3,6 +3,7 @@
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQdata/makeFragmentGenerator.hh"
 #include "art/Utilities/Exception.h"
+#include "cetlib/exception.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include <pthread.h>
 #include <sched.h>
@@ -102,6 +103,13 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
     tmp_gen_ptr = artdaq::makeFragmentGenerator(frag_gen_name, fr_pset);
   }
   catch (art::Exception& excpt) {
+    mf::LogError("FragmentReceiver")
+      << "Exception creating a FragmentGenerator of type \""
+      << frag_gen_name << "\" with parameter set \"" << fr_pset.to_string()
+      << "\", exception = " << excpt;
+    return false;
+  }
+  catch (cet::exception& excpt) {
     mf::LogError("FragmentReceiver")
       << "Exception creating a FragmentGenerator of type \""
       << frag_gen_name << "\" with parameter set \"" << fr_pset.to_string()
