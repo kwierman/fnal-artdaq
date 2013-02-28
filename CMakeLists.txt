@@ -16,8 +16,6 @@
 # use cmake 2.8 or later
 cmake_minimum_required (VERSION 2.8)
 
-PROJECT(artdaq)
-
 # cetbuildtools contains our cmake modules
 SET ( CETBUILDTOOLS_VERSION $ENV{CETBUILDTOOLS_VERSION} )
 IF (NOT CETBUILDTOOLS_VERSION)
@@ -43,23 +41,9 @@ endif()
 cet_report_compiler_flags()
 
 # these are minimum required versions, not the actual product versions
-find_ups_product( art v1_01_00 )
+find_ups_product( art v1_03_07 )
+find_ups_product( cetbuildtools v3_03_00 )
 
-find_ups_product( cetbuildtools v2_03_00 )
-
-find_ups_product( cpp0x v1_03_00 )
-find_ups_product( cetlib v1_03_00 )
-find_ups_product( fhiclcpp v2_16_00 )
-find_ups_product( messagefacility v1_10_00 )
-
-find_ups_root( v5_34_00 )
-find_ups_boost( v1_47_0 filesystem
-                        program_options
-                        regex
-                        system
-                        thread
-                        unit_test_framework
- )
 
 cet_check_gcc()
 
@@ -71,9 +55,6 @@ include_directories ( $ENV{LIBSIGCPP_LIB}/sigc++-2.0/include )
 #  Find all the libraries needed by our dependent CMakeList.txt files
 find_library( CPPUNIT NAMES cppunit   PATHS $ENV{CPPUNIT_LIB}   NO_DEFAULT_PATH )
 find_library( SIGC    NAMES sigc-2.0  PATHS $ENV{LIBSIGCPP_LIB} NO_DEFAULT_PATH )
-
-# define common flags
-# set( CMAKE_CXX_LINK_FLAGS "${CPPUNIT} -luuid -ldl" )
 
 # Debug streamer.
 string(TOUPPER ${CMAKE_BUILD_TYPE} BTYPE_UC)
@@ -94,10 +75,9 @@ if(${WANT_MPI})
   endif()
 endif()
 
-message(STATUS "Project is ${product} ${version} ${qualifier}")
-
 # macros for artdaq_dictionary and simple_plugin
 include(ArtDictionary)
+include(ArtMake)
 include(BuildPlugins)
 
 # testing

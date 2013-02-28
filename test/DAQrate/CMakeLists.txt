@@ -12,8 +12,11 @@ if(WANT_MPI)
     cet_test(cpi_t SOURCES ${CPI_SOURCE} LIBRARIES ${MPI_LIBRARIES})
   endif()
 
-  add_executable(s_r_handles s_r_handles.cc)
-  target_link_libraries(s_r_handles artdaq_DAQrate artdaq_DAQdata)
+  art_make_exec(NAME s_r_handles NO_INSTALL
+    LIBRARIES
+    artdaq_DAQrate
+    artdaq_DAQdata
+    )
 
   # This is an integration test that exercises SHandles and RHandles,
   # making sure they can communicate as expected.
