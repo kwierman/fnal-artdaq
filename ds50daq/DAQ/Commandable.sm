@@ -46,6 +46,7 @@ Entry { BootedEnter(); }
   init(pset: fhicl::ParameterSet const&)  [ctxt.do_initialize(pset)]
       Initialized/push(InitializedMap::Ready)  {}
   init(pset: fhicl::ParameterSet const&)  nil  {}
+  shutdown  Booted  {}
 }
 
 Initialized
@@ -95,6 +96,7 @@ Exit  { InRunExit(); }
   stop  Error  {}
   init(pset: fhicl::ParameterSet const&)  [ctxt.do_stop()]  pop(init, pset)  {}
   init(pset: fhicl::ParameterSet const&)  Error  {}
+  shutdown  pop(shutdown)  {}
 }
 
 Error
@@ -130,6 +132,7 @@ Running
   init(pset: fhicl::ParameterSet const&)  pop(init, pset)  {}
   reinit(pset: fhicl::ParameterSet const&)  Paused  {do_reinitialize(pset);}
   soft_init(pset: fhicl::ParameterSet const&)  nil  {do_soft_initialize(pset);}
+  shutdown  pop(shutdown)  {}
 }
 
 Paused
@@ -142,6 +145,7 @@ Paused
   init(pset: fhicl::ParameterSet const&)  pop(init, pset)  {}
   reinit(pset: fhicl::ParameterSet const&)  Paused  {do_reinitialize(pset);}
   soft_init(pset: fhicl::ParameterSet const&)  nil  {do_soft_initialize(pset);}
+  shutdown  pop(shutdown)  {}
 }
 
 %%

@@ -4,35 +4,83 @@ require "xmlrpc/server"
 require "open3"
 require "tempfile"
 require "logger"
+require "optparse"
+require "ostruct"
+
+class LoggerIO
+  # The standard ruby logger doesn't really support writing to both STDOUT and
+  # a file at the same time.  This class implemented the interface the logging
+  # class expects for a file handle (mainly a write and a close method) and will
+  # optionally write to stdout and a file.  It will also handle file rotation.
+  def openFile
+    @fileIndex += 1
+    if @fileIndex > @maxFiles
+      @fileIndex = 1
+    end
+    
+    logFileName = "pmt-%d.%d.log" % [ Process.pid, @fileIndex ]
+    puts "Log file name: %s" % [logFileName]
+    
+    if @fileHandle != nil
+      @fileHandle.close
+    end
+    @fileHandle = File.open(logFileName, "w")
+  end
+  
+  def initialize(logToStdout = True)
+    @logToStdout = logToStdout
+    @fileSize = 0
+    @fileIndex = 0
+    @fileHandle = nil
+    
+    @maxFiles = 5
+    @maxFileSize = 1048576
+    
+    self.openFile
+  end
+  
+  def write(*args)
+    if @fileHandle != nil
+      args.each { |arg|
+        if arg.length + @fileSize > @maxFileSize
+          @fileSize = 0
+          self.openFile
+        end
+        @fileSize += arg.length
+        @fileHandle.write(*args)
+        @fileHandle.flush
+      }
+    end
+    
+    if @logToStdout
+      STDOUT.write(*args)
+    end
+  end
+  
+  def close
+    if @fileHandle != nil
+      @fileHandle.close
+    end
+  end
+end
 
 class MPIHandler
   def executables
     @executables
   end
 
-  def createLogger()
-    # Create a logger object.  This will create log files with the name:
-    #  pmt-yearmondate-hourminsec.log
-    # Where the timestamp is the time that executables were spawned.
-    currentTime = Time.now
-    logFileName = "pmt-%d%02d%02d-%02d%02d%02d.log" % [ currentTime.year, 
-                                                        currentTime.month,
-                                                        currentTime.day,
-                                                        currentTime.hour,
-                                                        currentTime.min,
-                                                        currentTime.sec ]
-    @logger = Logger.new(logFileName, 5, 10240000)
+  def createLogger(logToStdout)
+    @logger = Logger.new(LoggerIO.new(logToStdout))
     @logger.level = Logger::INFO
     @logger.formatter = proc do |severity, datetime, progname, msg|
       "#{datetime}: #{msg}\n"
     end
-    puts "Log file basename: %s" % logFileName
   end
 
-  def initialize()
+  def initialize(logToStdout)
     @mpiThread = nil
     @executables = []
-    self.createLogger
+    self.createLogger(logToStdout)
   end
 
   def addExecutable(program, host, options)
@@ -65,6 +113,10 @@ class MPIHandler
   end
 
   def parseOutput(line)
+    # Parse the output of the MPI processes.  The shell wrapper scripts that
+    # launch the actual exectuables print the following:
+    #   STARTING:hostname:executable:command line options
+    #   EXITING:hostname:return code:executable:command line options
     parts = line.chomp.split(":")
     if parts.count == 4 and parts[0] == "STARTING"
       @executables.each { |optionsHash|
@@ -89,6 +141,8 @@ class MPIHandler
   end
 
   def handleIO(stdoutHandle, stderrHandle)
+    # Poll stdout and stderr for data.  If a complete line has been received
+    # pass it to the parsing code.
     stdBuffers = {}
     while true
       readyFDs = IO.select([stdoutHandle, stderrHandle])
@@ -110,9 +164,6 @@ class MPIHandler
           
           lines.each { |line|
             @logger.info(line.chomp)
-            # 07-Feb-2013, KAB: temporary printout of logfile lines
-            # on the console.
-            puts line.chomp
             self.parseOutput(line)
           }
         end
@@ -225,42 +276,40 @@ class PMTRPCHandler
     @mpiHandler.start
     return true
   end
+
+  def stopSystem
+    # Shut down any applications that have been configured.
+    return true
+  end
 end
 
 class PMT
-  def initialize(argv)
-    # Verify that the command line options are reasonable.  If the user has
-    # passed in a config file parse that and load the specified executables
-    # into the MPI handler class.
-    if argv.count != 2 and argv.count != 3
-      puts "#{$0} -p <port number> <program definition (optional)>"
-      exit
-    end
-
+  def initialize(parameterFile, portNumber, logToStdout)
     @rpcThread = nil
+    @mpiHandler = MPIHandler.new(logToStdout)
 
-    @mpiHandler = MPIHandler.new
-    if argv.count == 3
-      IO.foreach(argv[2]) { |definition|
+    if parameterFile != nil
+      IO.foreach(parameterFile) { |definition|
         program, host, port = definition.split(" ")
         @mpiHandler.addExecutable(program, host, port)
       }
     end
     
-    # Instantiate the RPM handler and then create the RPC server.
+    # Instantiate the RPC handler and then create the RPC server.
     @rpcHandler = PMTRPCHandler.new(@mpiHandler)
-    @rpcServer = XMLRPC::Server.new(port = argv[1])
+    @rpcServer = XMLRPC::Server.new(port = portNumber)
     @rpcServer.add_handler("pmt", @rpcHandler)
+  end
 
+  def start
     # If we've been passed our executable list via the command line we need
     # to spawn off the MPI processes right away.
     if @mpiHandler.executables.size > 0:
         @mpiHandler.start
     end
-  end
 
-  def start
-    # Startup the RPC server.  This does not return.
+    # Startup the RPC server in a new thread so that we can actually return from
+    # here.
     @rpcThread = Thread.new() do
       @rpcServer.serve
     end
@@ -278,8 +327,59 @@ class PMT
 end
 
 if __FILE__ == $0
-  pmt = PMT.new(ARGV)
-  pmt.start
+  options = OpenStruct.new
+  options.logToStdout = true
+  options.portNumber = 8080
+  options.parameterFile = nil
+  options.doCleanup = false
+
+  optParser = OptionParser.new do |opts|
+    opts.banner = "Usage: pmt.rb [options]"
+    opts.separator ""
+    opts.separator "Specific options:"
+    opts.on("-p", "--port [PORT]",
+            "The port PMT will use for XMLRPC communications.") do |port|
+      options.portNumber = Integer(port)
+    end
+  
+    opts.on("-q", "--quiet", "Don't log output to STDOUT.") do |stdout|
+      options.logToStdout = false
+    end
+  
+    opts.on("-c", "--cleanup", "Cleanup a set of processes launched by another",
+            "instance of PMT.  Note that a definition file must",
+            "be specified for this to work.") do |cleanup|
+      options.doCleanup = true
+    end
+    
+    opts.on("-d", "--definitions [definition file]",
+            "The list of programs and port numbers PMT will manage.") do |defs|
+      options.parameterFile = defs
+    end
+
+    opts.on_tail("-h", "--help", "Show this message.") do
+      puts opts
+      exit
+    end
+  end
+
+  optParser.parse(ARGV)
+  if ARGV.length == 0
+    puts optParser.help
+    exit
+  end
+
+  pmt = PMT.new(options.parameterFile, options.portNumber, options.logToStdout)
+
+  if options.doCleanup and options.parameterFile == nil
+    puts "A program definition file needs to be specified for the cleanup"
+    puts "option to work."
+    exit
+  elsif options.doCleanup
+    pmt.stop
+  else
+    pmt.start
+  end
 
   signals = %w[INT TERM HUP] & Signal.list.keys
   signals.each { 
