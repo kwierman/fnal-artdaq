@@ -197,14 +197,14 @@ std::vector<std::string> ds50::Commandable::legal_commands() const
     return { "init", "soft_init", "start", "shutdown" };
   }
   if (currentState == "Running") {
-    return { "pause", "stop", "init", "soft_init", "reinit" };
+    return { "pause", "stop", "init", "soft_init", "reinit", "shutdown" };
   }
   if (currentState == "Paused") {
-    return { "resume", "stop", "init", "soft_init", "reinit" };
+    return { "resume", "stop", "init", "soft_init", "reinit", "shutdown" };
   }
 
   // Booted and Error
-  return { "init" };
+  return { "init", "shutdown" };
 }
 
 // *******************************************************************

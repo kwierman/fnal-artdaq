@@ -201,6 +201,9 @@ namespace {
         for (unsigned int idx = 0; idx < cmdList.size(); ++idx) {
           if (idx > 0) {resultString.append(" ");}
           resultString.append(cmdList[idx]);
+          if (cmdList[idx] == "shutdown") {
+            resultString.append(" reset");
+          }
         }
         *retvalP = xmlrpc_c::value_string (resultString);
       } catch (std::runtime_error &er) { 
@@ -278,6 +281,10 @@ void xmlrpc_commander::run() try {
 
   register_method(shutdown);
 
+  // alias "daq.reset" to the internal shutdown transition
+  xmlrpc_c::methodPtr const ptr_reset(new shutdown_(*this));
+  registry.addMethod ("daq.reset", ptr_reset);
+ 
 #undef register_method
 
   xmlrpc_c::serverAbyss server(xmlrpc_c::serverAbyss::constrOpt ().registryP (&registry).portNumber (_port));
