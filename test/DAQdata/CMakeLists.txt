@@ -1,4 +1,8 @@
 
+cet_test(Fragment_t USE_BOOST_UNIT
+  LIBRARIES artdaq_DAQdata
+  )
+
 cet_test(FragmentGenerator_t USE_BOOST_UNIT
   LIBRARIES artdaq_DAQdata
   )

@@ -8,6 +8,7 @@
 #include <iterator>
 #include <vector>
 #include <stdint.h>
+#include <string.h>
 
 #include "artdaq/DAQdata/detail/RawFragmentHeader.hh"
 #include "artdaq/DAQdata/features.hh"
@@ -51,6 +52,13 @@ public:
   // all values zeroed.
   explicit Fragment(std::size_t n);
 
+  // Create a Fragment ready to hold the specified number of words
+  // of payload, with the specified sequence ID, fragment ID,
+  // fragment type, and metadata.
+  template <class T>
+  Fragment(std::size_t payload_size, sequence_id_t sequence_id,
+           fragment_id_t fragment_id, type_t type, const T & metadata);
+
   // Create a fragment with the given event id and fragment id, and
   // with no data payload.
   Fragment(sequence_id_t sequenceID,
@@ -69,13 +77,27 @@ public:
 
   // Header setters
   void setVersion(version_t version);
-  void setType(type_t type);
+  void setUserType(type_t type);
+  void setSystemType(type_t type);
   void setSequenceID(sequence_id_t sequence_id);
   void setFragmentID(fragment_id_t fragment_id);
 
   // Return the number of words in the data payload. This does not
   // include the number of words in the header.
   std::size_t dataSize() const;
+
+  // Test whether this Fragment has metadata
+  bool hasMetadata() const;
+
+  // Return a pointer to the metadata. This throws an exception
+  // if the fragment contains no metadata.
+  template <class T> T * metadata();
+  template <class T> T const * metadata() const;
+
+  // Set the metadata in the Fragment to the contents of
+  // the specified structure.  This throws an exception if
+  // the Fragment already contains metadata.
+  template <class T> void setMetadata(const T & md);
 
   // Resize the data payload to hold sz words.
   void resize(std::size_t sz, RawDataType v = RawDataType());
@@ -96,6 +118,10 @@ public:
   bool empty();
   void reserve(std::size_t cap);
   void swap(Fragment & other);
+
+  RawDataType * dataAddress();
+  RawDataType * metadataAddress();   // for internal use only
+  RawDataType * headerAddress();
 
   static Fragment eodFrag(size_t nFragsToExpect);
 
@@ -119,6 +145,23 @@ private:
 };
 
 #if USE_MODERN_FEATURES
+template <class T>
+artdaq::Fragment::
+Fragment(std::size_t payload_size, sequence_id_t sequence_id,
+         fragment_id_t fragment_id, type_t type, const T & metadata) :
+  vals_(payload_size + artdaq::detail::RawFragmentHeader::num_words() +
+        std::ceil(sizeof(T)/sizeof(artdaq::RawDataType)), 0)
+{
+  updateSize_();
+  fragmentHeader()->sequence_id = sequence_id;
+  fragmentHeader()->fragment_id = fragment_id;
+  fragmentHeader()->type        = type;
+  fragmentHeader()->metadata_word_count =
+    std::ceil(sizeof(T)/sizeof(artdaq::RawDataType));
+
+  memcpy(metadataAddress(), &metadata, sizeof(T));
+}
+
 inline
 std::size_t
 artdaq::Fragment::size() const
@@ -163,9 +206,16 @@ artdaq::Fragment::setVersion(version_t version)
 
 inline
 void
-artdaq::Fragment::setType(type_t type)
+artdaq::Fragment::setUserType(type_t type)
 {
-  fragmentHeader()->type = static_cast<uint8_t>(type);
+  fragmentHeader()->setUserType(static_cast<uint8_t>(type));
+}
+
+inline
+void
+artdaq::Fragment::setSystemType(type_t type)
+{
+  fragmentHeader()->setSystemType(static_cast<uint8_t>(type));
 }
 
 inline
@@ -195,14 +245,66 @@ inline
 std::size_t
 artdaq::Fragment::dataSize() const
 {
-  return vals_.size() - detail::RawFragmentHeader::num_words();
+  return vals_.size() - detail::RawFragmentHeader::num_words() -
+    fragmentHeader()->metadata_word_count;
+}
+
+inline
+bool
+artdaq::Fragment::hasMetadata() const
+{
+  return fragmentHeader()->metadata_word_count > 0;
+}
+
+template <class T>
+T *
+artdaq::Fragment::metadata()
+{
+  if (fragmentHeader()->metadata_word_count < 1) {
+    throw cet::exception("InvalidRequest")
+      << "No metadata has been stored in this Fragment.";
+  }
+  return reinterpret_cast<T *>
+    (&vals_[detail::RawFragmentHeader::num_words()]);
+}
+
+template <class T>
+T const *
+artdaq::Fragment::metadata() const
+{
+  if (fragmentHeader()->metadata_word_count < 1) {
+    throw cet::exception("InvalidRequest")
+      << "No metadata has been stored in this Fragment.";
+  }
+  return reinterpret_cast<T const *>
+    (&vals_[detail::RawFragmentHeader::num_words()]);
+}
+
+template <class T>
+void
+artdaq::Fragment::setMetadata(const T & metadata)
+{
+  if (fragmentHeader()->metadata_word_count > 0) {
+    throw cet::exception("InvalidRequest")
+      << "Metadata has already been stored in this Fragment.";
+  }
+
+  size_t addl_word_count =
+    std::ceil(sizeof(T)/sizeof(artdaq::RawDataType));
+  vals_.insert(vals_.begin()+detail::RawFragmentHeader::num_words(),
+               addl_word_count, 0);
+  updateSize_();
+  fragmentHeader()->metadata_word_count = addl_word_count;
+
+  memcpy(metadataAddress(), &metadata, sizeof(T));
 }
 
 inline
 void
 artdaq::Fragment::resize(std::size_t sz, RawDataType v)
 {
-  vals_.resize(sz + detail::RawFragmentHeader::num_words(), v);
+  vals_.resize(sz + fragmentHeader()->metadata_word_count +
+               detail::RawFragmentHeader::num_words(), v);
   updateSize_();
 }
 
@@ -210,7 +312,8 @@ inline
 artdaq::Fragment::iterator
 artdaq::Fragment::dataBegin()
 {
-  return vals_.begin() + detail::RawFragmentHeader::num_words();
+  return vals_.begin() + detail::RawFragmentHeader::num_words() +
+    fragmentHeader()->metadata_word_count;
 }
 
 inline
@@ -231,7 +334,8 @@ inline
 artdaq::Fragment::const_iterator
 artdaq::Fragment::dataBegin() const
 {
-  return vals_.begin() + detail::RawFragmentHeader::num_words();
+  return vals_.begin() + detail::RawFragmentHeader::num_words() +
+    fragmentHeader()->metadata_word_count;
 }
 
 inline
@@ -260,14 +364,16 @@ inline
 bool
 artdaq::Fragment::empty()
 {
-  return vals_.size() - detail::RawFragmentHeader::num_words() == 0;
+  return (vals_.size() - detail::RawFragmentHeader::num_words() -
+          fragmentHeader()->metadata_word_count) == 0;
 }
 
 inline
 void
 artdaq::Fragment::reserve(std::size_t cap)
 {
-  vals_.reserve(cap + detail::RawFragmentHeader::num_words());
+  vals_.reserve(cap + detail::RawFragmentHeader::num_words() +
+                fragmentHeader()->metadata_word_count);
 }
 
 inline
@@ -275,6 +381,32 @@ void
 artdaq::Fragment::swap(Fragment & other)
 {
   vals_.swap(other.vals_);
+}
+
+inline
+artdaq::RawDataType *
+artdaq::Fragment::dataAddress()
+{
+  return &vals_[0] + detail::RawFragmentHeader::num_words() +
+    fragmentHeader()->metadata_word_count;
+}
+
+inline
+artdaq::RawDataType *
+artdaq::Fragment::metadataAddress()
+{
+  if (fragmentHeader()->metadata_word_count < 1) {
+    throw cet::exception("InvalidRequest")
+      << "No metadata has been stored in this Fragment.";
+  }
+  return &vals_[0] + detail::RawFragmentHeader::num_words();
+}
+
+inline
+artdaq::RawDataType *
+artdaq::Fragment::headerAddress()
+{
+  return &vals_[0];
 }
 
 template <class InputIterator>
@@ -322,3 +454,4 @@ artdaq::operator<<(std::ostream & os, artdaq::Fragment const & f)
 #endif/* USE_MODERN_FEATURES */
 
 #endif /* artdaq_DAQdata_Fragment_hh */
+

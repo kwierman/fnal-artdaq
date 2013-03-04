@@ -23,6 +23,7 @@ artdaq::Fragment::Fragment() :
   vals_(RawFragmentHeader::num_words(), 0)
 {
   updateSize_();
+  fragmentHeader()->metadata_word_count = 0;
 }
 
 artdaq::Fragment::Fragment(std::size_t n) :
@@ -32,6 +33,7 @@ artdaq::Fragment::Fragment(std::size_t n) :
   fragmentHeader()->type        = Fragment::InvalidFragmentType;
   fragmentHeader()->sequence_id = Fragment::InvalidSequenceID;
   fragmentHeader()->fragment_id = Fragment::InvalidFragmentID;
+  fragmentHeader()->metadata_word_count = 0;
 }
 
 artdaq::Fragment::Fragment(sequence_id_t sequenceID,
@@ -40,9 +42,16 @@ artdaq::Fragment::Fragment(sequence_id_t sequenceID,
   vals_(RawFragmentHeader::num_words(), 0)
 {
   updateSize_();
-  fragmentHeader()->type        = type;
+  if (type == Fragment::DataFragmentType) {
+    // this value is special because it is the default specified
+    // in the constructor declaration
+    fragmentHeader()->setSystemType(type);
+  } else {
+    fragmentHeader()->setUserType(type);
+  }
   fragmentHeader()->sequence_id = sequenceID;
   fragmentHeader()->fragment_id = fragID;
+  fragmentHeader()->metadata_word_count = 0;
 }
 
 #if USE_MODERN_FEATURES
@@ -60,7 +69,7 @@ artdaq::Fragment::eodFrag(size_t nFragsToExpect)
 {
   Fragment result(static_cast<size_t>(ceil(sizeof(nFragsToExpect) /
                                       static_cast<double>(sizeof(value_type)))));
-  result.setType(Fragment::EndOfDataFragmentType);
+  result.setSystemType(Fragment::EndOfDataFragmentType);
   *result.dataBegin() = nFragsToExpect;
   return result;
 }
