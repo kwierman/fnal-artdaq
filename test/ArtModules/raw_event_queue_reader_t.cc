@@ -2,6 +2,7 @@
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQrate/GlobalQueue.hh"
 
+#include "fhiclcpp/make_ParameterSet.h"
 #include "art/Framework/Core/FileBlock.h"
 #include "art/Framework/Core/PrincipalMaker.h"
 #include "art/Framework/Core/RootDictionaryManager.h"
@@ -189,8 +190,10 @@ struct REQRTestFixture {
   }
 
   RawEventQueueReader & reader() {
+    fhicl::ParameterSet pset;
+    fhicl::make_ParameterSet("fragment_type_map: [[1, \"ABCDEF\"]]", pset);
     static RawEventQueueReader
-    s_reader(ParameterSet(),
+    s_reader(pset,
              helper(),
              principal_maker());
     return s_reader;
@@ -208,11 +211,13 @@ namespace {
     BOOST_REQUIRE(run || subrun == nullptr); // Sanity check.
     std::shared_ptr<RawEvent> event(new RawEvent(eventid.run(), eventid.subRun(), eventid.event()));
     std::vector<Fragment::value_type> fakeData { 1, 2, 3, 4 };
-    event->insertFragment(std::move(std::unique_ptr<Fragment>
-                                    (new Fragment(std::move(Fragment::dataFrag(eventid.event(),
-                                        0,
-                                        fakeData.begin(),
-                                        fakeData.end()))))));
+    std::unique_ptr<Fragment>
+      tmpFrag(new Fragment(std::move(Fragment::dataFrag(eventid.event(),
+                                                        0,
+                                                        fakeData.begin(),
+                                                        fakeData.end()))));
+    tmpFrag->setUserType(1);
+    event->insertFragment(std::move(tmpFrag));
     artdaq::getGlobalQueue().enqNowait(event);
     EventPrincipal * newevent = nullptr;
     SubRunPrincipal * newsubrun = nullptr;
@@ -237,7 +242,7 @@ namespace {
     BOOST_CHECK(newevent->id() == eventid);
     art::Event e(*newevent, ModuleDescription());
     art::Handle<std::vector<Fragment>> h;
-    e.getByLabel("daq", h);
+    e.getByLabel("daq", "ABCDEF", h);
     BOOST_CHECK(h.isValid());
     BOOST_CHECK(h->size() == 1);
     BOOST_CHECK(std::equal(fakeData.begin(),
