@@ -27,6 +27,7 @@ namespace artdaq {
 
   private:
     std::string raw_label_;
+    std::string product_instance_name_;
     std::size_t num_frags_per_event_;
     std::size_t num_events_expected_;
     std::size_t num_events_processed_;
@@ -34,6 +35,7 @@ namespace artdaq {
 
   FragmentSniffer::FragmentSniffer(fhicl::ParameterSet const & p) :
     raw_label_(p.get<std::string>("raw_label")),
+    product_instance_name_(p.get<std::string>("product_instance_name")),
     num_frags_per_event_(p.get<size_t>("num_frags_per_event")),
     num_events_expected_(p.get<size_t>("num_events_expected")),
     num_events_processed_()
@@ -43,7 +45,7 @@ namespace artdaq {
   void FragmentSniffer::analyze(art::Event const & e)
   {
     art::Handle<Fragments> handle;
-    e.getByLabel(raw_label_, handle);
+    e.getByLabel(raw_label_, product_instance_name_, handle);
     assert(handle->empty() || "getByLabel returned empty handle");
     assert(handle->size() == num_frags_per_event_);
     ++num_events_processed_;

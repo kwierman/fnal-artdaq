@@ -61,7 +61,7 @@ sendFragment(Fragment && frag)
 {
   // Precondition: Fragment must be complete and consistent (including
   // header information).
-  if (frag.type() == Fragment::type_t::END_OF_DATA) {
+  if (frag.type() == Fragment::EndOfDataFragmentType) {
     throw cet::exception("LogicError")
         << "EOD fragments should not be sent on as received: "
         << "use sendEODFrag() instead.";

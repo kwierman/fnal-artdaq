@@ -127,7 +127,7 @@ void Program::source()
           );
     while (from_d.sourcesActive() > 0) {
       from_d.recvFragment(frag);
-      if (want_sink_ && frag.type() != artdaq::Fragment::type_t::END_OF_DATA) {
+      if (want_sink_ && frag.type() != artdaq::Fragment::EndOfDataFragmentType) {
         to_r->sendFragment(std::move(frag));
       }
       if (from_d.sourcesActive() > 0 &&
@@ -235,7 +235,7 @@ void Program::sink()
       while (h.sourcesActive() > 0) {
         artdaq::FragmentPtr pfragment(new artdaq::Fragment);
         h.recvFragment(*pfragment);
-        if (pfragment->type() != artdaq::Fragment::type_t::END_OF_DATA) {
+        if (pfragment->type() != artdaq::Fragment::EndOfDataFragmentType) {
           events.insert(std::move(pfragment));
         }
         if (h.sourcesActive() == h.sourcesPending()) {

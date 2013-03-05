@@ -14,6 +14,7 @@
 #include "fhiclcpp/ParameterSet.h"
 
 #include <string>
+#include <map>
 
 namespace artdaq {
   namespace detail {
@@ -26,6 +27,7 @@ namespace artdaq {
       daqrate::seconds            waiting_time;
       bool                        resume_after_timeout;
       std::string                 pretend_module_name;
+      std::string                 unidentified_instance_name;
 
       RawEventQueueReader(fhicl::ParameterSet const & ps,
                           art::ProductRegistryHelper & help,
@@ -39,6 +41,8 @@ namespace artdaq {
                     art::RunPrincipal *& outR,
                     art::SubRunPrincipal *& outSR,
                     art::EventPrincipal *& outE);
+
+      std::map<Fragment::type_t, std::string> fragment_type_map_;
     };
 
   } // detail
