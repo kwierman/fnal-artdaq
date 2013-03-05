@@ -16,9 +16,11 @@ artdaq::detail::RawEventQueueReader::RawEventQueueReader(fhicl::ParameterSet con
   incoming_events(getGlobalQueue()),
   waiting_time(ps.get<double>("waiting_time", std::numeric_limits<double>::infinity())),
   resume_after_timeout(ps.get<bool>("resume_after_timeout", true)),
-  pretend_module_name("daq")
+  pretend_module_name("daq"),
+  unidentified_instance_name("unidentified")
 {
-  help.reconstitutes<Fragments, art::InEvent>(pretend_module_name);
+  help.reconstitutes<Fragments, art::InEvent>(pretend_module_name,
+                                              unidentified_instance_name);
 
   // 18-Feb-2013, KAB: added support for mapping fragments into
   // user-specified types.  Here is a sample FHICL parameter
@@ -130,11 +132,13 @@ bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal * const & i
     else {
       put_product_in_principal(popped_event->releaseProduct(type_list[idx]),
                                *outE,
-                               pretend_module_name);
+                               pretend_module_name,
+                               unidentified_instance_name);
       mf::LogWarning("UnknownFragmentType")
         << "The product instance name mapping for fragment type \""
-        << type_list[idx] << "\"is not known. Fragments of this type "
-        << "will be stored in the event without any instance name.";
+        << ((int)type_list[idx]) << "\" is not known. Fragments of this "
+        << "type will be stored in the event with an instance name of \""
+        << unidentified_instance_name << "\".";
     }
   }
 
