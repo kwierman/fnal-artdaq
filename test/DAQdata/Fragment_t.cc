@@ -17,6 +17,10 @@ struct MetadataTypeTwo {
   uint16_t field5;
 };
 
+struct MetadataTypeHuge {
+  uint64_t fields[300];
+};
+
 BOOST_AUTO_TEST_SUITE(Fragment_test)
 
 BOOST_AUTO_TEST_CASE(Construct)
@@ -561,6 +565,29 @@ BOOST_AUTO_TEST_CASE(Metadata)
   BOOST_REQUIRE_EQUAL(dataPtr[2], (uint64_t)0x456789ab);
   BOOST_REQUIRE_EQUAL(dataPtr[3], (uint64_t)0x3c3c3c3c);
   BOOST_REQUIRE_EQUAL(dataPtr[4], (uint64_t)0x5a5a5a5a);
+
+  MetadataTypeHuge mdHuge;
+  artdaq::Fragment f4(19);
+  BOOST_REQUIRE_EQUAL(f4.hasMetadata(),false);
+  try {
+    f4.setMetadata(mdHuge);
+    BOOST_REQUIRE(0 && "Should have thrown exception");
+  }
+  catch (cet::exception const & excpt) {
+  }
+  catch (...) {
+    BOOST_REQUIRE(0 && "Should have thrown cet::exception");
+  }
+
+  try {
+    artdaq::Fragment f5(127, 1, 2, 3, mdHuge);
+    BOOST_REQUIRE(0 && "Should have thrown exception");
+  }
+  catch (cet::exception const & excpt) {
+  }
+  catch (...) {
+    BOOST_REQUIRE(0 && "Should have thrown cet::exception");
+  }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

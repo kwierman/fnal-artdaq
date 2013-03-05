@@ -156,8 +156,17 @@ Fragment(std::size_t payload_size, sequence_id_t sequence_id,
   fragmentHeader()->sequence_id = sequence_id;
   fragmentHeader()->fragment_id = fragment_id;
   fragmentHeader()->type        = type;
-  fragmentHeader()->metadata_word_count =
-    std::ceil(sizeof(T)/sizeof(artdaq::RawDataType));
+
+  size_t max_md_wc =
+    (256 * sizeof(detail::RawFragmentHeader::metadata_word_count_t)) - 1;
+  size_t requested_md_wc = std::ceil(sizeof(T)/sizeof(artdaq::RawDataType));
+  if (requested_md_wc > max_md_wc) {
+    throw cet::exception("InvalidRequest")
+      << "The requested metadata structure is too large: "
+      << "requested word count = " << requested_md_wc
+      << ", maximum word count = " << max_md_wc;
+  }
+  fragmentHeader()->metadata_word_count = requested_md_wc;
 
   memcpy(metadataAddress(), &metadata, sizeof(T));
 }
@@ -289,12 +298,20 @@ artdaq::Fragment::setMetadata(const T & metadata)
       << "Metadata has already been stored in this Fragment.";
   }
 
-  size_t addl_word_count =
-    std::ceil(sizeof(T)/sizeof(artdaq::RawDataType));
+  size_t max_md_wc =
+    (256 * sizeof(detail::RawFragmentHeader::metadata_word_count_t)) - 1;
+  size_t requested_md_wc = std::ceil(sizeof(T)/sizeof(artdaq::RawDataType));
+  if (requested_md_wc > max_md_wc) {
+    throw cet::exception("InvalidRequest")
+      << "The requested metadata structure is too large: "
+      << "requested word count = " << requested_md_wc
+      << ", maximum word count = " << max_md_wc;
+  }
+
   vals_.insert(vals_.begin()+detail::RawFragmentHeader::num_words(),
-               addl_word_count, 0);
+               requested_md_wc, 0);
   updateSize_();
-  fragmentHeader()->metadata_word_count = addl_word_count;
+  fragmentHeader()->metadata_word_count = requested_md_wc;
 
   memcpy(metadataAddress(), &metadata, sizeof(T));
 }
