@@ -224,7 +224,7 @@ size_t ds50::EventBuilder::process_fragments()
   while (receiver_ptr_->sourcesActive() > 0) {
     artdaq::FragmentPtr pfragment(new artdaq::Fragment);
     receiver_ptr_->recvFragment(*pfragment);
-    if (pfragment->type() != artdaq::Fragment::type_t::END_OF_DATA) {
+    if (pfragment->type() != artdaq::Fragment::EndOfDataFragmentType) {
       //mf::LogDebug("EventBuilder")
       //  << "Received fragment " << fragments_received << ".";
       ++fragments_received;
