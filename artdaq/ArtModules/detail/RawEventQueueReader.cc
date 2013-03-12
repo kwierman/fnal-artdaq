@@ -10,8 +10,8 @@
 using std::string;
 
 artdaq::detail::RawEventQueueReader::RawEventQueueReader(fhicl::ParameterSet const & ps,
-    art::ProductRegistryHelper & help,
-    art::PrincipalMaker const & pm):
+							 art::ProductRegistryHelper & help,
+							 art::PrincipalMaker const & pm):
   pmaker(pm),
   incoming_events(getGlobalQueue()),
   waiting_time(ps.get<double>("waiting_time", std::numeric_limits<double>::infinity())),
