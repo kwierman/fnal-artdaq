@@ -5,6 +5,7 @@
 
 
 #include "art/Framework/Art/artapp.h"
+#include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/FragmentGenerator.hh"
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQdata/GenericFragmentSimulator.hh"
@@ -18,11 +19,9 @@
 
 #include "boost/program_options.hpp"
 
-#include "ds50daq/DAQ/DS50FragmentGenerator.hh"
-#include "ds50daq/DAQ/V172xFileReader.hh"
 #include "ds50daq/DAQ/Config.hh"
+#include "ds50daq/DAQ/FileReader.hh"
 
-#include <signal.h>
 #include <iostream>
 #include <memory>
 #include <utility>
@@ -34,92 +33,37 @@ using namespace fhicl;
 namespace  bpo = boost::program_options;
 
 volatile int events_to_generate;
-void sig_handler(int) {events_to_generate = -1;}
 
-
-class FileReader
-{
-public:
-  FileReader(string const& name, size_t fragment_number);
-  bool getNext(Fragment& out, size_t event_number);
-private:
-  string name_;
-  size_t fragment_;
-  FILE* fd_;
-};
-
-FileReader(string const& name, size_t fragment_number):
-  name_(name),
-  fragment_(fragment_number),
-  fd_(fopen(name.c_str(),"rb"))
-  
-{
-  if(!fd) throw runtime_error(name);
-}
-
-bool FileReader::getNext(Fragment& out, size_t event_number)
-{
-  V172xFragment::Header head;
-  size_t items = fread(&head,sizeof(head),1,fd_);
-
-  if(items==0 && feof(fd_)) return false;
-  if(items!=1) 
-    throw runtime_error(name_ + " <- failed reading header from this thing");
-
-  size_t head_size_words = sizeof(head) / sizeof(Fragment::value_type);
-  size_t total_word_count = ceil(head.event_size()*V172xFragment::Header::size_words 
-				 / (double)sizeof(Fragment::value_type));
-  size_t total_int32_to_read = head.event_size() - sizeof(head)/4;
-
-  Fragment frag(event_number, fragment_, Config::V1720_FRAGMENT_TYPE);
-  frag.resize(total_word_count);
-  memcpy(frag.dataBegin(),&head,sizeof(head));
-  Fragment::value_type* dest = frag.dataBegin() + head_size_words;
-  items = fread(dest, 4, total_int32_to_read);
-
-  if(items==0 && feof(fd_)) return false;
-  if(items!=total_int32_to_read) 
-    throw runtime_error(name_ + " <- failed reading data from this thing");
-
-  out = frag;
-  return true;
-}
 
 class Readers
 {
 public:
   Readers(vector<string> const&  fnames);
-  bool get(artdaq::EventStore& store);
+  bool run_to_end(artdaq::EventStore& store);
 private:
   vector<FileReader> readers_;
 };
 
-Reader::Reader(vector<string> const& fnames)
+Readers::Readers(vector<string> const& fnames) :
+  readers_()
 {
   readers_.reserve(fnames.size());
-  for(size_t i=0; i<fnames.size(), ++i)
-    {
-      readers_.emplace_back( FileReader(fnames[i], i+1) );
-    }
+  for (size_t i=0, sz=fnames.size(); i < sz; ++i)
+    readers_.emplace_back(fnames[i], i+1);
 }
   
-// this should just return the vector of fragments instead of putting
-// things into the event store
-
-bool Readers::get(artdaq::EventStore& store)
+bool Readers::run_to_end(artdaq::EventStore& store)
 {
-  vector<Fragment> frags(readers_.size());
-  bool not_done = true;
-
-  for(size_t i=0; i<readers_size() && not_done; ++i)
+  bool keep_going = true;
+  for (auto& r : readers_)
     {
-      not_done = readers_[i].getNext(frags[i],event_id_);
+      artdaq::Fragment frag;
+      keep_going &&= r.getNext(frag);
+      if (!keep_going) break;
+      store.insert(frag);
     }
 
-  if(not_done) { }
-
-  ++event_id;
-  return true;
+  return keep_going;
 }
 
 int main(int argc, char * argv[]) try
@@ -128,8 +72,8 @@ int main(int argc, char * argv[]) try
   descstr << argv[0] << " <-c <config-file>> <other-options>";
   bpo::options_description desc(descstr.str());
   desc.add_options()
-  ("config,c", bpo::value<std::string>(), "Configuration file.")
-  ("help,h", "produce help message");
+    ("config,c", bpo::value<std::string>(), "Configuration file.")
+    ("help,h", "produce help message");
   bpo::variables_map vm;
   try {
     bpo::store(bpo::command_line_parser(argc, argv).options(desc).run(), vm);
@@ -156,7 +100,7 @@ int main(int argc, char * argv[]) try
   if (getenv("FHICL_FILE_PATH") == nullptr)
     {
       std::cerr
-	<< "INFO: environment variable FHICL_FILE_PATH was not set. Using \".\"\n";
+        << "INFO: environment variable FHICL_FILE_PATH was not set. Using \".\"\n";
       setenv("FHICL_FILE_PATH", ".", 0);
     }
   cet::filepath_lookup_after1 lookup_policy("FHICL_FILE_PATH");
@@ -166,68 +110,56 @@ int main(int argc, char * argv[]) try
 
   std::vector<std::string> fnames = 
     top_level_pset.get<std::vector<std::string>>("file_names");
-  std::vector<std::shared_ptr<V172xFileReader>> readers;
+  Readers readers(fnames);
   
   artdaq::EventStore::run_id_t run_num = 
     top_level_pset.get<artdaq::EventStore::run_id_t>("run_number",2112);
   
-  for(size_t fnum=0;fnum < fnames.size();++fnum)
-    {
-      /*
-	static const char* psetModel[] = "
-	bundle_of_junk:
-	{
-	generator_ds50: { fragment_id: %s }
-	fileNames: [ "fileName%s.dat" ]
-	maxEvents: -1
-	}
-	";
-      */
+  // for (size_t fnum = 0, sz=fnames.size(); fnum < sz; ++fnum)
+  //   {
+  //     ParameterSet pf, pg;
+  //     pg.put("fragment_id", fnum+1);
+  //     pf.put("generator_ds50", pg);
+  //     pf.put<std::vector<std::string>>("fileNames", 
+  //                                      std::vector<std::string> { fnames[fnum] });
+  //     readers.emplace_back( new V172xFileReader(pf) );
+  //     readers.back()->start(run_num);
+  //   }
 
-      ParameterSet pf,pg;
-      pg.put("fragment_id",fnum+1);
-      pf.put("generator_ds50",pg);
-      // pf.put("maxEvents",1);
-      pf.put<std::vector<std::string>>("fileNames", std::vector<std::string> { fnames[fnum] });
-      readers.emplace_back( new V172xFileReader(pf) );
-      readers.back()->start(run_num);
-    }
+  artdaq::EventStore store(fnames.size(), run_num, 1, argc, argv, &artapp, true);
 
-  artdaq::EventStore store(fnames.size(), run_num,
-                           1, argc, argv,
-                           &artapp,
-                           true);
+  // int event_count = 1;
+  // bool done=false;
 
-  // int events_to_generate = top_level_pset.get<int>("events_to_generate", 0);
-  int event_count = 1;
-
-  bool done=false;
-  while(true||false) // what the hell is this for? well... it won't stop.
-    {
-      for(auto& r:readers)
-	{
-	  artdaq::FragmentPtrs frags;
+  // while (true)
+  //   {
+      
+  //     for(auto& r:readers)
+  //       {
+  //         artdaq::FragmentPtrs frags;
 	  
-	  if(not r->getNext(frags))
-	    {
-	      done=true;
-	      break;
-	    }
+  //         if(not r->getNext(frags))
+  //           {
+  //             done=true;
+  //             break;
+  //           }
 
-	cout << "E=" << event_count << " size=" << frags.front()->size() 
-             << " datasize=" << frags.front()->dataSize()
-             << endl;
+  //         cout << "E=" << event_count << " size=" << frags.front()->size() 
+  //              << " datasize=" << frags.front()->dataSize()
+  //              << endl;
 
-	  frags.front()->setSequenceID(event_count);
-	  frags.front()->setUserType(Config::V1720_FRAGMENT_TYPE);
-	  store.insert(std::move(frags.front()));	  
-	}
+  //         frags.front()->setSequenceID(event_count);
+  //         frags.front()->setUserType(Config::V1720_FRAGMENT_TYPE);
+  //         store.insert(std::move(frags.front()));	  
+  //       }
 
-      if(done) break;
-      ++event_count;
-    }
+  //     if(done) break;
+  //     ++event_count;
+  //   }
 
-  for(auto& r:readers) { r->stop(); }
+  // for(auto& r:readers) { r->stop(); }
+
+  readers.run_to_end(store);
   return store.endOfData();
  }
 
