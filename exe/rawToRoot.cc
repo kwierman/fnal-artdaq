@@ -34,36 +34,50 @@ namespace  bpo = boost::program_options;
 
 volatile int events_to_generate;
 
-
 class Readers
 {
 public:
-  Readers(vector<string> const&  fnames);
-  bool run_to_end(artdaq::EventStore& store);
+  Readers(vector<string> const&  fnames, bool size_in_words);
+  // Read all the input files, stopping when the first becomes exhausted.
+  // All Fragments read are put into the EventStore.
+  void run_to_end(artdaq::EventStore& store);
+
 private:
+  // Read one Fragment from each file, passing each to the
+  // EventStore. Return false when the first file becomes exhausted.
+  bool handle_next_event_(size_t eid, artdaq::EventStore& store);
   vector<FileReader> readers_;
 };
 
-Readers::Readers(vector<string> const& fnames) :
+Readers::Readers(vector<string> const& fnames, bool size_in_words) :
   readers_()
 {
   readers_.reserve(fnames.size());
   for (size_t i=0, sz=fnames.size(); i < sz; ++i)
-    readers_.emplace_back(fnames[i], i+1);
+    readers_.emplace_back(fnames[i], i+1, size_in_words);
 }
   
-bool Readers::run_to_end(artdaq::EventStore& store)
+void Readers::run_to_end(artdaq::EventStore& store)
 {
-  bool keep_going = true;
+  size_t events_read = 0;
+  while (true)
+    {
+      bool rc = handle_next_event_(events_read+1, store);
+      if (!rc) break;
+      ++events_read;
+    }
+}
+
+bool Readers::handle_next_event_(size_t event_num,
+                                 artdaq::EventStore& store)
+{
   for (auto& r : readers_)
     {
-      artdaq::Fragment frag;
-      keep_going &&= r.getNext(frag);
-      if (!keep_going) break;
-      store.insert(frag);
+      std::unique_ptr<artdaq::Fragment> fp = r.getNext(event_num);
+      if (fp == nullptr) return false;
+      store.insert(std::move(fp));
     }
-
-  return keep_going;
+  return true;
 }
 
 int main(int argc, char * argv[]) try
@@ -110,54 +124,13 @@ int main(int argc, char * argv[]) try
 
   std::vector<std::string> fnames = 
     top_level_pset.get<std::vector<std::string>>("file_names");
-  Readers readers(fnames);
+  bool const size_in_words = false; // we read only the malformed file for now.
+  Readers readers(fnames, size_in_words);
   
   artdaq::EventStore::run_id_t run_num = 
-    top_level_pset.get<artdaq::EventStore::run_id_t>("run_number",2112);
+    top_level_pset.get<artdaq::EventStore::run_id_t>("run_number", 1);
   
-  // for (size_t fnum = 0, sz=fnames.size(); fnum < sz; ++fnum)
-  //   {
-  //     ParameterSet pf, pg;
-  //     pg.put("fragment_id", fnum+1);
-  //     pf.put("generator_ds50", pg);
-  //     pf.put<std::vector<std::string>>("fileNames", 
-  //                                      std::vector<std::string> { fnames[fnum] });
-  //     readers.emplace_back( new V172xFileReader(pf) );
-  //     readers.back()->start(run_num);
-  //   }
-
   artdaq::EventStore store(fnames.size(), run_num, 1, argc, argv, &artapp, true);
-
-  // int event_count = 1;
-  // bool done=false;
-
-  // while (true)
-  //   {
-      
-  //     for(auto& r:readers)
-  //       {
-  //         artdaq::FragmentPtrs frags;
-	  
-  //         if(not r->getNext(frags))
-  //           {
-  //             done=true;
-  //             break;
-  //           }
-
-  //         cout << "E=" << event_count << " size=" << frags.front()->size() 
-  //              << " datasize=" << frags.front()->dataSize()
-  //              << endl;
-
-  //         frags.front()->setSequenceID(event_count);
-  //         frags.front()->setUserType(Config::V1720_FRAGMENT_TYPE);
-  //         store.insert(std::move(frags.front()));	  
-  //       }
-
-  //     if(done) break;
-  //     ++event_count;
-  //   }
-
-  // for(auto& r:readers) { r->stop(); }
 
   readers.run_to_end(store);
   return store.endOfData();
