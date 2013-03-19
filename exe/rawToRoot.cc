@@ -120,7 +120,7 @@ int main(int argc, char * argv[]) try
 
   std::vector<std::string> fnames = 
     top_level_pset.get<std::vector<std::string>>("file_names");
-  bool const size_in_words = false; // we read only the malformed file for now.
+  bool const size_in_words = top_level_pset.get<bool>("size_in_words", true);
   Readers readers(fnames, size_in_words);
   
   artdaq::EventStore::run_id_t run_num = 
