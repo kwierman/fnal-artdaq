@@ -9,8 +9,15 @@
 #include "art/Persistency/Provenance/BranchIDListHelper.h"
 #include "art/Persistency/Provenance/BranchIDListRegistry.h"
 #include "art/Persistency/Provenance/BranchKey.h"
+#include "art/Persistency/Provenance/History.h"
+#include "art/Persistency/Provenance/ParentageRegistry.h"
+#include "art/Persistency/Provenance/ProcessHistoryID.h"
+#include "art/Persistency/Provenance/ProcessHistoryRegistry.h"
 #include "art/Persistency/Provenance/ProductList.h"
 #include "art/Persistency/Provenance/ProductMetaData.h"
+#include "art/Persistency/Provenance/ProductProvenance.h"
+#include "art/Persistency/Provenance/RunAuxiliary.h"
+#include "art/Persistency/Provenance/SubRunAuxiliary.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h"
 #include "art/Utilities/Exception.h"
 #include "cetlib/column_width.h"
@@ -21,15 +28,16 @@
 #include "fhiclcpp/ParameterSetID.h"
 #include "fhiclcpp/ParameterSetRegistry.h"
 
+#include "NetMonTransportService.h"
+
 #include <cassert>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
 #include "unistd.h"
-
-#include "NetMonTransportService.h"
 
 #include "TClass.h"
 #include "TMessage.h"
@@ -50,17 +58,12 @@ private:
     virtual void write(EventPrincipal const&);
     virtual void writeRun(RunPrincipal const&);
     virtual void writeSubRun(SubRunPrincipal const&);
-private:
-    //TSocket* sock_;
 }; // NetMonOutput
 
 art::NetMonOutput::
 NetMonOutput(ParameterSet const& ps)
     : OutputModule(ps)
 {
-    //TServerSocket server(31030);
-    //sock_ = server.Accept();
-    //assert(sock_);
     ServiceHandle<NetMonTransportService> transport;
     transport->connect();
 }
@@ -68,10 +71,6 @@ NetMonOutput(ParameterSet const& ps)
 art::NetMonOutput::
 ~NetMonOutput()
 {
-    //sock_->Close();
-    //delete sock_;
-    //sock_ = 0;
-    //sleep(10);
     ServiceHandle<NetMonTransportService> transport;
     transport->disconnect();
 }
@@ -82,8 +81,19 @@ openFile(FileBlock const& fb)
 {
     (void) fb;
     fprintf(stderr, "NetMonOutput::openFile(const FileBlock&) called.\n");
+    //
+    //  Construct and send the init message.
+    //
     TMessage msg;
     msg.SetWriteMode();
+    //
+    //  Stream the message type code.
+    //
+    fprintf(stderr, "openFile: streaming message type code ...\n");
+    msg.WriteULong(1);
+    fprintf(stderr, "openFile: finished streaming message type code.\n");
+    //
+    //  Stream the ParameterSetRegistry.
     //
     unsigned long ps_cnt = fhicl::ParameterSetRegistry::size();
     fprintf(stderr, "openFile: parameter set count: %lu\n", ps_cnt);
@@ -99,13 +109,20 @@ openFile(FileBlock const& fb)
     }
     fprintf(stderr, "openFile: Finished streaming parameter sets.\n");
     //
+    //  Stream the MasterProductRegistry.
+    //
+    fprintf(stderr, "openFile: Streaming MasterProductRegistry ...\n");
     ProductList productList(ProductMetaData::instance().productList());
     TClass* plc = TClass::GetClass(
         "map<art::BranchKey,art::BranchDescription>");
     assert(plc != nullptr && "openFile: couldn't get TClass for "
                              "map<art::BranchKey,art::BranchDescription>!");
     msg.WriteObjectAny(&productList, plc);
+    fprintf(stderr, "openFile: finished streaming MasterProductRegistry.\n");
     //
+    //  Stream the BranchIDListRegistry.
+    //
+    fprintf(stderr, "openFile: Streaming BranchIDListRegistry ...\n");
     // typedef vector<BranchID::value_type> BranchIDList
     // typedef vector<BranchIDList> BranchIDLists
     // std::vector<std::vector<art::BranchID::value_type>>
@@ -114,17 +131,54 @@ openFile(FileBlock const& fb)
                                     "art::BranchID::value_type> >");
     assert(bilc != nullptr);
     msg.WriteObjectAny(bil, bilc);
-    fprintf(stderr, "openFile: content of BranchIDLists\n");
-    int max_bli = bil->size();
-    fprintf(stderr, "openFile: max_bli: %d\n", max_bli);
-    for (int i = 0; i < max_bli; ++i) {
-       int max_prdidx = (*bil)[i].size();
-       fprintf(stderr, "openFile: max_prdidx: %d\n", max_prdidx);
-       for (int j = 0; j < max_prdidx; ++j) {
-           fprintf(stderr, "openFile: bli: %d  prdidx: %d  bid: 0x%08lx\n",
-                   i, j, static_cast<unsigned long>( (*bil)[i][j]) );
-       }
+    fprintf(stderr, "openFile: finished streaming BranchIDListRegistry.\n");
+    {
+        fprintf(stderr, "openFile: content of BranchIDLists\n");
+        int max_bli = bil->size();
+        fprintf(stderr, "openFile: max_bli: %d\n", max_bli);
+        for (int i = 0; i < max_bli; ++i) {
+           int max_prdidx = (*bil)[i].size();
+           fprintf(stderr, "openFile: max_prdidx: %d\n", max_prdidx);
+           for (int j = 0; j < max_prdidx; ++j) {
+               fprintf(stderr, "openFile: bli: %d  prdidx: %d  bid: 0x%08lx\n",
+                       i, j, static_cast<unsigned long>( (*bil)[i][j]) );
+           }
+        }
     }
+    //
+    //  Stream the ProcessHistoryRegistry.
+    //
+    {
+        fprintf(stderr, "openFile: dumping ProcessHistoryRegistry ...\n");
+        ProcessHistoryMap const& phr = ProcessHistoryRegistry::get();
+        fprintf(stderr, "openFile: phr: size: %lu\n",
+                (unsigned long) phr.size());
+        for (auto I = phr.begin(), E = phr.end(); I != E; ++I) {
+            std::ostringstream OS;
+            I->first.print(OS);
+            fprintf(stderr, "openFile: phr: id: '%s'\n", OS.str().c_str());
+        }
+    }
+    fprintf(stderr, "openFile: Streaming ProcessHistoryRegistry ...\n");
+    //typedef std::map<const ProcessHistoryID,ProcessHistory> ProcessHistoryMap;
+    const ProcessHistoryMap& phm = ProcessHistoryRegistry::get();
+    fprintf(stderr, "openFile: phm: size: %lu\n", (unsigned long) phm.size());
+    //TClass* phm_class = TClass::GetClass("std::map<const art::ProcessHistoryID,art::ProcessHistory>");
+    TClass* phm_class = TClass::GetClass("std::map<const art::Hash<2>,art::ProcessHistory>");
+    assert(phm_class != nullptr);
+    msg.WriteObjectAny(&phm, phm_class);
+    fprintf(stderr, "openFile: finished streaming ProcessHistoryRegistry.\n");
+    //
+    //  Stream the ParentageRegistry.
+    //
+    fprintf(stderr, "openFile: Streaming ParentageRegistry ...\n");
+    //typedef std::map<const ParentageID,Parentage> ParentageMap
+    const ParentageMap& parentageMap = ParentageRegistry::get();
+    //TClass* parentageMapClass = TClass::GetClass("std::map<const art::ParentageID,art::Parentage>");
+    TClass* parentageMapClass = TClass::GetClass("std::map<const art::Hash<5>,art::Parentage>");
+    assert(parentageMapClass != nullptr);
+    msg.WriteObjectAny(&parentageMap, parentageMapClass);
+    fprintf(stderr, "openFile: finished streaming ParentageRegistry.\n");
     //
     //
     //  Send init message.
@@ -141,11 +195,27 @@ write(EventPrincipal const & ep)
 {
     TMessage msg;
     msg.SetWriteMode();
-    std::vector<std::string> productClassNames;
-    std::vector<std::string> productFriendlyClassNames;
-    std::vector<std::string> productLabels;
-    std::vector<std::string> productInstances;
-    std::vector<std::string> productProcesses;
+    //fprintf(stderr, "write: streaming message type code ...\n");
+    msg.WriteULong(4);
+    //fprintf(stderr, "write: finished streaming message type code.\n");
+    //fprintf(stderr, "write: streaming EventAuxiliary ...\n");
+    static TClass* aux_class = TClass::GetClass("art::EventAuxiliary");
+    assert(aux_class != nullptr && "write: Could not get TClass for "
+           "art::EventAuxiliary!");
+    msg.WriteObjectAny(&ep.aux(), aux_class);
+    //fprintf(stderr, "write: streamed EventAuxiliary.\n");
+    //fprintf(stderr, "write: streaming History ...\n");
+    static TClass* history_class = TClass::GetClass("art::History");
+    assert(history_class != nullptr && "write: Could not get TClass for "
+           "art::History!");
+    msg.WriteObjectAny(&ep.history(), history_class);
+    //fprintf(stderr, "write: streamed History.\n");
+    //std::vector<std::string> productClassNames;
+    //std::vector<std::string> productFriendlyClassNames;
+    //std::vector<std::string> productLabels;
+    //std::vector<std::string> productInstances;
+    //std::vector<std::string> productProcesses;
+    unsigned long prd_cnt = 0;
     //EventPrincipal::const_iterator = map<BranchID, sp<Group>>::iterator
     for (EventPrincipal::const_iterator I = ep.begin(), E = ep.end();
             I != E; ++I) {
@@ -153,49 +223,87 @@ write(EventPrincipal const & ep)
             continue;
         }
         const BranchDescription& bd(I->second->productDescription());
+        const std::string& name = bd.producedClassName();
+        if (name == "art::TriggerResults") {
+            continue;
+        }
         BranchKey bk(bd);
-        fprintf(stderr, "Saw product class: '%s' modlbl: '%s' instnm: '%s' procnm: '%s'\n",
-            bd.friendlyClassName().c_str(),
-            bd.moduleLabel().c_str(),
-            bd.productInstanceName().c_str(),
-            bd.processName().c_str()
-        );
-        productClassNames.push_back(bd.producedClassName());
-        productFriendlyClassNames.push_back(bd.friendlyClassName());
-        productLabels.push_back(bd.moduleLabel());
-        productInstances.push_back(bd.productInstanceName());
-        productProcesses.push_back(bd.processName());
+        //fprintf(stderr, "write: aw product class: '%s' modlbl: '%s' "
+        //    "instnm: '%s' procnm: '%s'\n",
+        //    bd.friendlyClassName().c_str(),
+        //    bd.moduleLabel().c_str(),
+        //   bd.productInstanceName().c_str(),
+        //    bd.processName().c_str()
+        //);
+        //productClassNames.push_back(bd.producedClassName());
+        //productFriendlyClassNames.push_back(bd.friendlyClassName());
+        //productLabels.push_back(bd.moduleLabel());
+        //productInstances.push_back(bd.productInstanceName());
+        //productProcesses.push_back(bd.processName());
+        ++prd_cnt;
     }
-    TClass* vs = TClass::GetClass("vector<string>");
-    msg.WriteObjectAny(&productClassNames, vs);
-    msg.WriteObjectAny(&productFriendlyClassNames, vs);
-    msg.WriteObjectAny(&productLabels, vs);
-    msg.WriteObjectAny(&productInstances, vs);
-    msg.WriteObjectAny(&productProcesses, vs);
+    //fprintf(stderr, "write: streaming product count: %lu\n", prd_cnt);
+    msg.WriteULong(prd_cnt);
+    //fprintf(stderr, "write: finished streaming product count.\n");
+    //static TClass* vs = TClass::GetClass("vector<string>");
+    //msg.WriteObjectAny(&productClassNames, vs);
+    //msg.WriteObjectAny(&productFriendlyClassNames, vs);
+    //msg.WriteObjectAny(&productLabels, vs);
+    //msg.WriteObjectAny(&productInstances, vs);
+    //msg.WriteObjectAny(&productProcesses, vs);
+    static TClass* branch_key_class = TClass::GetClass("art::BranchKey");
+    assert(branch_key_class != nullptr && "write: Could not get TClass for "
+           "art::BranchKey!");
+    static TClass* prdprov_class = TClass::GetClass("art::ProductProvenance");
+    assert(prdprov_class != nullptr && "write: Could not get TClass for "
+           "art::ProductProvenance!");
+    std::vector<BranchKey> bkv;
+    //std::map<art::BranchID, std::shared_ptr<art::Group>>::const_iterator
     for (EventPrincipal::const_iterator I = ep.begin(), E = ep.end();
             I != E; ++I) {
         if (I->second->productUnavailable()) {
             continue;
         }
-        const BranchDescription& bd = I->second->productDescription();
+        const BranchDescription& bd(I->second->productDescription());
         const std::string& name = bd.producedClassName();
         if (name == "art::TriggerResults") {
             continue;
         }
-        fprintf(stderr, "Streaming product of class: '%s' instnm: '%s'\n",
-             name.c_str(),
-             bd.productInstanceName().c_str()
-        );
+        //fprintf(stderr, "write: saw product class: '%s' modlbl: '%s' "
+        //    "instnm: '%s' procnm: '%s'\n",
+        //    bd.friendlyClassName().c_str(),
+        //    bd.moduleLabel().c_str(),
+        //    bd.productInstanceName().c_str(),
+        //    bd.processName().c_str()
+        //);
+        bkv.push_back(BranchKey(bd));
+        //fprintf(stderr, "write: streaming branch key of class: '%s' "
+        //     "instnm: '%s'\n", name.c_str(), bd.productInstanceName().c_str());
+        //fprintf(stderr, "write: dumping branch key: class: '%s' modlbl: '%s' "
+        //    "instnm: '%s' procnm: '%s'\n",
+        //    bkv.back().friendlyClassName_.c_str(),
+        //    bkv.back().moduleLabel_.c_str(),
+        //    bkv.back().productInstanceName_.c_str(),
+        //    bkv.back().processName_.c_str()
+        //);
+        msg.WriteObjectAny(&bkv.back(), branch_key_class);
+        //fprintf(stderr, "write: streaming product of class: '%s' "
+        //     "instnm: '%s'\n", name.c_str(), bd.productInstanceName().c_str());
         OutputHandle oh = ep.getForOutput(bd.branchID(), true);
         //const EDProduct* prd = I->second->getIt();
         const EDProduct* prd = oh.wrapper();
         msg.WriteObjectAny(prd, TClass::GetClass(bd.wrappedName().c_str()));
+        //fprintf(stderr, "write: streaming product provenance of class: '%s' "
+        //     "instnm: '%s'\n", name.c_str(), bd.productInstanceName().c_str());
+        const ProductProvenance* prdprov =
+            I->second->productProvenancePtr().get();
+        msg.WriteObjectAny(prdprov, prdprov_class);
     }
     ServiceHandle<NetMonTransportService> transport;
-    fprintf(stderr, "Sending a message ...\n");
+    //fprintf(stderr, "write: sending a message ...\n");
     transport->sendMessage(msg);
     //sock_->Send(msg);
-    fprintf(stderr, "Message sent.\n");
+    //fprintf(stderr, "write: message sent.\n");
 }
 
 void
