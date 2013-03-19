@@ -12,7 +12,6 @@
 #include "artdaq/DAQdata/makeFragmentGenerator.hh"
 #include "artdaq/DAQrate/EventStore.hh"
 #include "artdaq/DAQrate/SimpleQueueReader.hh"
-#include "cetlib/container_algorithms.h"
 #include "cetlib/filepath_maker.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/make_ParameterSet.h"
@@ -25,14 +24,11 @@
 #include <iostream>
 #include <memory>
 #include <utility>
-#include <cstdio>
 
 using namespace ds50;
 using namespace std;
 using namespace fhicl;
 namespace  bpo = boost::program_options;
-
-volatile int events_to_generate;
 
 class Readers
 {
