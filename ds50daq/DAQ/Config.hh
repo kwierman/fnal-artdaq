@@ -13,6 +13,7 @@ namespace ds50
     static const artdaq::detail::RawFragmentHeader::type_t V1495_FRAGMENT_TYPE =  2;
     static const artdaq::detail::RawFragmentHeader::type_t V1720_FRAGMENT_TYPE =  3;
     static const artdaq::detail::RawFragmentHeader::type_t V1724_FRAGMENT_TYPE =  4;
+    static const artdaq::detail::RawFragmentHeader::type_t V1190_FRAGMENT_TYPE =  5;
   }
 }
 
