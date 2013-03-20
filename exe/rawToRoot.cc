@@ -174,7 +174,7 @@ int main(int argc, char * argv[]) try
     top_level_pset.get<vector<string>>("file_names");
   bool const size_in_words = top_level_pset.get<bool>("size_in_words", true);
   bool const makeV1724 = top_level_pset.get<bool>("makeV1724", true);
-  auto const seed = top_level_pset.get<V172xFragment::adc_type>("seed");
+  auto const seed = top_level_pset.get<V172xFragment::adc_type>("seed", 30031);
   Readers readers(fnames, size_in_words, makeV1724, seed);
 
 
