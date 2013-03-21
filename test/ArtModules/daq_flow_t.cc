@@ -2,6 +2,7 @@
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQdata/GenericFragmentSimulator.hh"
 #include "artdaq/DAQrate/EventStore.hh"
+#include "artdaq/DAQrate/MPIProg.hh"
 #include "cetlib/exception.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
@@ -20,6 +21,7 @@ using std::size_t;
 
 int main(int argc, char * argv[])
 {
+  MPIProg mpiSentry(argc, argv);
   int rc = -1;
   try {
     size_t const NUM_FRAGS_PER_EVENT = 5;

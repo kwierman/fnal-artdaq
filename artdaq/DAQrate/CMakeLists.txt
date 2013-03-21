@@ -38,7 +38,7 @@ if(WANT_MPI)
     detail/FragCounter.cc
     infoFilename.cc
     )
-  list(APPEND LIB_LIBS ${MPI_LIBRARIES})
+  list(APPEND LIB_LIBS ${MPI_C_LIBRARIES})
 else()
   set_source_files_properties(EventStore.cc
     PROPERTIES COMPILE_DEFINITIONS ARTDAQ_NO_PERF
