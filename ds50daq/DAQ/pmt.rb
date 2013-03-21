@@ -109,7 +109,7 @@ class MPIHandler
                                                             hostsFileHandle.path]
     configFileHandle.rewind
     hostsFileHandle.rewind
-    return mpiCmd
+    return disableCpuAffinity + mpiCmd
   end
 
   def parseOutput(line)
