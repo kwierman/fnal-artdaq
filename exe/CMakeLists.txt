@@ -36,7 +36,7 @@ if(WANT_MPI)
     ${FHICLCPP}
     ${CETLIB}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
-    ${MPI_LIBRARIES}
+    ${MPI_C_LIBRARIES}
     )
 
   install_fhicl(LIST daqrate_simdata_noart.fcl)
