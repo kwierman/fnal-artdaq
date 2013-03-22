@@ -45,7 +45,8 @@ public:
   // addition to the V1720 fragments read from the file), set
   // 'makeV1724' to true. 'seed' is used to seed the random number
   // generated, which is only used if 'makeV1724' is true.
-  Readers(vector<string> const&  fnames, bool size_in_words, bool makeV1724,
+  Readers(size_t num_events,
+          vector<string> const&  fnames, bool size_in_words, bool makeV1724,
           V172xFragment::adc_type seed);
 
   // Read all the input files, stopping when the first becomes
@@ -63,14 +64,17 @@ private:
   // bits, and adding two bits of random noise.
   void insertV1724(Fragment const& v1720, EventStore& store);
 
+  size_t num_events_;
   bool makeV1724_;
   size_t numV1720fragmentsPerEvent_;
   vector<FileReader> readers_;
   std::independent_bits_engine<std::minstd_rand, 2, V172xFragment::adc_type> twoBits_;
 };
 
-Readers::Readers(vector<string> const& fnames, bool size_in_words,
+Readers::Readers(size_t num_events,
+                 vector<string> const& fnames, bool size_in_words,
                  bool makeV1724, V172xFragment::adc_type seed) :
+  num_events_(num_events),
   makeV1724_(makeV1724),
   numV1720fragmentsPerEvent_(fnames.size()),
   readers_(),
@@ -84,7 +88,8 @@ Readers::Readers(vector<string> const& fnames, bool size_in_words,
 void Readers::run_to_end(EventStore& store)
 {
   size_t events_read = 0;
-  while (true)
+  if (num_events_ == 0) num_events_ = -1;
+  while (true && events_read < num_events_)
     {
       bool rc = handle_next_event_(events_read+1, store);
       if (!rc) break;
@@ -170,12 +175,13 @@ int main(int argc, char * argv[]) try
   make_ParameterSet(vm["config"].as<string>(), lookup_policy, top_level_pset);
 
   vector<string> fnames =
-
     top_level_pset.get<vector<string>>("file_names");
+
+  auto const num_events = top_level_pset.get<size_t>("num_events", 0);
   bool const size_in_words = top_level_pset.get<bool>("size_in_words", true);
   bool const makeV1724 = top_level_pset.get<bool>("makeV1724", true);
   auto const seed = top_level_pset.get<V172xFragment::adc_type>("seed", 30031);
-  Readers readers(fnames, size_in_words, makeV1724, seed);
+  Readers readers(num_events, fnames, size_in_words, makeV1724, seed);
 
 
   EventStore::run_id_t run_num =
