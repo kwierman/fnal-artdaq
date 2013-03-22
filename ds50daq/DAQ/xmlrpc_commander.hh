@@ -5,46 +5,23 @@
 #ifndef XMLRPC_COMMANDER_H
 #define XMLRPC_COMMANDER_H
 
-#include "fhiclcpp/ParameterSet.h"
 #include <mutex>
+#include "ds50daq/DAQ/Commandable.hh"
 
 class xmlrpc_commander {
   public:
-    xmlrpc_commander (int port);
-    void operator() ();
-
-    void init (const std::string& config);
-    void start (int run);
-    void pause ();
-    void resume ();
-    void stop ();
-    void abort ();
-    void shutdown ();
-    void reboot ();
+    xmlrpc_commander (int port, ds50::Commandable& commandable);
+    void run();
 
   private:
     xmlrpc_commander (const xmlrpc_commander&) = delete;
     xmlrpc_commander (xmlrpc_commander&&) = delete;
 
     int _port;
-    fhicl::ParameterSet _pset;
 
-    enum state {
-      idle,
-      inited,
-      running,
-      paused
-    } _state;
-    
-    enum indirect_cmd {
-      do_stop,
-      do_pause,
-      do_resume,
-      do_abort
-    } _indirect_cmd;
-
-    std::mutex _m;
+  public:
+    ds50::Commandable& _commandable;
+    std::mutex mutex_;
 };
-
 
 #endif

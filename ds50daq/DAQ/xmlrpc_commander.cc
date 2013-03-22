@@ -7,7 +7,8 @@
 #include <xmlrpc-c/server_abyss.hpp>
 #include <stdexcept>
 #include <iostream>
-#include "xmlrpc_commander.hh"
+#include "art/Persistency/Provenance/RunID.h"
+#include "ds50daq/DAQ/xmlrpc_commander.hh"
 #include "fhiclcpp/make_ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
@@ -21,124 +22,284 @@ namespace {
   class cmd_: public xmlrpc_c::method {
     public:
       cmd_ (xmlrpc_commander& c, const std::string& signature, const std::string& description): _c(c) { _signature = signature; _help = description; }
+      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) {
+	std::unique_lock<std::mutex> lk(_c.mutex_, std::try_to_lock);
+	if (lk.owns_lock ()) execute_ (paramList, retvalP);
+	else *retvalP = xmlrpc_c::value_string ("busy");
+      }
     protected:
       xmlrpc_commander& _c;
+      virtual void execute_ (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) = 0;
   };
 
   class init_: public cmd_ {
     public:
-      init_ (xmlrpc_commander& c): cmd_(c, "s:s", "initialize the system") {}
-      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try {
-	_c.init (paramList.getString (0));
-	*retvalP = xmlrpc_c::value_string ("ok"); 
+      init_ (xmlrpc_commander& c):
+        cmd_(c, "s:s", "initialize the program") {}
+      void execute_ (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) override try {
+        if (paramList.size() > 0) {
+          std::string configString = paramList.getString(0);
+          fhicl::ParameterSet pset;
+          fhicl::make_ParameterSet(configString, pset);
+          if (_c._commandable.initialize(pset)) {
+            *retvalP = xmlrpc_c::value_string ("Success"); 
+          }
+          else {
+            std::string problemReport = _c._commandable.report("all");
+            *retvalP = xmlrpc_c::value_string (problemReport); 
+          }
+        }
+        else {
+          *retvalP = xmlrpc_c::value_string ("The init message requires a single argument that is a string containing the initialization ParameterSet."); 
+        }
       } catch (std::runtime_error &er) { 
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
-	mf::LogError ("Command") << er.what ();
+	mf::LogError ("XMLRPC_Commander") << er.what ();
       } 
   };
-  
-  class start_: public cmd_ {
+
+  class soft_init_: public cmd_ {
     public:
-      start_ (xmlrpc_commander& c): cmd_(c, "s:i", "start the run") {}
-      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) try { 
-	_c.start (paramList.getInt (0));
-	*retvalP = xmlrpc_c::value_string ("ok"); 
+      soft_init_ (xmlrpc_commander& c):
+        cmd_(c, "s:s", "initialize software components in the program") {}
+      void execute_ (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) override try {
+        if (paramList.size() > 0) {
+          std::string configString = paramList.getString(0);
+          fhicl::ParameterSet pset;
+          fhicl::make_ParameterSet(configString, pset);
+          if (_c._commandable.soft_initialize(pset)) {
+           *retvalP = xmlrpc_c::value_string ("Success"); 
+          }
+          else {
+            std::string problemReport = _c._commandable.report("all");
+            *retvalP = xmlrpc_c::value_string (problemReport); 
+          }
+        }
+        else {
+          *retvalP = xmlrpc_c::value_string ("The soft_init message requires a single argument that is a string containing the initialization ParameterSet."); 
+        }
       } catch (std::runtime_error &er) { 
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
-	mf::LogError ("Command") << er.what ();
+	mf::LogError ("XMLRPC_Commander") << er.what ();
+      } 
+  };
+
+  class reinit_: public cmd_ {
+    public:
+      reinit_ (xmlrpc_commander& c):
+        cmd_(c, "s:s", "re-initialize the program") {}
+      void execute_ (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) override try {
+        if (paramList.size() > 0) {
+          std::string configString = paramList.getString(0);
+          fhicl::ParameterSet pset;
+          fhicl::make_ParameterSet(configString, pset);
+          if (_c._commandable.reinitialize(pset)) {
+            *retvalP = xmlrpc_c::value_string ("Success"); 
+          }
+          else {
+            std::string problemReport = _c._commandable.report("all");
+            *retvalP = xmlrpc_c::value_string (problemReport); 
+          }
+        }
+        else {
+          *retvalP = xmlrpc_c::value_string ("The reinit message requires a single argument that is a string containing the initialization ParameterSet."); 
+        }
+      } catch (std::runtime_error &er) { 
+	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
+	mf::LogError ("XMLRPC_Commander") << er.what ();
+      } 
+  };
+
+  class start_: public cmd_ {
+    public:
+      start_ (xmlrpc_commander& c):
+        cmd_(c, "s:i", "start the run") {}
+      void execute_ (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) override try {
+        if (paramList.size() > 0) {
+          std::string run_number_string = paramList.getString(0);
+          art::RunNumber_t run_number =
+            boost::lexical_cast<art::RunNumber_t>(run_number_string);
+          art::RunID run_id(run_number);
+          if (_c._commandable.start(run_id)) {
+            *retvalP = xmlrpc_c::value_string ("Success"); 
+          }
+          else {
+            std::string problemReport = _c._commandable.report("all");
+            *retvalP = xmlrpc_c::value_string (problemReport); 
+          }
+        }
+        else {
+          *retvalP = xmlrpc_c::value_string ("The start message requires the run number as an argument."); 
+        }
+      } catch (std::runtime_error &er) { 
+	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
+	mf::LogError ("XMLRPC_Commander") << er.what ();
+      } 
+  };
+
+  class status_: public cmd_ {
+    public:
+      status_ (xmlrpc_commander& c):
+        cmd_(c, "s:s", "report the current state") {}
+      void execute_ (xmlrpc_c::paramList const&, xmlrpc_c::value * const retvalP) override try {
+        *retvalP = xmlrpc_c::value_string (_c._commandable.status());
+      } catch (std::runtime_error &er) { 
+	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
+	mf::LogError ("XMLRPC_Commander") << er.what ();
+      } 
+  };
+
+  class report_: public cmd_ {
+    public:
+      report_ (xmlrpc_commander& c):
+        cmd_(c, "s:s", "report statistics") {}
+      void execute_ (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) override try {
+        if (paramList.size() > 0) {
+          std::string which = paramList.getString(0);
+          *retvalP = xmlrpc_c::value_string (_c._commandable.report(which));
+        }
+        else {
+          *retvalP = xmlrpc_c::value_string ("The report message requires a single argument that selects the type of statistics to be reported."); 
+        }
+      } catch (std::runtime_error &er) { 
+	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
+	mf::LogError ("XMLRPC_Commander") << er.what ();
+      } 
+  };
+
+  class reset_stats_: public cmd_ {
+    public:
+      reset_stats_ (xmlrpc_commander& c):
+        cmd_(c, "s:s", "reset statistics") {}
+      void execute_ (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) override try {
+        if (paramList.size() > 0) {
+          std::string which = paramList.getString(0);
+          if (_c._commandable.reset_stats(which)) {
+            *retvalP = xmlrpc_c::value_string ("Success"); 
+          }
+          else {
+            std::string problemReport = _c._commandable.report("all");
+            *retvalP = xmlrpc_c::value_string (problemReport); 
+          }
+        }
+        else {
+          *retvalP = xmlrpc_c::value_string ("The reset_stats message requires a single argument that selects the type of statistics to be reset."); 
+        }
+      } catch (std::runtime_error &er) { 
+	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
+	mf::LogError ("XMLRPC_Commander") << er.what ();
+      } 
+  };
+
+  class legal_commands_: public cmd_ {
+    public:
+      legal_commands_ (xmlrpc_commander& c):
+        cmd_(c, "s:n", "return the currently legal commands") {}
+      void execute_ (xmlrpc_c::paramList const&, xmlrpc_c::value * const retvalP) override try {
+        std::vector<std::string> cmdList = _c._commandable.legal_commands();
+        std::string resultString;
+        for (unsigned int idx = 0; idx < cmdList.size(); ++idx) {
+          if (idx > 0) {resultString.append(" ");}
+          resultString.append(cmdList[idx]);
+          if (cmdList[idx] == "shutdown") {
+            resultString.append(" reset");
+          }
+        }
+        *retvalP = xmlrpc_c::value_string (resultString);
+      } catch (std::runtime_error &er) { 
+	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
+	mf::LogError ("XMLRPC_Commander") << er.what ();
       } 
   };
 
 #define generate_noarg_class(name, description) \
   class name ## _: public cmd_ { \
     public: \
-      name ## _(xmlrpc_commander& c): cmd_(c, "s:n", description) {} \
-      void execute (xmlrpc_c::paramList const&, xmlrpc_c::value * const retvalP) try { \
-	_c.name (); \
-	*retvalP = xmlrpc_c::value_string ("ok"); \
+      name ## _(xmlrpc_commander& c):\
+          cmd_(c, "s:n", description) {}\
+      void execute_ (xmlrpc_c::paramList const&, xmlrpc_c::value * const retvalP) override try { \
+        if (_c._commandable.name()) { \
+          *retvalP = xmlrpc_c::value_string ("Success"); \
+        } \
+        else { \
+          std::string problemReport = _c._commandable.report("all"); \
+          *retvalP = xmlrpc_c::value_string (problemReport); \
+        } \
       } catch (std::runtime_error &er) { \
 	*retvalP = xmlrpc_c::value_string (exception_msg (er)); \
-	mf::LogError ("Command") << er.what (); \
+	mf::LogError ("XMLRPC_Commander") << er.what (); \
       } \
   } 
 
+  generate_noarg_class(stop, "stop the run");
   generate_noarg_class(pause, "pause the run");
   generate_noarg_class(resume, "resume the run");
-  generate_noarg_class(stop, "stop the run");
-  generate_noarg_class(abort, "abort the system");
-  generate_noarg_class(reboot, "reboot the computer");
+  generate_noarg_class(shutdown, "shut down the program");
 
 #undef generate_noarg_class
 
+#if 0
   class shutdown_: public xmlrpc_c::registry::shutdown {
     public:
       shutdown_ (xmlrpc_c::serverAbyss *server): _server(server) {}
 
-      virtual void doit (const std::string&, void*) const {
+      virtual void doit (const std::string& paramString, void*) const {
+        mf::LogInfo("XMLRPC_Commander") << "A shutdown command was sent "
+                                        << "with parameter "
+                                        << paramString << "\"";
 	_server->terminate ();
       }
     private:
       xmlrpc_c::serverAbyss *_server;
   };
+#endif
 }
 
 
-xmlrpc_commander::xmlrpc_commander (int port): _port(port), _state(idle) {}
+xmlrpc_commander::xmlrpc_commander (int port, ds50::Commandable& commandable):
+  _port(port), _commandable(commandable)
+{}
 
-void xmlrpc_commander::operator() () try {
+void xmlrpc_commander::run() try {
   xmlrpc_c::registry registry;
 
 #define register_method(m) \
   xmlrpc_c::methodPtr const ptr_ ## m(new m ## _(*this));\
-  registry.addMethod ("ds50." #m, ptr_ ## m);
+  registry.addMethod ("daq." #m, ptr_ ## m);
 
   register_method(init);
+  register_method(soft_init);
+  register_method(reinit);
   register_method(start);
+  register_method(status);
+  register_method(report);
   register_method(stop);
+  register_method(pause);
+  register_method(resume);
+  register_method(reset_stats);
+  register_method(legal_commands);
 
+  register_method(shutdown);
+
+  // alias "daq.reset" to the internal shutdown transition
+  xmlrpc_c::methodPtr const ptr_reset(new shutdown_(*this));
+  registry.addMethod ("daq.reset", ptr_reset);
+ 
 #undef register_method
 
   xmlrpc_c::serverAbyss server(xmlrpc_c::serverAbyss::constrOpt ().registryP (&registry).portNumber (_port));
 
+#if 0
   shutdown_ shutdown_obj(&server);
   registry.setShutdown (&shutdown_obj);
+#endif
 
-  mf::LogDebug ("XMLRPC") << "running server" << std::endl;
+  mf::LogDebug ("XMLRPC_Commander") << "running server" << std::endl;
 
   server.run();
 
-  mf::LogDebug ("XMLRPC") << "server terminated" << std::endl;
+  mf::LogDebug ("XMLRPC_Commander") << "server terminated" << std::endl;
 
-  shutdown ();
 } catch (...) {
-  shutdown ();
   throw;
-}
-
-
-
-void xmlrpc_commander::init (const std::string& config) {
-  std::lock_guard<std::mutex> lk(_m);
-  if (_state != idle) throw std::runtime_error("wrong state");
-
-  fhicl::make_ParameterSet (config, _pset);
-
-
-  _state = inited;
-}
-
-
-void xmlrpc_commander::start (int) {
-  std::lock_guard<std::mutex> lk(_m);
-  if (_state != inited) throw std::runtime_error("wrong state");
-
-  _state = running;
-}
-
-
-void xmlrpc_commander::stop () {
-  if (_state != running) throw std::runtime_error("wrong state");
-}
-
-void xmlrpc_commander::shutdown () {
 }
