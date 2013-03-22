@@ -15,6 +15,7 @@
 #include "artdaq/DAQdata/GenericFragmentSimulator.hh"
 #include "artdaq/DAQdata/makeFragmentGenerator.hh"
 #include "artdaq/DAQrate/EventStore.hh"
+#include "artdaq/DAQrate/MPIProg.hh"
 #include "artdaq/DAQrate/SimpleQueueReader.hh"
 #include "cetlib/container_algorithms.h"
 #include "cetlib/filepath_maker.h"
@@ -37,6 +38,7 @@ void sig_handler(int) {events_to_generate = -1;}
 
 int main(int argc, char * argv[]) try
 {
+  MPIProg mpiSentry(argc, argv);
   std::ostringstream descstr;
   descstr << argv[0]
           << " <-c <config-file>> <other-options> [<source-file>]+";
