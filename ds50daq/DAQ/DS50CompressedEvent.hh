@@ -24,6 +24,7 @@ class ds50::CompressedEvent {
 public:
   typedef uint64_t reg_type;
   typedef std::vector<reg_type> DataVec;
+  enum Algo_t { AlgoHuffman, AlgoPod, AlgoSubexp0, AlgoSubexp1 };
 
   CompressedEvent() { }
   // will set up the headers and the sizes given a set of fragments
@@ -56,6 +57,12 @@ public:
 #endif
   };
 
+  setMetadata(size_t bits, Algo_t algo, int bias=0)
+  { bias_=bias; bits_=bits, algo_=algo; }
+  size_t getAdcBits() const { return bits_; }
+  int getBias() const { return bias_; }
+  Algo_t getAlgo() const { return algo_; }
+
 private:
   // ROOT persistency can't handle bitfields.
   typedef std::vector<HeaderProxy> DS50HeaderVec;
@@ -65,6 +72,11 @@ private:
   DS50HeaderVec ds50_headers_;
   CompVec compressed_fragments_;
   CountVec counts_;
+
+  // need some metadata: ADC bits, Compression algo name, algo bias
+  int bias_;
+  size_t bits_;
+  Algo_t algo_;
 };
 
 #if USE_MODERN_FEATURES
