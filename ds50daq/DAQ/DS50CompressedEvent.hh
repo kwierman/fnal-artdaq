@@ -24,7 +24,7 @@ class ds50::CompressedEvent {
 public:
   typedef uint64_t reg_type;
   typedef std::vector<reg_type> DataVec;
-  enum Algo_t { AlgoHuffman, AlgoPod, AlgoSubexp0, AlgoSubexp1 };
+  enum Algo_t { AlgoHuffman, AlgoPod, AlgoSubexp0, AlgoSubexp1, AlgoUnknown };
 
   CompressedEvent() { }
   // will set up the headers and the sizes given a set of fragments
@@ -57,7 +57,7 @@ public:
 #endif
   };
 
-  setMetadata(size_t bits, Algo_t algo, int bias=0)
+  void setMetadata(size_t bits, Algo_t algo, int bias=0)
   { bias_=bias; bits_=bits, algo_=algo; }
   size_t getAdcBits() const { return bits_; }
   int getBias() const { return bias_; }
