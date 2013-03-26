@@ -219,6 +219,7 @@ namespace {
                                                         fakeData.end()))));
     tmpFrag->setUserType(1);
     event->insertFragment(std::move(tmpFrag));
+    event->markComplete();
     artdaq::getGlobalQueue().enqNowait(event);
     EventPrincipal * newevent = nullptr;
     SubRunPrincipal * newsubrun = nullptr;

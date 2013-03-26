@@ -30,13 +30,15 @@ namespace artdaq {
     run_id_t run_id;       // RawDataType run_id;
     subrun_id_t subrun_id; // RawDataType subrun_id;
     sequence_id_t sequence_id;   // RawDataType sequence_id;
+    bool is_complete;
 
     RawEventHeader(run_id_t run,
                    subrun_id_t subrun,
                    sequence_id_t event) :
       run_id(run),
       subrun_id(subrun),
-      sequence_id(event)
+      sequence_id(event),
+      is_complete(false)
     { }
 
   };
@@ -59,6 +61,9 @@ namespace artdaq {
 #if USE_MODERN_FEATURES
     void insertFragment(FragmentPtr && pfrag);
 
+    // Mark the event as complete
+    void markComplete();
+
     // Return the number of fragments this RawEvent contains.
     size_t numFragments() const;
 
@@ -69,6 +74,7 @@ namespace artdaq {
     run_id_t runID() const;
     subrun_id_t subrunID() const;
     sequence_id_t sequenceID() const;
+    bool isComplete() const;
 
     // Print summary information about this RawEvent to the given stream.
     void print(std::ostream & os) const;
@@ -115,6 +121,8 @@ namespace artdaq {
     fragments_.emplace_back(std::move(pfrag));
   }
 
+  inline void RawEvent::markComplete() { header_.is_complete = true; }
+
   inline
   size_t RawEvent::numFragments() const
   {
@@ -132,6 +140,7 @@ namespace artdaq {
   inline RawEvent::run_id_t RawEvent::runID() const { return header_.run_id; }
   inline RawEvent::subrun_id_t RawEvent::subrunID() const { return header_.subrun_id; }
   inline RawEvent::sequence_id_t RawEvent::sequenceID() const { return header_.sequence_id; }
+  inline bool RawEvent::isComplete() const { return header_.is_complete; }
 
   inline
   std::unique_ptr<std::vector<Fragment>> RawEvent::releaseProduct()
