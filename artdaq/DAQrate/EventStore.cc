@@ -100,6 +100,7 @@ namespace artdaq {
       // map, report on statistics, and put the shared pointer onto
       // the event queue.
       RawEvent_ptr complete_event(loc->second);
+      complete_event->markComplete();
 #ifndef ARTDAQ_NO_PERF
       PerfWriteEvent(EventMeas::END, sequence_id);
 #endif
@@ -124,6 +125,21 @@ namespace artdaq {
   int
   EventStore::endOfData()
   {
+    // 26-Mar-2013, KAB: This will need to change once we get better
+    // end run handling, but for now let's at least drain the event
+    // store when we are shutting down (ending the run).
+    EventMap::iterator loc;
+    for (loc = events_.begin(); loc != events_.end(); ++loc) {
+      RawEvent_ptr complete_event(loc->second);
+      MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
+        getMonitoredQuantity(EVENT_RATE_STAT_KEY);
+      if (mqPtr.get() != 0) {
+        mqPtr->addSample(complete_event->wordCount());
+      }
+      queue_.enqNowait(complete_event);
+    }
+    events_.clear();
+
     RawEvent_ptr end_of_data(0);
     queue_.enqNowait(end_of_data);
     return reader_thread_.get();

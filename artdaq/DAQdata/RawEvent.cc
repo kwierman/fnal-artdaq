@@ -11,6 +11,7 @@ namespace artdaq {
        << ", Event " << sequenceID()
        << ", FragCount " << numFragments()
        << ", WordCount " << wordCount()
+       << ", Complete? " << isComplete()
        << '\n';
   for (auto const & frag : fragments_) { os << *frag << '\n'; }
   }
