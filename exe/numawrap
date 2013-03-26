@@ -14,6 +14,8 @@ Getopt::Long::Configure(qw(no_ignore_case bundling require_order));
 my $rank;
 if (exists $ENV{PMI_ID}) {
   $rank = $ENV{PMI_ID};
+} elsif (exists $ENV{PMI_RANK}) {
+  $rank = $ENV{PMI_RANK};
 } elsif (exists $ENV{OMPI_COMM_WORLD_LOCAL_RANK}) {
   $rank = $ENV{OMPI_COMM_WORLD_LOCAL_RANK};
 } elsif ($ENV{PBS_TASKNUM}) {
@@ -22,6 +24,8 @@ if (exists $ENV{PMI_ID}) {
 
 if (!defined $rank) {
   print STDERR "ERROR: could not ascertain rank!\n";
+  system("printenv | sort 1>&2");
+  exit(1);
 }
 
 my $options = {};
