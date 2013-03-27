@@ -51,10 +51,12 @@ namespace artdaq {
     // executed by the thread this EventStore will spawn.
     EventStore(size_t num_fragments_per_event, run_id_t run,
                int store_id, int argc, char * argv[],
-               ART_CMDLINE_FCN * reader, bool printSummaryStats = false);
+               ART_CMDLINE_FCN * reader, unsigned int seqIDModulus,
+               bool printSummaryStats = false);
     EventStore(size_t num_fragments_per_event, run_id_t run,
                int store_id, const std::string& configString,
-               ART_CFGSTRING_FCN * reader, bool printSummaryStats = false);
+               ART_CFGSTRING_FCN * reader, unsigned int seqIDModulus,
+               bool printSummaryStats = false);
 
     ~EventStore();
 
@@ -79,7 +81,8 @@ namespace artdaq {
     EventMap       events_;
     RawEventQueue & queue_;
     std::future<int> reader_thread_;
-    bool const     printSummaryStats_;
+    unsigned int const seqIDModulus_;
+    bool const printSummaryStats_;
 
     void initStatistics_();
     void reportStatistics_();

@@ -28,6 +28,7 @@ namespace artdaq {
                          int argc,
                          char * argv[],
                          ART_CMDLINE_FCN * reader,
+                         unsigned int seqIDModulus,
                          bool printSummaryStats) :
     id_(store_id),
     num_fragments_per_event_(num_fragments_per_event),
@@ -36,6 +37,7 @@ namespace artdaq {
     events_(),
     queue_(getGlobalQueue()),
     reader_thread_(std::async(std::launch::async, reader, argc, argv)),
+    seqIDModulus_(seqIDModulus),
     printSummaryStats_(printSummaryStats)
   {
     initStatistics_();
@@ -46,6 +48,7 @@ namespace artdaq {
                          int store_id,
                          const std::string& configString,
                          ART_CFGSTRING_FCN * reader,
+                         unsigned int seqIDModulus,
                          bool printSummaryStats) :
     id_(store_id),
     num_fragments_per_event_(num_fragments_per_event),
@@ -54,6 +57,7 @@ namespace artdaq {
     events_(),
     queue_(getGlobalQueue()),
     reader_thread_(std::async(std::launch::async, reader, configString)),
+    seqIDModulus_(seqIDModulus),
     printSummaryStats_(printSummaryStats)
   {
     initStatistics_();
@@ -72,20 +76,21 @@ namespace artdaq {
     // Fragment without a good fragment ID.
     assert(pfrag != nullptr);
     assert(pfrag->fragmentID() != Fragment::InvalidFragmentID);
+
     // find the event being built and put the fragment into it,
     // start new event if not already present
     // if the event is complete, delete it and report timing
-    //RawFragmentHeader* fh = pfrag->fragmentHeader();
-    Fragment::sequence_id_t sequence_id = pfrag->sequenceID();
-    // The fragmentID is expected to be correct in the incoming
-    // fragment; the EventStore has no business changing it in the
-    // current design.
-    //     // update the fragment ID (up to this point, it has been set to the
-    //     // detector rank or the source rank, but now we just want a simple index)
-    //     fh->fragment_id_ -= fragmentIdOffset_;
+
+    // The sequenceID is expected to be correct in the incoming fragment.
+    // The EventStore will divide it by the seqIDModulus to support the use case
+    // of the aggregator which needs bunch groups serialized events with
+    // continuous sequence IDs together.
+    Fragment::sequence_id_t sequence_id = (pfrag->sequenceID() - 1) / seqIDModulus_;
+
     // Find if the right event id is already known to events_ and, if so, where
     // it is.
     EventMap::iterator loc = events_.lower_bound(sequence_id);
+
     if (loc == events_.end() || events_.key_comp()(sequence_id, loc->first)) {
       // We don't have an event with this id; create one an insert it at loc,
       // and ajust loc to point to the newly inserted event.
@@ -93,6 +98,7 @@ namespace artdaq {
       loc =
         events_.insert(loc, EventMap::value_type(sequence_id, newevent));
     }
+
     // Now insert the fragment into the event we have located.
     loc->second->insertFragment(std::move(pfrag));
     if (loc->second->numFragments() == num_fragments_per_event_) {

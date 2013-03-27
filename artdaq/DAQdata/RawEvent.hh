@@ -96,6 +96,8 @@ namespace artdaq {
     FragmentPtrs           fragments_;
   };
 
+  typedef std::shared_ptr<RawEvent> RawEvent_ptr;
+
   inline
   RawEvent::RawEvent(run_id_t run, subrun_id_t subrun, sequence_id_t event) :
     header_(run, subrun, event),
@@ -109,12 +111,6 @@ namespace artdaq {
     if (pfrag == nullptr) {
       throw cet::exception("LogicError")
           << "Attempt to insert a null FragmentPtr into a RawEvent detected.\n";
-    }
-    if (pfrag->sequenceID() != header_.sequence_id) {
-      throw cet::exception("DataCorruption")
-          << "Attempt to insert a Fragment from event " << pfrag->sequenceID()
-          << " into a RawEvent with id " << header_.sequence_id
-          << " detected\n";
     }
     fragments_.emplace_back(std::move(pfrag));
   }

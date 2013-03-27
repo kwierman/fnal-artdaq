@@ -36,7 +36,7 @@ int main(int argc, char * argv[])
     // test of the EventStore's ability to deal with multiple events
     // simulatenously.
     GenericFragmentSimulator sim(sim_config);
-    EventStore events(NUM_FRAGS_PER_EVENT, RUN_ID, STORE_ID, argc, argv, &artapp);
+    EventStore events(NUM_FRAGS_PER_EVENT, RUN_ID, STORE_ID, argc, argv, &artapp, 1);
     FragmentPtrs frags;
     while (sim.getNext(frags)) {
       LOG_DEBUG("main") << "Number of fragments: " << frags.size() << '\n';
