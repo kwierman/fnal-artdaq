@@ -28,7 +28,8 @@
 #include "fhiclcpp/ParameterSetID.h"
 #include "fhiclcpp/ParameterSetRegistry.h"
 
-#include "NetMonTransportService.h"
+#include "artdaq/ArtModules/NetMonTransportService.h"
+#include "artdaq/DAQdata/NetMonHeader.hh"
 
 #include <cassert>
 #include <iomanip>
@@ -185,7 +186,7 @@ openFile(FileBlock const& fb)
     //
     ServiceHandle<NetMonTransportService> transport;
     fprintf(stderr, "openFile: Sending the init message ...\n");
-    transport->sendMessage(msg);
+    transport->sendMessage(0, artdaq::NetMonHeader::InitDataFragmentType, msg);
     fprintf(stderr, "openFile: Init message sent.\n");
 }
 
@@ -299,11 +300,11 @@ write(EventPrincipal const & ep)
             I->second->productProvenancePtr().get();
         msg.WriteObjectAny(prdprov, prdprov_class);
     }
+
     ServiceHandle<NetMonTransportService> transport;
-    //fprintf(stderr, "write: sending a message ...\n");
-    transport->sendMessage(msg);
-    //sock_->Send(msg);
-    //fprintf(stderr, "write: message sent.\n");
+    transport->sendMessage(static_cast<uint64_t>(ep.id().event()), 
+			   artdaq::NetMonHeader::EventDataFragmentType, 
+			   msg);
 }
 
 void

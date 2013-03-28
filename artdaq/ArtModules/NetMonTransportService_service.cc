@@ -1,4 +1,11 @@
-#include "NetMonTransportService.h"
+#include "artdaq/ArtModules/NetMonTransportService.h"
+#include "artdaq/DAQrate/RHandles.hh"
+#include "artdaq/DAQrate/SHandles.hh"
+#include "artdaq/DAQrate/GlobalQueue.hh"
+
+#include "artdaq/DAQdata/Fragment.hh"
+#include "artdaq/DAQdata/NetMonHeader.hh"
+#include "artdaq/DAQdata/RawEvent.hh"
 
 #include "art/Framework/Services/Registry/ActivityRegistry.h"
 #include "art/Utilities/Exception.h"
@@ -8,15 +15,16 @@
 #include "fhiclcpp/ParameterSetRegistry.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
+#include "TClass.h"
+#include "TServerSocket.h"
+#include "TMessage.h"
+#include "TBuffer.h"
+
 #include <cassert>
 #include <iomanip>
 #include <iostream>
 #include <string>
 #include <vector>
-
-#include "TClass.h"
-#include "TServerSocket.h"
-#include "TMessage.h"
 
 using namespace cet;
 using namespace fhicl;
@@ -32,13 +40,20 @@ NetMonTransportService::
 
 NetMonTransportService::
 NetMonTransportService(ParameterSet const& pset, art::ActivityRegistry&)
-    : NetMonTransportServiceInterface(), server_sock_(0), sock_(0)
+  : NetMonTransportServiceInterface(), server_sock_(0), sock_(0),
+    mpi_buffer_count_(pset.get<size_t>("mpi_buffer_count", 5)),
+    max_fragment_size_words_(pset.get<uint64_t>("max_fragment_size_words", 512 * 1024)),
+    first_data_sender_rank_(pset.get<size_t>("first_data_sender_rank", 0)),
+    first_data_receiver_rank_(pset.get<size_t>("first_data_receiver_rank", 0)),
+    data_sender_count_(pset.get<size_t>("data_sender_count", 1)),
+    data_receiver_count_(pset.get<size_t>("data_receiver_count", 1)),
+    incoming_events_(artdaq::getGlobalQueue()),
+    recvd_fragments_(nullptr)
 {
     mf::LogVerbatim("DEBUG") <<
         "-----> Begin NetMonTransportService::"
         "NetMonTransportService(ParameterSet const & pset, "
         "art::ActivityRegistry&)";
-    //ParameterSet services = pset.get<ParameterSet>("services", empty_pset);
     string val = pset.to_indented_string();
     mf::LogVerbatim("DEBUG") << "Contents of parameter set:";
     mf::LogVerbatim("DEBUG") << "";
@@ -59,58 +74,70 @@ void
 NetMonTransportService::
 connect()
 {
-    assert(sock_ == nullptr);
-    sock_ = new TSocket("localhost", 31030);
-    assert(sock_ != nullptr);
-}
-
-void
-NetMonTransportService::
-disconnect()
-{
-    if (sock_ != nullptr) {
-        sock_->Close();
-    }
-    delete sock_;
-    sock_ = 0;
-    if (server_sock_ != nullptr) {
-        server_sock_->Close();
-    }
-    delete server_sock_;
-    server_sock_ = 0;
+    mf::LogVerbatim("DEBUG") << "NetMonTransportService::connect(): Called";
+    mf::LogVerbatim("DEBUG") << "NetMonTransportService::connect(): Creating SHandle: " << data_receiver_count_ << " " << first_data_receiver_rank_;
+    sender_ptr_.reset(new artdaq::SHandles(mpi_buffer_count_,
+    					   max_fragment_size_words_,
+    					   data_receiver_count_,
+    					   first_data_receiver_rank_));
+    mf::LogVerbatim("DEBUG") << "NetMonTransportService::connect(): Creating SHandle, done.";
 }
 
 void
 NetMonTransportService::
 listen()
 {
-    assert(sock_ == nullptr);
-    assert(server_sock_ == nullptr);
-    server_sock_ = new TServerSocket(31030);
-    assert(server_sock_ != nullptr);
-    sock_ = server_sock_->Accept();
-    assert(sock_ != nullptr);
+  return;
 }
 
 void
 NetMonTransportService::
-sendMessage(TMessage const& msg)
+disconnect()
 {
-    assert(sock_ != nullptr);
-    sock_->Send(msg);
+    mf::LogVerbatim("DEBUG") << "NetMonTransportService::disconnect(): Called";
+
+    if (sender_ptr_) sender_ptr_.reset(nullptr);
+    if (receiver_ptr_) receiver_ptr_.reset(nullptr);
 }
 
 void
 NetMonTransportService::
-receiveMessage(TMessage*& msg)
+sendMessage(uint64_t sequenceId, uint8_t messageType, TMessage const& msg)
 {
-    assert(sock_ != nullptr);
-    assert(msg == nullptr);
-    int nBytes = sock_->Recv(msg);
-    assert(nBytes > 0);
-    mf::LogVerbatim("DEBUG") << "transport received a message: " << nBytes << " bytes.";
+  artdaq::NetMonHeader header;
+  header.data_length = static_cast<uint64_t>(msg.Length());
+  artdaq::Fragment fragment(std::ceil(msg.Length() / sizeof(artdaq::RawDataType)), 
+			    sequenceId, 0, messageType, header);
+  memcpy(&*fragment.dataBegin(), msg.Buffer(), msg.Length());
+  sender_ptr_->sendFragment(std::move(fragment));
+}
+
+void
+NetMonTransportService::
+receiveMessage(TMessage*&)
+{
+    if (recvd_fragments_ == nullptr) {
+      std::shared_ptr<artdaq::RawEvent> popped_event;
+      incoming_events_.deqWait(popped_event);
+      recvd_fragments_ = popped_event->releaseProduct();
+      /* Events coming out of the EventStore are not sorted but need to be
+	 sorted by sequence ID before they can be passed to art. 
+      */
+      std::sort (recvd_fragments_->begin(), recvd_fragments_->end(), 
+		 artdaq::fragmentSequenceIDCompare);
+    }
+
+    artdaq::Fragment topFrag = std::move(recvd_fragments_->at(0));
+    recvd_fragments_->erase(recvd_fragments_->begin());
+    if (recvd_fragments_->size() == 0) {
+      recvd_fragments_.reset(nullptr);
+    }
+
+    artdaq::NetMonHeader *header = topFrag.metadata<artdaq::NetMonHeader>();
+    //buffer = new TBuffer(1);
+    //buffer->SetBuffer(&*topFrag.dataBegin(), header->data_length);
+    mf::LogVerbatim("DEBUG") << "NetMonTransportService::receiveMessage(): Returning fragment with " << header->data_length << " bytes.";
 }
 
 DEFINE_ART_SERVICE_INTERFACE_IMPL(NetMonTransportService,
                                   NetMonTransportServiceInterface)
-

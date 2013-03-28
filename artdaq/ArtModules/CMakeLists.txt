@@ -1,3 +1,7 @@
+if(WANT_MPI)
+  include_directories(${MPI_INCLUDE_PATH})
+endif()
+
 art_make_library(
   SOURCE 
     RawInput_source.cc
@@ -33,6 +37,7 @@ simple_plugin(NetMonOutput "module"
 )
 
 simple_plugin(NetMonTransportService "service"
+  artdaq_DAQrate
   ${MF_MESSAGELOGGER}
   ${FHICLCPP}
   ${ROOT_NET}

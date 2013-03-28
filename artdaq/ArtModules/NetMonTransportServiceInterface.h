@@ -10,7 +10,7 @@ public:
     virtual void connect() = 0;
     virtual void disconnect() = 0;
     virtual void listen() = 0;
-    virtual void sendMessage(const TMessage&) = 0;
+    virtual void sendMessage(uint64_t sequenceId, uint8_t messageType, const TMessage&) = 0;
     virtual void receiveMessage(TMessage*&) = 0;
 };
 

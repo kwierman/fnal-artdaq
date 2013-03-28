@@ -19,6 +19,11 @@ artdaq::Fragment::type_t const artdaq::Fragment::EndOfDataFragmentType =
 artdaq::Fragment::type_t const artdaq::Fragment::DataFragmentType =
   detail::RawFragmentHeader::DataFragmentType;
 
+bool artdaq::fragmentSequenceIDCompare(Fragment i, Fragment j)
+{
+  return i.sequenceID() < j.sequenceID();
+}
+
 artdaq::Fragment::Fragment() :
   vals_(RawFragmentHeader::num_words(), 0)
 {

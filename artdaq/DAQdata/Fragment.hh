@@ -17,6 +17,7 @@ namespace artdaq {
   typedef detail::RawFragmentHeader::RawDataType RawDataType;
 
   class Fragment;
+  bool fragmentSequenceIDCompare(Fragment i, Fragment j);
 
   std::ostream & operator<<(std::ostream & os, Fragment const & f);
 }

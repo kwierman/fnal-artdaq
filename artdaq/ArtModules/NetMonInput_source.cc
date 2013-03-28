@@ -66,7 +66,6 @@ private:
     const art::PrincipalMaker& pm_;
     art::EventNumber_t ev_num_;
     const int max_events_;
-    //TSocket* sock_;
 };
 
 art::NetMonInputDetail::
