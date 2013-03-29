@@ -213,48 +213,56 @@ std::vector<std::string> ds50::Commandable::legal_commands() const
 
 bool ds50::Commandable::do_initialize(fhicl::ParameterSet const&)
 {
+  mf::LogDebug("CommandableInterface") << "do_initialize called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
 bool ds50::Commandable::do_start(art::RunID)
 {
+  mf::LogDebug("CommandableInterface") << "do_start called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
 bool ds50::Commandable::do_stop()
 {
+  mf::LogDebug("CommandableInterface") << "do_stop called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
 bool ds50::Commandable::do_pause()
 {
+  mf::LogDebug("CommandableInterface") << "do_pause called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
 bool ds50::Commandable::do_resume()
 {
+  mf::LogDebug("CommandableInterface") << "do_resume called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
 bool ds50::Commandable::do_shutdown()
 {
+  mf::LogDebug("CommandableInterface") << "do_shutdown called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
 bool ds50::Commandable::do_reinitialize(fhicl::ParameterSet const&)
 {
+  mf::LogDebug("CommandableInterface") << "do_reinitialize called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
 bool ds50::Commandable::do_soft_initialize(fhicl::ParameterSet const&)
 {
+  mf::LogDebug("CommandableInterface") << "do_soft_initialize called.";
   external_request_status_ = true;
   return external_request_status_;
 }
