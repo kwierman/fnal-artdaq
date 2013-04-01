@@ -71,6 +71,11 @@ namespace artdaq {
     // returned.
     int endOfData();
 
+    void startRun(run_id_t runID);
+    void endRun();
+    void pauseRun();
+    void resumeRun();
+
   private:
     // id_ is the unique identifier of this object; MPI programs will
     // use the MPI rank to fill in this value.

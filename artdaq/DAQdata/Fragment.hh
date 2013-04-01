@@ -7,6 +7,7 @@
 #include <iosfwd>
 #include <iterator>
 #include <vector>
+#include <memory>
 #include <stdint.h>
 #include <string.h>
 
@@ -41,6 +42,7 @@ public:
   static type_t const InvalidFragmentType;
   static type_t const EndOfDataFragmentType;
   static type_t const DataFragmentType;
+  static type_t const EndOfRunFragmentType;
 
   typedef std::vector<RawDataType>::reference       reference;
   typedef std::vector<RawDataType>::iterator        iterator;
@@ -125,6 +127,7 @@ public:
   RawDataType * headerAddress();
 
   static Fragment eodFrag(size_t nFragsToExpect);
+  static std::unique_ptr<Fragment> eorFrag(size_t nFragsToExpect);
 
   template <class InputIterator>
   static

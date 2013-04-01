@@ -36,8 +36,9 @@ struct artdaq::detail::RawFragmentHeader {
   static const type_t FIRST_SYSTEM_TYPE = 225;
   static const type_t LAST_SYSTEM_TYPE = 255;
   static const type_t InvalidFragmentType = INVALID_TYPE;
-  static const type_t EndOfDataFragmentType= FIRST_SYSTEM_TYPE;
+  static const type_t EndOfDataFragmentType = FIRST_SYSTEM_TYPE;
   static const type_t DataFragmentType = FIRST_SYSTEM_TYPE+1;
+  static const type_t EndOfRunFragmentType = FIRST_SYSTEM_TYPE+2;
 
   // Each of the following invalid values is chosen based on the
   // size of the bitfield in which the corresponding data are
