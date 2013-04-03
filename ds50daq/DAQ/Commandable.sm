@@ -96,6 +96,7 @@ Exit  { InRunExit(); }
   stop  Error  {}
   init(pset: fhicl::ParameterSet const&)  [ctxt.do_stop()]  pop(init, pset)  {}
   init(pset: fhicl::ParameterSet const&)  Error  {}
+  shutdown  [ctxt.do_stop()]  pop(shutdown)  {}
   shutdown  pop(shutdown)  {}
 }
 
