@@ -13,8 +13,9 @@ ds50::DS50FragmentGenerator::DS50FragmentGenerator(const fhicl::ParameterSet &ps
 void ds50::DS50FragmentGenerator::start (int run) { 
   if (run < 0) throw cet::exception("DS50FragmentGenerator") << "negative run number";
 
+    // thread not started yet
   ev_counter_.store (1);
-  should_stop_ = false; // no lock required: thread not started yet
+  should_stop_.store (false);
   run_number_ = run; 
 
   perfreset ();
@@ -28,8 +29,8 @@ void ds50::DS50FragmentGenerator::pause () { pause_ (); }
 void ds50::DS50FragmentGenerator::resume () { resume_ (); } 
 
 void ds50::DS50FragmentGenerator::stop () { 
+  should_stop_.store (true);
   std::unique_lock<std::mutex> lk(mutex_);
-  should_stop_ = true;
   stop_ (); 
 }
 
@@ -50,13 +51,14 @@ void ds50::DS50FragmentGenerator::shutdown () {
   shutdown_ (); 
 }
   
-bool ds50::DS50FragmentGenerator::should_stop () { return should_stop_; } // no lock required: modified within a lock and used in getNext__ within a lock
+bool ds50::DS50FragmentGenerator::should_stop () { return should_stop_.load (); } 
 
 
 bool ds50::DS50FragmentGenerator::getNext_ (artdaq::FragmentPtrs & output) { 
   if (init_only_) stop ();
 
   if (sleep_us_ > 0) usleep (sleep_us_);
+  if (should_stop ()) usleep (500000);  // This will allow to the stopping thread to gather the required lock
 
   bool r = false;
   {
@@ -72,12 +74,6 @@ bool ds50::DS50FragmentGenerator::getNext_ (artdaq::FragmentPtrs & output) {
 
   }
 
-  // if the size is zero, sleep for a tiny amount of time to allow
-  // the stop method to get the lock (otherwise, we can get in a
-  // situation where the getNext loop locks out the stop
-  if (output.size() == 0) {
-    usleep(10);
-  }
   return r;
 }
 
