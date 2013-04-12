@@ -56,6 +56,15 @@ namespace artdaq {
                int store_id, const std::string& configString,
                ART_CFGSTRING_FCN * reader, bool printSummaryStats = false);
 
+    EventStore(size_t num_fragments_per_event, run_id_t run,
+               int store_id, int argc, char * argv[],
+               ART_CMDLINE_FCN * reader, int max_art_queue_size,
+               double enq_timeout_sec, bool printSummaryStats = false);
+    EventStore(size_t num_fragments_per_event, run_id_t run,
+               int store_id, const std::string& configString,
+               ART_CFGSTRING_FCN * reader, int max_art_queue_size,
+               double enq_timeout_sec, bool printSummaryStats = false);
+
     ~EventStore();
 
     // Give ownership of the Fragment to the EventStore. The pointer
@@ -79,6 +88,7 @@ namespace artdaq {
     EventMap       events_;
     RawEventQueue & queue_;
     std::future<int> reader_thread_;
+    daqrate::seconds const enq_timeout_;
     bool const     printSummaryStats_;
 
     void initStatistics_();
