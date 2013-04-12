@@ -73,4 +73,17 @@ artdaq::Fragment::eodFrag(size_t nFragsToExpect)
   *result.dataBegin() = nFragsToExpect;
   return result;
 }
+
+artdaq::Fragment
+artdaq::Fragment::
+dataFrag(sequence_id_t sequenceID,
+         fragment_id_t fragID,
+         RawDataType const * dataPtr,
+         size_t dataSize)
+{
+  Fragment result(sequenceID, fragID);
+  result.resize(dataSize);
+  memcpy(result.dataAddress(), dataPtr, (dataSize * sizeof(RawDataType)));
+  return result;
+}
 #endif

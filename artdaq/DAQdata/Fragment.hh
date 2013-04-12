@@ -102,6 +102,9 @@ public:
   // Resize the data payload to hold sz words.
   void resize(std::size_t sz, RawDataType v = RawDataType());
 
+  // Resize the fragment to hold the number of words in the header.
+  void autoResize();
+
   // Return an iterator to the beginning of the data payload (post-header).
   iterator dataBegin();
   // ... and the end
@@ -125,6 +128,7 @@ public:
 
   static Fragment eodFrag(size_t nFragsToExpect);
 
+  // 12-Apr-2013, KAB - this method is deprecated, please do not use
   template <class InputIterator>
   static
   Fragment
@@ -132,6 +136,13 @@ public:
            fragment_id_t fragID,
            InputIterator i,
            InputIterator e);
+
+  static
+  Fragment
+  dataFrag(sequence_id_t sequenceID,
+           fragment_id_t fragID,
+           RawDataType const * dataPtr,
+           size_t dataSize);
 #endif
 
 private:
@@ -326,6 +337,14 @@ artdaq::Fragment::resize(std::size_t sz, RawDataType v)
 }
 
 inline
+void
+artdaq::Fragment::autoResize()
+{
+  vals_.resize(fragmentHeader()->word_count);
+  updateSize_();
+}
+
+inline
 artdaq::Fragment::iterator
 artdaq::Fragment::dataBegin()
 {
@@ -426,6 +445,7 @@ artdaq::Fragment::headerAddress()
   return &vals_[0];
 }
 
+// 12-Apr-2013, KAB - this method is deprecated, please do not use
 template <class InputIterator>
 artdaq::Fragment
 artdaq::Fragment::
