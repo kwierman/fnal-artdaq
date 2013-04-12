@@ -8,11 +8,12 @@
 namespace artdaq {
   typedef std::shared_ptr<RawEvent> RawEvent_ptr;
   typedef daqrate::ConcurrentQueue<RawEvent_ptr> RawEventQueue;
+  typedef daqrate::ConcurrentQueue<RawEvent_ptr>::SizeType SizeType;
 
   // The first thread to call getGlobalQueue() causes the creation of
   // the queue. The queue will be destroyed at static destruction
   // time.
-  RawEventQueue & getGlobalQueue();
+  RawEventQueue & getGlobalQueue(SizeType maxSize=std::numeric_limits<SizeType>::max());
 }
 
 #endif /* artdaq_DAQrate_GlobalQueue_hh */
