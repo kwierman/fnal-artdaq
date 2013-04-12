@@ -1,8 +1,5 @@
 
 #include "artdaq/DAQrate/EventStore.hh"
-#ifndef ARTDAQ_NO_PERF
-#include "artdaq/DAQrate/Perf.hh"
-#endif
 #include <utility>
 #include <cstring>
 #include <dlfcn.h>
@@ -15,6 +12,15 @@
 #include "artdaq/DAQrate/SimpleQueueReader.hh"
 #include "artdaq/DAQrate/Utils.hh"
 #include "messagefacility/MessageLogger/MessageLogger.h"
+
+// jbk note about performance measurement collection - 
+// We should no longer need this "Perf" performance measurement.
+// The event store is used in applications that do not use MPI,
+// and the Perf performance measurement collector requires MPI
+// to be initialized.
+#if 0
+#include "artdaq/DAQrate/Perf.hh"
+#endif
 
 using namespace std;
 
@@ -147,9 +153,12 @@ namespace artdaq {
       // the event queue.
       RawEvent_ptr complete_event(loc->second);
       complete_event->markComplete();
-#ifndef ARTDAQ_NO_PERF
+
+#if 0
+      // jbk - see note at top of file
       PerfWriteEvent(EventMeas::END, sequence_id);
 #endif
+
       events_.erase(loc);
       // 13-Dec-2012, KAB - this monitoring needs to come before
       // the enqueueing of the event lest it be empty by the 
