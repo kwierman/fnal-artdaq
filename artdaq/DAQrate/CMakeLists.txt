@@ -23,6 +23,8 @@ set(LIB_SOURCES
 set(LIB_LIBS
   artdaq_DAQdata
   ${FHICLCPP}
+  ${MF_MESSAGELOGGER}
+  ${MF_UTILITIES}
   ${CLHEP}
   ${Boost_THREAD_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
