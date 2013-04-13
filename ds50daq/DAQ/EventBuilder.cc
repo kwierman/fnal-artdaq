@@ -12,7 +12,7 @@
  */
 ds50::EventBuilder::EventBuilder(int mpi_rank) :
   mpi_rank_(mpi_rank), local_group_defined_(false),
-  data_sender_count_(0), run_id_(0)
+  data_sender_count_(0), run_id_()
 {
   mf::LogDebug("EventBuilder") << "Constructor";
 
