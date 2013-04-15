@@ -23,9 +23,16 @@ void ds50::DS50FragmentGenerator::start (int run) {
 }
 
 
-void ds50::DS50FragmentGenerator::pause () { pause_ (); }
+void ds50::DS50FragmentGenerator::pause () { 
+  std::unique_lock<std::mutex> lk(mutex_);
+  should_stop_ = true;
+  pause_ (); 
+}
 
-void ds50::DS50FragmentGenerator::resume () { resume_ (); } 
+void ds50::DS50FragmentGenerator::resume () { 
+  should_stop_ = false; // no lock required: thread not started yet
+  resume_ (); 
+} 
 
 void ds50::DS50FragmentGenerator::stop () { 
   std::unique_lock<std::mutex> lk(mutex_);
