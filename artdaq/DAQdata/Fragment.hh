@@ -43,6 +43,7 @@ public:
   static type_t const EndOfDataFragmentType;
   static type_t const DataFragmentType;
   static type_t const EndOfRunFragmentType;
+  static type_t const EndOfSubrunFragmentType;
 
   typedef std::vector<RawDataType>::reference       reference;
   typedef std::vector<RawDataType>::iterator        iterator;
@@ -126,8 +127,7 @@ public:
   RawDataType * metadataAddress();   // for internal use only
   RawDataType * headerAddress();
 
-  static Fragment eodFrag(size_t nFragsToExpect);
-  static std::unique_ptr<Fragment> eorFrag(size_t nFragsToExpect);
+  static std::unique_ptr<Fragment> eodFrag(size_t nFragsToExpect);
 
   template <class InputIterator>
   static

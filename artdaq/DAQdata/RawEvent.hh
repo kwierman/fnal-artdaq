@@ -23,8 +23,8 @@ namespace artdaq {
   namespace detail { struct RawEventHeader; }
 
   struct detail::RawEventHeader {
-    typedef uint32_t             run_id_t;    // Fragments don't know about runs
-    typedef uint32_t             subrun_id_t; // Fragments don't know about subruns
+    typedef uint32_t                run_id_t;    // Fragments don't know about runs
+    typedef uint32_t                subrun_id_t; // Fragments don't know about subruns
     typedef Fragment::sequence_id_t sequence_id_t;
 
     run_id_t run_id;       // RawDataType run_id;

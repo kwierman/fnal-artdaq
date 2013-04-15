@@ -18,6 +18,7 @@ struct artdaq::NetMonHeader {
   static type_t const InitDataFragmentType;
   static type_t const RunDataFragmentType;
   static type_t const SubRunDataFragmentType;
+  static type_t const ShutdownFragmentType;
 };
 
 #endif

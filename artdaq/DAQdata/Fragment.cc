@@ -20,6 +20,8 @@ artdaq::Fragment::type_t const artdaq::Fragment::DataFragmentType =
   detail::RawFragmentHeader::DataFragmentType;
 artdaq::Fragment::type_t const artdaq::Fragment::EndOfRunFragmentType =
   detail::RawFragmentHeader::EndOfRunFragmentType;
+artdaq::Fragment::type_t const artdaq::Fragment::EndOfSubrunFragmentType =
+  detail::RawFragmentHeader::EndOfSubrunFragmentType;
 
 bool artdaq::fragmentSequenceIDCompare(Fragment i, Fragment j)
 {
@@ -71,22 +73,12 @@ artdaq::Fragment::print(std::ostream & os) const
      << '\n';
 }
 
-artdaq::Fragment
-artdaq::Fragment::eodFrag(size_t nFragsToExpect)
-{
-  Fragment result(static_cast<size_t>(ceil(sizeof(nFragsToExpect) /
-                                      static_cast<double>(sizeof(value_type)))));
-  result.setSystemType(Fragment::EndOfDataFragmentType);
-  *result.dataBegin() = nFragsToExpect;
-  return result;
-}
-
 std::unique_ptr<artdaq::Fragment>
-artdaq::Fragment::eorFrag(size_t nFragsToExpect)
+artdaq::Fragment::eodFrag(size_t nFragsToExpect)
 {
   std::unique_ptr<artdaq::Fragment> result(new Fragment(static_cast<size_t>(ceil(sizeof(nFragsToExpect) /
 										 static_cast<double>(sizeof(value_type))))));
-  result->setSystemType(Fragment::EndOfRunFragmentType);
+  result->setSystemType(Fragment::EndOfDataFragmentType);
   *result->dataBegin() = nFragsToExpect;
   return result;
 }
