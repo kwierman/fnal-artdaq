@@ -19,6 +19,7 @@
 #include "TServerSocket.h"
 #include "TMessage.h"
 #include "TBuffer.h"
+#include "TBufferFile.h"
 
 #include <cassert>
 #include <iomanip>
@@ -50,24 +51,24 @@ NetMonTransportService(ParameterSet const& pset, art::ActivityRegistry&)
     incoming_events_(artdaq::getGlobalQueue()),
     recvd_fragments_(nullptr)
 {
-    mf::LogVerbatim("DEBUG") <<
-        "-----> Begin NetMonTransportService::"
-        "NetMonTransportService(ParameterSet const & pset, "
-        "art::ActivityRegistry&)";
+  //mf::LogVerbatim("DEBUG") <<
+  //     "-----> Begin NetMonTransportService::"
+  //    "NetMonTransportService(ParameterSet const & pset, "
+  //    "art::ActivityRegistry&)";
     string val = pset.to_indented_string();
-    mf::LogVerbatim("DEBUG") << "Contents of parameter set:";
-    mf::LogVerbatim("DEBUG") << "";
-    mf::LogVerbatim("DEBUG") << val;
+    //  mf::LogVerbatim("DEBUG") << "Contents of parameter set:";
+    //mf::LogVerbatim("DEBUG") << "";
+    //mf::LogVerbatim("DEBUG") << val;
     vector<string> keys = pset.get_pset_keys();
-    for (vector<string>::iterator I = keys.begin(), E = keys.end();
-            I != E; ++I) {
-        mf::LogVerbatim("DEBUG") << "key: " << *I;
-    }
-    mf::LogVerbatim("DEBUG") << "this: 0x" << std::hex << this << std::dec;
-    mf::LogVerbatim("DEBUG") <<
-        "-----> End   NetMonTransportService::"
-        "NetMonTransportService(ParameterSet const & pset, "
-        "art::ActivityRegistry&)";
+    //for (vector<string>::iterator I = keys.begin(), E = keys.end();
+    //        I != E; ++I) {
+    //    mf::LogVerbatim("DEBUG") << "key: " << *I;
+    //}
+    //mf::LogVerbatim("DEBUG") << "this: 0x" << std::hex << this << std::dec;
+    //mf::LogVerbatim("DEBUG") <<
+    //    "-----> End   NetMonTransportService::"
+    //    "NetMonTransportService(ParameterSet const & pset, "
+    //    "art::ActivityRegistry&)";
 }
 
 void
@@ -102,23 +103,34 @@ disconnect()
 
 void
 NetMonTransportService::
-sendMessage(uint64_t sequenceId, uint8_t messageType, TMessage const& msg)
+sendMessage(uint64_t sequenceId, uint8_t messageType, TBufferFile & msg)
 {
   artdaq::NetMonHeader header;
   header.data_length = static_cast<uint64_t>(msg.Length());
-  artdaq::Fragment fragment(std::ceil(msg.Length() / sizeof(artdaq::RawDataType)), 
+  artdaq::Fragment fragment(std::ceil(msg.Length() / sizeof(artdaq::RawDataType) + 1), 
 			    sequenceId, 0, messageType, header);
+
+  std::cout << "NetMonTransportService::sendMessage(): Sending fragment of type " << (int)messageType << std::endl;
+
   memcpy(&*fragment.dataBegin(), msg.Buffer(), msg.Length());
   sender_ptr_->sendFragment(std::move(fragment));
 }
 
 void
 NetMonTransportService::
-receiveMessage(TMessage*&)
+receiveMessage(TBufferFile *&msg)
 {
     if (recvd_fragments_ == nullptr) {
+      mf::LogVerbatim("DEBUG") << "NetMonTransportService::receiveMessage(): No raw events, calling deqWait()...";
       std::shared_ptr<artdaq::RawEvent> popped_event;
       incoming_events_.deqWait(popped_event);
+
+      if (popped_event == nullptr) {
+	msg = nullptr;
+	return;
+      }
+
+      mf::LogVerbatim("DEBUG") << "NetMonTransportService::receiveMessage(): Back from deqWait()";
       recvd_fragments_ = popped_event->releaseProduct();
       /* Events coming out of the EventStore are not sorted but need to be
 	 sorted by sequence ID before they can be passed to art. 
@@ -134,9 +146,12 @@ receiveMessage(TMessage*&)
     }
 
     artdaq::NetMonHeader *header = topFrag.metadata<artdaq::NetMonHeader>();
-    //buffer = new TBuffer(1);
-    //buffer->SetBuffer(&*topFrag.dataBegin(), header->data_length);
-    mf::LogVerbatim("DEBUG") << "NetMonTransportService::receiveMessage(): Returning fragment with " << header->data_length << " bytes.";
+
+    char *buffer = (char *)malloc(header->data_length);
+    memcpy(buffer, &*topFrag.dataBegin(), header->data_length);
+    msg = new TBufferFile(TBuffer::kRead, header->data_length, buffer, kTRUE, 0);
+
+    mf::LogVerbatim("DEBUG") << "NetMonTransportService::receiveMessage(): Returning fragment " << topFrag.sequenceID() << " with " << header->data_length << " bytes.";
 }
 
 DEFINE_ART_SERVICE_INTERFACE_IMPL(NetMonTransportService,

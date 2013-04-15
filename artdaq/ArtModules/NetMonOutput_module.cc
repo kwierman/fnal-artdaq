@@ -11,6 +11,8 @@
 #include "art/Persistency/Provenance/BranchKey.h"
 #include "art/Persistency/Provenance/History.h"
 #include "art/Persistency/Provenance/ParentageRegistry.h"
+#include "art/Persistency/Provenance/ProcessConfiguration.h"
+#include "art/Persistency/Provenance/ProcessConfigurationID.h"
 #include "art/Persistency/Provenance/ProcessHistoryID.h"
 #include "art/Persistency/Provenance/ProcessHistoryRegistry.h"
 #include "art/Persistency/Provenance/ProductList.h"
@@ -19,6 +21,7 @@
 #include "art/Persistency/Provenance/RunAuxiliary.h"
 #include "art/Persistency/Provenance/SubRunAuxiliary.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h"
+#include "art/Utilities/DebugMacros.h"
 #include "art/Utilities/Exception.h"
 #include "cetlib/column_width.h"
 #include "cetlib/lpad.h"
@@ -56,266 +59,737 @@ public:
     ~NetMonOutput();
 private:
     virtual void openFile(FileBlock const&);
+    virtual void closeFile();
+    virtual void respondToCloseInputFile(FileBlock const&);
+    virtual void respondToCloseOutputFiles(FileBlock const&);
+    virtual void endJob();
+
     virtual void write(EventPrincipal const&);
     virtual void writeRun(RunPrincipal const&);
     virtual void writeSubRun(SubRunPrincipal const&);
-}; // NetMonOutput
+    void writeDataProducts(TBufferFile&, const Principal&,
+                           std::vector<BranchKey*>&);
+private:
+};
 
 art::NetMonOutput::
 NetMonOutput(ParameterSet const& ps)
     : OutputModule(ps)
 {
+    FDEBUG(1) << "Begin: NetMonOutput::NetMonOutput(ParameterSet const& ps)\n";
     ServiceHandle<NetMonTransportService> transport;
     transport->connect();
+    FDEBUG(1) << "End:   NetMonOutput::NetMonOutput(ParameterSet const& ps)\n";
 }
 
 art::NetMonOutput::
 ~NetMonOutput()
 {
+    FDEBUG(1) << "Begin: NetMonOutput::~NetMonOutput()\n";
     ServiceHandle<NetMonTransportService> transport;
     transport->disconnect();
+    FDEBUG(1) << "End:   NetMonOutput::~NetMonOutput()\n";
 }
 
 void
 art::NetMonOutput::
-openFile(FileBlock const& fb)
+openFile(FileBlock const&)
 {
-    (void) fb;
-    fprintf(stderr, "NetMonOutput::openFile(const FileBlock&) called.\n");
+    FDEBUG(1) << "Begin/End: NetMonOutput::openFile(const FileBlock&)\n";
+}
+
+void
+art::NetMonOutput::
+closeFile()
+{
+    FDEBUG(1) << "Begin/End: NetMonOutput::closeFile()\n";
+}
+
+void
+art::NetMonOutput::
+respondToCloseInputFile(FileBlock const&)
+{
+    FDEBUG(1) << "Begin/End: NetMonOutput::"
+                 "respondToCloseOutputFiles(FileBlock const&)\n";
+}
+
+void
+art::NetMonOutput::
+respondToCloseOutputFiles(FileBlock const&)
+{
+    FDEBUG(1) << "Begin/End: NetMonOutput::"
+                 "respondToCloseOutputFiles(FileBlock const&)\n";
+}
+
+static
+void
+send_shutdown_message()
+{
+    FDEBUG(1) << "Begin: NetMonOutput static send_shutdown_message()\n";
     //
-    //  Construct and send the init message.
+    //  Construct and send the shutdown message.
     //
-    TMessage msg;
+    TBufferFile msg(TBuffer::kWrite);
     msg.SetWriteMode();
     //
     //  Stream the message type code.
     //
-    fprintf(stderr, "openFile: streaming message type code ...\n");
-    msg.WriteULong(1);
-    fprintf(stderr, "openFile: finished streaming message type code.\n");
+    {
+        FDEBUG(1) << "NetMonOutput static send_shutdown_message: "
+                     "streaming shutdown message type code ...\n";
+        msg.WriteULong(5);
+        FDEBUG(1) << "NetMonOutput static send_shutdown_message: "
+                     "finished streaming shutdown message type code.\n";
+    }
+    //
+    //
+    //  Send the shutdown  message.
+    //
+    {
+        art::ServiceHandle<NetMonTransportService> transport;
+        FDEBUG(1) << "NetMonOutput static send_shutdown_message: "
+                     "sending the shutdown message ...\n";
+	transport->sendMessage(0, artdaq::NetMonHeader::ShutdownFragmentType, msg);
+        FDEBUG(1) << "NetMonOutput static send_shutdown_message: "
+                     "sent the shutdown message.\n";
+    }
+    FDEBUG(1) << "End:   NetMonOutput static send_shutdown_message()\n";
+}
+
+void
+art::NetMonOutput::
+endJob()
+{
+    FDEBUG(1) << "Begin: NetMonOutput::endJob()\n";
+    send_shutdown_message();
+    FDEBUG(1) << "End:   NetMonOutput::endJob()\n";
+}
+
+static
+void
+send_init_message()
+{
+    FDEBUG(1) << "Begin: NetMonOutput static send_init_message()\n";
+    //
+    //  Get the classes we will need.
+    //
+    static TClass* string_class = TClass::GetClass("std::string");
+    assert(string_class != nullptr &&
+           "NetMonOutput static send_init_message(): "
+           "Could not get TClass for std::string!");
+    static TClass* product_list_class = TClass::GetClass(
+        "map<art::BranchKey,art::BranchDescription>");
+    assert(product_list_class != nullptr &&
+           "NetMonOutput static send_init_message(): "
+           "Could not get TClass for "
+           "map<art::BranchKey,art::BranchDescription>!");
+    //static TClass* branch_id_list_registry_class = TClass::GetClass(
+    //    "std::vector<std::vector<art::BranchID::value_type> >");
+    //assert(branch_id_list_registry_class != nullptr &&
+    //       "NetMonOutput static send_init_message(): "
+    //       "Could not get class for "
+    //       "std::vector<std::vector<art::BranchID::value_type> >!");
+    //typedef std::map<const ProcessHistoryID,ProcessHistory> ProcessHistoryMap;
+    //TClass* process_history_map_class = TClass::GetClass(
+    //    "std::map<const art::ProcessHistoryID,art::ProcessHistory>");
+    //FIXME: Replace the "2" here with a use of the proper enum value!
+    static TClass* process_history_map_class = TClass::GetClass(
+        "std::map<const art::Hash<2>,art::ProcessHistory>");
+    assert(process_history_map_class != nullptr &&
+           "NetMonOutput static send_init_message(): "
+           "Could not get class for "
+           "std::map<const art::Hash<2>,art::ProcessHistory>!");
+    //static TClass* parentage_map_class = TClass::GetClass(
+    //    "std::map<const art::ParentageID,art::Parentage>");
+    //FIXME: Replace the "5" here with a use of the proper enum value!
+    static TClass* parentage_map_class = TClass::GetClass(
+        "std::map<const art::Hash<5>,art::Parentage>");
+    assert(parentage_map_class != nullptr &&
+           "NetMonOutput static send_init_message(): "
+           "Could not get class for "
+           "std::map<const art::Hash<5>,art::Parentage>!");
+    //
+    //  Construct and send the init message.
+    //
+    TBufferFile msg(TBuffer::kWrite);
+    msg.SetWriteMode();
+    //
+    //  Stream the message type code.
+    //
+    {
+        FDEBUG(1) << "NetMonOutput static send_init_message(): "
+                     "Streaming message type code ...\n";
+        msg.WriteULong(1);
+        FDEBUG(1) << "NetMonOutput static send_init_message(): "
+                     "Finished streaming message type code.\n";
+    }
     //
     //  Stream the ParameterSetRegistry.
     //
-    unsigned long ps_cnt = fhicl::ParameterSetRegistry::size();
-    fprintf(stderr, "openFile: parameter set count: %lu\n", ps_cnt);
-    msg.WriteULong(ps_cnt);
-    fprintf(stderr, "openFile: Streaming parameter sets ...\n");
-    TClass* str_class = TClass::GetClass("std::string");
-    assert(str_class != nullptr && "openFile: couldn't get TClass for "
-           "std::string!");
-    for (auto I = fhicl::ParameterSetRegistry::begin(),
-            E = fhicl::ParameterSetRegistry::end(); I != E; ++I) {
-        std::string pset_str = I->second.to_string();
-        msg.WriteObjectAny(&pset_str, str_class);
+    {
+        unsigned long ps_cnt = fhicl::ParameterSetRegistry::size();
+        FDEBUG(1) << "NetMonOutput static send_init_message(): "
+                     "parameter set count: " << ps_cnt << '\n';
+        msg.WriteULong(ps_cnt);
+        FDEBUG(1) << "NetMonOutput static send_init_message(): "
+                     "Streaming parameter sets ...\n";
+        for (auto I = fhicl::ParameterSetRegistry::begin(),
+                E = fhicl::ParameterSetRegistry::end(); I != E; ++I) {
+            std::string pset_str = I->second.to_string();
+            msg.WriteObjectAny(&pset_str, string_class);
+        }
+        FDEBUG(1) << "NetMonOutput static send_init_message(): "
+                     "Finished streaming parameter sets.\n";
     }
-    fprintf(stderr, "openFile: Finished streaming parameter sets.\n");
     //
     //  Stream the MasterProductRegistry.
     //
-    fprintf(stderr, "openFile: Streaming MasterProductRegistry ...\n");
-    ProductList productList(ProductMetaData::instance().productList());
-    TClass* plc = TClass::GetClass(
-        "map<art::BranchKey,art::BranchDescription>");
-    assert(plc != nullptr && "openFile: couldn't get TClass for "
-                             "map<art::BranchKey,art::BranchDescription>!");
-    msg.WriteObjectAny(&productList, plc);
-    fprintf(stderr, "openFile: finished streaming MasterProductRegistry.\n");
-    //
-    //  Stream the BranchIDListRegistry.
-    //
-    fprintf(stderr, "openFile: Streaming BranchIDListRegistry ...\n");
-    // typedef vector<BranchID::value_type> BranchIDList
-    // typedef vector<BranchIDList> BranchIDLists
-    // std::vector<std::vector<art::BranchID::value_type>>
-    BranchIDLists *bil = &BranchIDListRegistry::instance()->data();
-    TClass* bilc = TClass::GetClass("std::vector<std::vector<"
-                                    "art::BranchID::value_type> >");
-    assert(bilc != nullptr);
-    msg.WriteObjectAny(bil, bilc);
-    fprintf(stderr, "openFile: finished streaming BranchIDListRegistry.\n");
     {
-        fprintf(stderr, "openFile: content of BranchIDLists\n");
-        int max_bli = bil->size();
-        fprintf(stderr, "openFile: max_bli: %d\n", max_bli);
+        FDEBUG(1) << "NetMonOutput static send_init_message(): "
+                     "Streaming MasterProductRegistry ...\n";
+        art::ProductList productList(
+            art::ProductMetaData::instance().productList());
+        msg.WriteObjectAny(&productList, product_list_class);
+        FDEBUG(1) << "NetMonOutput static send_init_message(): "
+                     "Finished streaming MasterProductRegistry.\n";
+    }
+    //
+    //  Dump The BranchIDListRegistry
+    //
+    if (art::debugit() >= 2) {
+        //typedef vector<BranchID::value_type> BranchIDList
+        //typedef vector<BranchIDList> BranchIDLists
+        //std::vector<std::vector<art::BranchID::value_type>>
+        art::BranchIDLists* bilr =
+            &art::BranchIDListRegistry::instance()->data();
+        FDEBUG(2) << "NetMonOutput static send_init_message(): "
+                     "Content of BranchIDLists\n";
+        int max_bli = bilr->size();
+        FDEBUG(2) << "NetMonOutput static send_init_message(): "
+                     "max_bli: " << max_bli << '\n';
         for (int i = 0; i < max_bli; ++i) {
-           int max_prdidx = (*bil)[i].size();
-           fprintf(stderr, "openFile: max_prdidx: %d\n", max_prdidx);
+           int max_prdidx = (*bilr)[i].size();
+           FDEBUG(2) << "NetMonOutput static send_init_message(): "
+                        "max_prdidx: " << max_prdidx << '\n';
            for (int j = 0; j < max_prdidx; ++j) {
-               fprintf(stderr, "openFile: bli: %d  prdidx: %d  bid: 0x%08lx\n",
-                       i, j, static_cast<unsigned long>( (*bil)[i][j]) );
+               FDEBUG(2) << "NetMonOutput static send_init_message(): "
+                            "bli: " << i
+                         << " prdidx: " << j
+                         << " bid: 0x" << std::hex
+                         << static_cast<unsigned long>((*bilr)[i][j])
+                         << std::dec << '\n';
            }
+        }
+    }
+    //
+    //  Dump the ProcessHistoryRegistry.
+    //
+    if (art::debugit() >= 1) {
+        FDEBUG(1) << "NetMonOutput static send_init_message(): "
+                     "Dumping ProcessHistoryRegistry ...\n";
+        //typedef std::map<const ProcessHistoryID,ProcessHistory>
+        //    ProcessHistoryMap;
+        art::ProcessHistoryMap const& phr = art::ProcessHistoryRegistry::get();
+        FDEBUG(1) << "NetMonOutput static send_init_message(): "
+                     "phr: size: " << phr.size() << '\n';
+        for (auto I = phr.begin(), E = phr.end(); I != E; ++I) {
+            std::ostringstream OS;
+            I->first.print(OS);
+            FDEBUG(1) << "NetMonOutput static send_init_message(): "
+                         "phr: id: '" << OS.str() << "'\n";
         }
     }
     //
     //  Stream the ProcessHistoryRegistry.
     //
     {
-        fprintf(stderr, "openFile: dumping ProcessHistoryRegistry ...\n");
-        ProcessHistoryMap const& phr = ProcessHistoryRegistry::get();
-        fprintf(stderr, "openFile: phr: size: %lu\n",
-                (unsigned long) phr.size());
-        for (auto I = phr.begin(), E = phr.end(); I != E; ++I) {
-            std::ostringstream OS;
-            I->first.print(OS);
-            fprintf(stderr, "openFile: phr: id: '%s'\n", OS.str().c_str());
-        }
+        FDEBUG(1) << "NetMonOutput static send_init_message(): "
+                     "Streaming ProcessHistoryRegistry ...\n";
+        //typedef std::map<const ProcessHistoryID,ProcessHistory>
+        //    ProcessHistoryMap;
+        const art::ProcessHistoryMap& phm = art::ProcessHistoryRegistry::get();
+        FDEBUG(1) << "NetMonOutput static send_init_message(): "
+                     "phm: size: " << phm.size() << '\n';
+        msg.WriteObjectAny(&phm, process_history_map_class);
+        FDEBUG(1) << "NetMonOutput static send_init_message(): "
+                     "Finished streaming ProcessHistoryRegistry.\n";
     }
-    fprintf(stderr, "openFile: Streaming ProcessHistoryRegistry ...\n");
-    //typedef std::map<const ProcessHistoryID,ProcessHistory> ProcessHistoryMap;
-    const ProcessHistoryMap& phm = ProcessHistoryRegistry::get();
-    fprintf(stderr, "openFile: phm: size: %lu\n", (unsigned long) phm.size());
-    //TClass* phm_class = TClass::GetClass("std::map<const art::ProcessHistoryID,art::ProcessHistory>");
-    TClass* phm_class = TClass::GetClass("std::map<const art::Hash<2>,art::ProcessHistory>");
-    assert(phm_class != nullptr);
-    msg.WriteObjectAny(&phm, phm_class);
-    fprintf(stderr, "openFile: finished streaming ProcessHistoryRegistry.\n");
     //
     //  Stream the ParentageRegistry.
     //
-    fprintf(stderr, "openFile: Streaming ParentageRegistry ...\n");
-    //typedef std::map<const ParentageID,Parentage> ParentageMap
-    const ParentageMap& parentageMap = ParentageRegistry::get();
-    //TClass* parentageMapClass = TClass::GetClass("std::map<const art::ParentageID,art::Parentage>");
-    TClass* parentageMapClass = TClass::GetClass("std::map<const art::Hash<5>,art::Parentage>");
-    assert(parentageMapClass != nullptr);
-    msg.WriteObjectAny(&parentageMap, parentageMapClass);
-    fprintf(stderr, "openFile: finished streaming ParentageRegistry.\n");
+    {
+        FDEBUG(1) << "NetMonOutput static send_init_message(): "
+                     "Streaming ParentageRegistry ...\n";
+        //typedef std::map<const ParentageID,Parentage> ParentageMap
+        const art::ParentageMap& parentageMap = art::ParentageRegistry::get();
+        msg.WriteObjectAny(&parentageMap, parentage_map_class);
+        FDEBUG(1) << "NetMonOutput static send_init_message(): "
+                     "Finished streaming ParentageRegistry.\n";
+    }
     //
     //
     //  Send init message.
     //
-    ServiceHandle<NetMonTransportService> transport;
-    fprintf(stderr, "openFile: Sending the init message ...\n");
-    transport->sendMessage(0, artdaq::NetMonHeader::InitDataFragmentType, msg);
-    fprintf(stderr, "openFile: Init message sent.\n");
+    {
+        art::ServiceHandle<NetMonTransportService> transport;
+        FDEBUG(1) << "NetMonOutput static send_init_message(): "
+                     "Sending the init message ...\n";
+	transport->sendMessage(0, artdaq::NetMonHeader::InitDataFragmentType, msg);
+        FDEBUG(1) << "NetMonOutput static send_init_message(): "
+                     "Init message sent.\n";
+    }
+    FDEBUG(1) << "End:   NetMonOutput static send_init_message()\n";
 }
 
 void
 art::NetMonOutput::
-write(EventPrincipal const & ep)
+writeDataProducts(TBufferFile& msg, const Principal& principal,
+                  std::vector<BranchKey*>& bkv)
 {
-    TMessage msg;
-    msg.SetWriteMode();
-    //fprintf(stderr, "write: streaming message type code ...\n");
-    msg.WriteULong(4);
-    //fprintf(stderr, "write: finished streaming message type code.\n");
-    //fprintf(stderr, "write: streaming EventAuxiliary ...\n");
-    static TClass* aux_class = TClass::GetClass("art::EventAuxiliary");
-    assert(aux_class != nullptr && "write: Could not get TClass for "
-           "art::EventAuxiliary!");
-    msg.WriteObjectAny(&ep.aux(), aux_class);
-    //fprintf(stderr, "write: streamed EventAuxiliary.\n");
-    //fprintf(stderr, "write: streaming History ...\n");
-    static TClass* history_class = TClass::GetClass("art::History");
-    assert(history_class != nullptr && "write: Could not get TClass for "
-           "art::History!");
-    msg.WriteObjectAny(&ep.history(), history_class);
-    //fprintf(stderr, "write: streamed History.\n");
-    //std::vector<std::string> productClassNames;
-    //std::vector<std::string> productFriendlyClassNames;
-    //std::vector<std::string> productLabels;
-    //std::vector<std::string> productInstances;
-    //std::vector<std::string> productProcesses;
+    FDEBUG(1) << "Begin: NetMonOutput::writeDataProducts(...)\n";
+    //
+    //  Fetch the class dictionaries we need for
+    //  writing out the data products.
+    //
+    static TClass* branch_key_class = TClass::GetClass("art::BranchKey");
+    assert(branch_key_class != nullptr &&
+           "NetMonOutput::writeDataProducts(...): "
+           "Could not get TClass for art::BranchKey!");
+    static TClass* prdprov_class = TClass::GetClass("art::ProductProvenance");
+    assert(prdprov_class != nullptr && 
+           "NetMonOutput::writeDataProducts(...): "
+           "Could not get TClass for art::ProductProvenance!");
+    //
+    //  Calculate the data product count.
+    //
     unsigned long prd_cnt = 0;
-    //EventPrincipal::const_iterator = map<BranchID, sp<Group>>::iterator
-    for (EventPrincipal::const_iterator I = ep.begin(), E = ep.end();
-            I != E; ++I) {
+    //std::map<art::BranchID, std::shared_ptr<art::Group>>::const_iterator
+    for (auto I = principal.begin(), E = principal.end(); I != E; ++I) {
         if (I->second->productUnavailable()) {
             continue;
         }
-        const BranchDescription& bd(I->second->productDescription());
-        const std::string& name = bd.producedClassName();
-        if (name == "art::TriggerResults") {
-            continue;
-        }
-        BranchKey bk(bd);
-        //fprintf(stderr, "write: aw product class: '%s' modlbl: '%s' "
-        //    "instnm: '%s' procnm: '%s'\n",
-        //    bd.friendlyClassName().c_str(),
-        //    bd.moduleLabel().c_str(),
-        //   bd.productInstanceName().c_str(),
-        //    bd.processName().c_str()
-        //);
-        //productClassNames.push_back(bd.producedClassName());
-        //productFriendlyClassNames.push_back(bd.friendlyClassName());
-        //productLabels.push_back(bd.moduleLabel());
-        //productInstances.push_back(bd.productInstanceName());
-        //productProcesses.push_back(bd.processName());
         ++prd_cnt;
     }
-    //fprintf(stderr, "write: streaming product count: %lu\n", prd_cnt);
-    msg.WriteULong(prd_cnt);
-    //fprintf(stderr, "write: finished streaming product count.\n");
-    //static TClass* vs = TClass::GetClass("vector<string>");
-    //msg.WriteObjectAny(&productClassNames, vs);
-    //msg.WriteObjectAny(&productFriendlyClassNames, vs);
-    //msg.WriteObjectAny(&productLabels, vs);
-    //msg.WriteObjectAny(&productInstances, vs);
-    //msg.WriteObjectAny(&productProcesses, vs);
-    static TClass* branch_key_class = TClass::GetClass("art::BranchKey");
-    assert(branch_key_class != nullptr && "write: Could not get TClass for "
-           "art::BranchKey!");
-    static TClass* prdprov_class = TClass::GetClass("art::ProductProvenance");
-    assert(prdprov_class != nullptr && "write: Could not get TClass for "
-           "art::ProductProvenance!");
-    std::vector<BranchKey> bkv;
+    //
+    //  Write the data product count.
+    //
+    {
+        FDEBUG(1) << "NetMonOutput::writeDataProducts(...): "
+                     "Streaming product count: " << prd_cnt << '\n';
+        msg.WriteULong(prd_cnt);
+        FDEBUG(1) << "NetMonOutput::writeDataProducts(...): "
+                     "Finished streaming product count.\n";
+    }
+    //
+    //  Loop over the groups in the RunPrincipal and
+    //  write out the data products.
+    //
+    // Note: We need this vector of keys because the ROOT I/O mechanism
+    //       requires that each object inserted in the message has a
+    //       unique address, so we force that by holding on to each
+    //       branch key manufactured in the loop until after we are
+    //       done constructing the message.
+    //
+    bkv.reserve(prd_cnt);
     //std::map<art::BranchID, std::shared_ptr<art::Group>>::const_iterator
-    for (EventPrincipal::const_iterator I = ep.begin(), E = ep.end();
-            I != E; ++I) {
+    for (auto I = principal.begin(), E = principal.end(); I != E; ++I) {
         if (I->second->productUnavailable()) {
             continue;
         }
         const BranchDescription& bd(I->second->productDescription());
-        const std::string& name = bd.producedClassName();
-        if (name == "art::TriggerResults") {
-            continue;
+        bkv.push_back(new BranchKey(bd));
+        if (art::debugit() >= 2) {
+            FDEBUG(2) << "NetMonOutput::writeDataProducts(...): "
+                         "Dumping branch key           of class: '"
+                      << bkv.back()->friendlyClassName_
+                      << "' modlbl: '"
+                      << bkv.back()->moduleLabel_
+                      << "' instnm: '"
+                      << bkv.back()->productInstanceName_
+                      << "' procnm: '"
+                      << bkv.back()->processName_
+                      << "'\n";
         }
-        //fprintf(stderr, "write: saw product class: '%s' modlbl: '%s' "
-        //    "instnm: '%s' procnm: '%s'\n",
-        //    bd.friendlyClassName().c_str(),
-        //    bd.moduleLabel().c_str(),
-        //    bd.productInstanceName().c_str(),
-        //    bd.processName().c_str()
-        //);
-        bkv.push_back(BranchKey(bd));
-        //fprintf(stderr, "write: streaming branch key of class: '%s' "
-        //     "instnm: '%s'\n", name.c_str(), bd.productInstanceName().c_str());
-        //fprintf(stderr, "write: dumping branch key: class: '%s' modlbl: '%s' "
-        //    "instnm: '%s' procnm: '%s'\n",
-        //    bkv.back().friendlyClassName_.c_str(),
-        //    bkv.back().moduleLabel_.c_str(),
-        //    bkv.back().productInstanceName_.c_str(),
-        //    bkv.back().processName_.c_str()
-        //);
-        msg.WriteObjectAny(&bkv.back(), branch_key_class);
-        //fprintf(stderr, "write: streaming product of class: '%s' "
-        //     "instnm: '%s'\n", name.c_str(), bd.productInstanceName().c_str());
-        OutputHandle oh = ep.getForOutput(bd.branchID(), true);
-        //const EDProduct* prd = I->second->getIt();
-        const EDProduct* prd = oh.wrapper();
-        msg.WriteObjectAny(prd, TClass::GetClass(bd.wrappedName().c_str()));
-        //fprintf(stderr, "write: streaming product provenance of class: '%s' "
-        //     "instnm: '%s'\n", name.c_str(), bd.productInstanceName().c_str());
-        const ProductProvenance* prdprov =
-            I->second->productProvenancePtr().get();
-        msg.WriteObjectAny(prdprov, prdprov_class);
+        {
+            FDEBUG(1) << "NetMonOutput::writeDataProducts(...): "
+                         "Streaming branch key         of class: '"
+                      << bd.producedClassName()
+                      << "' modlbl: '"
+                      << bd.moduleLabel()
+                      << "' instnm: '"
+                      << bd.productInstanceName()
+                      << "' procnm: '"
+                      << bd.processName()
+                      << "'\n";
+            msg.WriteObjectAny(bkv.back(), branch_key_class);
+        }
+        {
+            FDEBUG(1) << "NetMonOutput::writeDataProducts(...): "
+                         "Streaming product            of class: '"
+                      << bd.producedClassName()
+                      << "' modlbl: '"
+                      << bd.moduleLabel()
+                      << "' instnm: '"
+                      << bd.productInstanceName()
+                      << "' procnm: '"
+                      << bd.processName()
+                      << "'\n";
+            OutputHandle oh = principal.getForOutput(bd.branchID(), true);
+            const EDProduct* prd = oh.wrapper();
+            msg.WriteObjectAny(prd, TClass::GetClass(bd.wrappedName().c_str()));
+        }
+        {
+            FDEBUG(1) << "NetMonOutput::writeDataProducts(...): "
+                         "Streaming product provenance of class: '"
+                      << bd.producedClassName()
+                      << "' modlbl: '"
+                      << bd.moduleLabel()
+                      << "' instnm: '"
+                      << bd.productInstanceName()
+                      << "' procnm: '"
+                      << bd.processName()
+                      << "'\n";
+            const ProductProvenance* prdprov =
+                I->second->productProvenancePtr().get();
+            msg.WriteObjectAny(prdprov, prdprov_class);
+        }
     }
-
-    ServiceHandle<NetMonTransportService> transport;
-    transport->sendMessage(static_cast<uint64_t>(ep.id().event()), 
-			   artdaq::NetMonHeader::EventDataFragmentType, 
-			   msg);
+    FDEBUG(1) << "End:   NetMonOutput::writeDataProducts(...)\n";
 }
 
 void
 art::NetMonOutput::
-writeRun(RunPrincipal const&)
+write(const EventPrincipal& ep)
 {
+    //
+    //  Write an Event message.
+    //
+    FDEBUG(1) << "Begin: NetMonOutput::"
+                 "write(const EventPrincipal& ep)\n";
+    static bool init_message_sent{false};
+    if (!init_message_sent) {
+        send_init_message();
+        init_message_sent = true;
+    }
+    //
+    //  Get root classes needed for I/O.
+    //
+    static TClass* run_aux_class = TClass::GetClass("art::RunAuxiliary");
+    assert(run_aux_class != nullptr &&
+           "NetMonOutput::write(const EventPrincipal& ep): "
+           "Could not get TClass for art::RunAuxiliary!");
+    static TClass* subrun_aux_class = TClass::GetClass("art::SubRunAuxiliary");
+    assert(subrun_aux_class != nullptr &&
+           "NetMonOutput::write(const EventPrincipal& ep): "
+           "Could not get TClass for art::SubRunAuxiliary!");
+    static TClass* event_aux_class = TClass::GetClass("art::EventAuxiliary");
+    assert(event_aux_class != nullptr &&
+           "NetMonOutput::write(const EventPrincipal& ep): "
+           "Could not get TClass for art::EventAuxiliary!");
+    static TClass* history_class = TClass::GetClass("art::History");
+    assert(history_class != nullptr &&
+           "NetMonOutput::write(const EventPrincipal& ep): "
+           "Could not get TClass for art::History!");
+    //
+    //  Setup message buffer.
+    //
+    TBufferFile msg(TBuffer::kWrite);
+    msg.SetWriteMode();
+    //
+    //  Write message type code.
+    //
+    {
+        FDEBUG(1) << "NetMonOutput::write(const EventPrincipal& ep): "
+                     "Streaming message type code ...\n";
+        msg.WriteULong(4);
+        FDEBUG(1) << "NetMonOutput::write(const EventPrincipal& ep): "
+                     "Finished streaming message type code.\n";
+    }
+    //
+    //  Write RunAuxiliary.
+    //
+    {
+        FDEBUG(1) << "NetMonOutput::write(const EventPrincipal& ep): "
+                     "Streaming RunAuxiliary ...\n";
+        msg.WriteObjectAny(&ep.subRunPrincipal().runPrincipal().aux(),
+                           run_aux_class);
+        FDEBUG(1) << "NetMonOutput::write(const EventPrincipal& ep): "
+                     "Finished streaming RunAuxiliary.\n";
+    }
+    //
+    //  Write SubRunAuxiliary.
+    //
+    {
+        FDEBUG(1) << "NetMonOutput::write(const EventPrincipal& ep): "
+                     "Streaming SubRunAuxiliary ...\n";
+        msg.WriteObjectAny(&ep.subRunPrincipal().aux(),
+                           subrun_aux_class);
+        FDEBUG(1) << "NetMonOutput::write(const EventPrincipal& ep): "
+                     "Finished streaming SubRunAuxiliary.\n";
+    }
+    //
+    //  Write EventAuxiliary.
+    //
+    {
+        FDEBUG(1) << "NetMonOutput::write(const EventPrincipal& ep): "
+                     "Streaming EventAuxiliary ...\n";
+        msg.WriteObjectAny(&ep.aux(), event_aux_class);
+        FDEBUG(1) << "NetMonOutput::write(const EventPrincipal& ep): "
+                     "Finished streaming EventAuxiliary.\n";
+    }
+    //
+    //  Write History.
+    //
+    {
+        FDEBUG(1) << "NetMonOutput::write(const EventPrincipal& ep): "
+                     "Streaming History ...\n";
+        msg.WriteObjectAny(&ep.history(), history_class);
+        FDEBUG(1) << "NetMonOutput::write(const EventPrincipal& ep): "
+                     "Finished streaming History.\n";
+    }
+    //
+    //  Write data products.
+    //
+    std::vector<BranchKey*> bkv;
+    writeDataProducts(msg, ep, bkv);
+    //
+    //  Send message.
+    //
+    {
+        ServiceHandle<NetMonTransportService> transport;
+        FDEBUG(1) << "NetMonOutput::write(const EventPrincipal& ep): "
+                     "Sending a message ...\n";
+	transport->sendMessage(ep.id().event(), artdaq::NetMonHeader::EventDataFragmentType, msg);
+        FDEBUG(1) << "NetMonOutput::write(const EventPrincipal& ep): "
+                     "Message sent.\n";
+    }
+    //
+    //  Delete the branch keys we created for the message.
+    //
+    for (auto I = bkv.begin(), E = bkv.end(); I != E; ++I) {
+        delete *I;
+        *I = 0;
+    }
+    FDEBUG(1) << "End:   NetMonOutput::write(const EventPrincipal& ep)\n";
 }
 
 void
-art::NetMonOutput::writeSubRun(SubRunPrincipal const&)
+art::NetMonOutput::
+writeRun(const RunPrincipal& rp)
 {
+    //
+    //  Write an EndRun message.
+    //
+    FDEBUG(1) << "Begin: NetMonOutput::writeRun(const RunPrincipal& rp)\n";
+    (void) rp;
+#if 0
+    //
+    //  Fetch the class dictionaries we need for
+    //  writing out the auxiliary information.
+    //
+    static TClass* run_aux_class = TClass::GetClass("art::RunAuxiliary");
+    assert(run_aux_class != nullptr && "writeRun: Could not get TClass for "
+           "art::RunAuxiliary!");
+    //
+    //  Begin preparing message.
+    //
+    TBufferFile msg(TBuffer::kWrite);
+    msg.SetWriteMode();
+    //
+    //  Write message type code.
+    //
+    {
+        FDEBUG(1) << "writeRun: streaming message type code ...\n";
+        msg.WriteULong(2);
+        FDEBUG(1) << "writeRun: finished streaming message type code.\n";
+    }
+    //
+    //  Write RunAuxiliary.
+    //
+    {
+        FDEBUG(1) << "writeRun: streaming RunAuxiliary ...\n";
+        if (art::debugit() >= 1) {
+            FDEBUG(1) << "writeRun: dumping ProcessHistoryRegistry ...\n";
+            //typedef std::map<const ProcessHistoryID,ProcessHistory>
+            //    ProcessHistoryMap;
+            art::ProcessHistoryMap const& phr =
+                art::ProcessHistoryRegistry::get();
+            FDEBUG(1) << "writeRun: phr: size: " << phr.size() << '\n';
+            for (auto I = phr.begin(), E = phr.end(); I != E; ++I) {
+                std::ostringstream OS;
+                I->first.print(OS);
+                FDEBUG(1) << "writeRun: phr: id: '" << OS.str() << "'\n";
+                OS.str("");
+                FDEBUG(1) << "writeRun: phr: data.size(): "
+                          << I->second.data().size() << '\n';
+                if (I->second.data().size()) {
+                    I->second.data().back().id().print(OS);
+                    FDEBUG(1) << "writeRun: phr: data.back().id(): '"
+                              << OS.str() << "'\n";
+                }
+            }
+            if (!rp.aux().processHistoryID().isValid()) {
+                FDEBUG(1) << "writeRun: ProcessHistoryID: 'INVALID'\n";
+            }
+            else {
+                std::ostringstream OS;
+                rp.aux().processHistoryID().print(OS);
+                FDEBUG(1) << "writeRun: ProcessHistoryID: '"
+                          << OS.str() << "'\n";
+                OS.str("");
+                const ProcessHistory& processHistory =
+                    ProcessHistoryRegistry::get(rp.aux().processHistoryID());
+                if (processHistory.data().size()) {
+                    // FIXME: Print something special on invalid id() here!
+                    processHistory.data().back().id().print(OS);
+                    FDEBUG(1) << "writeRun: ProcessConfigurationID: '"
+                              << OS.str() << "'\n";
+                    OS.str("");
+                    FDEBUG(1) << "writeRun: ProcessConfiguration: '"
+                              << processHistory.data().back() << '\n';
+                }
+            }
+        }
+        msg.WriteObjectAny(&rp.aux(), run_aux_class);
+        FDEBUG(1) << "writeRun: streamed RunAuxiliary.\n";
+    }
+    //
+    //  Write data products.
+    //
+    std::vector<BranchKey*> bkv;
+    writeDataProducts(msg, rp, bkv);
+    //
+    //  Send message.
+    //
+    {
+        ServiceHandle<NetMonTransportService> transport;
+        FDEBUG(1) << "writeRun: sending a message ...\n";
+	transport->sendMessage(0, artdaq::NetMonHeader::RunDataFragmentType, msg);
+        FDEBUG(1) << "writeRun: message sent.\n";
+    }
+    //
+    //  Delete the branch keys we created for the message.
+    //
+    for (auto I = bkv.begin(), E = bkv.end(); I != E; ++I) {
+        delete *I;
+        *I = 0;
+    }
+#endif // 0
+    FDEBUG(1) << "End:   NetMonOutput::writeRun(const RunPrincipal& rp)\n";
+}
+
+void
+art::NetMonOutput::writeSubRun(const SubRunPrincipal& srp)
+{
+    //
+    //  Write an EndSubRun message.
+    //
+    FDEBUG(1) << "Begin: NetMonOutput::"
+                 "writeSubRun(const SubRunPrincipal& srp)\n";
+    //
+    //  Fetch the class dictionaries we need for
+    //  writing out the auxiliary information.
+    //
+    static TClass* subrun_aux_class = TClass::GetClass("art::SubRunAuxiliary");
+    assert(subrun_aux_class != nullptr && "NetMonOutput::writeSubRun: "
+           "Could not get TClass for art::SubRunAuxiliary!");
+    //
+    //  Begin preparing message.
+    //
+    TBufferFile msg(TBuffer::kWrite);
+    msg.SetWriteMode();
+    //
+    //  Write message type code.
+    //
+    {
+        FDEBUG(1) << "NetMonOutput::writeSubRun: "
+                     "streaming message type code ...\n";
+        msg.WriteULong(3);
+        FDEBUG(1) << "NetMonOutput::writeSubRun: "
+                     "finished streaming message type code.\n";
+    }
+    //
+    //  Write SubRunAuxiliary.
+    //
+    {
+        FDEBUG(1) << "NetMonOutput::writeSubRun: "
+                     "streaming SubRunAuxiliary ...\n";
+        if (art::debugit() >= 1) {
+            FDEBUG(1) << "NetMonOutput::writeSubRun: "
+                         "dumping ProcessHistoryRegistry ...\n";
+            //typedef std::map<const ProcessHistoryID,ProcessHistory>
+            //    ProcessHistoryMap;
+            art::ProcessHistoryMap const& phr =
+                art::ProcessHistoryRegistry::get();
+            FDEBUG(1) << "NetMonOutput::writeSubRun: "
+                         "phr: size: " << phr.size() << '\n';
+            for (auto I = phr.begin(), E = phr.end(); I != E; ++I) {
+                std::ostringstream OS;
+                I->first.print(OS);
+                FDEBUG(1) << "NetMonOutput::writeSubRun: "
+                             "phr: id: '" << OS.str() << "'\n";
+                OS.str("");
+                FDEBUG(1) << "NetMonOutput::writeSubRun: "
+                             "phr: data.size(): "
+                          << I->second.data().size() << '\n';
+                if (I->second.data().size()) {
+                    I->second.data().back().id().print(OS);
+                    FDEBUG(1) << "NetMonOutput::writeSubRun: "
+                                 "phr: data.back().id(): '"
+                              << OS.str() << "'\n";
+                }
+            }
+            if (!srp.aux().processHistoryID().isValid()) {
+                FDEBUG(1) << "NetMonOutput::writeSubRun: "
+                             "ProcessHistoryID: 'INVALID'\n";
+            }
+            else {
+                std::ostringstream OS;
+                srp.aux().processHistoryID().print(OS);
+                FDEBUG(1) << "NetMonOutput::writeSubRun: ProcessHistoryID: '"
+                          << OS.str() << "'\n";
+                OS.str("");
+                const ProcessHistory& processHistory =
+                    ProcessHistoryRegistry::get(srp.aux().processHistoryID());
+                if (processHistory.data().size()) {
+                    // FIXME: Print something special on invalid id() here!
+                    processHistory.data().back().id().print(OS);
+                    FDEBUG(1) << "NetMonOutput::writeSubRun: "
+                                 "ProcessConfigurationID: '"
+                              << OS.str() << "'\n";
+                    OS.str("");
+                    FDEBUG(1) << "NetMonOutput::writeSubRun: "
+                                 "ProcessConfiguration: '"
+                              << processHistory.data().back() << '\n';
+                }
+            }
+        }
+        msg.WriteObjectAny(&srp.aux(), subrun_aux_class);
+        FDEBUG(1) << "NetMonOutput::writeSubRun: streamed SubRunAuxiliary.\n";
+    }
+    //
+    //  Write data products.
+    //
+    std::vector<BranchKey*> bkv;
+    writeDataProducts(msg, srp, bkv);
+    //
+    //  Send message.
+    //
+    {
+        ServiceHandle<NetMonTransportService> transport;
+        FDEBUG(1) << "NetMonOutput::writeSubRun: sending a message ...\n";
+	transport->sendMessage(0, artdaq::NetMonHeader::SubRunDataFragmentType, msg);
+        FDEBUG(1) << "NetMonOutput::writeSubRun: message sent.\n";
+    }
+    //
+    //  Delete the branch keys we created for the message.
+    //
+    for (auto I = bkv.begin(), E = bkv.end(); I != E; ++I) {
+        delete *I;
+        *I = 0;
+    }
+    FDEBUG(1) << "End:   NetMonOutput::"
+                 "writeSubRun(const SubRunPrincipal& srp)\n";
 }
 
 DEFINE_ART_MODULE(art::NetMonOutput)

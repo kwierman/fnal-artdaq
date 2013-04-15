@@ -10,6 +10,7 @@
 
 #include "TServerSocket.h"
 
+class TBufferFile;
 class TMessage;
 class TSocket;
 
@@ -30,8 +31,8 @@ public:
     void connect();
     void disconnect();
     void listen();
-    void sendMessage(uint64_t sequenceId, uint8_t messageType, TMessage const&);
-    void receiveMessage(TMessage*&);
+    void sendMessage(uint64_t sequenceId, uint8_t messageType, TBufferFile &);
+    void receiveMessage(TBufferFile *&);
 private:
     TServerSocket* server_sock_;
     TSocket* sock_;
