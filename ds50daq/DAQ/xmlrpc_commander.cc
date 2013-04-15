@@ -13,8 +13,39 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 namespace {
-  std::string exception_msg (const std::runtime_error &er) { 
-    std::string msg(er.what ()); //std::string(er.what ()).substr (2);
+  std::string exception_msg (const std::runtime_error &er,
+                             const std::string &helpText="execute request") { 
+    std::string msg("Exception when trying to ");
+    msg.append(helpText);
+    msg.append(": ");
+    msg.append(er.what ()); //std::string(er.what ()).substr (2);
+    if (msg[msg.size() - 1] == '\n') msg.erase(msg.size() - 1);
+    return msg;
+  }
+  std::string exception_msg (const art::Exception &er,
+                             const std::string &helpText) { 
+    std::string msg("Exception when trying to ");
+    msg.append(helpText);
+    msg.append(": ");
+    msg.append(er.what ());
+    if (msg[msg.size() - 1] == '\n') msg.erase(msg.size() - 1);
+    return msg;
+  }
+  std::string exception_msg (const cet::exception &er,
+                             const std::string &helpText) { 
+    std::string msg("Exception when trying to ");
+    msg.append(helpText);
+    msg.append(": ");
+    msg.append(er.what ());
+    if (msg[msg.size() - 1] == '\n') msg.erase(msg.size() - 1);
+    return msg;
+  }
+  std::string exception_msg (const std::string &erText,
+                             const std::string &helpText) { 
+    std::string msg("Exception when trying to ");
+    msg.append(helpText);
+    msg.append(": ");
+    msg.append(erText);
     if (msg[msg.size() - 1] == '\n') msg.erase(msg.size() - 1);
     return msg;
   }
@@ -53,8 +84,21 @@ namespace {
           *retvalP = xmlrpc_c::value_string ("The init message requires a single argument that is a string containing the initialization ParameterSet."); 
         }
       } catch (std::runtime_error &er) { 
-	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
-	mf::LogError ("XMLRPC_Commander") << er.what ();
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (art::Exception &er) { 
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (cet::exception &er) { 
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (...) { 
+        std::string msg = exception_msg ("Unknown exception", _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
       } 
   };
 
@@ -79,8 +123,21 @@ namespace {
           *retvalP = xmlrpc_c::value_string ("The soft_init message requires a single argument that is a string containing the initialization ParameterSet."); 
         }
       } catch (std::runtime_error &er) { 
-	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
-	mf::LogError ("XMLRPC_Commander") << er.what ();
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (art::Exception &er) { 
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (cet::exception &er) { 
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (...) { 
+        std::string msg = exception_msg ("Unknown exception", _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
       } 
   };
 
@@ -105,8 +162,21 @@ namespace {
           *retvalP = xmlrpc_c::value_string ("The reinit message requires a single argument that is a string containing the initialization ParameterSet."); 
         }
       } catch (std::runtime_error &er) { 
-	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
-	mf::LogError ("XMLRPC_Commander") << er.what ();
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (art::Exception &er) { 
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (cet::exception &er) { 
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (...) { 
+        std::string msg = exception_msg ("Unknown exception", _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
       } 
   };
 
@@ -132,8 +202,21 @@ namespace {
           *retvalP = xmlrpc_c::value_string ("The start message requires the run number as an argument."); 
         }
       } catch (std::runtime_error &er) { 
-	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
-	mf::LogError ("XMLRPC_Commander") << er.what ();
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (art::Exception &er) { 
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (cet::exception &er) { 
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (...) { 
+        std::string msg = exception_msg ("Unknown exception", _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
       } 
   };
 
@@ -144,8 +227,21 @@ namespace {
       void execute_ (xmlrpc_c::paramList const&, xmlrpc_c::value * const retvalP) override try {
         *retvalP = xmlrpc_c::value_string (_c._commandable.status());
       } catch (std::runtime_error &er) { 
-	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
-	mf::LogError ("XMLRPC_Commander") << er.what ();
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (art::Exception &er) { 
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (cet::exception &er) { 
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (...) { 
+        std::string msg = exception_msg ("Unknown exception", _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
       } 
   };
 
@@ -162,8 +258,21 @@ namespace {
           *retvalP = xmlrpc_c::value_string ("The report message requires a single argument that selects the type of statistics to be reported."); 
         }
       } catch (std::runtime_error &er) { 
-	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
-	mf::LogError ("XMLRPC_Commander") << er.what ();
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (art::Exception &er) { 
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (cet::exception &er) { 
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (...) { 
+        std::string msg = exception_msg ("Unknown exception", _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
       } 
   };
 
@@ -186,8 +295,21 @@ namespace {
           *retvalP = xmlrpc_c::value_string ("The reset_stats message requires a single argument that selects the type of statistics to be reset."); 
         }
       } catch (std::runtime_error &er) { 
-	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
-	mf::LogError ("XMLRPC_Commander") << er.what ();
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (art::Exception &er) { 
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (cet::exception &er) { 
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (...) { 
+        std::string msg = exception_msg ("Unknown exception", _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
       } 
   };
 
@@ -207,8 +329,21 @@ namespace {
         }
         *retvalP = xmlrpc_c::value_string (resultString);
       } catch (std::runtime_error &er) { 
-	*retvalP = xmlrpc_c::value_string (exception_msg (er)); 
-	mf::LogError ("XMLRPC_Commander") << er.what ();
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (art::Exception &er) { 
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (cet::exception &er) { 
+        std::string msg = exception_msg (er, _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
+      } catch (...) { 
+        std::string msg = exception_msg ("Unknown exception", _help);
+        *retvalP = xmlrpc_c::value_string (msg); 
+        mf::LogError ("XMLRPC_Commander") << msg;
       } 
   };
 
@@ -226,8 +361,21 @@ namespace {
           *retvalP = xmlrpc_c::value_string (problemReport); \
         } \
       } catch (std::runtime_error &er) { \
-	*retvalP = xmlrpc_c::value_string (exception_msg (er)); \
-	mf::LogError ("XMLRPC_Commander") << er.what (); \
+        std::string msg = exception_msg (er, _help); \
+        *retvalP = xmlrpc_c::value_string (msg);  \
+        mf::LogError ("XMLRPC_Commander") << msg; \
+      } catch (art::Exception &er) {  \
+        std::string msg = exception_msg (er, _help); \
+        *retvalP = xmlrpc_c::value_string (msg);  \
+        mf::LogError ("XMLRPC_Commander") << msg; \
+      } catch (cet::exception &er) {  \
+        std::string msg = exception_msg (er, _help); \
+        *retvalP = xmlrpc_c::value_string (msg);  \
+        mf::LogError ("XMLRPC_Commander") << msg; \
+      } catch (...) {  \
+        std::string msg = exception_msg ("Unknown exception", _help); \
+        *retvalP = xmlrpc_c::value_string (msg);  \
+        mf::LogError ("XMLRPC_Commander") << msg; \
       } \
   } 
 
