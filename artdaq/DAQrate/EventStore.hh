@@ -49,14 +49,12 @@ namespace artdaq {
 
     // Create an EventStore that uses 'reader' as the function to be
     // executed by the thread this EventStore will spawn.
-    EventStore(size_t num_fragments_per_event, run_id_t run,
-               int store_id, int argc, char * argv[],
-               ART_CMDLINE_FCN * reader, unsigned int seqIDModulus,
-               bool printSummaryStats = false);
-    EventStore(size_t num_fragments_per_event, run_id_t run,
-               int store_id, const std::string& configString,
-               ART_CFGSTRING_FCN * reader, unsigned int seqIDModulus,
-               bool printSummaryStats = false);
+    EventStore(size_t num_fragments_per_event, int store_id, int argc, 
+	       char * argv[], ART_CMDLINE_FCN * reader, 
+	       unsigned int seqIDModulus, bool printSummaryStats = false);
+    EventStore(size_t num_fragments_per_event, int store_id, 
+	       const std::string& configString, ART_CFGSTRING_FCN * reader, 
+	       unsigned int seqIDModulus, bool printSummaryStats = false);
 
     ~EventStore();
 
@@ -71,22 +69,29 @@ namespace artdaq {
     // returned.
     int endOfData();
 
+    // Push any incomplete events onto the queue.
+    void flushData();
+
     void startRun(run_id_t runID);
+    void startSubrun();
     void endRun();
-    void pauseRun();
-    void resumeRun();
+    void endSubrun();
 
   private:
     // id_ is the unique identifier of this object; MPI programs will
     // use the MPI rank to fill in this value.
     int const      id_;
     size_t  const  num_fragments_per_event_;
-    run_id_t const run_id_;
-    subrun_id_t const subrun_id_;
+    run_id_t run_id_;
+    subrun_id_t subrun_id_;
     EventMap       events_;
     RawEventQueue & queue_;
     std::future<int> reader_thread_;
+
     unsigned int const seqIDModulus_;
+    sequence_id_t lastFlushedSeqID_;
+    sequence_id_t highestSeqIDSeen_;
+
     bool const printSummaryStats_;
 
     void initStatistics_();

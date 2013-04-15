@@ -23,7 +23,6 @@ namespace artdaq {
     INCOMPLETE_EVENT_STAT_KEY("EventStoreIncompleteEvents");
 
   EventStore::EventStore(size_t num_fragments_per_event,
-                         run_id_t run,
                          int store_id,
                          int argc,
                          char * argv[],
@@ -32,19 +31,20 @@ namespace artdaq {
                          bool printSummaryStats) :
     id_(store_id),
     num_fragments_per_event_(num_fragments_per_event),
-    run_id_(run),
-    subrun_id_(0),
+    run_id_(1),
+    subrun_id_(1),
     events_(),
     queue_(getGlobalQueue()),
     reader_thread_(std::async(std::launch::async, reader, argc, argv)),
     seqIDModulus_(seqIDModulus),
+    lastFlushedSeqID_(0),
+    highestSeqIDSeen_(0),
     printSummaryStats_(printSummaryStats)
   {
     initStatistics_();
   }
 
   EventStore::EventStore(size_t num_fragments_per_event,
-                         run_id_t run,
                          int store_id,
                          const std::string& configString,
                          ART_CFGSTRING_FCN * reader,
@@ -52,12 +52,14 @@ namespace artdaq {
                          bool printSummaryStats) :
     id_(store_id),
     num_fragments_per_event_(num_fragments_per_event),
-    run_id_(run),
-    subrun_id_(0),
+    run_id_(1),
+    subrun_id_(1),
     events_(),
     queue_(getGlobalQueue()),
     reader_thread_(std::async(std::launch::async, reader, configString)),
     seqIDModulus_(seqIDModulus),
+    lastFlushedSeqID_(0),
+    highestSeqIDSeen_(0),
     printSummaryStats_(printSummaryStats)
   {
     initStatistics_();
@@ -83,9 +85,13 @@ namespace artdaq {
 
     // The sequenceID is expected to be correct in the incoming fragment.
     // The EventStore will divide it by the seqIDModulus to support the use case
-    // of the aggregator which needs bunch groups serialized events with
+    // of the aggregator which needs to bunch groups of serialized events with
     // continuous sequence IDs together.
-    Fragment::sequence_id_t sequence_id = (pfrag->sequenceID() - 1) / seqIDModulus_;
+    if (pfrag->sequenceID() > highestSeqIDSeen_) {
+      highestSeqIDSeen_ = pfrag->sequenceID();
+    }
+    Fragment::sequence_id_t sequence_id = ((pfrag->sequenceID() - (1 + lastFlushedSeqID_)) / seqIDModulus_) + 1;
+    std::cout << "EventStore::insert(" << id_ << "): Seq " << pfrag->sequenceID() << " maps to " << sequence_id << std::endl;
 
     // Find if the right event id is already known to events_ and, if so, where
     // it is.
@@ -94,7 +100,8 @@ namespace artdaq {
     if (loc == events_.end() || events_.key_comp()(sequence_id, loc->first)) {
       // We don't have an event with this id; create one an insert it at loc,
       // and ajust loc to point to the newly inserted event.
-      RawEvent_ptr newevent(new RawEvent(run_id_, subrun_id_, sequence_id));
+      std::cout << "EventStore::insert(" << id_ << "): Creating RawEvent with run " << run_id_ << " and subrun " << subrun_id_ << std::endl;
+      RawEvent_ptr newevent(new RawEvent(run_id_, subrun_id_, pfrag->sequenceID()));
       loc =
         events_.insert(loc, EventMap::value_type(sequence_id, newevent));
     }
@@ -119,6 +126,7 @@ namespace artdaq {
       if (mqPtr.get() != 0) {
         mqPtr->addSample(complete_event->wordCount());
       }
+      std::cout << "EventStore::insert(" << id_ << "): Enqueing a RawEvent." << std::endl;
       queue_.enqNowait(complete_event);
     }
     MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
@@ -131,9 +139,15 @@ namespace artdaq {
   int
   EventStore::endOfData()
   {
-    // 26-Mar-2013, KAB: This will need to change once we get better
-    // end run handling, but for now let's at least drain the event
-    // store when we are shutting down (ending the run).
+    std::cout << "EventStore::endOfData(" << id_ << "): Called." << std::endl;
+    RawEvent_ptr end_of_data(nullptr);
+    queue_.enqNowait(end_of_data);
+    return reader_thread_.get();
+  }
+
+  void EventStore::flushData()
+  {
+    std::cout << "EventStore::flushData(" << id_ << "): Called." << std::endl;
     EventMap::iterator loc;
     for (loc = events_.begin(); loc != events_.end(); ++loc) {
       RawEvent_ptr complete_event(loc->second);
@@ -142,13 +156,52 @@ namespace artdaq {
       if (mqPtr.get() != 0) {
         mqPtr->addSample(complete_event->wordCount());
       }
+      std::cout << "EventStore::flushData(" << id_ << "): Enqueueing incomplete event" << std::endl;
       queue_.enqNowait(complete_event);
     }
     events_.clear();
 
-    RawEvent_ptr end_of_data(0);
-    queue_.enqNowait(end_of_data);
-    return reader_thread_.get();
+    lastFlushedSeqID_ = highestSeqIDSeen_;
+  }
+
+  void EventStore::startRun(run_id_t runID) 
+  {
+    run_id_ = runID;
+    subrun_id_ = 1;
+    lastFlushedSeqID_ = 0;
+    highestSeqIDSeen_ = 0;
+  }
+
+  void EventStore::startSubrun() 
+  {
+    subrun_id_ += 1;
+  }
+
+  void EventStore::endRun() 
+  {
+    RawEvent_ptr endOfRunEvent(new RawEvent(run_id_, subrun_id_, 0));
+    std::unique_ptr<artdaq::Fragment> endOfRunFrag(new Fragment(static_cast<size_t>(ceil(sizeof(size_t) /
+											 static_cast<double>(sizeof(Fragment::value_type))))));
+
+    endOfRunFrag->setSystemType(Fragment::EndOfRunFragmentType);
+    *endOfRunFrag->dataBegin() = id_;
+    endOfRunEvent->insertFragment(std::move(endOfRunFrag));
+
+    std::cout << "EventStore(" << id_ << "): Enqueueing an EndRun message." << std::endl;
+    queue_.enqNowait(endOfRunEvent);
+  }
+  void EventStore::endSubrun() 
+  {
+    RawEvent_ptr endOfSubrunEvent(new RawEvent(run_id_, subrun_id_, 0));
+    std::unique_ptr<artdaq::Fragment> endOfSubrunFrag(new Fragment(static_cast<size_t>(ceil(sizeof(size_t) /
+											    static_cast<double>(sizeof(Fragment::value_type))))));
+
+    endOfSubrunFrag->setSystemType(Fragment::EndOfSubrunFragmentType);
+    *endOfSubrunFrag->dataBegin() = id_;
+    endOfSubrunEvent->insertFragment(std::move(endOfSubrunFrag));
+
+    std::cout << "EventStore(" << id_ << "): Enqueueing an EndSubrun message." << std::endl;
+    queue_.enqNowait(endOfSubrunEvent);
   }
 
   void

@@ -220,12 +220,12 @@ void Program::sink()
       &artapp :
       &artdaq::simpleQueueReaderApp;
     artdaq::EventStore events(conf_.detectors_,
-                              conf_.run_,
                               sink_rank,
                               useArt ? conf_.art_argc_ : 1,
                               useArt ? conf_.art_argv_ : dummyArgs,
                               reader,
                               printStats);
+    events.startRun(conf_.run_);
     { // Block to handle scope of h, below.
       artdaq::RHandles h(sink_buffers_ *
                          std::ceil(1.0 * conf_.sources_ / conf_.sinks_),

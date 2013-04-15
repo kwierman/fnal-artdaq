@@ -89,7 +89,7 @@ void
 artdaq::SHandles::
 sendEODFrag(size_t dest, size_t nFragments)
 {
-  sendFragTo(Fragment::eodFrag(nFragments), dest);
+  sendFragTo(std::move(*Fragment::eodFrag(nFragments)), dest);
 }
 
 void artdaq::SHandles::waitAll()
