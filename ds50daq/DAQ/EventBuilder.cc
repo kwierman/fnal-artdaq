@@ -6,13 +6,14 @@
 #include "art/Framework/Art/artapp.h"
 #include "artdaq/DAQrate/SimpleQueueReader.hh"
 #include "artdaq/Utilities/SimpleLookupPolicy.h"
+#include "artdaq/DAQdata/NetMonHeader.hh"
 
 /**
  * Constructor.
  */
 ds50::EventBuilder::EventBuilder(int mpi_rank) :
   mpi_rank_(mpi_rank), local_group_defined_(false),
-  data_sender_count_(0), run_id_(0)
+  data_sender_count_(0), art_initialized_(false)
 {
   mf::LogDebug("EventBuilder") << "Constructor";
 
@@ -46,6 +47,27 @@ ds50::EventBuilder::~EventBuilder()
     MPI_Comm_free(&local_group_comm_);
   }
   mf::LogDebug("EventBuilder") << "Destructor";
+}
+
+void ds50::EventBuilder::initializeEventStore()
+{
+  if (use_art_) {
+    artdaq::EventStore::ART_CFGSTRING_FCN * reader = &artapp_string_config;
+    event_store_ptr_.reset(new artdaq::EventStore(expected_fragments_per_event_,
+						  mpi_rank_, init_string_,
+						  reader, 1, print_event_store_stats_));
+    art_initialized_ = true;
+  }
+  else {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wwrite-strings"
+    char * dummyArgs[1] { "SimpleQueueReader" };
+#pragma GCC diagnostic pop
+    artdaq::EventStore::ART_CMDLINE_FCN * reader = &artdaq::simpleQueueReaderApp;
+    event_store_ptr_.reset(new artdaq::EventStore(expected_fragments_per_event_,
+						  mpi_rank_, 1, dummyArgs,
+						  reader, 1, print_event_store_stats_));
+  }
 }
 
 /**
@@ -146,32 +168,82 @@ bool ds50::EventBuilder::initialize(fhicl::ParameterSet const& pset)
   }
   print_event_store_stats_ = evb_pset.get<bool>("print_event_store_stats", false);
 
+  /* Once art has been initialized we can't tear it down or change it's
+     configuration.  We'll keep track of when we have initialized it.  Once it
+     has been initialized we need to verify that the configuration is the same
+     every subsequent time we transition through the init state.  If the
+     config changes we have to throw up our hands and bail out.
+  */
+  std::cout << "ds50::EventBuilder::initialize(): 1" << std::endl;
+  if (art_initialized_ == false) {
+    this->initializeEventStore();
+    std::cout << "ds50::EventBuilder::initialize(): 2" << std::endl;
+
+    fhicl::ParameterSet tmp = pset;
+    tmp.erase("daq");
+    previous_pset_ = tmp;
+  } else {
+    std::cout << "ds50::EventBuilder::initialize(): 3" << std::endl;    
+
+    fhicl::ParameterSet tmp = pset;
+    tmp.erase("daq");
+    if (tmp != previous_pset_) {
+      mf::LogError("EventBuilder")
+	<< "The art configuration can not be altered after art "
+	<< "has been configured.";
+      return false;
+    }
+  }
+
   return true;
 }
 
 bool ds50::EventBuilder::start(art::RunID id)
 {
   run_id_ = id;
+  eod_fragments_received_ = 0;
+  std::cout << "ds50::EventBuilder::start(): Calling lock..." << std::endl;
+  flush_mutex_.lock();
+  std::cout << "ds50::EventBuilder::start(): Back from lock..." << std::endl;
+  event_store_ptr_->startRun(id.run());
   return true;
 }
 
 bool ds50::EventBuilder::stop()
 {
+  std::cout << "ds50::EventBuilder::stop(): Calling lock..." << std::endl;
+  flush_mutex_.lock();
+  std::cout << "ds50::EventBuilder::stop(): Back from lock..." << std::endl;
+  event_store_ptr_->endSubrun();
+  event_store_ptr_->endRun();
+  flush_mutex_.unlock();
   return true;
 }
 
 bool ds50::EventBuilder::pause()
 {
+  std::cout << "ds50::EventBuilder::pause(): Calling lock..." << std::endl;
+  flush_mutex_.lock();
+  std::cout << "ds50::EventBuilder::pause(): Back from lock..." << std::endl;
+  event_store_ptr_->endSubrun();
+  flush_mutex_.unlock();
   return true;
 }
 
 bool ds50::EventBuilder::resume()
 {
+  eod_fragments_received_ = 0;
+  std::cout << "ds50::EventBuilder::resume(): Calling lock..." << std::endl;
+  flush_mutex_.lock();
+  std::cout << "ds50::EventBuilder::resume(): Back from lock..." << std::endl;
+  event_store_ptr_->startSubrun();
   return true;
 }
 
 bool ds50::EventBuilder::shutdown()
 {
+  std::cout << "ds50::EventBuilder::shutdown(): Called." << std::endl;
+  event_store_ptr_->endOfData();
   return true;
 }
 
@@ -194,41 +266,34 @@ bool ds50::EventBuilder::reinitialize(fhicl::ParameterSet const& pset)
 size_t ds50::EventBuilder::process_fragments()
 {
   size_t fragments_received = 0;
+  bool process_fragments = true;
+
+  std::cout << "ds50::EventBuilder::process_fragments(): Starting." << std::endl;
 
   receiver_ptr_.reset(new artdaq::RHandles(mpi_buffer_count_,
                                            max_fragment_size_words_,
                                            data_sender_count_,
                                            first_data_sender_rank_));
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wwrite-strings"
-  char * dummyArgs[1] { "SimpleQueueReader" };
-#pragma GCC diagnostic pop
-  std::unique_ptr<artdaq::EventStore> events;
-  if (use_art_) {
-    artdaq::EventStore::ART_CFGSTRING_FCN * reader = &artapp_string_config;
-    events.reset(new artdaq::EventStore(expected_fragments_per_event_,
-                                        run_id_.run(), mpi_rank_, init_string_,
-                                        reader, 1, print_event_store_stats_));
-  }
-  else {
-    artdaq::EventStore::ART_CMDLINE_FCN * reader = &artdaq::simpleQueueReaderApp;
-    events.reset(new artdaq::EventStore(expected_fragments_per_event_,
-                                        run_id_.run(), mpi_rank_, 1, dummyArgs,
-                                        reader, 1, print_event_store_stats_));
-  }
-
   MPI_Barrier(local_group_comm_);
 
   mf::LogDebug("EventBuilder") << "Waiting for first fragment.";
-  while (receiver_ptr_->sourcesActive() > 0) {
+  while (process_fragments) {
     artdaq::FragmentPtr pfragment(new artdaq::Fragment);
     receiver_ptr_->recvFragment(*pfragment);
     if (pfragment->type() != artdaq::Fragment::EndOfDataFragmentType) {
-      mf::LogDebug("EventBuilder")
-        << "Received fragment " << fragments_received << ".";
+      std::cout << "ds50::EventBuilder::process_fragments(): Got a data fragment, sequence " << pfragment->sequenceID() << std::endl;
       ++fragments_received;
-      events->insert(std::move(pfragment));
+      event_store_ptr_->insert(std::move(pfragment));
+    } else {
+      std::cout << "ds50::EventBuilder::process_fragments(): Got an EOD fragment." << std::endl;
+      eod_fragments_received_++;
+      if (eod_fragments_received_ == data_sender_count_) {
+	std::cout << "ds50::EventBuilder::process_fragments(): Got all EOD fragments." << std::endl;
+	event_store_ptr_->flushData();
+	flush_mutex_.unlock();
+	process_fragments = false;
+      }
     }
     if (receiver_ptr_->sourcesActive() == receiver_ptr_->sourcesPending()) {
       mf::LogDebug("EventBuilder")
@@ -237,12 +302,8 @@ size_t ds50::EventBuilder::process_fragments()
     }
   }
 
-  //MPI_Barrier(local_group_comm_);
-
   receiver_ptr_.reset(nullptr);
-
-  /*int rc =*/ events->endOfData();
-
+  std::cout << "ds50::EventBuilder::process_fragments(): Exiting" << std::endl;
   return fragments_received;
 }
 

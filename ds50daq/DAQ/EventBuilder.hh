@@ -9,6 +9,7 @@
 #include "artdaq/DAQrate/quiet_mpi.hh"
 #include "artdaq/DAQdata/FragmentGenerator.hh"
 #include "artdaq/DAQrate/RHandles.hh"
+#include "artdaq/DAQrate/EventStore.hh"
 
 namespace ds50
 {
@@ -37,21 +38,30 @@ public:
   std::string report(std::string const&) const;
 
 private:
+  void initializeEventStore();
+
   int mpi_rank_;
   bool local_group_defined_;
   MPI_Comm local_group_comm_;
 
   std::string init_string_;
+  fhicl::ParameterSet previous_pset_;
+
   uint64_t max_fragment_size_words_;
   size_t mpi_buffer_count_;
   size_t first_data_sender_rank_;
   size_t data_sender_count_;
   size_t expected_fragments_per_event_;
+  size_t eod_fragments_received_;
   bool use_art_;
   bool print_event_store_stats_;
   art::RunID run_id_;
 
   std::unique_ptr<artdaq::RHandles> receiver_ptr_;
+  std::unique_ptr<artdaq::EventStore> event_store_ptr_;
+  bool art_initialized_;
+
+  std::mutex flush_mutex_;
 };
 
 #endif

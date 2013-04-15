@@ -58,36 +58,47 @@ bool ds50::EventBuilderApp::do_stop()
     report_string_ = "Error stopping the EventBuilder.";
   }
 
-  int number_of_fragments_processed = event_building_future_.get();
-  mf::LogDebug("EventBuilderApp::do_stop()")
-    << "Number of fragments processed = " << number_of_fragments_processed
-    << ".";
-
+  event_building_future_.get();
   return external_request_status_;
 }
 
 bool ds50::EventBuilderApp::do_pause()
 {
+  std::cout << "ds50::EventBuilderApp::do_pause(): Called." << std::endl;
   report_string_ = "";
   external_request_status_ = event_builder_ptr_->pause();
   if (! external_request_status_) {
     report_string_ = "Error pausing the EventBuilder.";
   }
+
+  std::cout << "ds50::EventBuilderApp::do_pause(): Getting result from future." << std::endl;
+  event_building_future_.get();
+  std::cout << "ds50::EventBuilderApp::do_pause(): Returning" << std::endl;
   return external_request_status_;
 }
 
 bool ds50::EventBuilderApp::do_resume()
 {
+  std::cout << "ds50::EventBuilderApp::do_resume(): Called." << std::endl;
   report_string_ = "";
   external_request_status_ = event_builder_ptr_->resume();
   if (! external_request_status_) {
     report_string_ = "Error resuming the EventBuilder.";
   }
+
+  std::cout << "ds50::EventBuilderApp::do_resume(): Spawning thread." << std::endl;
+  event_building_future_ =
+    std::async(std::launch::async, &EventBuilder::process_fragments,
+               event_builder_ptr_.get());
+
+  std::cout << "ds50::EventBuilderApp::do_resume(): Returning." << std::endl;
   return external_request_status_;
 }
 
 bool ds50::EventBuilderApp::do_shutdown()
 {
+  std::cerr << "ds50::EventBuilderApp::do_shutdown(): Called." << std::endl;
+
   report_string_ = "";
   external_request_status_ = event_builder_ptr_->shutdown();
   if (! external_request_status_) {
@@ -126,7 +137,7 @@ void ds50::EventBuilderApp::BootedEnter()
   // Booted Entry action rather than the Initialized Exit action because the
   // Initialized Exit action is only called after the "init" transition guard
   // condition is executed.
-  event_builder_ptr_.reset(nullptr);
+  //event_builder_ptr_.reset(nullptr);
 }
 
 std::string ds50::EventBuilderApp::report(std::string const& which) const
