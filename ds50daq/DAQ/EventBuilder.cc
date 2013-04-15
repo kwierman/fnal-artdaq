@@ -209,13 +209,13 @@ size_t ds50::EventBuilder::process_fragments()
     artdaq::EventStore::ART_CFGSTRING_FCN * reader = &artapp_string_config;
     events.reset(new artdaq::EventStore(expected_fragments_per_event_,
                                         run_id_.run(), mpi_rank_, init_string_,
-                                        reader, print_event_store_stats_));
+                                        reader, 1, print_event_store_stats_));
   }
   else {
     artdaq::EventStore::ART_CMDLINE_FCN * reader = &artdaq::simpleQueueReaderApp;
     events.reset(new artdaq::EventStore(expected_fragments_per_event_,
                                         run_id_.run(), mpi_rank_, 1, dummyArgs,
-                                        reader, print_event_store_stats_));
+                                        reader, 1, print_event_store_stats_));
   }
 
   MPI_Barrier(local_group_comm_);
@@ -225,8 +225,8 @@ size_t ds50::EventBuilder::process_fragments()
     artdaq::FragmentPtr pfragment(new artdaq::Fragment);
     receiver_ptr_->recvFragment(*pfragment);
     if (pfragment->type() != artdaq::Fragment::EndOfDataFragmentType) {
-      //mf::LogDebug("EventBuilder")
-      //  << "Received fragment " << fragments_received << ".";
+      mf::LogDebug("EventBuilder")
+        << "Received fragment " << fragments_received << ".";
       ++fragments_received;
       events->insert(std::move(pfragment));
     }
