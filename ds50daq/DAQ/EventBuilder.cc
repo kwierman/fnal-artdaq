@@ -277,7 +277,7 @@ size_t ds50::EventBuilder::process_fragments()
     artdaq::FragmentPtr pfragment(new artdaq::Fragment);
     receiver_ptr_->recvFragment(*pfragment);
     if (pfragment->type() != artdaq::Fragment::EndOfDataFragmentType) {
-      std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Got a data fragment, sequence " << pfragment->sequenceID() << std::endl;
+      std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Got a data fragment, sequence " << pfragment->sequenceID() << ", run " << run_id_.run() << std::endl;
       ++fragments_received;
       event_store_ptr_->insert(std::move(pfragment));
     } else {
