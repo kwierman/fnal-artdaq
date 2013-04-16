@@ -124,6 +124,7 @@ namespace artdaq {
       if (mqPtr.get() != 0) {
         mqPtr->addSample(complete_event->wordCount());
       }
+      std::cout << "artdaq::EventStore(" << id_ << "): Enqueueing event " << complete_event->sequenceID() << std::endl;
       queue_.enqNowait(complete_event);
     }
     MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().

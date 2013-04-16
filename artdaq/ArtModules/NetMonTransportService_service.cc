@@ -75,13 +75,10 @@ void
 NetMonTransportService::
 connect()
 {
-    mf::LogVerbatim("DEBUG") << "NetMonTransportService::connect(): Called";
-    mf::LogVerbatim("DEBUG") << "NetMonTransportService::connect(): Creating SHandle: " << data_receiver_count_ << " " << first_data_receiver_rank_;
     sender_ptr_.reset(new artdaq::SHandles(mpi_buffer_count_,
     					   max_fragment_size_words_,
     					   data_receiver_count_,
     					   first_data_receiver_rank_));
-    mf::LogVerbatim("DEBUG") << "NetMonTransportService::connect(): Creating SHandle, done.";
 }
 
 void
@@ -95,8 +92,6 @@ void
 NetMonTransportService::
 disconnect()
 {
-    mf::LogVerbatim("DEBUG") << "NetMonTransportService::disconnect(): Called";
-
     if (sender_ptr_) sender_ptr_.reset(nullptr);
     if (receiver_ptr_) receiver_ptr_.reset(nullptr);
 }
