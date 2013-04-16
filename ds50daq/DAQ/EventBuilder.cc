@@ -174,17 +174,12 @@ bool ds50::EventBuilder::initialize(fhicl::ParameterSet const& pset)
      every subsequent time we transition through the init state.  If the
      config changes we have to throw up our hands and bail out.
   */
-  std::cout << "ds50::EventBuilder::initialize(): 1" << std::endl;
   if (art_initialized_ == false) {
     this->initializeEventStore();
-    std::cout << "ds50::EventBuilder::initialize(): 2" << std::endl;
-
     fhicl::ParameterSet tmp = pset;
     tmp.erase("daq");
     previous_pset_ = tmp;
   } else {
-    std::cout << "ds50::EventBuilder::initialize(): 3" << std::endl;    
-
     fhicl::ParameterSet tmp = pset;
     tmp.erase("daq");
     if (tmp != previous_pset_) {
@@ -202,18 +197,18 @@ bool ds50::EventBuilder::start(art::RunID id)
 {
   run_id_ = id;
   eod_fragments_received_ = 0;
-  std::cout << "ds50::EventBuilder::start(): Calling lock..." << std::endl;
+  std::cout << "ds50::EventBuilder::start(" << mpi_rank_ << "): Calling lock..." << std::endl;
   flush_mutex_.lock();
-  std::cout << "ds50::EventBuilder::start(): Back from lock..." << std::endl;
+  std::cout << "ds50::EventBuilder::start(" << mpi_rank_ << "): Back from lock..." << std::endl;
   event_store_ptr_->startRun(id.run());
   return true;
 }
 
 bool ds50::EventBuilder::stop()
 {
-  std::cout << "ds50::EventBuilder::stop(): Calling lock..." << std::endl;
+  std::cout << "ds50::EventBuilder::stop(" << mpi_rank_ << "): Calling lock..." << std::endl;
   flush_mutex_.lock();
-  std::cout << "ds50::EventBuilder::stop(): Back from lock..." << std::endl;
+  std::cout << "ds50::EventBuilder::stop(" << mpi_rank_ << "): Back from lock..." << std::endl;
   event_store_ptr_->endSubrun();
   event_store_ptr_->endRun();
   flush_mutex_.unlock();
@@ -222,9 +217,9 @@ bool ds50::EventBuilder::stop()
 
 bool ds50::EventBuilder::pause()
 {
-  std::cout << "ds50::EventBuilder::pause(): Calling lock..." << std::endl;
+  std::cout << "ds50::EventBuilder::pause(" << mpi_rank_ << "): Calling lock..." << std::endl;
   flush_mutex_.lock();
-  std::cout << "ds50::EventBuilder::pause(): Back from lock..." << std::endl;
+  std::cout << "ds50::EventBuilder::pause(" << mpi_rank_ << "): Back from lock..." << std::endl;
   event_store_ptr_->endSubrun();
   flush_mutex_.unlock();
   return true;
@@ -233,16 +228,16 @@ bool ds50::EventBuilder::pause()
 bool ds50::EventBuilder::resume()
 {
   eod_fragments_received_ = 0;
-  std::cout << "ds50::EventBuilder::resume(): Calling lock..." << std::endl;
+  std::cout << "ds50::EventBuilder::resume(" << mpi_rank_ << "): Calling lock..." << std::endl;
   flush_mutex_.lock();
-  std::cout << "ds50::EventBuilder::resume(): Back from lock..." << std::endl;
+  std::cout << "ds50::EventBuilder::resume(" << mpi_rank_ << "): Back from lock..." << std::endl;
   event_store_ptr_->startSubrun();
   return true;
 }
 
 bool ds50::EventBuilder::shutdown()
 {
-  std::cout << "ds50::EventBuilder::shutdown(): Called." << std::endl;
+  std::cout << "ds50::EventBuilder::shutdown(" << mpi_rank_ << "): Called." << std::endl;
   event_store_ptr_->endOfData();
   return true;
 }
@@ -268,7 +263,7 @@ size_t ds50::EventBuilder::process_fragments()
   size_t fragments_received = 0;
   bool process_fragments = true;
 
-  std::cout << "ds50::EventBuilder::process_fragments(): Starting." << std::endl;
+  std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Starting." << std::endl;
 
   receiver_ptr_.reset(new artdaq::RHandles(mpi_buffer_count_,
                                            max_fragment_size_words_,
@@ -282,14 +277,14 @@ size_t ds50::EventBuilder::process_fragments()
     artdaq::FragmentPtr pfragment(new artdaq::Fragment);
     receiver_ptr_->recvFragment(*pfragment);
     if (pfragment->type() != artdaq::Fragment::EndOfDataFragmentType) {
-      std::cout << "ds50::EventBuilder::process_fragments(): Got a data fragment, sequence " << pfragment->sequenceID() << std::endl;
+      std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Got a data fragment, sequence " << pfragment->sequenceID() << std::endl;
       ++fragments_received;
       event_store_ptr_->insert(std::move(pfragment));
     } else {
-      std::cout << "ds50::EventBuilder::process_fragments(): Got an EOD fragment." << std::endl;
       eod_fragments_received_++;
+      std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Got an EOD fragment " << eod_fragments_received_ << "/" << data_sender_count_ << "." << std::endl;
       if (eod_fragments_received_ == data_sender_count_) {
-	std::cout << "ds50::EventBuilder::process_fragments(): Got all EOD fragments." << std::endl;
+	std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Got all EOD fragments." << std::endl;
 	event_store_ptr_->flushData();
 	flush_mutex_.unlock();
 	process_fragments = false;
@@ -303,7 +298,7 @@ size_t ds50::EventBuilder::process_fragments()
   }
 
   receiver_ptr_.reset(nullptr);
-  std::cout << "ds50::EventBuilder::process_fragments(): Exiting" << std::endl;
+  std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Exiting" << std::endl;
   return fragments_received;
 }
 

@@ -48,6 +48,8 @@ private:
   size_t evb_count_;
   int rt_priority_;
 
+  int mpi_rank_;
+
   std::unique_ptr<artdaq::SHandles> sender_ptr_;
 };
 

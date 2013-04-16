@@ -22,14 +22,13 @@ ds50::FragmentReceiver::FragmentReceiver() :
                    &local_group_comm_);
   if (status == MPI_SUCCESS) {
     local_group_defined_ = true;
-    int temp_rank;
-    MPI_Comm_rank(local_group_comm_, &temp_rank);
-
+    MPI_Comm_rank(local_group_comm_, &mpi_rank_);
+    
     mf::LogDebug("FragmentReceiver")
       << "Successfully created local communicator for type "
       << ds50::Config::FragmentReceiverTask << ", identifier = 0x"
       << std::hex << local_group_comm_ << std::dec
-      << ", rank = " << temp_rank << ".";
+      << ", rank = " << mpi_rank_ << ".";
   }
   else {
     mf::LogError("FragmentReceiver")
@@ -202,9 +201,8 @@ bool ds50::FragmentReceiver::pause()
 
 bool ds50::FragmentReceiver::resume()
 {
-  std::cout << "ds50::FragmentReceiver::resume(): Called" << std::endl;
+  std::cout << "ds50::FragmentReceiver::resume(" << mpi_rank_ << "): Called" << std::endl;
   generator_ptr_->resume();
-  std::cout << "ds50::FragmentReceiver::resume(): Returning" << std::endl;
   return true;
 }
 
@@ -232,7 +230,7 @@ bool ds50::FragmentReceiver::reinitialize(fhicl::ParameterSet const& pset)
 
 size_t ds50::FragmentReceiver::process_fragments()
 {
-  std::cout << "ds50::FragmentReceiver::process_fragments(): Called" << std::endl;
+  std::cout << "ds50::FragmentReceiver::process_fragments(" << mpi_rank_ << "): Called" << std::endl;
 
   if (rt_priority_ > 0) {
 #pragma GCC diagnostic push
@@ -263,24 +261,19 @@ size_t ds50::FragmentReceiver::process_fragments()
 #pragma GCC diagnostic pop
   }
 
-  std::cout << "ds50::FragmentReceiver::process_fragments(): Creating new SHandle" << std::endl;
   sender_ptr_.reset(new artdaq::SHandles(mpi_buffer_count_,
                                          max_fragment_size_words_,
                                          evb_count_,
                                          first_evb_rank_));
 
-  std::cout << "ds50::FragmentReceiver::process_fragments(): Called" << std::endl;
   MPI_Barrier(local_group_comm_);
-  std::cout << "ds50::FragmentReceiver::process_fragments(): Back from barrier" << std::endl;
 
   mf::LogDebug("FragmentReceiver") << "Waiting for first fragment.";
   artdaq::Fragment::sequence_id_t prev_seq_id = 0;
   artdaq::FragmentPtrs frags;
   bool result;
   do {
-    std::cout << "ds50::FragmentReceiver::process_fragments(): Blocked on getNext()" << std::endl;
     result = generator_ptr_->getNext(frags);
-    std::cout << "ds50::FragmentReceiver::process_fragments(): Back from getNext()" << std::endl;
     for (auto & fragPtr : frags) {
       artdaq::Fragment::sequence_id_t sequence_id = fragPtr->sequenceID();
       if ((fragment_count % 250) == 0) {
@@ -289,10 +282,8 @@ size_t ds50::FragmentReceiver::process_fragments()
           << " with sequence id " << sequence_id << ".";
       }
 
-      if (fragPtr->type() == artdaq::Fragment::EndOfDataFragmentType) {
-	sender_ptr_->broadcastFragment(std::move(*fragPtr));
-      } else {
-	std::cout << "ds50::FragmentReceiver::process_fragments(): Got fragment " << sequence_id << std::endl;
+      if (fragPtr->type() != artdaq::Fragment::EndOfDataFragmentType) {
+	std::cout << "ds50::FragmentReceiver::process_fragments(" << mpi_rank_ << "): Got fragment " << sequence_id << std::endl;
 	// check for continous sequence IDs
 	if (abs(sequence_id-prev_seq_id) > 1) {
 	  mf::LogWarning("FragmentReceiver")
@@ -301,7 +292,7 @@ size_t ds50::FragmentReceiver::process_fragments()
 	    << prev_seq_id << ".";
 	}
 	prev_seq_id = sequence_id;
-	sender_ptr_->sendFragment(std::move(*fragPtr));				    
+	sender_ptr_->sendFragment(std::move(*fragPtr));
       }
 
       ++fragment_count;
@@ -309,17 +300,14 @@ size_t ds50::FragmentReceiver::process_fragments()
     frags.clear();
   } while (result == true);
 
-  std::cout << "ds50::FragmentReceiver::process_fragments(): Bailing out..." << std::endl;
+  std::cout << "ds50::FragmentReceiver::process_fragments(" << mpi_rank_ << "): Bailing out..." << std::endl;
 
   // 07-Feb-2013, KAB
   // removing this barrier so that we can stop the trigger (V1495)
   // generation and readout before stopping the readout of the other cards
   //MPI_Barrier(local_group_comm_);
 
-  mf::LogDebug("FragmentReceiver") << "Before destroying sender.";
   sender_ptr_.reset(nullptr);
-  mf::LogDebug("FragmentReceiver") << "After destroying sender.";
-
   return fragment_count;
 }
 
