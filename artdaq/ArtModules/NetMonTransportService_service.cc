@@ -110,8 +110,6 @@ sendMessage(uint64_t sequenceId, uint8_t messageType, TBufferFile & msg)
   artdaq::Fragment fragment(std::ceil(msg.Length() / sizeof(artdaq::RawDataType) + 1), 
 			    sequenceId, 0, messageType, header);
 
-  std::cout << "NetMonTransportService::sendMessage(): Sending fragment of type " << (int)messageType << std::endl;
-
   memcpy(&*fragment.dataBegin(), msg.Buffer(), msg.Length());
   sender_ptr_->sendFragment(std::move(fragment));
 }
@@ -121,7 +119,6 @@ NetMonTransportService::
 receiveMessage(TBufferFile *&msg)
 {
     if (recvd_fragments_ == nullptr) {
-      mf::LogVerbatim("DEBUG") << "NetMonTransportService::receiveMessage(): No raw events, calling deqWait()...";
       std::shared_ptr<artdaq::RawEvent> popped_event;
       incoming_events_.deqWait(popped_event);
 
@@ -130,7 +127,6 @@ receiveMessage(TBufferFile *&msg)
 	return;
       }
 
-      mf::LogVerbatim("DEBUG") << "NetMonTransportService::receiveMessage(): Back from deqWait()";
       recvd_fragments_ = popped_event->releaseProduct();
       /* Events coming out of the EventStore are not sorted but need to be
 	 sorted by sequence ID before they can be passed to art. 

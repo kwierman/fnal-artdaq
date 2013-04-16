@@ -37,9 +37,6 @@ public:
   // the Fragment was sent.
   size_t sendFragment(Fragment &&);
 
-  // Send the given fragment to all destinations.
-  void broadcastFragment(Fragment &&);
-
   // How many fragments have been sent using this SHandles object?
   size_t count() const;
 

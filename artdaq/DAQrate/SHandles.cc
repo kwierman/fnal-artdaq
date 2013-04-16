@@ -74,19 +74,6 @@ sendFragment(Fragment && frag)
 
 void
 artdaq::SHandles::
-broadcastFragment(Fragment && frag)
-{
-  size_t dest_end = dest_start_ + dest_count_;
-  for (size_t dest = dest_start_; dest != dest_end; ++dest) {
-    sendFragTo(std::move(frag), dest);
-  sent_frag_count_.incSlot(dest);
-  }
-
-  waitAll();
-}
-
-void
-artdaq::SHandles::
 sendEODFrag(size_t dest, size_t nFragments)
 {
   sendFragTo(std::move(*Fragment::eodFrag(nFragments)), dest);
@@ -127,5 +114,5 @@ sendFragTo(Fragment && frag, size_t dest)
         << " dest=" << dest
         << " sequenceID=" << curfrag.sequenceID()
         << " fragID=" << curfrag.fragmentID()
-        << flusher;
+	<< flusher;
 }

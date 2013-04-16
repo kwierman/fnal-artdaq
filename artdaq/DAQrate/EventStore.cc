@@ -91,7 +91,6 @@ namespace artdaq {
       highestSeqIDSeen_ = pfrag->sequenceID();
     }
     Fragment::sequence_id_t sequence_id = ((pfrag->sequenceID() - (1 + lastFlushedSeqID_)) / seqIDModulus_) + 1;
-    std::cout << "EventStore::insert(" << id_ << "): Seq " << pfrag->sequenceID() << " maps to " << sequence_id << std::endl;
 
     // Find if the right event id is already known to events_ and, if so, where
     // it is.
@@ -100,7 +99,6 @@ namespace artdaq {
     if (loc == events_.end() || events_.key_comp()(sequence_id, loc->first)) {
       // We don't have an event with this id; create one an insert it at loc,
       // and ajust loc to point to the newly inserted event.
-      std::cout << "EventStore::insert(" << id_ << "): Creating RawEvent with run " << run_id_ << " and subrun " << subrun_id_ << std::endl;
       RawEvent_ptr newevent(new RawEvent(run_id_, subrun_id_, pfrag->sequenceID()));
       loc =
         events_.insert(loc, EventMap::value_type(sequence_id, newevent));
@@ -126,7 +124,6 @@ namespace artdaq {
       if (mqPtr.get() != 0) {
         mqPtr->addSample(complete_event->wordCount());
       }
-      std::cout << "EventStore::insert(" << id_ << "): Enqueing a RawEvent." << std::endl;
       queue_.enqNowait(complete_event);
     }
     MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
