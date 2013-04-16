@@ -1,4 +1,5 @@
 #include "artdaq/DAQrate/Config.hh"
+#include "artdaq/DAQrate/MPIProg.hh"
 #include <cstring>
 #include <cassert>
 
@@ -10,6 +11,7 @@ int main()
                           "2",  "1",   "--", "a", "bc", "de f"
                         };
   int argc = sizeof(argv) / sizeof(char *);
+  MPIProg mpiSentry(argc, const_cast<char **>(argv));
   int rank = 1;
   int nprocs = 15;
   Config cfg(rank, nprocs, argc, const_cast<char **>(argv));

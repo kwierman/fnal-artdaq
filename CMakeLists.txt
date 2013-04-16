@@ -69,10 +69,6 @@ endif()
 
 if(${WANT_MPI})
   find_package(MPI QUIET)
-  if(MPI_FOUND)
-    # Remove cxx library -- compiled with wrong version of GCC.
-    LIST(REMOVE_AT MPI_LIBRARIES 0)
-  endif()
 endif()
 
 # macros for artdaq_dictionary and simple_plugin

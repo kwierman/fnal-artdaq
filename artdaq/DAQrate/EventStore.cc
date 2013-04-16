@@ -1,8 +1,5 @@
 
 #include "artdaq/DAQrate/EventStore.hh"
-#ifndef ARTDAQ_NO_PERF
-#include "artdaq/DAQrate/Perf.hh"
-#endif
 #include <utility>
 #include <cstring>
 #include <dlfcn.h>
@@ -14,6 +11,16 @@
 #include "artdaq/DAQrate/StatisticsCollection.hh"
 #include "artdaq/DAQrate/SimpleQueueReader.hh"
 #include "artdaq/DAQrate/Utils.hh"
+#include "messagefacility/MessageLogger/MessageLogger.h"
+
+// jbk note about performance measurement collection - 
+// We should no longer need this "Perf" performance measurement.
+// The event store is used in applications that do not use MPI,
+// and the Perf performance measurement collector requires MPI
+// to be initialized.
+#if 0
+#include "artdaq/DAQrate/Perf.hh"
+#endif
 
 using namespace std;
 
@@ -34,11 +41,12 @@ namespace artdaq {
     run_id_(1),
     subrun_id_(1),
     events_(),
-    queue_(getGlobalQueue()),
+    queue_(getGlobalQueue(50)),
     reader_thread_(std::async(std::launch::async, reader, argc, argv)),
     seqIDModulus_(seqIDModulus),
     lastFlushedSeqID_(0),
     highestSeqIDSeen_(0),
+    enq_timeout_(5.0),
     printSummaryStats_(printSummaryStats)
   {
     initStatistics_();
@@ -55,11 +63,63 @@ namespace artdaq {
     run_id_(1),
     subrun_id_(1),
     events_(),
-    queue_(getGlobalQueue()),
+    queue_(getGlobalQueue(50)),
     reader_thread_(std::async(std::launch::async, reader, configString)),
     seqIDModulus_(seqIDModulus),
     lastFlushedSeqID_(0),
     highestSeqIDSeen_(0),
+    enq_timeout_(5.0),
+    printSummaryStats_(printSummaryStats)
+  {
+    initStatistics_();
+  }
+
+  EventStore::EventStore(size_t num_fragments_per_event,
+                         run_id_t run,
+                         int store_id,
+                         int argc,
+                         char * argv[],
+                         ART_CMDLINE_FCN * reader,
+                         int max_art_queue_size,
+                         double enq_timeout_sec,
+			 unsigned int seqIDModulus,
+                         bool printSummaryStats) :
+    id_(store_id),
+    num_fragments_per_event_(num_fragments_per_event),
+    run_id_(run),
+    subrun_id_(0),
+    events_(),
+    queue_(getGlobalQueue(max_art_queue_size)),
+    reader_thread_(std::async(std::launch::async, reader, argc, argv)),
+    seqIDModulus_(seqIDModulus),
+    lastFlushedSeqID_(0),
+    highestSeqIDSeen_(0),
+    enq_timeout_(enq_timeout_sec),
+    printSummaryStats_(printSummaryStats)
+  {
+    initStatistics_();
+  }
+
+  EventStore::EventStore(size_t num_fragments_per_event,
+                         run_id_t run,
+                         int store_id,
+                         const std::string& configString,
+                         ART_CFGSTRING_FCN * reader,
+                         int max_art_queue_size,
+                         double enq_timeout_sec,
+			 unsigned int seqIDModulous,
+                         bool printSummaryStats) :
+    id_(store_id),
+    num_fragments_per_event_(num_fragments_per_event),
+    run_id_(run),
+    subrun_id_(0),
+    events_(),
+    queue_(getGlobalQueue(max_art_queue_size)),
+    reader_thread_(std::async(std::launch::async, reader, configString)),
+    seqIDModulus_(seqIDModulus),
+    lastFlushedSeqID_(0),
+    highestSeqIDSeen_(0),
+    enq_timeout_(enq_timeout_sec),
     printSummaryStats_(printSummaryStats)
   {
     initStatistics_();
@@ -112,9 +172,11 @@ namespace artdaq {
       // the event queue.
       RawEvent_ptr complete_event(loc->second);
       complete_event->markComplete();
-#ifndef ARTDAQ_NO_PERF
+#if 0
+      // jbk - see note at top of file
       PerfWriteEvent(EventMeas::END, sequence_id);
 #endif
+
       events_.erase(loc);
       // 13-Dec-2012, KAB - this monitoring needs to come before
       // the enqueueing of the event lest it be empty by the 
@@ -125,7 +187,11 @@ namespace artdaq {
         mqPtr->addSample(complete_event->wordCount());
       }
       std::cout << "artdaq::EventStore(" << id_ << "): Enqueueing event " << complete_event->sequenceID() << std::endl;
-      queue_.enqNowait(complete_event);
+      bool enqSuccess = queue_.enqTimedWait(complete_event, enq_timeout_);
+      if (! enqSuccess) {
+        mf::LogError("EventStore") << "Enqueueing event " << sequence_id
+                                   << " FAILED , queue size = " << queue_.size();
+      }
     }
     MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
       getMonitoredQuantity(INCOMPLETE_EVENT_STAT_KEY);
@@ -140,12 +206,19 @@ namespace artdaq {
     std::cout << "EventStore::endOfData(" << id_ << "): Called." << std::endl;
     RawEvent_ptr end_of_data(nullptr);
     queue_.enqNowait(end_of_data);
-    return reader_thread_.get();
+    return 0;
   }
 
   void EventStore::flushData()
   {
     std::cout << "EventStore::flushData(" << id_ << "): Called." << std::endl;
+
+    bool enqSuccess;
+    // 26-Mar-2013, KAB: This will need to change once we get better
+    // end run handling, but for now let's at least drain the event
+    // store when we are shutting down (ending the run).
+    mf::LogDebug("EventStore")
+      << "Flushing " << events_.size() << " stale events from the EventStore.";
     EventMap::iterator loc;
     for (loc = events_.begin(); loc != events_.end(); ++loc) {
       RawEvent_ptr complete_event(loc->second);
@@ -154,10 +227,17 @@ namespace artdaq {
       if (mqPtr.get() != 0) {
         mqPtr->addSample(complete_event->wordCount());
       }
-      std::cout << "EventStore::flushData(" << id_ << "): Enqueueing incomplete event" << std::endl;
-      queue_.enqNowait(complete_event);
+      enqSuccess = queue_.enqTimedWait(complete_event, enq_timeout_);
+      if (! enqSuccess) {
+        mf::LogError("EventStore") << "Enqueueing event "
+                                   << complete_event->sequenceID()
+                                   << " FAILED , queue size = "
+                                   << queue_.size();
+      }
     }
     events_.clear();
+    mf::LogDebug("EventStore")
+      << "Done flushing stale events from the EventStore.";
 
     lastFlushedSeqID_ = highestSeqIDSeen_;
   }

@@ -52,7 +52,7 @@ recvFragment(Fragment & output)
   // Debug << "recv entered" << flusher;
   RecvMeas rm;
   int which;
-  MPI_Status status = { 0, 0, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_SUCCESS };
+  MPI_Status status;
   int wait_result = MPI_Waitany(buffer_count_, &reqs_[0], &which, &status);
   size_t src_index(indexForSource_(status.MPI_SOURCE));
   int rank;
@@ -88,8 +88,7 @@ recvFragment(Fragment & output)
   }
   // The Fragment at index 'which' is now available.
   // Resize (down) to size to remove trailing garbage.
-  payload_[which].resize(payload_[which].size() -
-                         detail::RawFragmentHeader::num_words());;
+  payload_[which].autoResize();
   output.swap(payload_[which]);
   // Reset our buffer.
   Fragment tmp(max_payload_size_);
