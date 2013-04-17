@@ -7,7 +7,7 @@
 
 %class Commandable
 %package ds50
-%header Commandable.hh
+%header ds50daq/DAQ/Commandable.hh
 
 // compilation and diagram hints:
 // java -jar $SMC_HOME/bin/Smc.jar -c++ Commandable.sm
@@ -96,6 +96,7 @@ Exit  { InRunExit(); }
   stop  Error  {}
   init(pset: fhicl::ParameterSet const&)  [ctxt.do_stop()]  pop(init, pset)  {}
   init(pset: fhicl::ParameterSet const&)  Error  {}
+  shutdown  [ctxt.do_stop()]  pop(shutdown)  {}
   shutdown  pop(shutdown)  {}
 }
 
