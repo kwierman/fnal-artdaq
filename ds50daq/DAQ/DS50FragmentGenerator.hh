@@ -42,7 +42,7 @@ namespace ds50 {
       int run_number_;
       int fragment_id_, sleep_us_;
       bool init_only_;
-      bool should_stop_;
+      std::atomic<bool> should_stop_;
       std::mutex mutex_;
       std::condition_variable stop_wait_;
 

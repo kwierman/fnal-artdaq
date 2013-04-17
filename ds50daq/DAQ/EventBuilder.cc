@@ -53,9 +53,9 @@ void ds50::EventBuilder::initializeEventStore()
 {
   if (use_art_) {
     artdaq::EventStore::ART_CFGSTRING_FCN * reader = &artapp_string_config;
-    event_store_ptr_.reset(new artdaq::EventStore(expected_fragments_per_event_,
+    event_store_ptr_.reset(new artdaq::EventStore(expected_fragments_per_event_, 1,
 						  mpi_rank_, init_string_,
-						  reader, 1, print_event_store_stats_));
+						  reader, print_event_store_stats_));
     art_initialized_ = true;
   }
   else {
@@ -64,9 +64,9 @@ void ds50::EventBuilder::initializeEventStore()
     char * dummyArgs[1] { "SimpleQueueReader" };
 #pragma GCC diagnostic pop
     artdaq::EventStore::ART_CMDLINE_FCN * reader = &artdaq::simpleQueueReaderApp;
-    event_store_ptr_.reset(new artdaq::EventStore(expected_fragments_per_event_,
+    event_store_ptr_.reset(new artdaq::EventStore(expected_fragments_per_event_, 1,
 						  mpi_rank_, 1, dummyArgs,
-						  reader, 1, print_event_store_stats_));
+						  reader, print_event_store_stats_));
   }
 }
 
