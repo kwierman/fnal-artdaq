@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(Trivial)
   */
   std::unique_ptr<artdaq::EventStore> eventStore;
   artdaq::EventStore::ART_CMDLINE_FCN *bogusReader = &bogusApp;
-  eventStore.reset(new artdaq::EventStore(4, 0, 0, nullptr, bogusReader, 1, false));
+  eventStore.reset(new artdaq::EventStore(4, 1, 0, 0, nullptr, bogusReader, false));
 
   int sequenceID[8] = {1, 2, 1, 2, 1, 2, 2, 1};
   int fragmentID[8] = {1, 2, 3, 4, 1, 2, 3, 4};
@@ -77,7 +77,8 @@ BOOST_AUTO_TEST_CASE(SequenceMod)
   */
   std::unique_ptr<artdaq::EventStore> eventStore;
   artdaq::EventStore::ART_CMDLINE_FCN *bogusReader = &bogusApp;
-  eventStore.reset(new artdaq::EventStore(4, 0, 0, nullptr, bogusReader, 4, false));
+  eventStore.reset(new artdaq::EventStore(4, 1, 0, 0, nullptr, bogusReader, false));
+  eventStore->setSeqIDModulus(4);
 
   int sequenceID[8] = {1, 5, 4, 6, 7, 2, 8, 3};
   int fragmentID[8] = {1, 2, 3, 4, 1, 2, 3, 4};

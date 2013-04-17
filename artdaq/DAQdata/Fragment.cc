@@ -95,3 +95,4 @@ dataFrag(sequence_id_t sequenceID,
   memcpy(result.dataAddress(), dataPtr, (dataSize * sizeof(RawDataType)));
   return result;
 }
+#endif

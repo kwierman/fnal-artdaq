@@ -49,12 +49,12 @@ namespace artdaq {
 
     // Create an EventStore that uses 'reader' as the function to be
     // executed by the thread this EventStore will spawn.
-    EventStore(size_t num_fragments_per_event, int store_id, int argc, 
-	       char * argv[], ART_CMDLINE_FCN * reader, 
-	       unsigned int seqIDModulus, bool printSummaryStats = false);
-    EventStore(size_t num_fragments_per_event, int store_id, 
-	       const std::string& configString, ART_CFGSTRING_FCN * reader, 
-	       unsigned int seqIDModulus, bool printSummaryStats = false);
+    EventStore(size_t num_fragments_per_event, run_id_t run,
+               int store_id, int argc, char * argv[],
+               ART_CMDLINE_FCN * reader, bool printSummaryStats = false);
+    EventStore(size_t num_fragments_per_event, run_id_t run,
+               int store_id, const std::string& configString,
+               ART_CFGSTRING_FCN * reader, bool printSummaryStats = false);
 
     EventStore(size_t num_fragments_per_event, run_id_t run,
                int store_id, int argc, char * argv[],
@@ -78,6 +78,13 @@ namespace artdaq {
     // returned.
     int endOfData();
 
+    // Set the parameter that will be used to determine which sequence IDs get
+    // grouped together into events.  This defaults to 1 which is the case where
+    // fragments with the same sequence ID will get grouped together.  The other
+    // use case is for the aggregator which will group together fragments with
+    // different sequence IDs.
+    void setSeqIDModulus(unsigned int seqIDModulus);
+
     // Push any incomplete events onto the queue.
     void flushData();
 
@@ -97,7 +104,7 @@ namespace artdaq {
     RawEventQueue & queue_;
     std::future<int> reader_thread_;
 
-    unsigned int const seqIDModulus_;
+    unsigned int seqIDModulus_;
     sequence_id_t lastFlushedSeqID_;
     sequence_id_t highestSeqIDSeen_;
 

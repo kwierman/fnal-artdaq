@@ -30,20 +30,20 @@ namespace artdaq {
     INCOMPLETE_EVENT_STAT_KEY("EventStoreIncompleteEvents");
 
   EventStore::EventStore(size_t num_fragments_per_event,
+                         run_id_t run,
                          int store_id,
                          int argc,
                          char * argv[],
                          ART_CMDLINE_FCN * reader,
-                         unsigned int seqIDModulus,
                          bool printSummaryStats) :
     id_(store_id),
     num_fragments_per_event_(num_fragments_per_event),
-    run_id_(1),
-    subrun_id_(1),
+    run_id_(run),
+    subrun_id_(0),
     events_(),
     queue_(getGlobalQueue(50)),
     reader_thread_(std::async(std::launch::async, reader, argc, argv)),
-    seqIDModulus_(seqIDModulus),
+    seqIDModulus_(1),
     lastFlushedSeqID_(0),
     highestSeqIDSeen_(0),
     enq_timeout_(5.0),
@@ -53,19 +53,19 @@ namespace artdaq {
   }
 
   EventStore::EventStore(size_t num_fragments_per_event,
+                         run_id_t run,
                          int store_id,
                          const std::string& configString,
                          ART_CFGSTRING_FCN * reader,
-                         unsigned int seqIDModulus,
                          bool printSummaryStats) :
     id_(store_id),
     num_fragments_per_event_(num_fragments_per_event),
-    run_id_(1),
-    subrun_id_(1),
+    run_id_(run),
+    subrun_id_(0),
     events_(),
     queue_(getGlobalQueue(50)),
     reader_thread_(std::async(std::launch::async, reader, configString)),
-    seqIDModulus_(seqIDModulus),
+    seqIDModulus_(1),
     lastFlushedSeqID_(0),
     highestSeqIDSeen_(0),
     enq_timeout_(5.0),
@@ -82,7 +82,6 @@ namespace artdaq {
                          ART_CMDLINE_FCN * reader,
                          int max_art_queue_size,
                          double enq_timeout_sec,
-			 unsigned int seqIDModulus,
                          bool printSummaryStats) :
     id_(store_id),
     num_fragments_per_event_(num_fragments_per_event),
@@ -91,7 +90,7 @@ namespace artdaq {
     events_(),
     queue_(getGlobalQueue(max_art_queue_size)),
     reader_thread_(std::async(std::launch::async, reader, argc, argv)),
-    seqIDModulus_(seqIDModulus),
+    seqIDModulus_(1),
     lastFlushedSeqID_(0),
     highestSeqIDSeen_(0),
     enq_timeout_(enq_timeout_sec),
@@ -107,7 +106,6 @@ namespace artdaq {
                          ART_CFGSTRING_FCN * reader,
                          int max_art_queue_size,
                          double enq_timeout_sec,
-			 unsigned int seqIDModulous,
                          bool printSummaryStats) :
     id_(store_id),
     num_fragments_per_event_(num_fragments_per_event),
@@ -116,7 +114,7 @@ namespace artdaq {
     events_(),
     queue_(getGlobalQueue(max_art_queue_size)),
     reader_thread_(std::async(std::launch::async, reader, configString)),
-    seqIDModulus_(seqIDModulus),
+    seqIDModulus_(1),
     lastFlushedSeqID_(0),
     highestSeqIDSeen_(0),
     enq_timeout_(enq_timeout_sec),
@@ -207,6 +205,11 @@ namespace artdaq {
     RawEvent_ptr end_of_data(nullptr);
     queue_.enqNowait(end_of_data);
     return 0;
+  }
+
+  void EventStore::setSeqIDModulus(unsigned int seqIDModulus) 
+  {
+    seqIDModulus_ = seqIDModulus; 
   }
 
   void EventStore::flushData()
