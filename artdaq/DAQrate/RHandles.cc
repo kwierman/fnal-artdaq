@@ -88,8 +88,7 @@ recvFragment(Fragment & output)
   }
   // The Fragment at index 'which' is now available.
   // Resize (down) to size to remove trailing garbage.
-  payload_[which].resize(payload_[which].size() -
-                         detail::RawFragmentHeader::num_words());;
+  payload_[which].autoResize();
   output.swap(payload_[which]);
   // Reset our buffer.
   Fragment tmp(max_payload_size_);
