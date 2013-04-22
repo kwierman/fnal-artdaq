@@ -55,7 +55,7 @@ void ds50::EventBuilder::initializeEventStore()
     artdaq::EventStore::ART_CFGSTRING_FCN * reader = &artapp_string_config;
     event_store_ptr_.reset(new artdaq::EventStore(expected_fragments_per_event_, 1,
 						  mpi_rank_, init_string_,
-						  reader, print_event_store_stats_));
+						  reader, 20, 5.0, print_event_store_stats_));
     art_initialized_ = true;
   }
   else {
@@ -66,7 +66,7 @@ void ds50::EventBuilder::initializeEventStore()
     artdaq::EventStore::ART_CMDLINE_FCN * reader = &artdaq::simpleQueueReaderApp;
     event_store_ptr_.reset(new artdaq::EventStore(expected_fragments_per_event_, 1,
 						  mpi_rank_, 1, dummyArgs,
-						  reader, print_event_store_stats_));
+						  reader, 20, 5.0, print_event_store_stats_));
   }
 }
 
@@ -210,7 +210,9 @@ bool ds50::EventBuilder::stop()
   flush_mutex_.lock();
   std::cout << "ds50::EventBuilder::stop(" << mpi_rank_ << "): Back from lock..." << std::endl;
   event_store_ptr_->endSubrun();
+  std::cout << "ds50::EventBuilder::stop(" << mpi_rank_ << "): Back from endSubRun..." << std::endl;
   event_store_ptr_->endRun();
+  std::cout << "ds50::EventBuilder::stop(" << mpi_rank_ << "): Back from endRun..." << std::endl;
   flush_mutex_.unlock();
   return true;
 }
@@ -260,8 +262,10 @@ bool ds50::EventBuilder::reinitialize(fhicl::ParameterSet const& pset)
 
 size_t ds50::EventBuilder::process_fragments()
 {
-  size_t fragments_received = 0;
   bool process_fragments = true;
+  size_t senderSlot;
+  std::vector<size_t> fragments_received(data_sender_count_ + first_data_sender_rank_, 0);
+  std::vector<size_t> fragments_sent(data_sender_count_ + first_data_sender_rank_, 0);
 
   std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Starting." << std::endl;
 
@@ -275,31 +279,41 @@ size_t ds50::EventBuilder::process_fragments()
   mf::LogDebug("EventBuilder") << "Waiting for first fragment.";
   while (process_fragments) {
     artdaq::FragmentPtr pfragment(new artdaq::Fragment);
-    receiver_ptr_->recvFragment(*pfragment);
+    senderSlot = receiver_ptr_->recvFragment(*pfragment);
+    fragments_received[senderSlot] += 1;
     if (pfragment->type() != artdaq::Fragment::EndOfDataFragmentType) {
-      std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Got a data fragment, sequence " << pfragment->sequenceID() << ", run " << run_id_.run() << std::endl;
-      ++fragments_received;
+      std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Got a data fragment, sequence " << pfragment->sequenceID() << ", ID " << pfragment->fragmentID() << ", run " << run_id_.run() << std::endl;
       event_store_ptr_->insert(std::move(pfragment));
     } else {
       eod_fragments_received_++;
+      fragments_sent[senderSlot] = *pfragment->dataBegin() + 1; // Note that we count the EOD as a fragment received but SHandles does not.
+      std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Slot " << senderSlot << " sent " << fragments_sent[senderSlot] << std::endl;
+      std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Slot " << senderSlot << " received " << fragments_received[senderSlot] << std::endl;
       std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Got an EOD fragment " << eod_fragments_received_ << "/" << data_sender_count_ << "." << std::endl;
-      if (eod_fragments_received_ == data_sender_count_) {
-	std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Got all EOD fragments." << std::endl;
+      }
+  
+    if (eod_fragments_received_ == data_sender_count_) {
+      std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Got all EOD fragments." << std::endl;
+      bool fragmentsOutstanding = false;
+      for (size_t i = 0; i < data_sender_count_ + first_data_sender_rank_; i++) {
+	if (fragments_received[i] != fragments_sent[i]) {
+	  std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Slot " << i << " has fragments outstanding." << std::endl;
+	  fragmentsOutstanding = true;
+	  break;
+	}
+      }
+
+      if (!fragmentsOutstanding) {
 	event_store_ptr_->flushData();
 	flush_mutex_.unlock();
 	process_fragments = false;
       }
     }
-    if (receiver_ptr_->sourcesActive() == receiver_ptr_->sourcesPending()) {
-      mf::LogDebug("EventBuilder")
-        << "Waiting for in-flight fragments from "
-        << receiver_ptr_->sourcesPending() << " sources.";
-    }
   }
 
   receiver_ptr_.reset(nullptr);
   std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Exiting" << std::endl;
-  return fragments_received;
+  return 0;
 }
 
 std::string ds50::EventBuilder::report(std::string const&) const
