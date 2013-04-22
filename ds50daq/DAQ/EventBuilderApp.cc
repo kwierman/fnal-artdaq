@@ -64,41 +64,33 @@ bool ds50::EventBuilderApp::do_stop()
 
 bool ds50::EventBuilderApp::do_pause()
 {
-  std::cout << "ds50::EventBuilderApp::do_pause(): Called." << std::endl;
   report_string_ = "";
   external_request_status_ = event_builder_ptr_->pause();
   if (! external_request_status_) {
     report_string_ = "Error pausing the EventBuilder.";
   }
 
-  std::cout << "ds50::EventBuilderApp::do_pause(): Getting result from future." << std::endl;
   event_building_future_.get();
-  std::cout << "ds50::EventBuilderApp::do_pause(): Returning" << std::endl;
   return external_request_status_;
 }
 
 bool ds50::EventBuilderApp::do_resume()
 {
-  std::cout << "ds50::EventBuilderApp::do_resume(): Called." << std::endl;
   report_string_ = "";
   external_request_status_ = event_builder_ptr_->resume();
   if (! external_request_status_) {
     report_string_ = "Error resuming the EventBuilder.";
   }
 
-  std::cout << "ds50::EventBuilderApp::do_resume(): Spawning thread." << std::endl;
   event_building_future_ =
     std::async(std::launch::async, &EventBuilder::process_fragments,
                event_builder_ptr_.get());
 
-  std::cout << "ds50::EventBuilderApp::do_resume(): Returning." << std::endl;
   return external_request_status_;
 }
 
 bool ds50::EventBuilderApp::do_shutdown()
 {
-  std::cerr << "ds50::EventBuilderApp::do_shutdown(): Called." << std::endl;
-
   report_string_ = "";
   external_request_status_ = event_builder_ptr_->shutdown();
   if (! external_request_status_) {

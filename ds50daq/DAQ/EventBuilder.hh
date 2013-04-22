@@ -61,6 +61,13 @@ private:
   std::unique_ptr<artdaq::EventStore> event_store_ptr_;
   bool art_initialized_;
 
+  /* This is used for syncronization between the thread running 
+     process_fragments() and XMLRPC calls.  This will be locked before data
+     readout begins by the start() and resume() methods in the event builder.
+     It will be unlocked by the process_fragments() thread once EOD fragments
+     and all data has been received.  The stop() and pause() methods will
+     attempt to lock the mutex as well and will be blocked until all data has
+     been clocked into the EventBuilder. */
   std::mutex flush_mutex_;
 };
 

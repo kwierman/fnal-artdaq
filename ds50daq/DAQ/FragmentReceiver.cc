@@ -201,7 +201,6 @@ bool ds50::FragmentReceiver::pause()
 
 bool ds50::FragmentReceiver::resume()
 {
-  std::cout << "ds50::FragmentReceiver::resume(" << mpi_rank_ << "): Called" << std::endl;
   generator_ptr_->resume();
   return true;
 }
@@ -230,8 +229,6 @@ bool ds50::FragmentReceiver::reinitialize(fhicl::ParameterSet const& pset)
 
 size_t ds50::FragmentReceiver::process_fragments()
 {
-  std::cout << "ds50::FragmentReceiver::process_fragments(" << mpi_rank_ << "): Called" << std::endl;
-
   if (rt_priority_ > 0) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
@@ -294,8 +291,6 @@ size_t ds50::FragmentReceiver::process_fragments()
     }
     frags.clear();
   }
-
-  std::cout << "ds50::FragmentReceiver::process_fragments(" << mpi_rank_ << "): Bailing out..." << std::endl;
 
   // 07-Feb-2013, KAB
   // removing this barrier so that we can stop the trigger (V1495)

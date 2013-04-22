@@ -197,31 +197,23 @@ bool ds50::EventBuilder::start(art::RunID id)
 {
   run_id_ = id;
   eod_fragments_received_ = 0;
-  std::cout << "ds50::EventBuilder::start(" << mpi_rank_ << "): Calling lock..." << std::endl;
   flush_mutex_.lock();
-  std::cout << "ds50::EventBuilder::start(" << mpi_rank_ << "): Back from lock..." << std::endl;
   event_store_ptr_->startRun(id.run());
   return true;
 }
 
 bool ds50::EventBuilder::stop()
 {
-  std::cout << "ds50::EventBuilder::stop(" << mpi_rank_ << "): Calling lock..." << std::endl;
   flush_mutex_.lock();
-  std::cout << "ds50::EventBuilder::stop(" << mpi_rank_ << "): Back from lock..." << std::endl;
   event_store_ptr_->endSubrun();
-  std::cout << "ds50::EventBuilder::stop(" << mpi_rank_ << "): Back from endSubRun..." << std::endl;
   event_store_ptr_->endRun();
-  std::cout << "ds50::EventBuilder::stop(" << mpi_rank_ << "): Back from endRun..." << std::endl;
   flush_mutex_.unlock();
   return true;
 }
 
 bool ds50::EventBuilder::pause()
 {
-  std::cout << "ds50::EventBuilder::pause(" << mpi_rank_ << "): Calling lock..." << std::endl;
   flush_mutex_.lock();
-  std::cout << "ds50::EventBuilder::pause(" << mpi_rank_ << "): Back from lock..." << std::endl;
   event_store_ptr_->endSubrun();
   flush_mutex_.unlock();
   return true;
@@ -230,16 +222,17 @@ bool ds50::EventBuilder::pause()
 bool ds50::EventBuilder::resume()
 {
   eod_fragments_received_ = 0;
-  std::cout << "ds50::EventBuilder::resume(" << mpi_rank_ << "): Calling lock..." << std::endl;
   flush_mutex_.lock();
-  std::cout << "ds50::EventBuilder::resume(" << mpi_rank_ << "): Back from lock..." << std::endl;
   event_store_ptr_->startSubrun();
   return true;
 }
 
 bool ds50::EventBuilder::shutdown()
 {
-  std::cout << "ds50::EventBuilder::shutdown(" << mpi_rank_ << "): Called." << std::endl;
+  /* We don't care about flushing data here.  The only way to transition to the
+     shutdown state is from a state where there is no data taking.  All we have
+     to do is signal the art input module that we're done taking data so that
+     it can wrap up whatever it needs to do. */
   event_store_ptr_->endOfData();
   return true;
 }
@@ -267,8 +260,6 @@ size_t ds50::EventBuilder::process_fragments()
   std::vector<size_t> fragments_received(data_sender_count_ + first_data_sender_rank_, 0);
   std::vector<size_t> fragments_sent(data_sender_count_ + first_data_sender_rank_, 0);
 
-  std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Starting." << std::endl;
-
   receiver_ptr_.reset(new artdaq::RHandles(mpi_buffer_count_,
                                            max_fragment_size_words_,
                                            data_sender_count_,
@@ -282,22 +273,23 @@ size_t ds50::EventBuilder::process_fragments()
     senderSlot = receiver_ptr_->recvFragment(*pfragment);
     fragments_received[senderSlot] += 1;
     if (pfragment->type() != artdaq::Fragment::EndOfDataFragmentType) {
-      std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Got a data fragment, sequence " << pfragment->sequenceID() << ", ID " << pfragment->fragmentID() << ", run " << run_id_.run() << std::endl;
       event_store_ptr_->insert(std::move(pfragment));
     } else {
       eod_fragments_received_++;
-      fragments_sent[senderSlot] = *pfragment->dataBegin() + 1; // Note that we count the EOD as a fragment received but SHandles does not.
-      std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Slot " << senderSlot << " sent " << fragments_sent[senderSlot] << std::endl;
-      std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Slot " << senderSlot << " received " << fragments_received[senderSlot] << std::endl;
-      std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Got an EOD fragment " << eod_fragments_received_ << "/" << data_sender_count_ << "." << std::endl;
-      }
+      /* We count the EOD fragment as a fragment received but the SHandles class
+	 does not count it as a fragment sent which means we need to add one to
+	 the total expected fragments. */
+      fragments_sent[senderSlot] = *pfragment->dataBegin() + 1;
+    }
   
+    /* If we've received EOD fragments from all of the FragmentReceivers we can
+       verify that we've also received every fragment that they have sent.  If
+       all fragments are accounted for we can flush the EventStore, unlock the 
+       mutex and exit out of this thread.*/
     if (eod_fragments_received_ == data_sender_count_) {
-      std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Got all EOD fragments." << std::endl;
       bool fragmentsOutstanding = false;
       for (size_t i = 0; i < data_sender_count_ + first_data_sender_rank_; i++) {
 	if (fragments_received[i] != fragments_sent[i]) {
-	  std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Slot " << i << " has fragments outstanding." << std::endl;
 	  fragmentsOutstanding = true;
 	  break;
 	}
@@ -312,7 +304,6 @@ size_t ds50::EventBuilder::process_fragments()
   }
 
   receiver_ptr_.reset(nullptr);
-  std::cout << "ds50::EventBuilder::process_fragments(" << mpi_rank_ << "): Exiting" << std::endl;
   return 0;
 }
 
