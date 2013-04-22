@@ -42,8 +42,10 @@ public:
   static type_t const InvalidFragmentType;
   static type_t const EndOfDataFragmentType;
   static type_t const DataFragmentType;
+  static type_t const InitFragmentType;
   static type_t const EndOfRunFragmentType;
   static type_t const EndOfSubrunFragmentType;
+  static type_t const ShutdownFragmentType;
 
   typedef std::vector<RawDataType>::reference       reference;
   typedef std::vector<RawDataType>::iterator        iterator;

@@ -18,10 +18,14 @@ artdaq::Fragment::type_t const artdaq::Fragment::EndOfDataFragmentType =
   detail::RawFragmentHeader::EndOfDataFragmentType;
 artdaq::Fragment::type_t const artdaq::Fragment::DataFragmentType =
   detail::RawFragmentHeader::DataFragmentType;
+artdaq::Fragment::type_t const artdaq::Fragment::InitFragmentType = 
+  detail::RawFragmentHeader::InitFragmentType;
 artdaq::Fragment::type_t const artdaq::Fragment::EndOfRunFragmentType =
   detail::RawFragmentHeader::EndOfRunFragmentType;
 artdaq::Fragment::type_t const artdaq::Fragment::EndOfSubrunFragmentType =
   detail::RawFragmentHeader::EndOfSubrunFragmentType;
+artdaq::Fragment::type_t const artdaq::Fragment::ShutdownFragmentType = 
+  detail::RawFragmentHeader::ShutdownFragmentType;
 
 bool artdaq::fragmentSequenceIDCompare(Fragment i, Fragment j)
 {

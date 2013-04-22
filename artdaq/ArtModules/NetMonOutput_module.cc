@@ -149,7 +149,7 @@ send_shutdown_message()
         art::ServiceHandle<NetMonTransportService> transport;
         FDEBUG(1) << "NetMonOutput static send_shutdown_message: "
                      "sending the shutdown message ...\n";
-	transport->sendMessage(0, artdaq::NetMonHeader::ShutdownFragmentType, msg);
+	transport->sendMessage(0, artdaq::Fragment::ShutdownFragmentType, msg);
         FDEBUG(1) << "NetMonOutput static send_shutdown_message: "
                      "sent the shutdown message.\n";
     }
@@ -334,7 +334,7 @@ send_init_message()
         art::ServiceHandle<NetMonTransportService> transport;
         FDEBUG(1) << "NetMonOutput static send_init_message(): "
                      "Sending the init message ...\n";
-	transport->sendMessage(0, artdaq::NetMonHeader::InitDataFragmentType, msg);
+	transport->sendMessage(0, artdaq::Fragment::InitFragmentType, msg);
         FDEBUG(1) << "NetMonOutput static send_init_message(): "
                      "Init message sent.\n";
     }
@@ -559,7 +559,7 @@ write(const EventPrincipal& ep)
         ServiceHandle<NetMonTransportService> transport;
         FDEBUG(1) << "NetMonOutput::write(const EventPrincipal& ep): "
                      "Sending a message ...\n";
-	transport->sendMessage(ep.id().event(), artdaq::NetMonHeader::EventDataFragmentType, msg);
+	transport->sendMessage(ep.id().event(), artdaq::Fragment::DataFragmentType, msg);
         FDEBUG(1) << "NetMonOutput::write(const EventPrincipal& ep): "
                      "Message sent.\n";
     }
@@ -664,7 +664,7 @@ writeRun(const RunPrincipal& rp)
     {
         ServiceHandle<NetMonTransportService> transport;
         FDEBUG(1) << "writeRun: sending a message ...\n";
-	transport->sendMessage(0, artdaq::NetMonHeader::RunDataFragmentType, msg);
+	transport->sendMessage(0, artdaq::Fragment::EndOfRunFragmentType, msg);
         FDEBUG(1) << "writeRun: message sent.\n";
     }
     //
@@ -778,7 +778,7 @@ art::NetMonOutput::writeSubRun(const SubRunPrincipal& srp)
     {
         ServiceHandle<NetMonTransportService> transport;
         FDEBUG(1) << "NetMonOutput::writeSubRun: sending a message ...\n";
-	transport->sendMessage(0, artdaq::NetMonHeader::SubRunDataFragmentType, msg);
+	transport->sendMessage(0, artdaq::Fragment::EndOfSubrunFragmentType, msg);
         FDEBUG(1) << "NetMonOutput::writeSubRun: message sent.\n";
 
 	// Disconnecting will cause EOD fragments to be generated which will
