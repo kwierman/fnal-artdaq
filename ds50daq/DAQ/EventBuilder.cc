@@ -209,13 +209,15 @@ size_t ds50::EventBuilder::process_fragments()
     artdaq::EventStore::ART_CFGSTRING_FCN * reader = &artapp_string_config;
     events.reset(new artdaq::EventStore(expected_fragments_per_event_,
                                         run_id_.run(), mpi_rank_, init_string_,
-                                        reader, print_event_store_stats_));
+                                        reader, 20, 5.0,
+                                        print_event_store_stats_));
   }
   else {
     artdaq::EventStore::ART_CMDLINE_FCN * reader = &artdaq::simpleQueueReaderApp;
     events.reset(new artdaq::EventStore(expected_fragments_per_event_,
                                         run_id_.run(), mpi_rank_, 1, dummyArgs,
-                                        reader, print_event_store_stats_));
+                                        reader, 20, 5.0,
+                                        print_event_store_stats_));
   }
 
   MPI_Barrier(local_group_comm_);
