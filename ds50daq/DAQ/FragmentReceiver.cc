@@ -282,19 +282,16 @@ size_t ds50::FragmentReceiver::process_fragments()
           << " with sequence id " << sequence_id << ".";
       }
 
-      if (fragPtr->type() != artdaq::Fragment::EndOfDataFragmentType) {
-	std::cout << "ds50::FragmentReceiver::process_fragments(" << mpi_rank_ << "): Got fragment " << sequence_id << std::endl;
-	// check for continous sequence IDs
-	if (abs(sequence_id-prev_seq_id) > 1) {
-	  mf::LogWarning("FragmentReceiver")
-	    << "Missing sequence IDs: current sequence ID = "
-	    << sequence_id << ", previous sequence ID = "
-	    << prev_seq_id << ".";
-	}
-	prev_seq_id = sequence_id;
-	sender_ptr_->sendFragment(std::move(*fragPtr));
+      std::cout << "ds50::FragmentReceiver::process_fragments(" << mpi_rank_ << "): Got fragment " << sequence_id << std::endl;
+      // check for continous sequence IDs
+      if (abs(sequence_id-prev_seq_id) > 1) {
+	mf::LogWarning("FragmentReceiver")
+	  << "Missing sequence IDs: current sequence ID = "
+	  << sequence_id << ", previous sequence ID = "
+	  << prev_seq_id << ".";
       }
-
+      prev_seq_id = sequence_id;
+      sender_ptr_->sendFragment(std::move(*fragPtr));
       ++fragment_count;
     }
     frags.clear();
