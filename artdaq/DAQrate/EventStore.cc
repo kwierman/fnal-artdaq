@@ -184,7 +184,6 @@ namespace artdaq {
       if (mqPtr.get() != 0) {
         mqPtr->addSample(complete_event->wordCount());
       }
-      std::cout << "artdaq::EventStore(" << id_ << "): Enqueueing event " << complete_event->sequenceID() << std::endl;
       bool enqSuccess = queue_.enqTimedWait(complete_event, enq_timeout_);
       if (! enqSuccess) {
         mf::LogError("EventStore") << "Enqueueing event " << sequence_id
@@ -201,7 +200,6 @@ namespace artdaq {
   int
   EventStore::endOfData()
   {
-    std::cout << "EventStore::endOfData(" << id_ << "): Called." << std::endl;
     RawEvent_ptr end_of_data(nullptr);
     queue_.enqNowait(end_of_data);
     return 0;
@@ -214,12 +212,7 @@ namespace artdaq {
 
   void EventStore::flushData()
   {
-    std::cout << "EventStore::flushData(" << id_ << "): Called." << std::endl;
-
     bool enqSuccess;
-    // 26-Mar-2013, KAB: This will need to change once we get better
-    // end run handling, but for now let's at least drain the event
-    // store when we are shutting down (ending the run).
     mf::LogDebug("EventStore")
       << "Flushing " << events_.size() << " stale events from the EventStore.";
     EventMap::iterator loc;
@@ -268,9 +261,14 @@ namespace artdaq {
     *endOfRunFrag->dataBegin() = id_;
     endOfRunEvent->insertFragment(std::move(endOfRunFrag));
 
-    std::cout << "EventStore(" << id_ << "): Enqueueing an EndRun message." << std::endl;
-    queue_.enqNowait(endOfRunEvent);
+    bool enqSuccess = queue_.enqTimedWait(endOfRunEvent, enq_timeout_);
+    if (! enqSuccess) {
+        mf::LogError("EventStore") << "Enqueueing end of run event "
+                                   << " FAILED , queue size = "
+                                   << queue_.size();
+    }
   }
+
   void EventStore::endSubrun() 
   {
     RawEvent_ptr endOfSubrunEvent(new RawEvent(run_id_, subrun_id_, 0));
@@ -281,8 +279,12 @@ namespace artdaq {
     *endOfSubrunFrag->dataBegin() = id_;
     endOfSubrunEvent->insertFragment(std::move(endOfSubrunFrag));
 
-    std::cout << "EventStore(" << id_ << "): Enqueueing an EndSubrun message." << std::endl;
-    queue_.enqNowait(endOfSubrunEvent);
+    bool enqSuccess = queue_.enqTimedWait(endOfSubrunEvent, enq_timeout_);
+    if (! enqSuccess) {
+        mf::LogError("EventStore") << "Enqueueing end of subrun event "
+                                   << " FAILED , queue size = "
+                                   << queue_.size();
+    }
   }
 
   void

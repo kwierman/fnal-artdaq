@@ -780,6 +780,10 @@ art::NetMonOutput::writeSubRun(const SubRunPrincipal& srp)
         FDEBUG(1) << "NetMonOutput::writeSubRun: sending a message ...\n";
 	transport->sendMessage(0, artdaq::NetMonHeader::SubRunDataFragmentType, msg);
         FDEBUG(1) << "NetMonOutput::writeSubRun: message sent.\n";
+
+	// Disconnecting will cause EOD fragments to be generated which will
+	// allow components downstream to flush data and clean up.
+	transport->disconnect();
     }
     //
     //  Delete the branch keys we created for the message.
