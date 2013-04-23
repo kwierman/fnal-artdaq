@@ -208,7 +208,7 @@ namespace artdaq {
                                  << " FAILED , queue size = "
                                  << queue_.size();
     }
-    return 0;
+    return reader_thread_.get();
   }
 
   void EventStore::setSeqIDModulus(unsigned int seqIDModulus) 
