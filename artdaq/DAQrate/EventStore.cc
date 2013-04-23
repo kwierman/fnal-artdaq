@@ -201,7 +201,13 @@ namespace artdaq {
   EventStore::endOfData()
   {
     RawEvent_ptr end_of_data(nullptr);
-    queue_.enqNowait(end_of_data);
+    bool enqSuccess = queue_.enqTimedWait(end_of_data, enq_timeout_);
+    if (! enqSuccess) {
+      mf::LogError("EventStore") << "Enqueueing END_OF_DATA event "
+                                 << end_of_data->sequenceID()
+                                 << " FAILED , queue size = "
+                                 << queue_.size();
+    }
     return 0;
   }
 
