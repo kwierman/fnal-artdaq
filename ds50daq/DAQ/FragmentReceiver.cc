@@ -277,7 +277,6 @@ size_t ds50::FragmentReceiver::process_fragments()
           << " with sequence id " << sequence_id << ".";
       }
 
-      std::cout << "ds50::FragmentReceiver::process_fragments(" << mpi_rank_ << "): Got fragment " << sequence_id << std::endl;
       // check for continous sequence IDs
       if (abs(sequence_id-prev_seq_id) > 1) {
         mf::LogWarning("FragmentReceiver")
