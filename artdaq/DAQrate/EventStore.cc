@@ -43,6 +43,9 @@ namespace artdaq {
     events_(),
     queue_(getGlobalQueue(50)),
     reader_thread_(std::async(std::launch::async, reader, argc, argv)),
+    seqIDModulus_(1),
+    lastFlushedSeqID_(0),
+    highestSeqIDSeen_(0),
     enq_timeout_(5.0),
     printSummaryStats_(printSummaryStats)
   {
@@ -62,6 +65,9 @@ namespace artdaq {
     events_(),
     queue_(getGlobalQueue(50)),
     reader_thread_(std::async(std::launch::async, reader, configString)),
+    seqIDModulus_(1),
+    lastFlushedSeqID_(0),
+    highestSeqIDSeen_(0),
     enq_timeout_(5.0),
     printSummaryStats_(printSummaryStats)
   {
@@ -84,6 +90,9 @@ namespace artdaq {
     events_(),
     queue_(getGlobalQueue(max_art_queue_size)),
     reader_thread_(std::async(std::launch::async, reader, argc, argv)),
+    seqIDModulus_(1),
+    lastFlushedSeqID_(0),
+    highestSeqIDSeen_(0),
     enq_timeout_(enq_timeout_sec),
     printSummaryStats_(printSummaryStats)
   {
@@ -105,6 +114,9 @@ namespace artdaq {
     events_(),
     queue_(getGlobalQueue(max_art_queue_size)),
     reader_thread_(std::async(std::launch::async, reader, configString)),
+    seqIDModulus_(1),
+    lastFlushedSeqID_(0),
+    highestSeqIDSeen_(0),
     enq_timeout_(enq_timeout_sec),
     printSummaryStats_(printSummaryStats)
   {
@@ -124,27 +136,32 @@ namespace artdaq {
     // Fragment without a good fragment ID.
     assert(pfrag != nullptr);
     assert(pfrag->fragmentID() != Fragment::InvalidFragmentID);
+
     // find the event being built and put the fragment into it,
     // start new event if not already present
     // if the event is complete, delete it and report timing
-    //RawFragmentHeader* fh = pfrag->fragmentHeader();
-    Fragment::sequence_id_t sequence_id = pfrag->sequenceID();
-    // The fragmentID is expected to be correct in the incoming
-    // fragment; the EventStore has no business changing it in the
-    // current design.
-    //     // update the fragment ID (up to this point, it has been set to the
-    //     // detector rank or the source rank, but now we just want a simple index)
-    //     fh->fragment_id_ -= fragmentIdOffset_;
+
+    // The sequenceID is expected to be correct in the incoming fragment.
+    // The EventStore will divide it by the seqIDModulus to support the use case
+    // of the aggregator which needs to bunch groups of serialized events with
+    // continuous sequence IDs together.
+    if (pfrag->sequenceID() > highestSeqIDSeen_) {
+      highestSeqIDSeen_ = pfrag->sequenceID();
+    }
+    Fragment::sequence_id_t sequence_id = ((pfrag->sequenceID() - (1 + lastFlushedSeqID_)) / seqIDModulus_) + 1;
+
     // Find if the right event id is already known to events_ and, if so, where
     // it is.
     EventMap::iterator loc = events_.lower_bound(sequence_id);
+
     if (loc == events_.end() || events_.key_comp()(sequence_id, loc->first)) {
       // We don't have an event with this id; create one an insert it at loc,
       // and ajust loc to point to the newly inserted event.
-      RawEvent_ptr newevent(new RawEvent(run_id_, subrun_id_, sequence_id));
+      RawEvent_ptr newevent(new RawEvent(run_id_, subrun_id_, pfrag->sequenceID()));
       loc =
         events_.insert(loc, EventMap::value_type(sequence_id, newevent));
     }
+
     // Now insert the fragment into the event we have located.
     loc->second->insertFragment(std::move(pfrag));
     if (loc->second->numFragments() == num_fragments_per_event_) {
@@ -153,7 +170,6 @@ namespace artdaq {
       // the event queue.
       RawEvent_ptr complete_event(loc->second);
       complete_event->markComplete();
-
 #if 0
       // jbk - see note at top of file
       PerfWriteEvent(EventMeas::END, sequence_id);
@@ -184,10 +200,25 @@ namespace artdaq {
   int
   EventStore::endOfData()
   {
+    RawEvent_ptr end_of_data(nullptr);
+    bool enqSuccess = queue_.enqTimedWait(end_of_data, enq_timeout_);
+    if (! enqSuccess) {
+      mf::LogError("EventStore") << "Enqueueing END_OF_DATA event "
+                                 << end_of_data->sequenceID()
+                                 << " FAILED , queue size = "
+                                 << queue_.size();
+    }
+    return reader_thread_.get();
+  }
+
+  void EventStore::setSeqIDModulus(unsigned int seqIDModulus) 
+  {
+    seqIDModulus_ = seqIDModulus; 
+  }
+
+  void EventStore::flushData()
+  {
     bool enqSuccess;
-    // 26-Mar-2013, KAB: This will need to change once we get better
-    // end run handling, but for now let's at least drain the event
-    // store when we are shutting down (ending the run).
     mf::LogDebug("EventStore")
       << "Flushing " << events_.size() << " stale events from the EventStore.";
     EventMap::iterator loc;
@@ -210,15 +241,56 @@ namespace artdaq {
     mf::LogDebug("EventStore")
       << "Done flushing stale events from the EventStore.";
 
-    RawEvent_ptr end_of_data(0);
-    enqSuccess = queue_.enqTimedWait(end_of_data, enq_timeout_);
+    lastFlushedSeqID_ = highestSeqIDSeen_;
+  }
+
+  void EventStore::startRun(run_id_t runID) 
+  {
+    run_id_ = runID;
+    subrun_id_ = 1;
+    lastFlushedSeqID_ = 0;
+    highestSeqIDSeen_ = 0;
+  }
+
+  void EventStore::startSubrun() 
+  {
+    subrun_id_ += 1;
+  }
+
+  void EventStore::endRun() 
+  {
+    RawEvent_ptr endOfRunEvent(new RawEvent(run_id_, subrun_id_, 0));
+    std::unique_ptr<artdaq::Fragment> endOfRunFrag(new Fragment(static_cast<size_t>(ceil(sizeof(size_t) /
+											 static_cast<double>(sizeof(Fragment::value_type))))));
+
+    endOfRunFrag->setSystemType(Fragment::EndOfRunFragmentType);
+    *endOfRunFrag->dataBegin() = id_;
+    endOfRunEvent->insertFragment(std::move(endOfRunFrag));
+
+    bool enqSuccess = queue_.enqTimedWait(endOfRunEvent, enq_timeout_);
     if (! enqSuccess) {
-      mf::LogError("EventStore") << "Enqueueing END_OF_DATA event "
-                                 << end_of_data->sequenceID()
-                                 << " FAILED , queue size = "
-                                 << queue_.size();
+        mf::LogError("EventStore") << "Enqueueing end of run event "
+                                   << " FAILED , queue size = "
+                                   << queue_.size();
     }
-    return reader_thread_.get();
+  }
+
+  void EventStore::endSubrun() 
+  {
+    RawEvent_ptr endOfSubrunEvent(new RawEvent(run_id_, subrun_id_, 0));
+    std::unique_ptr<artdaq::Fragment> endOfSubrunFrag(new Fragment(static_cast<size_t>(ceil(sizeof(size_t) /
+											    static_cast<double>(sizeof(Fragment::value_type))))));
+
+    endOfSubrunFrag->setSystemType(Fragment::EndOfSubrunFragmentType);
+    *endOfSubrunFrag->dataBegin() = id_;
+    endOfSubrunEvent->insertFragment(std::move(endOfSubrunFrag));
+
+    bool enqSuccess = queue_.enqTimedWait(endOfSubrunEvent, enq_timeout_);
+    if (! enqSuccess) {
+        mf::LogError("EventStore") << "Enqueueing end of subrun event "
+                                   << " FAILED , queue size = "
+                                   << queue_.size();
+    }
   }
 
   void

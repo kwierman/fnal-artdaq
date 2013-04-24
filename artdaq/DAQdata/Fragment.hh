@@ -7,6 +7,7 @@
 #include <iosfwd>
 #include <iterator>
 #include <vector>
+#include <memory>
 #include <stdint.h>
 #include <string.h>
 
@@ -17,6 +18,7 @@ namespace artdaq {
   typedef detail::RawFragmentHeader::RawDataType RawDataType;
 
   class Fragment;
+  bool fragmentSequenceIDCompare(Fragment i, Fragment j);
 
   std::ostream & operator<<(std::ostream & os, Fragment const & f);
 }
@@ -40,6 +42,10 @@ public:
   static type_t const InvalidFragmentType;
   static type_t const EndOfDataFragmentType;
   static type_t const DataFragmentType;
+  static type_t const InitFragmentType;
+  static type_t const EndOfRunFragmentType;
+  static type_t const EndOfSubrunFragmentType;
+  static type_t const ShutdownFragmentType;
 
   typedef std::vector<RawDataType>::reference       reference;
   typedef std::vector<RawDataType>::iterator        iterator;
@@ -126,7 +132,7 @@ public:
   RawDataType * metadataAddress();   // for internal use only
   RawDataType * headerAddress();
 
-  static Fragment eodFrag(size_t nFragsToExpect);
+  static std::unique_ptr<Fragment> eodFrag(size_t nFragsToExpect);
 
   // 12-Apr-2013, KAB - this method is deprecated, please do not use
   template <class InputIterator>

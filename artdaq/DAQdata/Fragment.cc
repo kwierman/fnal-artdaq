@@ -18,6 +18,19 @@ artdaq::Fragment::type_t const artdaq::Fragment::EndOfDataFragmentType =
   detail::RawFragmentHeader::EndOfDataFragmentType;
 artdaq::Fragment::type_t const artdaq::Fragment::DataFragmentType =
   detail::RawFragmentHeader::DataFragmentType;
+artdaq::Fragment::type_t const artdaq::Fragment::InitFragmentType = 
+  detail::RawFragmentHeader::InitFragmentType;
+artdaq::Fragment::type_t const artdaq::Fragment::EndOfRunFragmentType =
+  detail::RawFragmentHeader::EndOfRunFragmentType;
+artdaq::Fragment::type_t const artdaq::Fragment::EndOfSubrunFragmentType =
+  detail::RawFragmentHeader::EndOfSubrunFragmentType;
+artdaq::Fragment::type_t const artdaq::Fragment::ShutdownFragmentType = 
+  detail::RawFragmentHeader::ShutdownFragmentType;
+
+bool artdaq::fragmentSequenceIDCompare(Fragment i, Fragment j)
+{
+  return i.sequenceID() < j.sequenceID();
+}
 
 artdaq::Fragment::Fragment() :
   vals_(RawFragmentHeader::num_words(), 0)
@@ -64,13 +77,13 @@ artdaq::Fragment::print(std::ostream & os) const
      << '\n';
 }
 
-artdaq::Fragment
+std::unique_ptr<artdaq::Fragment>
 artdaq::Fragment::eodFrag(size_t nFragsToExpect)
 {
-  Fragment result(static_cast<size_t>(ceil(sizeof(nFragsToExpect) /
-                                      static_cast<double>(sizeof(value_type)))));
-  result.setSystemType(Fragment::EndOfDataFragmentType);
-  *result.dataBegin() = nFragsToExpect;
+  std::unique_ptr<artdaq::Fragment> result(new Fragment(static_cast<size_t>(ceil(sizeof(nFragsToExpect) /
+										 static_cast<double>(sizeof(value_type))))));
+  result->setSystemType(Fragment::EndOfDataFragmentType);
+  *result->dataBegin() = nFragsToExpect;
   return result;
 }
 
