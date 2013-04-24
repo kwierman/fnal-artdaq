@@ -10,8 +10,8 @@
 using std::string;
 
 artdaq::detail::RawEventQueueReader::RawEventQueueReader(fhicl::ParameterSet const & ps,
-    art::ProductRegistryHelper & help,
-    art::PrincipalMaker const & pm):
+							 art::ProductRegistryHelper & help,
+							 art::PrincipalMaker const & pm):
   pmaker(pm),
   incoming_events(getGlobalQueue()),
   waiting_time(ps.get<double>("waiting_time", std::numeric_limits<double>::infinity())),
@@ -96,8 +96,29 @@ bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal * const & i
   //      configured NOT to keep trying after a timeout, or
   //   2) the event we read was the end-of-data marker: a null
   //      pointer
-  if (!got_event || !popped_event) { return false; }
+  if (!got_event || !popped_event) { 
+    return false; 
+  }
+
+  // Check the number of fragments in the RawEvent.  If we have a single
+  // fragment and that fragment is marked as EndRun or EndSubrun we'll create
+  // the special principals for that.
   art::Timestamp runstart;
+  if (popped_event->numFragments() == 1) {
+    if (popped_event->releaseProduct(Fragment::EndOfRunFragmentType)->size() == 1) {
+      art::EventID const evid(art::EventID::flushEvent());
+      outR = pmaker.makeRunPrincipal(evid.runID(), runstart);
+      outSR = pmaker.makeSubRunPrincipal(evid.subRunID(), runstart);
+      outE = pmaker.makeEventPrincipal(evid, runstart);
+      return true;
+    } else if(popped_event->releaseProduct(Fragment::EndOfSubrunFragmentType)->size() == 1) {
+      art::EventID const evid(art::EventID::flushEvent(inR->id()));
+      outSR = pmaker.makeSubRunPrincipal(evid.subRunID(), runstart);
+      outE = pmaker.makeEventPrincipal(evid, runstart);
+      return true;
+    }
+  }
+
   // make new runs or subruns if in* are 0 or if the run/subrun
   // have changed
   if (inR == 0 || inR->run() != popped_event->runID()) {

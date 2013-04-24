@@ -33,6 +33,11 @@ namespace artdaq {
                           art::ProductRegistryHelper & help,
                           art::PrincipalMaker const & pm);
 
+      RawEventQueueReader(fhicl::ParameterSet const & ps,
+                          art::ProductRegistryHelper & help,
+                          art::PrincipalMaker const & pm,
+			  art::MasterProductRegistry&) : RawEventQueueReader(ps, help, pm) {}
+
       void closeCurrentFile();
       void readFile(std::string const & name, art::FileBlock *& fb);
 

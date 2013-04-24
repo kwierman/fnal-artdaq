@@ -195,7 +195,8 @@ struct REQRTestFixture {
     static RawEventQueueReader
     s_reader(pset,
              helper(),
-             principal_maker());
+             principal_maker(),
+	     gf().productRegistry_);
     return s_reader;
   }
 };

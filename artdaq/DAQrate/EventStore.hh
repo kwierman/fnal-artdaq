@@ -78,16 +78,36 @@ namespace artdaq {
     // returned.
     int endOfData();
 
+    // Set the parameter that will be used to determine which sequence IDs get
+    // grouped together into events.  This defaults to 1 which is the case where
+    // fragments with the same sequence ID will get grouped together.  The other
+    // use case is for the aggregator which will group together fragments with
+    // different sequence IDs.
+    void setSeqIDModulus(unsigned int seqIDModulus);
+
+    // Push any incomplete events onto the queue.
+    void flushData();
+
+    void startRun(run_id_t runID);
+    void startSubrun();
+    void endRun();
+    void endSubrun();
+
   private:
     // id_ is the unique identifier of this object; MPI programs will
     // use the MPI rank to fill in this value.
     int const      id_;
     size_t  const  num_fragments_per_event_;
-    run_id_t const run_id_;
-    subrun_id_t const subrun_id_;
+    run_id_t run_id_;
+    subrun_id_t subrun_id_;
     EventMap       events_;
     RawEventQueue & queue_;
     std::future<int> reader_thread_;
+
+    unsigned int seqIDModulus_;
+    sequence_id_t lastFlushedSeqID_;
+    sequence_id_t highestSeqIDSeen_;
+
     daqrate::seconds const enq_timeout_;
     bool const     printSummaryStats_;
 
