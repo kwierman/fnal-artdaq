@@ -365,7 +365,7 @@ writeDataProducts(TBufferFile& msg, const Principal& principal,
     unsigned long prd_cnt = 0;
     //std::map<art::BranchID, std::shared_ptr<art::Group>>::const_iterator
     for (auto I = principal.begin(), E = principal.end(); I != E; ++I) {
-        if (I->second->productUnavailable()) {
+      if (I->second->productUnavailable() || ! selected(I->second->productDescription())) {
             continue;
         }
         ++prd_cnt;
@@ -393,7 +393,7 @@ writeDataProducts(TBufferFile& msg, const Principal& principal,
     bkv.reserve(prd_cnt);
     //std::map<art::BranchID, std::shared_ptr<art::Group>>::const_iterator
     for (auto I = principal.begin(), E = principal.end(); I != E; ++I) {
-        if (I->second->productUnavailable()) {
+        if (I->second->productUnavailable() || ! selected(I->second->productDescription())) {
             continue;
         }
         const BranchDescription& bd(I->second->productDescription());
