@@ -74,6 +74,12 @@ bool ds50::BoardReaderApp::do_pause()
   if (! external_request_status_) {
     report_string_ = "Error pausing the FragmentReceiver.";
   }
+
+  int number_of_fragments_sent = fragment_processing_future_.get();
+  mf::LogDebug("BoardReaderApp::do_pause()")
+    << "Number of fragments sent = " << number_of_fragments_sent
+    << ".";
+
   return external_request_status_;
 }
 
@@ -84,6 +90,11 @@ bool ds50::BoardReaderApp::do_resume()
   if (! external_request_status_) {
     report_string_ = "Error resuming the FragmentReceiver.";
   }
+
+  fragment_processing_future_ =
+    std::async(std::launch::async, &FragmentReceiver::process_fragments,
+               fragment_receiver_ptr_.get());
+
   return external_request_status_;
 }
 

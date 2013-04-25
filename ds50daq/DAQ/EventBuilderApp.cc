@@ -58,11 +58,7 @@ bool ds50::EventBuilderApp::do_stop()
     report_string_ = "Error stopping the EventBuilder.";
   }
 
-  int number_of_fragments_processed = event_building_future_.get();
-  mf::LogDebug("EventBuilderApp::do_stop()")
-    << "Number of fragments processed = " << number_of_fragments_processed
-    << ".";
-
+  event_building_future_.get();
   return external_request_status_;
 }
 
@@ -73,6 +69,8 @@ bool ds50::EventBuilderApp::do_pause()
   if (! external_request_status_) {
     report_string_ = "Error pausing the EventBuilder.";
   }
+
+  event_building_future_.get();
   return external_request_status_;
 }
 
@@ -83,6 +81,11 @@ bool ds50::EventBuilderApp::do_resume()
   if (! external_request_status_) {
     report_string_ = "Error resuming the EventBuilder.";
   }
+
+  event_building_future_ =
+    std::async(std::launch::async, &EventBuilder::process_fragments,
+               event_builder_ptr_.get());
+
   return external_request_status_;
 }
 
@@ -126,7 +129,7 @@ void ds50::EventBuilderApp::BootedEnter()
   // Booted Entry action rather than the Initialized Exit action because the
   // Initialized Exit action is only called after the "init" transition guard
   // condition is executed.
-  event_builder_ptr_.reset(nullptr);
+  //event_builder_ptr_.reset(nullptr);
 }
 
 std::string ds50::EventBuilderApp::report(std::string const& which) const

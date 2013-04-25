@@ -22,14 +22,13 @@ ds50::FragmentReceiver::FragmentReceiver() :
                    &local_group_comm_);
   if (status == MPI_SUCCESS) {
     local_group_defined_ = true;
-    int temp_rank;
-    MPI_Comm_rank(local_group_comm_, &temp_rank);
-
+    MPI_Comm_rank(local_group_comm_, &mpi_rank_);
+    
     mf::LogDebug("FragmentReceiver")
       << "Successfully created local communicator for type "
       << ds50::Config::FragmentReceiverTask << ", identifier = 0x"
       << std::hex << local_group_comm_ << std::dec
-      << ", rank = " << temp_rank << ".";
+      << ", rank = " << mpi_rank_ << ".";
   }
   else {
     mf::LogError("FragmentReceiver")
@@ -286,7 +285,6 @@ size_t ds50::FragmentReceiver::process_fragments()
           << prev_seq_id << ".";
       }
       prev_seq_id = sequence_id;
-
       sender_ptr_->sendFragment(std::move(*fragPtr));
       ++fragment_count;
     }
@@ -298,10 +296,7 @@ size_t ds50::FragmentReceiver::process_fragments()
   // generation and readout before stopping the readout of the other cards
   //MPI_Barrier(local_group_comm_);
 
-  mf::LogDebug("FragmentReceiver") << "Before destroying sender.";
   sender_ptr_.reset(nullptr);
-  mf::LogDebug("FragmentReceiver") << "After destroying sender.";
-
   return fragment_count;
 }
 

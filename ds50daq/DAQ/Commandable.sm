@@ -56,7 +56,7 @@ Initialized
   init(pset: fhicl::ParameterSet const&)  [ctxt.do_initialize(pset)]
       Initialized/push(InitializedMap::Ready)  {}
   init(pset: fhicl::ParameterSet const&)  Booted  {}
-  shutdown  Booted  {}
+  shutdown [ctxt.do_shutdown()] Booted  { }
 }
 
 %%
