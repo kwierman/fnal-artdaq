@@ -39,8 +39,12 @@ enum class content_selector_t : uint8_t {
                FragmentPtr & frag_ptr);
 
 private:
-  virtual bool getNext_(FragmentPtrs & output);
-
+  bool getNext_(FragmentPtrs & output) override;
+  bool requiresStateMachine_() const override;
+  void start_() override;
+  void stop_() override;
+  void pause_() override;
+  void resume_() override;
   std::size_t generateFragmentSize_();
 
   // Configuration

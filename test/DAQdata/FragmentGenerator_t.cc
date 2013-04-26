@@ -12,11 +12,16 @@ class artdaqtest::FragmentGeneratorTest :
   public artdaq::FragmentGenerator {
 public:
   FragmentGeneratorTest();
-private:
-  bool getNext_(artdaq::FragmentPtrs &);
+  bool getNext_(artdaq::FragmentPtrs &) override;
+  bool requiresStateMachine_() const override;
+  void start_() override;
+  void stop_() override;
+  void pause_() override;
+  void resume_() override;
 };
 
 artdaqtest::FragmentGeneratorTest::FragmentGeneratorTest()
+
   :
   FragmentGenerator()
 {
@@ -28,6 +33,27 @@ artdaqtest::FragmentGeneratorTest::getNext_(artdaq::FragmentPtrs & frags)
   frags.emplace_back(new artdaq::Fragment);
   return true;
 }
+
+bool
+artdaqtest::FragmentGeneratorTest::requiresStateMachine_() const {
+  return false;
+}
+
+void
+artdaqtest::FragmentGeneratorTest::start_()
+{ }
+
+void
+artdaqtest::FragmentGeneratorTest::stop_()
+{ }
+
+void
+artdaqtest::FragmentGeneratorTest::pause_()
+{ }
+
+void
+artdaqtest::FragmentGeneratorTest::resume_()
+{ }
 
 BOOST_AUTO_TEST_SUITE(FragmentGenerator_t)
 
