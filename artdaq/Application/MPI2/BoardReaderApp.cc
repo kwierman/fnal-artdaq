@@ -1,10 +1,10 @@
-#include "ds50daq/DAQ/BoardReaderApp.hh"
+#include "artdaq/Application/MPI2/BoardReaderApp.hh"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 /**
  * Default constructor.
  */
-ds50::BoardReaderApp::BoardReaderApp()
+artdaq::BoardReaderApp::BoardReaderApp()
 {
 }
 
@@ -12,7 +12,7 @@ ds50::BoardReaderApp::BoardReaderApp()
 // *** The following methods implement the state machine operations.
 // *******************************************************************
 
-bool ds50::BoardReaderApp::do_initialize(fhicl::ParameterSet const& pset)
+bool artdaq::BoardReaderApp::do_initialize(fhicl::ParameterSet const& pset)
 {
   report_string_ = "";
   external_request_status_ = true;
@@ -32,7 +32,7 @@ bool ds50::BoardReaderApp::do_initialize(fhicl::ParameterSet const& pset)
   return external_request_status_;
 }
 
-bool ds50::BoardReaderApp::do_start(art::RunID id)
+bool artdaq::BoardReaderApp::do_start(art::RunID id)
 {
   report_string_ = "";
   external_request_status_ = fragment_receiver_ptr_->start(id);
@@ -50,7 +50,7 @@ bool ds50::BoardReaderApp::do_start(art::RunID id)
   return external_request_status_;
 }
 
-bool ds50::BoardReaderApp::do_stop()
+bool artdaq::BoardReaderApp::do_stop()
 {
   report_string_ = "";
   external_request_status_ = fragment_receiver_ptr_->stop();
@@ -67,7 +67,7 @@ bool ds50::BoardReaderApp::do_stop()
   return external_request_status_;
 }
 
-bool ds50::BoardReaderApp::do_pause()
+bool artdaq::BoardReaderApp::do_pause()
 {
   report_string_ = "";
   external_request_status_ = fragment_receiver_ptr_->pause();
@@ -83,7 +83,7 @@ bool ds50::BoardReaderApp::do_pause()
   return external_request_status_;
 }
 
-bool ds50::BoardReaderApp::do_resume()
+bool artdaq::BoardReaderApp::do_resume()
 {
   report_string_ = "";
   external_request_status_ = fragment_receiver_ptr_->resume();
@@ -98,7 +98,7 @@ bool ds50::BoardReaderApp::do_resume()
   return external_request_status_;
 }
 
-bool ds50::BoardReaderApp::do_shutdown()
+bool artdaq::BoardReaderApp::do_shutdown()
 {
   report_string_ = "";
   external_request_status_ = fragment_receiver_ptr_->shutdown();
@@ -108,7 +108,7 @@ bool ds50::BoardReaderApp::do_shutdown()
   return external_request_status_;
 }
 
-bool ds50::BoardReaderApp::do_soft_initialize(fhicl::ParameterSet const& pset)
+bool artdaq::BoardReaderApp::do_soft_initialize(fhicl::ParameterSet const& pset)
 {
   report_string_ = "";
   external_request_status_ = fragment_receiver_ptr_->soft_initialize(pset);
@@ -119,7 +119,7 @@ bool ds50::BoardReaderApp::do_soft_initialize(fhicl::ParameterSet const& pset)
   return external_request_status_;
 }
 
-bool ds50::BoardReaderApp::do_reinitialize(fhicl::ParameterSet const& pset)
+bool artdaq::BoardReaderApp::do_reinitialize(fhicl::ParameterSet const& pset)
 {
   external_request_status_ = fragment_receiver_ptr_->reinitialize(pset);
   if (! external_request_status_) {
@@ -129,7 +129,7 @@ bool ds50::BoardReaderApp::do_reinitialize(fhicl::ParameterSet const& pset)
   return external_request_status_;
 }
 
-void ds50::BoardReaderApp::BootedEnter()
+void artdaq::BoardReaderApp::BootedEnter()
 {
   mf::LogDebug("BoardReaderApp") << "Booted state entry action called.";
 
@@ -140,7 +140,7 @@ void ds50::BoardReaderApp::BootedEnter()
   fragment_receiver_ptr_.reset(nullptr);
 }
 
-std::string ds50::BoardReaderApp::report(std::string const& which) const
+std::string artdaq::BoardReaderApp::report(std::string const& which) const
 {
   // if there is an outstanding error, return that
   if (report_string_.length() > 0) {

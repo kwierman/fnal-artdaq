@@ -2,15 +2,15 @@
  * This file add the xmlrpc commander as a client to the SC
  * Author: Alessandro Razeto <Alessandro.Razeto@ge.infn.it>
  */
-#ifndef XMLRPC_COMMANDER_H
-#define XMLRPC_COMMANDER_H
+#ifndef artdaq_ExternalComms_xmlrpc_commander_hh
+#define artdaq_ExternalComms_xmlrpc_commander_hh
 
 #include <mutex>
-#include "ds50daq/DAQ/Commandable.hh"
+#include "artdaq/Application/Commandable.hh"
 
 class xmlrpc_commander {
   public:
-    xmlrpc_commander (int port, ds50::Commandable& commandable);
+    xmlrpc_commander (int port, artdaq::Commandable& commandable);
     void run();
 
   private:
@@ -20,8 +20,8 @@ class xmlrpc_commander {
     int _port;
 
   public:
-    ds50::Commandable& _commandable;
+    artdaq::Commandable& _commandable;
     std::mutex mutex_;
 };
 
-#endif
+#endif /* artdaq_ExternalComms_xmlrpc_commander_hh */

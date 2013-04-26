@@ -1,10 +1,10 @@
-#include "ds50daq/DAQ/Commandable.hh"
+#include "artdaq/Application/Commandable.hh"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 /**
  * Default constructor.
  */
-ds50::Commandable::Commandable() : fsm_(*this)
+artdaq::Commandable::Commandable() : fsm_(*this)
 {
 }
 
@@ -15,7 +15,7 @@ ds50::Commandable::Commandable() : fsm_(*this)
 /**
  * Processes the initialize request.
  */
-bool ds50::Commandable::initialize(fhicl::ParameterSet const& pset)
+bool artdaq::Commandable::initialize(fhicl::ParameterSet const& pset)
 {
   external_request_status_ = true;
   report_string_ = "All is OK.";
@@ -35,7 +35,7 @@ bool ds50::Commandable::initialize(fhicl::ParameterSet const& pset)
 /**
  * Processes the start request.
  */
-bool ds50::Commandable::start(art::RunID id)
+bool artdaq::Commandable::start(art::RunID id)
 {
   external_request_status_ = true;
   report_string_ = "All is OK.";
@@ -55,7 +55,7 @@ bool ds50::Commandable::start(art::RunID id)
 /**
  * Processes the stop request.
  */
-bool ds50::Commandable::stop()
+bool artdaq::Commandable::stop()
 {
   external_request_status_ = true;
   report_string_ = "All is OK.";
@@ -75,7 +75,7 @@ bool ds50::Commandable::stop()
 /**
  * Processes the pause request.
  */
-bool ds50::Commandable::pause()
+bool artdaq::Commandable::pause()
 {
   external_request_status_ = true;
   report_string_ = "All is OK.";
@@ -95,7 +95,7 @@ bool ds50::Commandable::pause()
 /**
  * Processes the resume request.
  */
-bool ds50::Commandable::resume()
+bool artdaq::Commandable::resume()
 {
   external_request_status_ = true;
   report_string_ = "All is OK.";
@@ -115,7 +115,7 @@ bool ds50::Commandable::resume()
 /**
  * Processes the shutdown request.
  */
-bool ds50::Commandable::shutdown()
+bool artdaq::Commandable::shutdown()
 {
   external_request_status_ = true;
   report_string_ = "All is OK.";
@@ -135,7 +135,7 @@ bool ds50::Commandable::shutdown()
 /**
  * Processes the soft_initialize request.
  */
-bool ds50::Commandable::soft_initialize(fhicl::ParameterSet const& pset)
+bool artdaq::Commandable::soft_initialize(fhicl::ParameterSet const& pset)
 {
   external_request_status_ = true;
   report_string_ = "All is OK.";
@@ -155,7 +155,7 @@ bool ds50::Commandable::soft_initialize(fhicl::ParameterSet const& pset)
 /**
  * Processes the reinitialize request.
  */
-bool ds50::Commandable::reinitialize(fhicl::ParameterSet const& pset)
+bool artdaq::Commandable::reinitialize(fhicl::ParameterSet const& pset)
 {
   external_request_status_ = true;
   report_string_ = "All is OK.";
@@ -175,7 +175,7 @@ bool ds50::Commandable::reinitialize(fhicl::ParameterSet const& pset)
 /**
  * Returns the current state.
  */
-std::string ds50::Commandable::status() const
+std::string artdaq::Commandable::status() const
 {
   std::string fullStateName = fsm_.getState().getName();
   size_t pos = fullStateName.rfind("::");
@@ -190,7 +190,7 @@ std::string ds50::Commandable::status() const
 /**
  * Returns the current list of legal commands.
  */
-std::vector<std::string> ds50::Commandable::legal_commands() const
+std::vector<std::string> artdaq::Commandable::legal_commands() const
 {
   std::string currentState = this->status();
   if (currentState == "Ready") {
@@ -211,63 +211,63 @@ std::vector<std::string> ds50::Commandable::legal_commands() const
 // *** The following methods implement the state machine operations.
 // *******************************************************************
 
-bool ds50::Commandable::do_initialize(fhicl::ParameterSet const&)
+bool artdaq::Commandable::do_initialize(fhicl::ParameterSet const&)
 {
   mf::LogDebug("CommandableInterface") << "do_initialize called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
-bool ds50::Commandable::do_start(art::RunID)
+bool artdaq::Commandable::do_start(art::RunID)
 {
   mf::LogDebug("CommandableInterface") << "do_start called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
-bool ds50::Commandable::do_stop()
+bool artdaq::Commandable::do_stop()
 {
   mf::LogDebug("CommandableInterface") << "do_stop called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
-bool ds50::Commandable::do_pause()
+bool artdaq::Commandable::do_pause()
 {
   mf::LogDebug("CommandableInterface") << "do_pause called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
-bool ds50::Commandable::do_resume()
+bool artdaq::Commandable::do_resume()
 {
   mf::LogDebug("CommandableInterface") << "do_resume called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
-bool ds50::Commandable::do_shutdown()
+bool artdaq::Commandable::do_shutdown()
 {
   mf::LogDebug("CommandableInterface") << "do_shutdown called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
-bool ds50::Commandable::do_reinitialize(fhicl::ParameterSet const&)
+bool artdaq::Commandable::do_reinitialize(fhicl::ParameterSet const&)
 {
   mf::LogDebug("CommandableInterface") << "do_reinitialize called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
-bool ds50::Commandable::do_soft_initialize(fhicl::ParameterSet const&)
+bool artdaq::Commandable::do_soft_initialize(fhicl::ParameterSet const&)
 {
   mf::LogDebug("CommandableInterface") << "do_soft_initialize called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
-void ds50::Commandable::badTransition(const std::string& trans)
+void artdaq::Commandable::badTransition(const std::string& trans)
 {
   report_string_ = "An invalid transition (";
   report_string_.append(trans);
@@ -278,12 +278,12 @@ void ds50::Commandable::badTransition(const std::string& trans)
   external_request_status_ = false;
 }
 
-void ds50::Commandable::BootedEnter()
+void artdaq::Commandable::BootedEnter()
 {
   mf::LogDebug("CommandableInterface") << "BootedEnter called.";
 }
 
-void ds50::Commandable::InRunExit()
+void artdaq::Commandable::InRunExit()
 {
   mf::LogDebug("CommandableInterface") << "InRunExit called.";
 }

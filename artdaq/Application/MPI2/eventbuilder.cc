@@ -2,15 +2,15 @@
 #include <boost/program_options.hpp>
 #include <boost/lexical_cast.hpp>
 #include "messagefacility/MessageLogger/MessageLogger.h"
-#include "ds50daq/DAQ/configureMessageFacility.hh"
-#include "ds50daq/DAQ/EventBuilderApp.hh"
-#include "ds50daq/DAQ/xmlrpc_commander.hh"
+#include "artdaq/Application/configureMessageFacility.hh"
+#include "artdaq/Application/MPI2/EventBuilderApp.hh"
+#include "artdaq/ExternalComms/xmlrpc_commander.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 
 int main(int argc, char *argv[])
 {
   // initialization
-  ds50::configureMessageFacility("eventbuilder");
+  artdaq::configureMessageFacility("eventbuilder");
   int threading_result;
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &threading_result);
   mf::LogDebug("EventBuilder::main")
@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
   mf::SetApplicationName("EventBuilder-" + boost::lexical_cast<std::string>(vm["port"].as<unsigned short> ()));
 
   // create the EventBuilderApp
-  ds50::EventBuilderApp evb_app(rank_);;
+  artdaq::EventBuilderApp evb_app(rank_);;
 
   // create the xmlrpc_commander and run it
   xmlrpc_commander commander(vm["port"].as<unsigned short> (), evb_app);

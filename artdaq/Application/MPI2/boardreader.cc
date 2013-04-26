@@ -2,15 +2,15 @@
 #include <boost/program_options.hpp>
 #include <boost/lexical_cast.hpp>
 #include "messagefacility/MessageLogger/MessageLogger.h"
-#include "ds50daq/DAQ/configureMessageFacility.hh"
-#include "ds50daq/DAQ/BoardReaderApp.hh"
-#include "ds50daq/DAQ/xmlrpc_commander.hh"
+#include "artdaq/Application/configureMessageFacility.hh"
+#include "artdaq/Application/MPI2/BoardReaderApp.hh"
+#include "artdaq/ExternalComms/xmlrpc_commander.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 
 int main(int argc, char *argv[])
 {
   // initialization
-  ds50::configureMessageFacility("boardreader"); 
+  artdaq::configureMessageFacility("boardreader"); 
   int threading_result;
   MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &threading_result);
   mf::LogDebug("BoardReader::main")
@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
   mf::SetApplicationName("BoardReader-" + boost::lexical_cast<std::string>(vm["port"].as<unsigned short> ()));
 
   // create the BoardReaderApp
-  ds50::BoardReaderApp br_app;
+  artdaq::BoardReaderApp br_app;
 
   // create the xmlrpc_commander and run it
   xmlrpc_commander commander(vm["port"].as<unsigned short> (), br_app);

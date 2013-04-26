@@ -1,5 +1,5 @@
-#ifndef DS50FragmentGenerator_hh
-#define DS50FragmentGenerator_hh
+#ifndef from_ds50_ds50daq_DAQ_DS50FragmentGenerator_hh
+#define from_ds50_ds50daq_DAQ_DS50FragmentGenerator_hh
 
 #include <mutex>
 #include <condition_variable>
@@ -59,4 +59,4 @@ namespace ds50 {
   };
 }
 
-#endif /* artdaq_DAQdata_FragmentGenerator_hh */
+#endif /* from_ds50_ds50daq_DAQ_DS50FragmentGenerator_hh */

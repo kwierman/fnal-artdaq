@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <iostream>
 #include "art/Persistency/Provenance/RunID.h"
-#include "ds50daq/DAQ/xmlrpc_commander.hh"
+#include "artdaq/ExternalComms/xmlrpc_commander.hh"
 #include "fhiclcpp/make_ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
@@ -404,7 +404,7 @@ namespace {
 }
 
 
-xmlrpc_commander::xmlrpc_commander (int port, ds50::Commandable& commandable):
+xmlrpc_commander::xmlrpc_commander (int port, artdaq::Commandable& commandable):
   _port(port), _commandable(commandable)
 {}
 

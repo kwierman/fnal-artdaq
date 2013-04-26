@@ -1,18 +1,18 @@
-#ifndef ds50daq_DAQ_BoardReaderApp_hh
-#define ds50daq_DAQ_BoardReaderApp_hh
+#ifndef artdaq_Application_MPI2_BoardReaderApp_hh
+#define artdaq_Application_MPI2_BoardReaderApp_hh
 
 #include <future>
 #include <thread>
 
-#include "ds50daq/DAQ/Commandable.hh"
-#include "ds50daq/DAQ/FragmentReceiver.hh"
+#include "artdaq/Application/Commandable.hh"
+#include "artdaq/Application/MPI2/FragmentReceiver.hh"
 
-namespace ds50
+namespace artdaq
 {
   class BoardReaderApp;
 }
 
-class ds50::BoardReaderApp : public ds50::Commandable
+class artdaq::BoardReaderApp : public artdaq::Commandable
 {
 public:
   BoardReaderApp();
@@ -36,8 +36,8 @@ public:
   std::string report(std::string const&) const override;
 
 private:
-  std::unique_ptr<ds50::FragmentReceiver> fragment_receiver_ptr_;
+  std::unique_ptr<artdaq::FragmentReceiver> fragment_receiver_ptr_;
   std::future<size_t> fragment_processing_future_;
 };
 
-#endif
+#endif /* artdaq_Application_MPI2_BoardReaderApp_hh */

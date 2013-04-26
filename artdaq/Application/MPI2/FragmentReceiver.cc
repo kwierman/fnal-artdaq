@@ -1,5 +1,5 @@
-#include "ds50daq/DAQ/Config.hh"
-#include "ds50daq/DAQ/FragmentReceiver.hh"
+#include "artdaq/Application/TaskType.hh"
+#include "artdaq/Application/MPI2/FragmentReceiver.hh"
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQdata/makeFragmentGenerator.hh"
 #include "art/Utilities/Exception.h"
@@ -11,22 +11,22 @@
 /**
  * Default constructor.
  */
-ds50::FragmentReceiver::FragmentReceiver() :
+artdaq::FragmentReceiver::FragmentReceiver() :
   local_group_defined_(false), generator_ptr_(nullptr)
 {
   mf::LogDebug("FragmentReceiver") << "Constructor";
 
   // set up an MPI communication group with other FragmentReceivers
   int status =
-    MPI_Comm_split(MPI_COMM_WORLD, ds50::Config::FragmentReceiverTask, 0,
+    MPI_Comm_split(MPI_COMM_WORLD, artdaq::TaskType::FragmentReceiverTask, 0,
                    &local_group_comm_);
   if (status == MPI_SUCCESS) {
     local_group_defined_ = true;
     MPI_Comm_rank(local_group_comm_, &mpi_rank_);
-    
+
     mf::LogDebug("FragmentReceiver")
       << "Successfully created local communicator for type "
-      << ds50::Config::FragmentReceiverTask << ", identifier = 0x"
+      << artdaq::TaskType::FragmentReceiverTask << ", identifier = 0x"
       << std::hex << local_group_comm_ << std::dec
       << ", rank = " << mpi_rank_ << ".";
   }
@@ -40,7 +40,7 @@ ds50::FragmentReceiver::FragmentReceiver() :
 /**
  * Destructor.
  */
-ds50::FragmentReceiver::~FragmentReceiver()
+artdaq::FragmentReceiver::~FragmentReceiver()
 {
   if (local_group_defined_) {
     MPI_Comm_free(&local_group_comm_);
@@ -51,7 +51,7 @@ ds50::FragmentReceiver::~FragmentReceiver()
 /**
  * Processes the initialize request.
  */
-bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
+bool artdaq::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
 {
   mf::LogDebug("FragmentReceiver") << "initialize method called with "
                                    << "ParameterSet = \"" << pset.to_string()
@@ -125,8 +125,8 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
 
   generator_ptr_.reset(nullptr);
   try {
-    DS50FragmentGenerator* tmp_ds50gen_bareptr =
-      dynamic_cast<DS50FragmentGenerator*>(tmp_gen_ptr.get());
+    ds50::DS50FragmentGenerator* tmp_ds50gen_bareptr =
+      dynamic_cast<ds50::DS50FragmentGenerator*>(tmp_gen_ptr.get());
     if (tmp_ds50gen_bareptr) {
       tmp_gen_ptr.release();
       generator_ptr_.reset(tmp_ds50gen_bareptr);
@@ -181,37 +181,37 @@ bool ds50::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
   return true;
 }
 
-bool ds50::FragmentReceiver::start(art::RunID id)
+bool artdaq::FragmentReceiver::start(art::RunID id)
 {
   generator_ptr_->start(id.run());
   return true;
 }
 
-bool ds50::FragmentReceiver::stop()
+bool artdaq::FragmentReceiver::stop()
 {
   generator_ptr_->stop();
   return true;
 }
 
-bool ds50::FragmentReceiver::pause()
+bool artdaq::FragmentReceiver::pause()
 {
   generator_ptr_->pause();
   return true;
 }
 
-bool ds50::FragmentReceiver::resume()
+bool artdaq::FragmentReceiver::resume()
 {
   generator_ptr_->resume();
   return true;
 }
 
-bool ds50::FragmentReceiver::shutdown()
+bool artdaq::FragmentReceiver::shutdown()
 {
   generator_ptr_.reset(nullptr);
   return true;
 }
 
-bool ds50::FragmentReceiver::soft_initialize(fhicl::ParameterSet const& pset)
+bool artdaq::FragmentReceiver::soft_initialize(fhicl::ParameterSet const& pset)
 {
   mf::LogDebug("FragmentReceiver") << "soft_initialize method called with "
                                    << "ParameterSet = \"" << pset.to_string()
@@ -219,7 +219,7 @@ bool ds50::FragmentReceiver::soft_initialize(fhicl::ParameterSet const& pset)
   return true;
 }
 
-bool ds50::FragmentReceiver::reinitialize(fhicl::ParameterSet const& pset)
+bool artdaq::FragmentReceiver::reinitialize(fhicl::ParameterSet const& pset)
 {
   mf::LogDebug("FragmentReceiver") << "reinitialize method called with "
                                    << "ParameterSet = \"" << pset.to_string()
@@ -227,12 +227,12 @@ bool ds50::FragmentReceiver::reinitialize(fhicl::ParameterSet const& pset)
   return true;
 }
 
-size_t ds50::FragmentReceiver::process_fragments()
+size_t artdaq::FragmentReceiver::process_fragments()
 {
   if (rt_priority_ > 0) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-    sched_param s_param = {}; 
+    sched_param s_param = {};
     s_param.sched_priority = rt_priority_;
     if (pthread_setschedparam(pthread_self(), SCHED_RR, &s_param))
       mf::LogWarning("FragmentReceiver") << "setting realtime prioriry failed";
@@ -300,7 +300,7 @@ size_t ds50::FragmentReceiver::process_fragments()
   return fragment_count;
 }
 
-std::string ds50::FragmentReceiver::report(std::string const&) const
+std::string artdaq::FragmentReceiver::report(std::string const&) const
 {
   return "Fragment receiver stats coming soon.";
 }

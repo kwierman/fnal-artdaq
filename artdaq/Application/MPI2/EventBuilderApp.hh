@@ -1,17 +1,17 @@
-#ifndef ds50daq_DAQ_EventBuilderApp_hh
-#define ds50daq_DAQ_EventBuilderApp_hh
+#ifndef artdaq_Application_MPI2_EventBuilderApp_hh
+#define artdaq_Application_MPI2_EventBuilderApp_hh
 
 #include <future>
 
-#include "ds50daq/DAQ/Commandable.hh"
-#include "ds50daq/DAQ/EventBuilder.hh"
+#include "artdaq/Application/Commandable.hh"
+#include "artdaq/Application/MPI2/EventBuilder.hh"
 
-namespace ds50
+namespace artdaq
 {
   class EventBuilderApp;
 }
 
-class ds50::EventBuilderApp : public ds50::Commandable
+class artdaq::EventBuilderApp : public artdaq::Commandable
 {
 public:
   EventBuilderApp(int mpi_rank);
@@ -36,8 +36,8 @@ public:
 
 private:
   int mpi_rank_;
-  std::unique_ptr<ds50::EventBuilder> event_builder_ptr_;
+  std::unique_ptr<artdaq::EventBuilder> event_builder_ptr_;
   std::future<size_t> event_building_future_;
 };
 
-#endif
+#endif /* artdaq_Application_MPI2_EventBuilderApp_hh */

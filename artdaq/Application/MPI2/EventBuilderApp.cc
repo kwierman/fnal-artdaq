@@ -1,10 +1,10 @@
-#include "ds50daq/DAQ/EventBuilderApp.hh"
+#include "artdaq/Application/MPI2/EventBuilderApp.hh"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 /**
  * Constructor.
  */
-ds50::EventBuilderApp::EventBuilderApp(int mpi_rank) : mpi_rank_(mpi_rank)
+artdaq::EventBuilderApp::EventBuilderApp(int mpi_rank) : mpi_rank_(mpi_rank)
 {
 }
 
@@ -12,7 +12,7 @@ ds50::EventBuilderApp::EventBuilderApp(int mpi_rank) : mpi_rank_(mpi_rank)
 // *** The following methods implement the state machine operations.
 // *******************************************************************
 
-bool ds50::EventBuilderApp::do_initialize(fhicl::ParameterSet const& pset)
+bool artdaq::EventBuilderApp::do_initialize(fhicl::ParameterSet const& pset)
 {
   report_string_ = "";
   external_request_status_ = true;
@@ -32,7 +32,7 @@ bool ds50::EventBuilderApp::do_initialize(fhicl::ParameterSet const& pset)
   return external_request_status_;
 }
 
-bool ds50::EventBuilderApp::do_start(art::RunID id)
+bool artdaq::EventBuilderApp::do_start(art::RunID id)
 {
   report_string_ = "";
   external_request_status_ = event_builder_ptr_->start(id);
@@ -50,7 +50,7 @@ bool ds50::EventBuilderApp::do_start(art::RunID id)
   return external_request_status_;
 }
 
-bool ds50::EventBuilderApp::do_stop()
+bool artdaq::EventBuilderApp::do_stop()
 {
   report_string_ = "";
   external_request_status_ = event_builder_ptr_->stop();
@@ -62,7 +62,7 @@ bool ds50::EventBuilderApp::do_stop()
   return external_request_status_;
 }
 
-bool ds50::EventBuilderApp::do_pause()
+bool artdaq::EventBuilderApp::do_pause()
 {
   report_string_ = "";
   external_request_status_ = event_builder_ptr_->pause();
@@ -74,7 +74,7 @@ bool ds50::EventBuilderApp::do_pause()
   return external_request_status_;
 }
 
-bool ds50::EventBuilderApp::do_resume()
+bool artdaq::EventBuilderApp::do_resume()
 {
   report_string_ = "";
   external_request_status_ = event_builder_ptr_->resume();
@@ -89,7 +89,7 @@ bool ds50::EventBuilderApp::do_resume()
   return external_request_status_;
 }
 
-bool ds50::EventBuilderApp::do_shutdown()
+bool artdaq::EventBuilderApp::do_shutdown()
 {
   report_string_ = "";
   external_request_status_ = event_builder_ptr_->shutdown();
@@ -99,7 +99,7 @@ bool ds50::EventBuilderApp::do_shutdown()
   return external_request_status_;
 }
 
-bool ds50::EventBuilderApp::do_soft_initialize(fhicl::ParameterSet const& pset)
+bool artdaq::EventBuilderApp::do_soft_initialize(fhicl::ParameterSet const& pset)
 {
   report_string_ = "";
   external_request_status_ = event_builder_ptr_->soft_initialize(pset);
@@ -110,7 +110,7 @@ bool ds50::EventBuilderApp::do_soft_initialize(fhicl::ParameterSet const& pset)
   return external_request_status_;
 }
 
-bool ds50::EventBuilderApp::do_reinitialize(fhicl::ParameterSet const& pset)
+bool artdaq::EventBuilderApp::do_reinitialize(fhicl::ParameterSet const& pset)
 {
   report_string_ = "";
   external_request_status_ = event_builder_ptr_->reinitialize(pset);
@@ -121,7 +121,7 @@ bool ds50::EventBuilderApp::do_reinitialize(fhicl::ParameterSet const& pset)
   return external_request_status_;
 }
 
-void ds50::EventBuilderApp::BootedEnter()
+void artdaq::EventBuilderApp::BootedEnter()
 {
   mf::LogDebug("EventBuilderApp") << "Booted state entry action called.";
 
@@ -132,7 +132,7 @@ void ds50::EventBuilderApp::BootedEnter()
   //event_builder_ptr_.reset(nullptr);
 }
 
-std::string ds50::EventBuilderApp::report(std::string const& which) const
+std::string artdaq::EventBuilderApp::report(std::string const& which) const
 {
   // if there is an outstanding error, return that
   if (report_string_.length() > 0) {

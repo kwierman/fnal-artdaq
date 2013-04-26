@@ -1,19 +1,19 @@
-#ifndef ds50daq_DAQ_Commandable_hh
-#define ds50daq_DAQ_Commandable_hh
+#ifndef artdaq_Application_Commandable_hh
+#define artdaq_Application_Commandable_hh
 
 #include <string>
 #include <vector>
 
 #include "fhiclcpp/ParameterSet.h"
 #include "art/Persistency/Provenance/RunID.h"
-#include "ds50daq/DAQ/Commandable_sm.h"  // must be included after others
+#include "artdaq/Application/Commandable_sm.h"  // must be included after others
 
-namespace ds50
+namespace artdaq
 {
   class Commandable;
 }
 
-class ds50::Commandable
+class artdaq::Commandable
 {
 public:
   Commandable();
@@ -66,4 +66,4 @@ protected:
   std::string report_string_;
 };
 
-#endif
+#endif /* artdaq_Application_Commandable_hh */

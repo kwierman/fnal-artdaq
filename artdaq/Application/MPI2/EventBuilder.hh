@@ -1,5 +1,5 @@
-#ifndef ds50daq_DAQ_EventBuilder_hh
-#define ds50daq_DAQ_EventBuilder_hh
+#ifndef artdaq_Application_MPI2_EventBuilder_hh
+#define artdaq_Application_MPI2_EventBuilder_hh
 
 #include <string>
 #include <vector>
@@ -11,12 +11,12 @@
 #include "artdaq/DAQrate/RHandles.hh"
 #include "artdaq/DAQrate/EventStore.hh"
 
-namespace ds50
+namespace artdaq
 {
   class EventBuilder;
 }
 
-class ds50::EventBuilder
+class artdaq::EventBuilder
 {
 public:
   EventBuilder(int mpi_rank);
@@ -71,4 +71,4 @@ private:
   std::mutex flush_mutex_;
 };
 
-#endif
+#endif /* artdaq_Application_MPI2_EventBuilder_hh */

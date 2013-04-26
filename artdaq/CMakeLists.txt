@@ -1,4 +1,6 @@
 add_subdirectory(Utilities)
-add_subdirectory(DAQrate)
 add_subdirectory(DAQdata)
+add_subdirectory(DAQrate)
+add_subdirectory(Application)
+add_subdirectory(ExternalComms)
 add_subdirectory(ArtModules)

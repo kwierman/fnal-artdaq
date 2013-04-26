@@ -2,15 +2,15 @@
 #include <boost/program_options.hpp>
 #include <boost/lexical_cast.hpp>
 #include "messagefacility/MessageLogger/MessageLogger.h"
-#include "ds50daq/DAQ/configureMessageFacility.hh"
-#include "ds50daq/DAQ/Commandable.hh"
-#include "ds50daq/DAQ/xmlrpc_commander.hh"
+#include "artdaq/Application/configureMessageFacility.hh"
+#include "artdaq/Application/Commandable.hh"
+#include "artdaq/ExternalComms/xmlrpc_commander.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 
 int main(int argc, char *argv[])
 {
   // initialization
-  ds50::configureMessageFacility("commandable");
+  artdaq::configureMessageFacility("commandable");
   int threading_result;
   MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &threading_result);
   mf::LogDebug("Commandable::main")
@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
   desc.add_options ()
     ("port,p", boost::program_options::value<unsigned short>(), "Port number")
     ("help,h", "produce help message");
-  
+
   boost::program_options::variables_map vm;
   try {
     boost::program_options::store (boost::program_options::command_line_parser(argc, argv).options(desc).run(), vm);
@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
   mf::SetApplicationName("Commandable-" + boost::lexical_cast<std::string>(vm["port"].as<unsigned short> ()));
 
   // create the Commandable object
-  ds50::Commandable commandable;
+  artdaq::Commandable commandable;
 
   // create the xmlrpc_commander and run it
   xmlrpc_commander commander(vm["port"].as<unsigned short> (), commandable);

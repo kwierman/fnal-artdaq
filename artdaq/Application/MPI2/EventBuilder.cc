@@ -1,5 +1,5 @@
-#include "ds50daq/DAQ/Config.hh"
-#include "ds50daq/DAQ/EventBuilder.hh"
+#include "artdaq/Application/TaskType.hh"
+#include "artdaq/Application/MPI2/EventBuilder.hh"
 #include "art/Utilities/Exception.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "artdaq/DAQrate/EventStore.hh"
@@ -11,7 +11,7 @@
 /**
  * Constructor.
  */
-ds50::EventBuilder::EventBuilder(int mpi_rank) :
+artdaq::EventBuilder::EventBuilder(int mpi_rank) :
   mpi_rank_(mpi_rank), local_group_defined_(false),
   data_sender_count_(0), art_initialized_(false)
 {
@@ -19,7 +19,7 @@ ds50::EventBuilder::EventBuilder(int mpi_rank) :
 
   // set up an MPI communication group with other EventBuilders
   int status =
-    MPI_Comm_split(MPI_COMM_WORLD, ds50::Config::EventBuilderTask, 0,
+    MPI_Comm_split(MPI_COMM_WORLD, artdaq::TaskType::EventBuilderTask, 0,
                    &local_group_comm_);
   if (status == MPI_SUCCESS) {
     local_group_defined_ = true;
@@ -27,7 +27,7 @@ ds50::EventBuilder::EventBuilder(int mpi_rank) :
     MPI_Comm_rank(local_group_comm_, &temp_rank);
     mf::LogDebug("EventBuilder")
       << "Successfully created local communicator for type "
-      << ds50::Config::EventBuilderTask << ", identifier = 0x"
+      << artdaq::TaskType::EventBuilderTask << ", identifier = 0x"
       << std::hex << local_group_comm_ << std::dec
       << ", rank = " << temp_rank << ".";
   }
@@ -41,7 +41,7 @@ ds50::EventBuilder::EventBuilder(int mpi_rank) :
 /**
  * Destructor.
  */
-ds50::EventBuilder::~EventBuilder()
+artdaq::EventBuilder::~EventBuilder()
 {
   if (local_group_defined_) {
     MPI_Comm_free(&local_group_comm_);
@@ -49,7 +49,7 @@ ds50::EventBuilder::~EventBuilder()
   mf::LogDebug("EventBuilder") << "Destructor";
 }
 
-void ds50::EventBuilder::initializeEventStore()
+void artdaq::EventBuilder::initializeEventStore()
 {
   if (use_art_) {
     artdaq::EventStore::ART_CFGSTRING_FCN * reader = &artapp_string_config;
@@ -73,7 +73,7 @@ void ds50::EventBuilder::initializeEventStore()
 /**
  * Processes the initialize request.
  */
-bool ds50::EventBuilder::initialize(fhicl::ParameterSet const& pset)
+bool artdaq::EventBuilder::initialize(fhicl::ParameterSet const& pset)
 {
   init_string_ = pset.to_string();
   mf::LogDebug("EventBuilder") << "initialize method called with DAQ "
@@ -193,7 +193,7 @@ bool ds50::EventBuilder::initialize(fhicl::ParameterSet const& pset)
   return true;
 }
 
-bool ds50::EventBuilder::start(art::RunID id)
+bool artdaq::EventBuilder::start(art::RunID id)
 {
   run_id_ = id;
   eod_fragments_received_ = 0;
@@ -202,7 +202,7 @@ bool ds50::EventBuilder::start(art::RunID id)
   return true;
 }
 
-bool ds50::EventBuilder::stop()
+bool artdaq::EventBuilder::stop()
 {
   flush_mutex_.lock();
   event_store_ptr_->endSubrun();
@@ -211,7 +211,7 @@ bool ds50::EventBuilder::stop()
   return true;
 }
 
-bool ds50::EventBuilder::pause()
+bool artdaq::EventBuilder::pause()
 {
   flush_mutex_.lock();
   event_store_ptr_->endSubrun();
@@ -219,7 +219,7 @@ bool ds50::EventBuilder::pause()
   return true;
 }
 
-bool ds50::EventBuilder::resume()
+bool artdaq::EventBuilder::resume()
 {
   eod_fragments_received_ = 0;
   flush_mutex_.lock();
@@ -227,7 +227,7 @@ bool ds50::EventBuilder::resume()
   return true;
 }
 
-bool ds50::EventBuilder::shutdown()
+bool artdaq::EventBuilder::shutdown()
 {
   /* We don't care about flushing data here.  The only way to transition to the
      shutdown state is from a state where there is no data taking.  All we have
@@ -237,7 +237,7 @@ bool ds50::EventBuilder::shutdown()
   return true;
 }
 
-bool ds50::EventBuilder::soft_initialize(fhicl::ParameterSet const& pset)
+bool artdaq::EventBuilder::soft_initialize(fhicl::ParameterSet const& pset)
 {
   mf::LogDebug("EventBuilder") << "soft_initialize method called with DAQ "
                                << "ParameterSet = \"" << pset.to_string()
@@ -245,7 +245,7 @@ bool ds50::EventBuilder::soft_initialize(fhicl::ParameterSet const& pset)
   return true;
 }
 
-bool ds50::EventBuilder::reinitialize(fhicl::ParameterSet const& pset)
+bool artdaq::EventBuilder::reinitialize(fhicl::ParameterSet const& pset)
 {
   mf::LogDebug("EventBuilder") << "reinitialize method called with DAQ "
                                << "ParameterSet = \"" << pset.to_string()
@@ -253,7 +253,7 @@ bool ds50::EventBuilder::reinitialize(fhicl::ParameterSet const& pset)
   return true;
 }
 
-size_t ds50::EventBuilder::process_fragments()
+size_t artdaq::EventBuilder::process_fragments()
 {
   bool process_fragments = true;
   size_t senderSlot;
@@ -307,7 +307,7 @@ size_t ds50::EventBuilder::process_fragments()
   return 0;
 }
 
-std::string ds50::EventBuilder::report(std::string const&) const
+std::string artdaq::EventBuilder::report(std::string const&) const
 {
   // lots of cool stuff that we can do here
   // - report on the number of fragments received and the number

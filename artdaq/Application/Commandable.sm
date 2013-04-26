@@ -6,8 +6,8 @@
 %}
 
 %class Commandable
-%package ds50
-%header ds50daq/DAQ/Commandable.hh
+%package artdaq
+%header artdaq/Application/Commandable.hh
 
 // compilation and diagram hints:
 // java -jar $SMC_HOME/bin/Smc.jar -c++ Commandable.sm

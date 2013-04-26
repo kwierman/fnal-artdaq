@@ -1,22 +1,22 @@
-#ifndef ds50daq_DAQ_FragmentReceiver_hh
-#define ds50daq_DAQ_FragmentReceiver_hh
+#ifndef artdaq_Application_MPI2_FragmentReceiver_hh
+#define artdaq_Application_MPI2_FragmentReceiver_hh
 
 #include <string>
 #include <vector>
 #include <iostream>
 
-#include "ds50daq/DAQ/DS50FragmentGenerator.hh"
+#include "from_ds50/ds50daq/DAQ/DS50FragmentGenerator.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "art/Persistency/Provenance/RunID.h"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 #include "artdaq/DAQrate/SHandles.hh"
 
-namespace ds50
+namespace artdaq
 {
   class FragmentReceiver;
 }
 
-class ds50::FragmentReceiver
+class artdaq::FragmentReceiver
 {
 public:
   FragmentReceiver();
@@ -40,7 +40,7 @@ public:
 private:
   bool local_group_defined_;
   MPI_Comm local_group_comm_;
-  std::unique_ptr<DS50FragmentGenerator> generator_ptr_;
+  std::unique_ptr<ds50::DS50FragmentGenerator> generator_ptr_;
 
   uint64_t max_fragment_size_words_;
   size_t mpi_buffer_count_;
@@ -53,4 +53,4 @@ private:
   std::unique_ptr<artdaq::SHandles> sender_ptr_;
 };
 
-#endif
+#endif /* artdaq_Application_MPI2_FragmentReceiver_hh */
