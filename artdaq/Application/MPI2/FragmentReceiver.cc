@@ -97,9 +97,8 @@ bool artdaq::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
     return false;
   }
 
-  std::unique_ptr<artdaq::FragmentGenerator> tmp_gen_ptr;
   try {
-    tmp_gen_ptr = artdaq::makeFragmentGenerator(frag_gen_name, fr_pset);
+    generator_ptr_ = artdaq::makeFragmentGenerator(frag_gen_name, fr_pset);
   }
   catch (art::Exception& excpt) {
     mf::LogError("FragmentReceiver")
@@ -120,24 +119,6 @@ bool artdaq::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
       << "Unknown exception creating a FragmentGenerator of type \""
       << frag_gen_name << "\" with parameter set \"" << fr_pset.to_string()
       << "\".";
-    return false;
-  }
-
-  generator_ptr_.reset(nullptr);
-  try {
-    ds50::DS50FragmentGenerator* tmp_ds50gen_bareptr =
-      dynamic_cast<ds50::DS50FragmentGenerator*>(tmp_gen_ptr.get());
-    if (tmp_ds50gen_bareptr) {
-      tmp_gen_ptr.release();
-      generator_ptr_.reset(tmp_ds50gen_bareptr);
-    }
-  }
-  catch (...) {}
-  if (! generator_ptr_) {
-    mf::LogError("FragmentReceiver")
-      << "Error: The requested fragment generator type (" << frag_gen_name
-      << ") is not a DS50FragmentGenerator, and only DS50FragmentGenerators "
-      << "are currently supported.";
     return false;
   }
 

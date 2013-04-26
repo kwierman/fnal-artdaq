@@ -5,7 +5,7 @@
 #include "artdaq/DAQdata/Fragments.hh"
 
 namespace artdaq {
-  // FragmentGenerator is an abstract class that deinfe the interface
+  // FragmentGenerator is an abstract class that defines the interface
   // for obtaining events. Subclasses are to override the (private)
   // virtual functions; users of FragmentGenerator are to invoke the
   // public (non-virtual) functions.

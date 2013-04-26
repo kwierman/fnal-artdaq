@@ -5,7 +5,7 @@
 #include <vector>
 #include <iostream>
 
-#include "from_ds50/ds50daq/DAQ/DS50FragmentGenerator.hh"
+#include "artdaq/DAQdata/FragmentGenerator.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "art/Persistency/Provenance/RunID.h"
 #include "artdaq/DAQrate/quiet_mpi.hh"
@@ -40,7 +40,7 @@ public:
 private:
   bool local_group_defined_;
   MPI_Comm local_group_comm_;
-  std::unique_ptr<ds50::DS50FragmentGenerator> generator_ptr_;
+  std::unique_ptr<FragmentGenerator> generator_ptr_;
 
   uint64_t max_fragment_size_words_;
   size_t mpi_buffer_count_;
