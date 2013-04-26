@@ -83,7 +83,7 @@ add_subdirectory(test)
 add_subdirectory(artdaq)
 
 # Scripts and execs.
-add_subdirectory(exe)
+add_subdirectory(proto)
 
 # ups - table and config files
 add_subdirectory(ups)
