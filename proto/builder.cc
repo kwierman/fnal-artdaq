@@ -3,9 +3,9 @@
 #include "artdaq/DAQdata/FragmentGenerator.hh"
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQdata/makeFragmentGenerator.hh"
-#include "artdaq/DAQrate/Config.hh"
+#include "Config.hh"
 #include "artdaq/DAQrate/EventStore.hh"
-#include "artdaq/DAQrate/MPIProg.hh"
+#include "MPIProg.hh"
 #include "artdaq/DAQrate/Perf.hh"
 #include "artdaq/DAQrate/RHandles.hh"
 #include "artdaq/DAQrate/SHandles.hh"
@@ -220,7 +220,7 @@ void Program::sink()
       &artapp :
       &artdaq::simpleQueueReaderApp;
     artdaq::EventStore events(conf_.detectors_,
-			      conf_.run_,
+            conf_.run_,
                               sink_rank,
                               useArt ? conf_.art_argc_ : 1,
                               useArt ? conf_.art_argv_ : dummyArgs,

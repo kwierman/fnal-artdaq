@@ -1,5 +1,5 @@
 
-#include "artdaq/DAQrate/Config.hh"
+#include "Config.hh"
 #include "artdaq/DAQrate/Perf.hh"
 #include "artdaq/DAQrate/infoFilename.hh"
 #include "artdaq/DAQdata/Fragment.hh"

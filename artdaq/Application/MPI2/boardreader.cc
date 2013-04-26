@@ -1,27 +1,30 @@
-#include <iostream>
-#include <boost/program_options.hpp>
-#include <boost/lexical_cast.hpp>
-#include "messagefacility/MessageLogger/MessageLogger.h"
-#include "artdaq/Application/configureMessageFacility.hh"
 #include "artdaq/Application/MPI2/BoardReaderApp.hh"
-#include "artdaq/ExternalComms/xmlrpc_commander.hh"
+#include "artdaq/Application/MPI2/MPISentry.hh"
+#include "artdaq/Application/configureMessageFacility.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
+#include "artdaq/ExternalComms/xmlrpc_commander.hh"
+#include "messagefacility/MessageLogger/MessageLogger.h"
+
+#include "boost/program_options.hpp"
+#include "boost/lexical_cast.hpp"
+
+#include <iostream>
 
 int main(int argc, char *argv[])
 {
   // initialization
-  artdaq::configureMessageFacility("boardreader"); 
-  int threading_result;
-  MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &threading_result);
+  int const wanted_threading_level { MPI_THREAD_MULTIPLE };
+  artdaq::MPISentry mpiSentry(&argc, &argv, MPI_THREAD_FUNNELED);
+  artdaq::configureMessageFacility("boardreader");
   mf::LogDebug("BoardReader::main")
     << "MPI initialized with requested thread support level of "
-    << MPI_THREAD_FUNNELED << ", actual support level = "
-    << threading_result << ".";
-  int procs_;
-  int rank_;
-  MPI_Comm_size(MPI_COMM_WORLD, &procs_);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
-  mf::LogDebug("BoardReader::main") << "size = " << procs_ << ", rank = " << rank_;
+    << wanted_threading_level << ", actual support level = "
+    << mpiSentry.threading_level() << ".";
+  mf::LogDebug("BoardReader::main")
+    << "size = "
+    << mpiSentry.procs()
+    << ", rank = "
+    << mpiSentry.rank();
 
   // handle the command-line arguments
   std::string usage = std::string(argv[0]) + " -p port_number <other-options>";
@@ -30,7 +33,7 @@ int main(int argc, char *argv[])
   desc.add_options ()
     ("port,p", boost::program_options::value<unsigned short>(), "Port number")
     ("help,h", "produce help message");
-  
+
   boost::program_options::variables_map vm;
   try {
     boost::program_options::store (boost::program_options::command_line_parser(argc, argv).options(desc).run(), vm);
@@ -58,7 +61,4 @@ int main(int argc, char *argv[])
   // create the xmlrpc_commander and run it
   xmlrpc_commander commander(vm["port"].as<unsigned short> (), br_app);
   commander.run();
-
-  // cleanup
-  MPI_Finalize();
 }

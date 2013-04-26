@@ -10,7 +10,7 @@ cet_script(numawrap)
 # Build this project's executables:
 
 # Nominally a test exec (no MPI) but we want this to be available to other packages.
-art_make_exec(NAME driver
+art_make_exec(driver
   LIBRARIES
   artdaq_DAQrate
   artdaq_DAQdata
@@ -21,23 +21,39 @@ art_make_exec(NAME driver
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   )
 
-if(WANT_MPI)
-  art_make_exec(NAME perfdump
-    LIBRARIES
-    artdaq_DAQrate
-    )
+art_make_exec(perfdump
+  LIBRARIES
+  artdaq_DAQrate
+  )
 
-  art_make_exec(NAME builder
-    LIBRARIES
-    ${ART_FRAMEWORK_ART}
-    artdaq_DAQrate
-    artdaq_DAQdata
-    artdaq_Utilities
-    ${FHICLCPP}
-    ${CETLIB}
-    ${Boost_PROGRAM_OPTIONS_LIBRARY}
-    ${MPI_C_LIBRARIES}
-    )
+art_make_exec(NAME builder
+  SOURCE
+  builder.cc
+  Config.cc
+  LIBRARIES
+  ${ART_FRAMEWORK_ART}
+  artdaq_DAQrate
+  artdaq_DAQdata
+  artdaq_Utilities
+  ${FHICLCPP}
+  ${CETLIB}
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${MPI_C_LIBRARIES}
+  )
 
-  install_fhicl(LIST daqrate_simdata_noart.fcl)
-endif()
+cet_test(config_t
+  SOURCES
+  config_t.cc
+  Config.cc
+  LIBRARIES artdaq_DAQrate )
+
+cet_test(config_with_art_t
+  SOURCES
+  config_with_art_t.cc
+  Config.cc
+  LIBRARIES artdaq_DAQrate
+  TEST_PROPERTIES ENVIRONMENT ARTDAQ_DAQRATE_USE_ART=1
+  )
+
+install_fhicl(LIST daqrate_simdata_noart.fcl)
+install_source()

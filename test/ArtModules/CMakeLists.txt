@@ -8,31 +8,30 @@ simple_plugin(FragmentSniffer "module"
   )
 
 cet_test(raw_event_queue_reader_t USE_BOOST_UNIT
-         LIBRARIES
-         artdaq_ArtModules
-         artdaq_DAQdata_dict
-         artdaq_DAQrate
-         artdaq_DAQdata
-         ${ART_FRAMEWORK_CORE}
-         ${ART_FRAMEWORK_PRINCIPAL}
-         ${ART_PERSISTENCY_PROVENANCE}
-         ${ART_UTILITIES}
-         )
+  LIBRARIES
+  artdaq_ArtModules
+  artdaq_DAQdata_dict
+  artdaq_DAQrate
+  artdaq_DAQdata
+  ${ART_FRAMEWORK_CORE}
+  ${ART_FRAMEWORK_PRINCIPAL}
+  ${ART_PERSISTENCY_PROVENANCE}
+  ${ART_UTILITIES}
+  )
 
-if(WANT_MPI)
-  cet_test(daq_flow_t
-    LIBRARIES
-    ${ART_FRAMEWORK_ART}
-    artdaq_DAQdata_GenericFragmentSimulator_generator
-    artdaq_DAQrate
-    artdaq_DAQdata
-    ${MF_MESSAGELOGGER}
-    ${FHICLCPP}
-    ${CETLIB}
-    TEST_ARGS -c daq_flow_t.fcl
-    DATAFILES daq_flow_t.fcl
-    )
-endif()
+cet_test(daq_flow_t
+  LIBRARIES
+  ${ART_FRAMEWORK_ART}
+  artdaq_DAQdata_GenericFragmentSimulator_generator
+  artdaq_Application_MPI2
+  artdaq_DAQrate
+  artdaq_DAQdata
+  ${MF_MESSAGELOGGER}
+  ${FHICLCPP}
+  ${CETLIB}
+  TEST_ARGS -c daq_flow_t.fcl
+  DATAFILES daq_flow_t.fcl
+  )
 
 # Wait for an input for a second, then exit.
 cet_test(read_files_t HANDBUILT

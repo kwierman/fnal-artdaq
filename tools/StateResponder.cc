@@ -1,27 +1,30 @@
-#include <iostream>
-#include <boost/program_options.hpp>
-#include <boost/lexical_cast.hpp>
-#include "messagefacility/MessageLogger/MessageLogger.h"
-#include "artdaq/Application/configureMessageFacility.hh"
 #include "artdaq/Application/Commandable.hh"
-#include "artdaq/ExternalComms/xmlrpc_commander.hh"
+#include "artdaq/Application/MPI2/MPISentry.hh"
+#include "artdaq/Application/configureMessageFacility.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
+#include "artdaq/ExternalComms/xmlrpc_commander.hh"
+#include "messagefacility/MessageLogger/MessageLogger.h"
+
+#include "boost/program_options.hpp"
+#include "boost/lexical_cast.hpp"
+
+#include <iostream>
 
 int main(int argc, char *argv[])
 {
   // initialization
+  int const wanted_threading_level { MPI_THREAD_FUNNELED };
+  artdaq::MPISentry mpiSentry(&argc, &argv, wanted_threading_level);
   artdaq::configureMessageFacility("commandable");
-  int threading_result;
-  MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &threading_result);
   mf::LogDebug("Commandable::main")
     << "MPI initialized with requested thread support level of "
-    << MPI_THREAD_FUNNELED << ", actual support level = "
-    << threading_result << ".";
-  int procs_;
-  int rank_;
-  MPI_Comm_size(MPI_COMM_WORLD, &procs_);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
-  mf::LogDebug("Commandable::main") << "size = " << procs_ << ", rank = " << rank_;
+    << wanted_threading_level << ", actual support level = "
+    << mpiSentry.threading_level() << ".";
+  mf::LogDebug("Commandable::main")
+    << "size = "
+    << mpiSentry.procs()
+    << ", rank = "
+    << mpiSentry.rank();
 
   // handle the command-line arguments
   std::string usage = std::string(argv[0]) + " -p port_number <other-options>";
@@ -58,7 +61,4 @@ int main(int argc, char *argv[])
   // create the xmlrpc_commander and run it
   xmlrpc_commander commander(vm["port"].as<unsigned short> (), commandable);
   commander.run();
-
-  // cleanup
-  MPI_Finalize();
 }

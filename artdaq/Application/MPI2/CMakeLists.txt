@@ -5,7 +5,8 @@ art_make_library(SOURCE
   EventBuilder.cc
   EventBuilderApp.cc
   FragmentReceiver.cc
-  ../../../from_ds50/ds50daq/DAQ/DS50FragmentGenerator.cc # TEMPORARY
+  MPISentry.cc
+ ../../../from_ds50/ds50daq/DAQ/DS50FragmentGenerator.cc # TEMPORARY
   LIBRARIES
   artdaq_DAQrate
   artdaq_Application
