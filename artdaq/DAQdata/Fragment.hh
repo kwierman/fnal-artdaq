@@ -35,17 +35,32 @@ public:
   typedef detail::RawFragmentHeader::sequence_id_t sequence_id_t;
   typedef detail::RawFragmentHeader::fragment_id_t fragment_id_t;
 
-  static version_t const InvalidVersion;
-  static sequence_id_t const InvalidSequenceID;
-  static fragment_id_t const InvalidFragmentID;
+  static constexpr version_t InvalidVersion =
+    detail::RawFragmentHeader::InvalidVersion;
+  static constexpr sequence_id_t InvalidSequenceID =
+    detail::RawFragmentHeader::InvalidSequenceID;
+  static constexpr fragment_id_t InvalidFragmentID =
+    detail::RawFragmentHeader::InvalidFragmentID;
 
-  static type_t const InvalidFragmentType;
-  static type_t const EndOfDataFragmentType;
-  static type_t const DataFragmentType;
-  static type_t const InitFragmentType;
-  static type_t const EndOfRunFragmentType;
-  static type_t const EndOfSubrunFragmentType;
-  static type_t const ShutdownFragmentType;
+  static constexpr type_t InvalidFragmentType =
+    detail::RawFragmentHeader::InvalidFragmentType;
+  static constexpr type_t EndOfDataFragmentType =
+    detail::RawFragmentHeader::EndOfDataFragmentType;
+  static constexpr type_t DataFragmentType =
+    detail::RawFragmentHeader::DataFragmentType;
+  static constexpr type_t InitFragmentType =
+    detail::RawFragmentHeader::InitFragmentType;
+  static constexpr type_t EndOfRunFragmentType =
+    detail::RawFragmentHeader::EndOfRunFragmentType;
+  static constexpr type_t EndOfSubrunFragmentType =
+    detail::RawFragmentHeader::EndOfSubrunFragmentType;
+  static constexpr type_t ShutdownFragmentType =
+    detail::RawFragmentHeader::ShutdownFragmentType;
+  static constexpr type_t FirstUserFragmentType =
+    detail::RawFragmentHeader::FIRST_USER_TYPE;
+
+  static constexpr bool isUserFragmentType(type_t fragmentType);
+  static constexpr bool isSystemFragmentType(type_t fragmentType);
 
   typedef std::vector<RawDataType>::reference       reference;
   typedef std::vector<RawDataType>::iterator        iterator;
@@ -162,6 +177,25 @@ private:
 };
 
 #if USE_MODERN_FEATURES
+inline
+bool
+constexpr
+artdaq::Fragment::
+isUserFragmentType(type_t fragmentType)
+{
+  return fragmentType >= detail::RawFragmentHeader::FIRST_USER_TYPE &&
+    fragmentType <= detail::RawFragmentHeader::LAST_USER_TYPE;
+}
+
+inline
+bool
+constexpr
+artdaq::Fragment::
+isSystemFragmentType(type_t fragmentType)
+{
+  return fragmentType >= detail::RawFragmentHeader::FIRST_SYSTEM_TYPE;
+}
+
 template <class T>
 artdaq::Fragment::
 Fragment(std::size_t payload_size, sequence_id_t sequence_id,

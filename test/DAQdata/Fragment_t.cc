@@ -41,16 +41,16 @@ BOOST_AUTO_TEST_CASE(Construct)
   BOOST_REQUIRE_EQUAL(f2.dataSize(),   (size_t)  7);
   BOOST_REQUIRE_EQUAL(f2.size(),       (size_t) 10);
   BOOST_REQUIRE_EQUAL(f2.version(),    (artdaq::Fragment::version_t) 0);
-  BOOST_REQUIRE_EQUAL(f2.type(),       artdaq::Fragment::InvalidFragmentType);
-  BOOST_REQUIRE_EQUAL(f2.sequenceID(), artdaq::Fragment::InvalidSequenceID);
-  BOOST_REQUIRE_EQUAL(f2.fragmentID(), artdaq::Fragment::InvalidFragmentID);
+  BOOST_REQUIRE(f2.type() == artdaq::Fragment::InvalidFragmentType);
+  BOOST_REQUIRE(f2.sequenceID() == artdaq::Fragment::InvalidSequenceID);
+  BOOST_REQUIRE(f2.fragmentID() == artdaq::Fragment::InvalidFragmentID);
   BOOST_REQUIRE_EQUAL(f2.hasMetadata(),false);
 
   artdaq::Fragment f3(101, 202);
   BOOST_REQUIRE_EQUAL(f3.dataSize(),   (size_t) 0);
   BOOST_REQUIRE_EQUAL(f3.size(),       (size_t) 3);
   BOOST_REQUIRE_EQUAL(f3.version(),    (artdaq::Fragment::version_t) 0);
-  BOOST_REQUIRE_EQUAL(f3.type(),       artdaq::Fragment::DataFragmentType);
+  BOOST_REQUIRE(f3.type() == artdaq::Fragment::DataFragmentType);
   BOOST_REQUIRE_EQUAL(f3.sequenceID(), (artdaq::Fragment::sequence_id_t) 101);
   BOOST_REQUIRE_EQUAL(f3.fragmentID(), (artdaq::Fragment::fragment_id_t) 202);
   BOOST_REQUIRE_EQUAL(f3.hasMetadata(),false);
