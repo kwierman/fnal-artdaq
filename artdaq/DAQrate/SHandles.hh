@@ -25,10 +25,13 @@ public:
   // Fragments with dataSize() greater than max_payload_size will not be sent.
   // dest_count is the number of receivers used in the round-robin algorithm
   // dest_start is the rank of the first receiver
+  // broadcast_sends determines whether fragments will be sent to all
+  // destinations or will use the round-robin algorithm
   SHandles(size_t buffer_count,
            uint64_t max_payload_size,
            size_t dest_count,
-           size_t dest_start);
+           size_t dest_start,
+           bool broadcast_sends);
 
   // Make sure we clean up and wait for in-flight sends.
   ~SHandles();
@@ -69,6 +72,7 @@ private:
   size_t const dest_start_;
   size_t pos_; // next slot to check
   detail::FragCounter sent_frag_count_;
+  bool broadcast_sends_;
 
   Requests reqs_;
   Fragments payload_;
