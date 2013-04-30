@@ -192,7 +192,7 @@ class MPIHandler
       configFile = Tempfile.new("config")
       hostsFile = Tempfile.new("hosts")
       begin
-        mpiCmd = self.buildMPICommand(configFile, hostsFile, "mpi_wrapper.sh")
+        mpiCmd = self.buildMPICommand(configFile, hostsFile, "pmt_mpiwrapper.sh")
         Open3.popen3(mpiCmd) { |stdin, stdout, stderr|
           self.handleIO(stdout, stderr)
         }
@@ -220,7 +220,7 @@ class MPIHandler
     configFile = Tempfile.new("config")
     hostsFile = Tempfile.new("hosts")
     begin
-      mpiCmd = self.buildMPICommand(configFile, hostsFile, "mpi_cleaner.sh")
+      mpiCmd = self.buildMPICommand(configFile, hostsFile, "pmt_cleanup.sh")
 
       Open3.popen3(mpiCmd) { |stdin, stdout, stderr|
         # Block until this is done.

@@ -28,7 +28,7 @@ art_make_exec(boardreader
   artdaq_ExternalComms
 )
 
-cet_script(pmt.rb REMOVE_EXTENSIONS)
+cet_script(pmt.rb pmt_cleanup.sh pmt_mpiwrapper.sh)# REMOVE_EXTENSIONS)
 
 install_headers()
 install_source()
