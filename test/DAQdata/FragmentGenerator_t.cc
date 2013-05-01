@@ -13,6 +13,7 @@ class artdaqtest::FragmentGeneratorTest :
 public:
   FragmentGeneratorTest();
   bool getNext_(artdaq::FragmentPtrs &) override;
+  std::vector<artdaq::Fragment::fragment_id_t> fragmentIDs_() override;
   bool requiresStateMachine_() const override;
   void start_() override;
   void stop_() override;
@@ -32,6 +33,13 @@ artdaqtest::FragmentGeneratorTest::getNext_(artdaq::FragmentPtrs & frags)
 {
   frags.emplace_back(new artdaq::Fragment);
   return true;
+}
+
+std::vector<artdaq::Fragment::fragment_id_t>
+artdaqtest::FragmentGeneratorTest::
+fragmentIDs_()
+{
+  return { 1 };
 }
 
 bool

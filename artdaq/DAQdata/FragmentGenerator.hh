@@ -1,29 +1,30 @@
 #ifndef artdaq_DAQdata_FragmentGenerator_hh
 #define artdaq_DAQdata_FragmentGenerator_hh
 
+////////////////////////////////////////////////////////////////////////
+// FragmentGenerator is an abstract class that defines the interface for
+// obtaining events. Subclasses are to override the (private) virtual
+// functions; users of FragmentGenerator are to invoke the public
+// (non-virtual) functions.
+//
+// All classes that inherit from FragmentGenerator are required to
+// implement the state-machine related functions. Some classes that
+// inherit from FragmentGenerator can work only when invoked by a client
+// that obeys the associated state-machine rules. Other classes that
+// inherit from FragmentGenerator may also allow programs to call *none*
+// of the state-machine related function; these programs will call only
+// getNext().
+//
+// State-machine related interface functions will be called only from a
+// single thread. getNext() will be called only from a single
+// thread. The thread from which state-machine interfaces functions are
+// called may be a different thread from the one that calls getNext().
+////////////////////////////////////////////////////////////////////////
+
 #include "fhiclcpp/fwd.h"
 #include "artdaq/DAQdata/Fragments.hh"
 
 namespace artdaq {
-  // FragmentGenerator is an abstract class that defines the interface
-  // for obtaining events. Subclasses are to override the (private)
-  // virtual functions; users of FragmentGenerator are to invoke the
-  // public (non-virtual) functions.
-  //
-  // All classes that inherit from FragmentGenerator are required to
-  // implement the state-machine related functions. Some classes that
-  // inherit from FragmentGenerator can work only when invoked by a
-  // client that obeys the associated state-machine rules. Other classes
-  // that inherit from FragmentGenerator may also allow programs to call
-  // *none* of the state-machine related function; these programs will
-  // call only getNext().
-  //
-  // State-machine related interface functions will be called only from
-  // a single thread. getNext() will be called only from a single
-  // thread. The thread from which state-machine interfaces functions
-  // are called may be a different thread from the one that calls
-  // getNext().
-
   class FragmentGenerator {
   public:
 
@@ -39,6 +40,11 @@ namespace artdaq {
     // Fragments may or may not have the same FragmentID. Fragments
     // will all be part of the same Run and SubRun.
     bool getNext(FragmentPtrs & output);
+
+
+    // This generator produces fragments with what distinct IDs (*not*
+    // types)?
+    std::vector<Fragment::fragment_id_t> fragmentIDs();
 
     //
     // State-machine related interface below.
@@ -98,8 +104,14 @@ namespace artdaq {
 
     // Obtain the next group of Fragments, if any are available. Return
     // false if no more data are available, if we are 'stopped', or if
-    // we are not running in state-machine mode.
+    // we are not running in state-machine mode. Note that getNext_()
+    // must return n of each fragmentID declared by fragmentIDs_().
     virtual bool getNext_(FragmentPtrs & output) = 0;
+
+    // This generator produces fragments with what distinct IDs (*not*
+    // types)?  Can be implemented using initializer syntax if
+    // appropriate, e.g.  return { 3, 4 };
+    virtual std::vector<Fragment::fragment_id_t> fragmentIDs_() = 0;
 
     //
     // State-machine related implementor interface below.

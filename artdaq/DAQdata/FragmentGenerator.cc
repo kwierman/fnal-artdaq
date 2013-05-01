@@ -4,6 +4,13 @@ bool artdaq::FragmentGenerator::getNext(FragmentPtrs & output) {
   return getNext_(output);
 }
 
+std::vector<artdaq::Fragment::fragment_id_t>
+artdaq::FragmentGenerator::
+fragmentIDs()
+{
+  return fragmentIDs_();
+}
+
 int artdaq::FragmentGenerator::run_number() const {
   return run_number_;
 }
