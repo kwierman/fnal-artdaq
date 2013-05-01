@@ -18,7 +18,7 @@ void do_sending(int /*my_rank*/, int num_senders, int num_receivers)
                           false); // round robin
 }
 
-void do_receiving(int rank/*my_rank*/, int num_senders)
+void do_receiving(int /*my_rank*/, int num_senders)
 {
   artdaq::RHandles receiver(10, // buffer_count
                             1024 * 1024, // max_payload_size
