@@ -82,6 +82,8 @@ namespace {
     artdaq::FragmentGenerator & generator() const;
 
   private:
+    bool generateFragments_();
+
     std::unique_ptr<artdaq::FragmentGenerator> generator_;
     size_t const numFragIDs_;
     std::map < artdaq::Fragment::fragment_id_t,
@@ -103,27 +105,31 @@ namespace {
   ThrottledGenerator::
   getNext(artdaq::FragmentPtrs & newFrags)
   {
-    if (frags_.begin()->second.size()) { // Something stored.
+    if (frags_.size() && frags_.begin()->second.size()) { // Something stored.
       for (auto & fQp : frags_) {
         assert(fQp.second.size());
         newFrags.emplace_back(std::move(fQp.second.front()));
         fQp.second.pop_front();
       }
     }
-    else {   // Need fresh.
-      artdaq::FragmentPtrs incomingFrags;
-      bool result { false };
-      while ((result = generator_->getNext(incomingFrags)) &&
-             newFrags.empty()) { }
-      for (auto && frag : newFrags) {
-        frags_[frag->fragmentID()].emplace_back(std::move(frag));
-      }
-      if (frags_.begin()->second.size()) {
-        generator_->getNext(newFrags);
-      }
-      return result;
+    else {   // Need fresh fragments.
+      return generateFragments_() && getNext(newFrags);
     }
     return true;
+  }
+
+  bool
+  ThrottledGenerator::
+  generateFragments_()
+  {
+    artdaq::FragmentPtrs incomingFrags;
+    bool result { false };
+    while ((result = generator_->getNext(incomingFrags)) &&
+           incomingFrags.empty()) { }
+    for (auto && frag : incomingFrags) {
+      frags_[frag->fragmentID()].emplace_back(std::move(frag));
+    }
+    return result;
   }
 
   size_t
@@ -143,10 +149,12 @@ namespace {
   int process_data(int argc, char ** argv,
                    fhicl::ParameterSet const & pset)
   {
+    auto const gta_pset = pset.get<ParameterSet>("genToArt");
+
     // Make the generators based on the configuration.
     std::vector<ThrottledGenerator> generators;
 
-    auto const fr_pset = pset.get<ParameterSet>("fragment_receiver");
+    auto const fr_pset = gta_pset.get<ParameterSet>("fragment_receiver");
     std::vector<std::string> const gen_psets =
       fr_pset.get<std::vector<std::string>>("generators", { });
     for (auto const & gen_ps_name : gen_psets) {
@@ -156,14 +164,14 @@ namespace {
     }
 
     artdaq::FragmentPtrs frags;
-    auto const eb_pset = pset.get<ParameterSet>("event_builder");
+    auto const eb_pset = gta_pset.get<ParameterSet>("event_builder", {} );
     size_t expected_frags_per_event = 0;
     for (auto & gen : generators) {
       expected_frags_per_event += gen.numFragIDs();
     }
 
     artdaq::EventStore store(expected_frags_per_event,
-                             pset.get<artdaq::EventStore::run_id_t>("run_number"),
+                             gta_pset.get<artdaq::EventStore::run_id_t>("run_number"),
                              1, // Store ID.
                              argc,
                              argv,
@@ -172,19 +180,22 @@ namespace {
                              eb_pset.get<double>("timeout", 5.0),
                              eb_pset.get<bool>("print_stats", false));
 
-
     auto const events_to_generate =
-      pset.get<artdaq::Fragment::sequence_id_t>("events_to_generate", 0);
+      gta_pset.get<artdaq::Fragment::sequence_id_t>("events_to_generate", -1);
     auto const reset_sequenceID = pset.get<bool>("reset_sequenceID", true);
     bool done = false;
-    for (artdaq::Fragment::sequence_id_t event_count = 0;
-         event_count < events_to_generate && (!done);
+    for (artdaq::Fragment::sequence_id_t event_count = 1;
+         (events_to_generate == static_cast<decltype(events_to_generate)>(-1)
+          || event_count <= events_to_generate) && (!done);
          ++event_count) {
       for (auto & gen : generators) {
-        done &= gen.getNext(frags);
+        done |= !gen.getNext(frags);
       }
       artdaq::Fragment::sequence_id_t current_sequence_id = -1;
       for (auto & val : frags) {
+        if (reset_sequenceID) {
+          val->setSequenceID(event_count);
+        }
         if (current_sequence_id ==
             static_cast<artdaq::Fragment::sequence_id_t>(-1)) {
           current_sequence_id = val->sequenceID();
@@ -197,9 +208,6 @@ namespace {
             << " and "
             << current_sequence_id
             << ".\n";
-        }
-        if (reset_sequenceID) {
-          val->setSequenceID(event_count);
         }
         store.insert(std::move(val));
       }
@@ -230,15 +238,11 @@ int main(int argc, char * argv[]) try
   make_ParameterSet(vm["config"].as<std::string>(), lookup_policy, pset);
   return process_data(argc, argv, pset);
 }
-
-catch (std::string & x)
-{
+catch (std::string & x) {
   cerr << "Exception (type string) caught in genToArt: " << x << '\n';
   return 1;
 }
-
-catch (char const * m)
-{
+catch (char const * m) {
   cerr << "Exception (type char const*) caught in genToArt: ";
   if (m)
   { cerr << m; }

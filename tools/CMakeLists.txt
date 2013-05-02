@@ -21,4 +21,10 @@ art_make_exec(genToArt
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   )
 
+cet_test(genToArt_t HANDBUILT
+  TEST_EXEC genToArt
+  TEST_ARGS -c genToArt_t.fcl
+  DATAFILES fcl/genToArt_t.fcl
+)
+
 install_source()

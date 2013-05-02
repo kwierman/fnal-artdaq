@@ -51,10 +51,8 @@ private:
   // Configuration
   content_selector_t const content_selection_;
   std::size_t const payload_size_spec_; // Poisson mean if random size wanted.
-  std::size_t const events_to_generate_; // Go forever if this is 0
   std::vector<Fragment::fragment_id_t> fragment_ids_;
 
-  RawDataType const run_number_;
   bool const want_random_payload_size_;
 
   // State

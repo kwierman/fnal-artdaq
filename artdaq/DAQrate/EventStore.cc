@@ -13,7 +13,7 @@
 #include "artdaq/DAQrate/Utils.hh"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
-// jbk note about performance measurement collection - 
+// jbk note about performance measurement collection -
 // We should no longer need this "Perf" performance measurement.
 // The event store is used in applications that do not use MPI,
 // and the Perf performance measurement collector requires MPI
@@ -177,7 +177,7 @@ namespace artdaq {
 
       events_.erase(loc);
       // 13-Dec-2012, KAB - this monitoring needs to come before
-      // the enqueueing of the event lest it be empty by the 
+      // the enqueueing of the event lest it be empty by the
       // time that we ask for the word count.
       MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
         getMonitoredQuantity(EVENT_RATE_STAT_KEY);
@@ -211,9 +211,9 @@ namespace artdaq {
     return reader_thread_.get();
   }
 
-  void EventStore::setSeqIDModulus(unsigned int seqIDModulus) 
+  void EventStore::setSeqIDModulus(unsigned int seqIDModulus)
   {
-    seqIDModulus_ = seqIDModulus; 
+    seqIDModulus_ = seqIDModulus;
   }
 
   void EventStore::flushData()
@@ -244,7 +244,7 @@ namespace artdaq {
     lastFlushedSeqID_ = highestSeqIDSeen_;
   }
 
-  void EventStore::startRun(run_id_t runID) 
+  void EventStore::startRun(run_id_t runID)
   {
     run_id_ = runID;
     subrun_id_ = 1;
@@ -252,16 +252,16 @@ namespace artdaq {
     highestSeqIDSeen_ = 0;
   }
 
-  void EventStore::startSubrun() 
+  void EventStore::startSubrun()
   {
-    subrun_id_ += 1;
+    ++subrun_id_;
   }
 
-  void EventStore::endRun() 
+  void EventStore::endRun()
   {
     RawEvent_ptr endOfRunEvent(new RawEvent(run_id_, subrun_id_, 0));
     std::unique_ptr<artdaq::Fragment> endOfRunFrag(new Fragment(static_cast<size_t>(ceil(sizeof(size_t) /
-											 static_cast<double>(sizeof(Fragment::value_type))))));
+                       static_cast<double>(sizeof(Fragment::value_type))))));
 
     endOfRunFrag->setSystemType(Fragment::EndOfRunFragmentType);
     *endOfRunFrag->dataBegin() = id_;
@@ -275,11 +275,11 @@ namespace artdaq {
     }
   }
 
-  void EventStore::endSubrun() 
+  void EventStore::endSubrun()
   {
     RawEvent_ptr endOfSubrunEvent(new RawEvent(run_id_, subrun_id_, 0));
     std::unique_ptr<artdaq::Fragment> endOfSubrunFrag(new Fragment(static_cast<size_t>(ceil(sizeof(size_t) /
-											    static_cast<double>(sizeof(Fragment::value_type))))));
+                          static_cast<double>(sizeof(Fragment::value_type))))));
 
     endOfSubrunFrag->setSystemType(Fragment::EndOfSubrunFragmentType);
     *endOfSubrunFrag->dataBegin() = id_;

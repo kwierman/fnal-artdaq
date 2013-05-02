@@ -11,8 +11,6 @@ artdaq::GenericFragmentSimulator::GenericFragmentSimulator(fhicl::ParameterSet c
   content_selection_(static_cast<content_selector_t>
                      (ps.get<size_t>("content_selection", 0))),
   payload_size_spec_(ps.get<size_t>("payload_size", 10240)),
-  events_to_generate_(ps.get<size_t>("events_to_generate", 0)),
-  run_number_(ps.get<RawDataType>("run_number", 1)),
   want_random_payload_size_(ps.get<bool>("want_random_payload_size", false)),
   current_event_num_(0),
   engine_(ps.get<int64_t>("random_seed", 314159)),
@@ -30,10 +28,6 @@ bool
 artdaq::GenericFragmentSimulator::getNext_(FragmentPtrs & frags)
 {
   ++current_event_num_;
-  if (events_to_generate_ != 0 &&
-      current_event_num_ > events_to_generate_) {
-    return false;
-  }
   frags.reserve(frags.size() + fragment_ids_.size());
   for (auto fragID : fragment_ids_) {
     frags.emplace_back();
