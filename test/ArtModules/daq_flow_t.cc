@@ -26,11 +26,11 @@ int main(int argc, char * argv[])
   try {
     size_t const NUM_FRAGS_PER_EVENT = 5;
     EventStore::run_id_t const RUN_ID = 2112;
+    size_t const NUM_EVENTS = 100;
     int const STORE_ID = 1;
     // We may want to add ParameterSet parsing to this code, but right
     // now this will do...
     ParameterSet sim_config;
-    sim_config.put("events_to_generate", 100);
     sim_config.put("fragments_per_event", NUM_FRAGS_PER_EVENT);
     sim_config.put("run_number", RUN_ID);
     // Eventually, this test should make a mixed-up streams of
@@ -40,14 +40,14 @@ int main(int argc, char * argv[])
     GenericFragmentSimulator sim(sim_config);
     EventStore events(NUM_FRAGS_PER_EVENT, RUN_ID, STORE_ID, argc, argv, &artapp, 1);
     FragmentPtrs frags;
-    while (sim.getNext(frags)) {
+    size_t event_count = 0;
+    while (frags.clear(), event_count++ < NUM_EVENTS && sim.getNext(frags)) {
       LOG_DEBUG("main") << "Number of fragments: " << frags.size() << '\n';
       assert(frags.size() == NUM_FRAGS_PER_EVENT);
-    for (auto && frag : frags) {
+      for (auto && frag : frags) {
         assert(frag != nullptr);
         events.insert(std::move(frag));
       }
-      frags.clear();
     }
     rc = events.endOfData();
   }
