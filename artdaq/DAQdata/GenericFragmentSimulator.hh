@@ -40,6 +40,7 @@ enum class content_selector_t : uint8_t {
 
 private:
   bool getNext_(FragmentPtrs & output) override;
+  std::vector<Fragment::fragment_id_t> fragmentIDs_() override;
   bool requiresStateMachine_() const override;
   void start_() override;
   void stop_() override;
@@ -51,8 +52,8 @@ private:
   content_selector_t const content_selection_;
   std::size_t const payload_size_spec_; // Poisson mean if random size wanted.
   std::size_t const events_to_generate_; // Go forever if this is 0
-  std::size_t const fragments_per_event_;
-  std::size_t const starting_fragment_id_;
+  std::vector<Fragment::fragment_id_t> fragment_ids_;
+
   RawDataType const run_number_;
   bool const want_random_payload_size_;
 

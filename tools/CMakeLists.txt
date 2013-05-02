@@ -9,4 +9,16 @@ art_make_exec(StateResponder
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   )
 
+art_make_exec(genToArt
+  LIBRARIES
+  artdaq_Application_MPI2
+  artdaq_DAQrate
+  artdaq_DAQdata
+  artdaq_Utilities
+  ${ART_FRAMEWORK_ART}
+  ${FHICLCPP}
+  ${CETLIB}
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  )
+
 install_source()
