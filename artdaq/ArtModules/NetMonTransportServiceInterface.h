@@ -1,5 +1,5 @@
-#ifndef art_Framework_IO_Root_NetMonTransportServiceInterface_h
-#define art_Framework_IO_Root_NetMonTransportServiceInterface_h
+#ifndef artdaq_ArtModules_NetMonTransportServiceInterface_h
+#define artdaq_ArtModules_NetMonTransportServiceInterface_h
 
 #include "art/Framework/Services/Registry/ServiceMacros.h"
 
@@ -16,7 +16,7 @@ public:
 };
 
 DECLARE_ART_SERVICE_INTERFACE(NetMonTransportServiceInterface, LEGACY)
-#endif /* art_Framework_IO_Root_NetMonTransportServiceInterface_h */
+#endif /* artdaq_ArtModules_NetMonTransportServiceInterface_h */
 
 // Local Variables:
 // mode: c++

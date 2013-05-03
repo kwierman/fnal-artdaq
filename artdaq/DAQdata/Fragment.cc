@@ -5,28 +5,6 @@
 
 using artdaq::detail::RawFragmentHeader;
 
-artdaq::Fragment::version_t const artdaq::Fragment::InvalidVersion =
-  detail::RawFragmentHeader::InvalidVersion;
-artdaq::Fragment::sequence_id_t const artdaq::Fragment::InvalidSequenceID =
-  detail::RawFragmentHeader::InvalidSequenceID;
-artdaq::Fragment::fragment_id_t const artdaq::Fragment::InvalidFragmentID =
-  detail::RawFragmentHeader::InvalidFragmentID;
-
-artdaq::Fragment::type_t const artdaq::Fragment::InvalidFragmentType =
-  detail::RawFragmentHeader::InvalidFragmentType;
-artdaq::Fragment::type_t const artdaq::Fragment::EndOfDataFragmentType =
-  detail::RawFragmentHeader::EndOfDataFragmentType;
-artdaq::Fragment::type_t const artdaq::Fragment::DataFragmentType =
-  detail::RawFragmentHeader::DataFragmentType;
-artdaq::Fragment::type_t const artdaq::Fragment::InitFragmentType = 
-  detail::RawFragmentHeader::InitFragmentType;
-artdaq::Fragment::type_t const artdaq::Fragment::EndOfRunFragmentType =
-  detail::RawFragmentHeader::EndOfRunFragmentType;
-artdaq::Fragment::type_t const artdaq::Fragment::EndOfSubrunFragmentType =
-  detail::RawFragmentHeader::EndOfSubrunFragmentType;
-artdaq::Fragment::type_t const artdaq::Fragment::ShutdownFragmentType = 
-  detail::RawFragmentHeader::ShutdownFragmentType;
-
 bool artdaq::fragmentSequenceIDCompare(Fragment i, Fragment j)
 {
   return i.sequenceID() < j.sequenceID();
@@ -81,7 +59,7 @@ std::unique_ptr<artdaq::Fragment>
 artdaq::Fragment::eodFrag(size_t nFragsToExpect)
 {
   std::unique_ptr<artdaq::Fragment> result(new Fragment(static_cast<size_t>(ceil(sizeof(nFragsToExpect) /
-										 static_cast<double>(sizeof(value_type))))));
+                     static_cast<double>(sizeof(value_type))))));
   result->setSystemType(Fragment::EndOfDataFragmentType);
   *result->dataBegin() = nFragsToExpect;
   return result;

@@ -17,7 +17,8 @@ artdaq::detail::RawEventQueueReader::RawEventQueueReader(fhicl::ParameterSet con
   waiting_time(ps.get<double>("waiting_time", std::numeric_limits<double>::infinity())),
   resume_after_timeout(ps.get<bool>("resume_after_timeout", true)),
   pretend_module_name("daq"),
-  unidentified_instance_name("unidentified")
+  unidentified_instance_name("unidentified"),
+  shutdownMsgReceived(false), outputFileCloseNeeded(false)
 {
   help.reconstitutes<Fragments, art::InEvent>(pretend_module_name,
                                               unidentified_instance_name);
@@ -70,6 +71,10 @@ bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal * const & i
     art::SubRunPrincipal *& outSR,
     art::EventPrincipal *& outE)
 {
+  if (outputFileCloseNeeded) {
+    outputFileCloseNeeded = false;
+    return false;
+  }
   // Establish default 'results'
   outR = 0;
   outSR = 0;
@@ -97,6 +102,7 @@ bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal * const & i
   //   2) the event we read was the end-of-data marker: a null
   //      pointer
   if (!got_event || !popped_event) { 
+    shutdownMsgReceived = true;
     return false; 
   }
 
@@ -115,6 +121,7 @@ bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal * const & i
       art::EventID const evid(art::EventID::flushEvent(inR->id()));
       outSR = pmaker.makeSubRunPrincipal(evid.subRunID(), runstart);
       outE = pmaker.makeEventPrincipal(evid, runstart);
+      outputFileCloseNeeded = true;
       return true;
     }
   }

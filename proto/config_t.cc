@@ -1,5 +1,5 @@
-#include "artdaq/DAQrate/Config.hh"
-#include "artdaq/DAQrate/MPIProg.hh"
+#include "Config.hh"
+#include "MPIProg.hh"
 #include <cstring>
 #include <cassert>
 
@@ -20,5 +20,5 @@ int main()
   assert(strcmp(cfg.art_argv_[1], "a") == 0);
   assert(strcmp(cfg.art_argv_[2], "bc") == 0);
   assert(strcmp(cfg.art_argv_[3], "de f") == 0);
-  assert(cfg.use_artapp_);
+  assert(!cfg.use_artapp_);
 }

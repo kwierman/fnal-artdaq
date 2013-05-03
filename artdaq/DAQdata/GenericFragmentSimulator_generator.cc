@@ -11,29 +11,26 @@ artdaq::GenericFragmentSimulator::GenericFragmentSimulator(fhicl::ParameterSet c
   content_selection_(static_cast<content_selector_t>
                      (ps.get<size_t>("content_selection", 0))),
   payload_size_spec_(ps.get<size_t>("payload_size", 10240)),
-  events_to_generate_(ps.get<size_t>("events_to_generate", 0)),
-  fragments_per_event_(ps.get<size_t>("fragments_per_event", 5)),
-  starting_fragment_id_(ps.get<size_t>("starting_fragment_id", 0)),
-  run_number_(ps.get<RawDataType>("run_number", 1)),
+  fragment_ids_(),
   want_random_payload_size_(ps.get<bool>("want_random_payload_size", false)),
   current_event_num_(0),
   engine_(ps.get<int64_t>("random_seed", 314159)),
   payload_size_generator_(payload_size_spec_),
   fragment_content_generator_()
-{ }
+{
+  fragment_ids_.resize(ps.get<size_t>("fragments_per_event", 5));
+  auto current_id = ps.get<Fragment::fragment_id_t>("starting_fragment_id", 0);
+  std::generate(fragment_ids_.begin(),
+                fragment_ids_.end(),
+                [&current_id]() { return current_id++; });
+}
 
 bool
 artdaq::GenericFragmentSimulator::getNext_(FragmentPtrs & frags)
 {
   ++current_event_num_;
-  if (events_to_generate_ != 0 &&
-      current_event_num_ > events_to_generate_) {
-    return false;
-  }
-  Fragment::fragment_id_t fragID(0);
-  frags.reserve(frags.size() + fragments_per_event_);
-  for (size_t i = starting_fragment_id_; i < fragments_per_event_; ++i) {
-    ++fragID;
+  frags.reserve(frags.size() + fragment_ids_.size());
+  for (auto fragID : fragment_ids_) {
     frags.emplace_back();
     bool result =
       getNext(current_event_num_, fragID, frags.back());
@@ -79,6 +76,39 @@ getNext(Fragment::sequence_id_t sequence_id,
   assert(frag_ptr != nullptr);
   return true;
 }
+
+std::vector<artdaq::Fragment::fragment_id_t>
+artdaq::GenericFragmentSimulator::
+fragmentIDs_()
+{
+  return fragment_ids_;
+}
+
+bool
+artdaq::GenericFragmentSimulator::
+requiresStateMachine_() const
+{
+  return false;
+}
+
+void
+artdaq::GenericFragmentSimulator::
+start_()
+{ }
+
+void
+artdaq::GenericFragmentSimulator::
+stop_()
+{ }
+
+void
+artdaq::GenericFragmentSimulator::
+pause_()
+{ }
+
+void
+artdaq::GenericFragmentSimulator::
+resume_() { }
 
 std::size_t
 artdaq::GenericFragmentSimulator::

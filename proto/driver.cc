@@ -15,7 +15,7 @@
 #include "artdaq/DAQdata/GenericFragmentSimulator.hh"
 #include "artdaq/DAQdata/makeFragmentGenerator.hh"
 #include "artdaq/DAQrate/EventStore.hh"
-#include "artdaq/DAQrate/MPIProg.hh"
+#include "MPIProg.hh"
 #include "artdaq/DAQrate/SimpleQueueReader.hh"
 #include "cetlib/container_algorithms.h"
 #include "cetlib/filepath_maker.h"
