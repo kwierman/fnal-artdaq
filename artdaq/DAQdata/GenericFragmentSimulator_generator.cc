@@ -11,6 +11,7 @@ artdaq::GenericFragmentSimulator::GenericFragmentSimulator(fhicl::ParameterSet c
   content_selection_(static_cast<content_selector_t>
                      (ps.get<size_t>("content_selection", 0))),
   payload_size_spec_(ps.get<size_t>("payload_size", 10240)),
+  fragment_ids_(),
   want_random_payload_size_(ps.get<bool>("want_random_payload_size", false)),
   current_event_num_(0),
   engine_(ps.get<int64_t>("random_seed", 314159)),
