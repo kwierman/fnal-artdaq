@@ -1,0 +1,13 @@
+#ifndef artdaq_Application_TaskType_hh
+#define artdaq_Application_TaskType_hh
+
+namespace artdaq
+{
+  namespace detail {
+    enum TaskType : int {FragmentReceiverTask=1, EventBuilderTask=2, AggregatorTask=3};
+  }
+
+  using detail::TaskType; // Require C++2011 scoping, hide C++03 scoping.
+}
+
+#endif /* artdaq_Application_TaskType_hh */

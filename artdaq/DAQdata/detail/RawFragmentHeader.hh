@@ -30,18 +30,18 @@ struct artdaq::detail::RawFragmentHeader {
   typedef uint8_t  metadata_word_count_t;
 
   // define special values for type_t
-  static const type_t INVALID_TYPE = 0;
-  static const type_t FIRST_USER_TYPE = 1;
-  static const type_t LAST_USER_TYPE = 224;
-  static const type_t FIRST_SYSTEM_TYPE = 225;
-  static const type_t LAST_SYSTEM_TYPE = 255;
-  static const type_t InvalidFragmentType = INVALID_TYPE;
-  static const type_t EndOfDataFragmentType = FIRST_SYSTEM_TYPE;
-  static const type_t DataFragmentType = FIRST_SYSTEM_TYPE+1;
-  static const type_t InitFragmentType = FIRST_SYSTEM_TYPE+2;
-  static const type_t EndOfRunFragmentType = FIRST_SYSTEM_TYPE+3;
-  static const type_t EndOfSubrunFragmentType = FIRST_SYSTEM_TYPE+4;
-  static const type_t ShutdownFragmentType = FIRST_SYSTEM_TYPE+5;
+  static constexpr type_t INVALID_TYPE = 0;
+  static constexpr type_t FIRST_USER_TYPE = 1;
+  static constexpr type_t LAST_USER_TYPE = 224;
+  static constexpr type_t FIRST_SYSTEM_TYPE = 225;
+  static constexpr type_t LAST_SYSTEM_TYPE = 255;
+  static constexpr type_t InvalidFragmentType = INVALID_TYPE;
+  static constexpr type_t EndOfDataFragmentType = FIRST_SYSTEM_TYPE;
+  static constexpr type_t DataFragmentType = FIRST_SYSTEM_TYPE+1;
+  static constexpr type_t InitFragmentType = FIRST_SYSTEM_TYPE+2;
+  static constexpr type_t EndOfRunFragmentType = FIRST_SYSTEM_TYPE+3;
+  static constexpr type_t EndOfSubrunFragmentType = FIRST_SYSTEM_TYPE+4;
+  static constexpr type_t ShutdownFragmentType = FIRST_SYSTEM_TYPE+5;
 
   // Each of the following invalid values is chosen based on the
   // size of the bitfield in which the corresponding data are

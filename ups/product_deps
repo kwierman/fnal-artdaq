@@ -1,7 +1,7 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent artdaq	v0_04_02
-defaultqual	e2
+parent artdaq	v1_00_00
+defaultqual	e2:ib
 
 # These optional lines define the installed directories where
 # headers, libraries, and executables will be found
@@ -18,36 +18,32 @@ bindir      fq_dir      bin
 #
 product		version		optional
 gcc		v4_7_1
-art		v1_06_00
+art		v1_07_01
 mvapich2	v1_7_0
-mpich           v3_0_2
+mpich		v3_0_2
+xmlrpc_c	v1_25_18
 
 # list products required ONLY for the build
 # any products here must NOT have qualifiers
-only_for_build	cetbuildtools	v3_04_04
+only_for_build	cetbuildtools	v3_04_05
+only_for_build	smc_compiler	v6_1_0
 
 # e2  - with gcc 4.7.1 and -std=c++11
 # -nq- means there is no qualifier
 # a - means the dependent product is not required by the parent and will not be setup
-qualifier		art		mvapich2	mpich	gcc	notes
-e2:debug		e2:debug	-nq-		-	-nq-	-std=c++11
-e2:opt			e2:opt		-nq-		-	-nq-	-std=c++11
-e2:prof			e2:prof		-nq-		-	-nq-	-std=c++11
-nu:e2:debug		nu:e2:debug	-nq-		-	-nq-	-std=c++11
-nu:e2:opt		nu:e2:opt	-nq-		-	-nq-	-std=c++11
-nu:e2:prof		nu:e2:prof	-nq-		-	-nq-	-std=c++11
-mu2e:e2:debug		mu2e:e2:debug	-nq-		-	-nq-	-std=c++11
-mu2e:e2:opt		mu2e:e2:opt	-nq-		-	-nq-	-std=c++11
-mu2e:e2:prof		mu2e:e2:prof	-nq-		-	-nq-	-std=c++11
-e2:eth:debug		e2:debug	-		debug	-nq-	-std=c++11
-e2:eth:opt		e2:opt		-		opt	-nq-	-std=c++11
-e2:eth:prof		e2:prof		-		prof	-nq-	-std=c++11
-nu:e2:eth:debug		nu:e2:debug	-		debug	-nq-	-std=c++11
-nu:e2:eth:opt		nu:e2:opt	-		opt	-nq-	-std=c++11
-nu:e2:eth:prof		nu:e2:prof	-		prof	-nq-	-std=c++11
-mu2e:e2:eth:debug	mu2e:e2:debug	-		debug	-nq-	-std=c++11
-mu2e:e2:eth:opt		mu2e:e2:opt	-		opt	-nq-	-std=c++11
-mu2e:e2:eth:prof	mu2e:e2:prof	-		prof	-nq-	-std=c++11
+qualifier		art		mvapich2	mpich	xmlrpc_c	gcc	notes
+e2:ib:debug		e2:debug	-nq-		-	e2:debug	-nq-	-std=c++11
+e2:ib:prof		e2:prof		-nq-		-	e2:prof		-nq-	-std=c++11
+nu:e2:ib:debug		nu:e2:debug	-nq-		-	e2:debug	-nq-	-std=c++11
+nu:e2:ib:prof		nu:e2:prof	-nq-		-	e2:prof		-nq-	-std=c++11
+mu2e:e2:ib:debug	mu2e:e2:debug	-nq-		-	e2:debug	-nq-	-std=c++11
+mu2e:e2:ib:prof		mu2e:e2:prof	-nq-		-	e2:prof		-nq-	-std=c++11
+e2:eth:debug		e2:debug	-		debug	e2:debug	-nq-	-std=c++11
+e2:eth:prof		e2:prof		-		prof	e2:prof		-nq-	-std=c++11
+nu:e2:eth:debug		nu:e2:debug	-		debug	e2:debug	-nq-	-std=c++11
+nu:e2:eth:prof		nu:e2:prof	-		prof	e2:prof		-nq-	-std=c++11
+mu2e:e2:eth:debug	mu2e:e2:debug	-		debug	e2:debug	-nq-	-std=c++11
+mu2e:e2:eth:prof	mu2e:e2:prof	-		prof	e2:prof		-nq-	-std=c++11
 
 # Preserve tabs and formatting in emacs and vi / vim:
 

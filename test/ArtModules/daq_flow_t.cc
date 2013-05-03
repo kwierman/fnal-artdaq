@@ -2,7 +2,7 @@
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQdata/GenericFragmentSimulator.hh"
 #include "artdaq/DAQrate/EventStore.hh"
-#include "artdaq/DAQrate/MPIProg.hh"
+#include "artdaq/Application/MPI2/MPISentry.hh"
 #include "cetlib/exception.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
@@ -21,16 +21,16 @@ using std::size_t;
 
 int main(int argc, char * argv[])
 {
-  MPIProg mpiSentry(argc, argv);
+  artdaq::MPISentry mpiSentry(&argc, &argv);
   int rc = -1;
   try {
     size_t const NUM_FRAGS_PER_EVENT = 5;
     EventStore::run_id_t const RUN_ID = 2112;
+    size_t const NUM_EVENTS = 100;
     int const STORE_ID = 1;
     // We may want to add ParameterSet parsing to this code, but right
     // now this will do...
     ParameterSet sim_config;
-    sim_config.put("events_to_generate", 100);
     sim_config.put("fragments_per_event", NUM_FRAGS_PER_EVENT);
     sim_config.put("run_number", RUN_ID);
     // Eventually, this test should make a mixed-up streams of
@@ -40,14 +40,14 @@ int main(int argc, char * argv[])
     GenericFragmentSimulator sim(sim_config);
     EventStore events(NUM_FRAGS_PER_EVENT, RUN_ID, STORE_ID, argc, argv, &artapp, 1);
     FragmentPtrs frags;
-    while (sim.getNext(frags)) {
+    size_t event_count = 0;
+    while (frags.clear(), event_count++ < NUM_EVENTS && sim.getNext(frags)) {
       LOG_DEBUG("main") << "Number of fragments: " << frags.size() << '\n';
       assert(frags.size() == NUM_FRAGS_PER_EVENT);
-    for (auto && frag : frags) {
+      for (auto && frag : frags) {
         assert(frag != nullptr);
         events.insert(std::move(frag));
       }
-      frags.clear();
     }
     rc = events.endOfData();
   }

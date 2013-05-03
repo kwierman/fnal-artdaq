@@ -10,14 +10,15 @@
 using std::string;
 
 artdaq::detail::RawEventQueueReader::RawEventQueueReader(fhicl::ParameterSet const & ps,
-							 art::ProductRegistryHelper & help,
-							 art::PrincipalMaker const & pm):
+               art::ProductRegistryHelper & help,
+               art::PrincipalMaker const & pm):
   pmaker(pm),
   incoming_events(getGlobalQueue()),
-  waiting_time(ps.get<double>("waiting_time", std::numeric_limits<double>::infinity())),
+  waiting_time(ps.get<double>("waiting_time", 86400.0)),
   resume_after_timeout(ps.get<bool>("resume_after_timeout", true)),
   pretend_module_name("daq"),
-  unidentified_instance_name("unidentified")
+  unidentified_instance_name("unidentified"),
+  shutdownMsgReceived(false), outputFileCloseNeeded(false)
 {
   help.reconstitutes<Fragments, art::InEvent>(pretend_module_name,
                                               unidentified_instance_name);
@@ -70,6 +71,10 @@ bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal * const & i
     art::SubRunPrincipal *& outSR,
     art::EventPrincipal *& outE)
 {
+  if (outputFileCloseNeeded) {
+    outputFileCloseNeeded = false;
+    return false;
+  }
   // Establish default 'results'
   outR = 0;
   outSR = 0;
@@ -96,8 +101,9 @@ bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal * const & i
   //      configured NOT to keep trying after a timeout, or
   //   2) the event we read was the end-of-data marker: a null
   //      pointer
-  if (!got_event || !popped_event) { 
-    return false; 
+  if (!got_event || !popped_event) {
+    shutdownMsgReceived = true;
+    return false;
   }
 
   // Check the number of fragments in the RawEvent.  If we have a single
@@ -115,6 +121,7 @@ bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal * const & i
       art::EventID const evid(art::EventID::flushEvent(inR->id()));
       outSR = pmaker.makeSubRunPrincipal(evid.subRunID(), runstart);
       outE = pmaker.makeEventPrincipal(evid, runstart);
+      outputFileCloseNeeded = true;
       return true;
     }
   }

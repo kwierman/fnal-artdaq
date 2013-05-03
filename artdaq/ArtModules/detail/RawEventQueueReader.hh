@@ -28,6 +28,8 @@ namespace artdaq {
       bool                        resume_after_timeout;
       std::string                 pretend_module_name;
       std::string                 unidentified_instance_name;
+      bool                        shutdownMsgReceived;
+      bool                        outputFileCloseNeeded;
 
       RawEventQueueReader(fhicl::ParameterSet const & ps,
                           art::ProductRegistryHelper & help,
@@ -40,6 +42,8 @@ namespace artdaq {
 
       void closeCurrentFile();
       void readFile(std::string const & name, art::FileBlock *& fb);
+
+      bool hasMoreData() const {return (! shutdownMsgReceived);}
 
       bool readNext(art::RunPrincipal * const & inR,
                     art::SubRunPrincipal * const & inSR,
