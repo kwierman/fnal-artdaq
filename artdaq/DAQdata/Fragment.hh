@@ -167,7 +167,8 @@ public:
 #endif
 
 private:
-  void updateSize_();
+  template <typename T> static std::size_t validatedMetadataSize_();
+  void updateFragmentHeaderWC_();
   std::vector<RawDataType> vals_;
 
 #if USE_MODERN_FEATURES
@@ -196,28 +197,48 @@ isSystemFragmentType(type_t fragmentType)
   return fragmentType >= detail::RawFragmentHeader::FIRST_SYSTEM_TYPE;
 }
 
-template <class T>
+template<typename T>
+std::size_t
 artdaq::Fragment::
-Fragment(std::size_t payload_size, sequence_id_t sequence_id,
-         fragment_id_t fragment_id, type_t type, const T & metadata) :
-  vals_(payload_size + artdaq::detail::RawFragmentHeader::num_words() +
-        std::ceil(sizeof(T)/sizeof(artdaq::RawDataType)), 0)
+validatedMetadataSize_()
 {
-  updateSize_();
-  fragmentHeader()->sequence_id = sequence_id;
-  fragmentHeader()->fragment_id = fragment_id;
-  fragmentHeader()->type        = type;
+  // Make sure a size_t is big enough to hold the maximum metadata
+  // size. This *should* always be true, but it is a compile-time check
+  // and therefore cheap.
+  static_assert(sizeof(size_t) >=
+                sizeof(decltype(std::numeric_limits<detail::RawFragmentHeader::metadata_word_count_t>::max())),
+                "metadata_word_count_t is too big!");
 
-  size_t max_md_wc =
-    (256 * sizeof(detail::RawFragmentHeader::metadata_word_count_t)) - 1;
-  size_t requested_md_wc = std::ceil(sizeof(T)/sizeof(artdaq::RawDataType));
+  static size_t constexpr max_md_wc =
+    std::numeric_limits<detail::RawFragmentHeader::metadata_word_count_t>::max();
+  size_t requested_md_wc =
+    std::ceil(sizeof(T) / static_cast<double>(sizeof(artdaq::RawDataType)));
   if (requested_md_wc > max_md_wc) {
     throw cet::exception("InvalidRequest")
       << "The requested metadata structure is too large: "
       << "requested word count = " << requested_md_wc
       << ", maximum word count = " << max_md_wc;
   }
-  fragmentHeader()->metadata_word_count = requested_md_wc;
+  return requested_md_wc;
+}
+
+template <class T>
+artdaq::Fragment::
+Fragment(std::size_t payload_size, sequence_id_t sequence_id,
+         fragment_id_t fragment_id, type_t type, const T & metadata) :
+  vals_((artdaq::detail::RawFragmentHeader::num_words() + // Header
+         validatedMetadataSize_<T>() + // Metadata
+         payload_size), // User data
+        0)
+{
+  updateFragmentHeaderWC_();
+  fragmentHeader()->sequence_id = sequence_id;
+  fragmentHeader()->fragment_id = fragment_id;
+  fragmentHeader()->type        = type;
+
+  fragmentHeader()->metadata_word_count =
+    vals_.size() -
+    (artdaq::detail::RawFragmentHeader::num_words() + payload_size);
 
   memcpy(metadataAddress(), &metadata, sizeof(T));
 }
@@ -282,7 +303,7 @@ inline
 void
 artdaq::Fragment::setSequenceID(sequence_id_t sequence_id)
 {
-  assert(sequence_id < 0x1000000000000);
+  assert(sequence_id <= detail::RawFragmentHeader::InvalidSequenceID);
   fragmentHeader()->sequence_id = sequence_id;
 }
 
@@ -295,9 +316,11 @@ artdaq::Fragment::setFragmentID(fragment_id_t fragment_id)
 
 inline
 void
-artdaq::Fragment::updateSize_()
+artdaq::Fragment::updateFragmentHeaderWC_()
 {
-  assert(vals_.size() < 0x100000000);
+  // Make sure vals_.size() fits inside 32 bits. Left-shift here should
+  // match bitfield size of word_count in RawFragmentHeader.
+  assert(vals_.size() < (1ULL << 32));
   fragmentHeader()->word_count = vals_.size();
 }
 
@@ -313,14 +336,14 @@ inline
 bool
 artdaq::Fragment::hasMetadata() const
 {
-  return fragmentHeader()->metadata_word_count > 0;
+  return fragmentHeader()->metadata_word_count != 0;
 }
 
 template <class T>
 T *
 artdaq::Fragment::metadata()
 {
-  if (fragmentHeader()->metadata_word_count < 1) {
+  if (fragmentHeader()->metadata_word_count == 0) {
     throw cet::exception("InvalidRequest")
       << "No metadata has been stored in this Fragment.";
   }
@@ -332,7 +355,7 @@ template <class T>
 T const *
 artdaq::Fragment::metadata() const
 {
-  if (fragmentHeader()->metadata_word_count < 1) {
+  if (fragmentHeader()->metadata_word_count == 0) {
     throw cet::exception("InvalidRequest")
       << "No metadata has been stored in this Fragment.";
   }
@@ -344,25 +367,14 @@ template <class T>
 void
 artdaq::Fragment::setMetadata(const T & metadata)
 {
-  if (fragmentHeader()->metadata_word_count > 0) {
+  if (fragmentHeader()->metadata_word_count != 0) {
     throw cet::exception("InvalidRequest")
       << "Metadata has already been stored in this Fragment.";
   }
-
-  size_t max_md_wc =
-    (256 * sizeof(detail::RawFragmentHeader::metadata_word_count_t)) - 1;
-  size_t requested_md_wc = std::ceil(sizeof(T)/sizeof(artdaq::RawDataType));
-  if (requested_md_wc > max_md_wc) {
-    throw cet::exception("InvalidRequest")
-      << "The requested metadata structure is too large: "
-      << "requested word count = " << requested_md_wc
-      << ", maximum word count = " << max_md_wc;
-  }
-
-  vals_.insert(vals_.begin()+detail::RawFragmentHeader::num_words(),
-               requested_md_wc, 0);
-  updateSize_();
-  fragmentHeader()->metadata_word_count = requested_md_wc;
+  auto const mdSize = validatedMetadataSize_<T>();
+  vals_.insert(dataBegin(), mdSize, 0);
+  updateFragmentHeaderWC_();
+  fragmentHeader()->metadata_word_count = mdSize;
 
   memcpy(metadataAddress(), &metadata, sizeof(T));
 }
@@ -373,7 +385,7 @@ artdaq::Fragment::resize(std::size_t sz, RawDataType v)
 {
   vals_.resize(sz + fragmentHeader()->metadata_word_count +
                detail::RawFragmentHeader::num_words(), v);
-  updateSize_();
+  updateFragmentHeaderWC_();
 }
 
 inline
@@ -381,7 +393,7 @@ void
 artdaq::Fragment::autoResize()
 {
   vals_.resize(fragmentHeader()->word_count);
-  updateSize_();
+  updateFragmentHeaderWC_();
 }
 
 inline
@@ -433,7 +445,7 @@ void
 artdaq::Fragment::clear()
 {
   vals_.erase(dataBegin(), dataEnd());
-  updateSize_();
+  updateFragmentHeaderWC_();
 }
 
 inline
@@ -471,7 +483,7 @@ inline
 artdaq::RawDataType *
 artdaq::Fragment::metadataAddress()
 {
-  if (fragmentHeader()->metadata_word_count < 1) {
+  if (fragmentHeader()->metadata_word_count == 0) {
     throw cet::exception("InvalidRequest")
       << "No metadata has been stored in this Fragment.";
   }
