@@ -57,9 +57,9 @@ NetMonTransportService::
 connect()
 {
   sender_ptr_.reset(new artdaq::SHandles(mpi_buffer_count_,
-					 max_fragment_size_words_,
-					 data_receiver_count_,
-					 first_data_receiver_rank_));
+                                         max_fragment_size_words_,
+                                         data_receiver_count_,
+                                         first_data_receiver_rank_));
 }
 
 void
@@ -86,8 +86,10 @@ sendMessage(uint64_t sequenceId, uint8_t messageType, TBufferFile & msg)
 
   artdaq::NetMonHeader header;
   header.data_length = static_cast<uint64_t>(msg.Length());
-  artdaq::Fragment fragment(std::ceil(msg.Length() / sizeof(artdaq::RawDataType) + 1), 
-			    sequenceId, 0, messageType, header);
+  artdaq::Fragment
+    fragment(std::ceil(msg.Length() /
+                       static_cast<double>(sizeof(artdaq::RawDataType))),
+             sequenceId, 0, messageType, header);
 
   memcpy(&*fragment.dataBegin(), msg.Buffer(), msg.Length());
   sender_ptr_->sendFragment(std::move(fragment));
@@ -100,18 +102,18 @@ receiveMessage(TBufferFile *&msg)
   if (recvd_fragments_ == nullptr) {
     std::shared_ptr<artdaq::RawEvent> popped_event;
     incoming_events_.deqWait(popped_event);
-    
+
     if (popped_event == nullptr) {
       msg = nullptr;
       return;
     }
-    
+
     recvd_fragments_ = popped_event->releaseProduct();
     /* Events coming out of the EventStore are not sorted but need to be
-       sorted by sequence ID before they can be passed to art. 
+       sorted by sequence ID before they can be passed to art.
     */
-    std::sort (recvd_fragments_->begin(), recvd_fragments_->end(), 
-	       artdaq::fragmentSequenceIDCompare);
+    std::sort (recvd_fragments_->begin(), recvd_fragments_->end(),
+         artdaq::fragmentSequenceIDCompare);
   }
 
   artdaq::Fragment topFrag = std::move(recvd_fragments_->at(0));
@@ -120,7 +122,7 @@ receiveMessage(TBufferFile *&msg)
     recvd_fragments_.reset(nullptr);
   }
 
-  artdaq::NetMonHeader *header = topFrag.metadata<artdaq::NetMonHeader>();  
+  artdaq::NetMonHeader *header = topFrag.metadata<artdaq::NetMonHeader>();
   char *buffer = (char *)malloc(header->data_length);
   memcpy(buffer, &*topFrag.dataBegin(), header->data_length);
   msg = new TBufferFile(TBuffer::kRead, header->data_length, buffer, kTRUE, 0);
