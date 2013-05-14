@@ -86,6 +86,14 @@ artdaq::detail::RawFragmentHeader::num_words()
   return sizeof(detail::RawFragmentHeader) / sizeof(RawDataType);
 }
 
+// Compile-time check that the assumption made in num_words() above is
+// actually true.
+static_assert((artdaq::detail::RawFragmentHeader::num_words() *
+               sizeof(artdaq::detail::RawFragmentHeader::RawDataType)) ==
+              sizeof(artdaq::detail::RawFragmentHeader),
+              "sizeof(RawFragmentHeader) is not an integer "
+              "multiple of sizeof(RawDataType)!");
+
 inline
 void
 artdaq::detail::RawFragmentHeader::setUserType(uint8_t utype)

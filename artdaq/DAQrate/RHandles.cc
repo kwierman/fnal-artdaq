@@ -70,7 +70,7 @@ recvFragment(Fragment & output)
         << " tag=" << status.MPI_TAG
         << " Fragment_sequenceID=" << sequence_id
         << " Fragment_size=" << payload_[which].size()
-        << " Fragment_dataSize=" << payload_[which].dataSize()
+        << " preAutoResize_Fragment_dataSize=" << payload_[which].dataSize()
         << " fragID=" << payload_[which].fragmentID()
         << flusher;
   char err_buffer[MPI_MAX_ERROR_STRING];

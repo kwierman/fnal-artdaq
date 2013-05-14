@@ -260,8 +260,11 @@ namespace artdaq {
   void EventStore::endRun()
   {
     RawEvent_ptr endOfRunEvent(new RawEvent(run_id_, subrun_id_, 0));
-    std::unique_ptr<artdaq::Fragment> endOfRunFrag(new Fragment(static_cast<size_t>(ceil(sizeof(size_t) /
-                       static_cast<double>(sizeof(Fragment::value_type))))));
+    std::unique_ptr<artdaq::Fragment>
+      endOfRunFrag(new
+                   Fragment(static_cast<size_t>
+                            (ceil(sizeof(id_) /
+                                  static_cast<double>(sizeof(Fragment::value_type))))));
 
     endOfRunFrag->setSystemType(Fragment::EndOfRunFragmentType);
     *endOfRunFrag->dataBegin() = id_;
@@ -278,8 +281,11 @@ namespace artdaq {
   void EventStore::endSubrun()
   {
     RawEvent_ptr endOfSubrunEvent(new RawEvent(run_id_, subrun_id_, 0));
-    std::unique_ptr<artdaq::Fragment> endOfSubrunFrag(new Fragment(static_cast<size_t>(ceil(sizeof(size_t) /
-                          static_cast<double>(sizeof(Fragment::value_type))))));
+    std::unique_ptr<artdaq::Fragment>
+      endOfSubrunFrag(new
+                      Fragment(static_cast<size_t>
+                               (ceil(sizeof(id_) /
+                                     static_cast<double>(sizeof(Fragment::value_type))))));
 
     endOfSubrunFrag->setSystemType(Fragment::EndOfSubrunFragmentType);
     *endOfSubrunFrag->dataBegin() = id_;
