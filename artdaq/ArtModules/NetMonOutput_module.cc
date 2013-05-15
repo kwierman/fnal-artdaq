@@ -34,7 +34,6 @@
 #include "artdaq/ArtModules/NetMonTransportService.h"
 #include "artdaq/DAQdata/NetMonHeader.hh"
 
-#include <cassert>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -174,15 +173,19 @@ send_init_message()
     //  Get the classes we will need.
     //
     static TClass* string_class = TClass::GetClass("std::string");
-    assert(string_class != nullptr &&
-           "NetMonOutput static send_init_message(): "
-           "Could not get TClass for std::string!");
+    if (string_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "NetMonOutput static send_init_message(): "
+            "Could not get TClass for std::string!";
+    }
     static TClass* product_list_class = TClass::GetClass(
         "map<art::BranchKey,art::BranchDescription>");
-    assert(product_list_class != nullptr &&
-           "NetMonOutput static send_init_message(): "
-           "Could not get TClass for "
-           "map<art::BranchKey,art::BranchDescription>!");
+    if (product_list_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "NetMonOutput static send_init_message(): "
+            "Could not get TClass for "
+            "map<art::BranchKey,art::BranchDescription>!";
+    }
     //static TClass* branch_id_list_registry_class = TClass::GetClass(
     //    "std::vector<std::vector<art::BranchID::value_type> >");
     //assert(branch_id_list_registry_class != nullptr &&
@@ -195,19 +198,23 @@ send_init_message()
     //FIXME: Replace the "2" here with a use of the proper enum value!
     static TClass* process_history_map_class = TClass::GetClass(
         "std::map<const art::Hash<2>,art::ProcessHistory>");
-    assert(process_history_map_class != nullptr &&
-           "NetMonOutput static send_init_message(): "
-           "Could not get class for "
-           "std::map<const art::Hash<2>,art::ProcessHistory>!");
+    if (process_history_map_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "NetMonOutput static send_init_message(): "
+            "Could not get class for "
+            "std::map<const art::Hash<2>,art::ProcessHistory>!";
+    }
     //static TClass* parentage_map_class = TClass::GetClass(
     //    "std::map<const art::ParentageID,art::Parentage>");
     //FIXME: Replace the "5" here with a use of the proper enum value!
     static TClass* parentage_map_class = TClass::GetClass(
         "std::map<const art::Hash<5>,art::Parentage>");
-    assert(parentage_map_class != nullptr &&
-           "NetMonOutput static send_init_message(): "
-           "Could not get class for "
-           "std::map<const art::Hash<5>,art::Parentage>!");
+    if (parentage_map_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "NetMonOutput static send_init_message(): "
+            "Could not get class for "
+            "std::map<const art::Hash<5>,art::Parentage>!";
+    }
     //
     //  Construct and send the init message.
     //
@@ -352,13 +359,17 @@ writeDataProducts(TBufferFile& msg, const Principal& principal,
     //  writing out the data products.
     //
     static TClass* branch_key_class = TClass::GetClass("art::BranchKey");
-    assert(branch_key_class != nullptr &&
-           "NetMonOutput::writeDataProducts(...): "
-           "Could not get TClass for art::BranchKey!");
+    if (branch_key_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "NetMonOutput::writeDataProducts(...): "
+            "Could not get TClass for art::BranchKey!";
+    }
     static TClass* prdprov_class = TClass::GetClass("art::ProductProvenance");
-    assert(prdprov_class != nullptr && 
-           "NetMonOutput::writeDataProducts(...): "
-           "Could not get TClass for art::ProductProvenance!");
+    if (prdprov_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "NetMonOutput::writeDataProducts(...): "
+            "Could not get TClass for art::ProductProvenance!";
+    }
     //
     //  Calculate the data product count.
     //
@@ -475,21 +486,29 @@ write(const EventPrincipal& ep)
     //  Get root classes needed for I/O.
     //
     static TClass* run_aux_class = TClass::GetClass("art::RunAuxiliary");
-    assert(run_aux_class != nullptr &&
-           "NetMonOutput::write(const EventPrincipal& ep): "
-           "Could not get TClass for art::RunAuxiliary!");
+    if (run_aux_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "NetMonOutput::write(const EventPrincipal& ep): "
+            "Could not get TClass for art::RunAuxiliary!";
+    }
     static TClass* subrun_aux_class = TClass::GetClass("art::SubRunAuxiliary");
-    assert(subrun_aux_class != nullptr &&
-           "NetMonOutput::write(const EventPrincipal& ep): "
-           "Could not get TClass for art::SubRunAuxiliary!");
+    if (subrun_aux_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "NetMonOutput::write(const EventPrincipal& ep): "
+            "Could not get TClass for art::SubRunAuxiliary!";
+    }
     static TClass* event_aux_class = TClass::GetClass("art::EventAuxiliary");
-    assert(event_aux_class != nullptr &&
+    if (event_aux_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
            "NetMonOutput::write(const EventPrincipal& ep): "
-           "Could not get TClass for art::EventAuxiliary!");
+           "Could not get TClass for art::EventAuxiliary!";
+    }
     static TClass* history_class = TClass::GetClass("art::History");
-    assert(history_class != nullptr &&
-           "NetMonOutput::write(const EventPrincipal& ep): "
-           "Could not get TClass for art::History!");
+    if (history_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "NetMonOutput::write(const EventPrincipal& ep): "
+            "Could not get TClass for art::History!";
+    }
     //
     //  Setup message buffer.
     //
@@ -691,8 +710,11 @@ art::NetMonOutput::writeSubRun(const SubRunPrincipal& srp)
     //  writing out the auxiliary information.
     //
     static TClass* subrun_aux_class = TClass::GetClass("art::SubRunAuxiliary");
-    assert(subrun_aux_class != nullptr && "NetMonOutput::writeSubRun: "
-           "Could not get TClass for art::SubRunAuxiliary!");
+    if (subrun_aux_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "NetMonOutput::writeSubRun: "
+            "Could not get TClass for art::SubRunAuxiliary!";
+    }
     //
     //  Begin preparing message.
     //

@@ -34,7 +34,6 @@
 
 #include "artdaq/ArtModules/NetMonTransportService.h"
 
-#include <cassert>
 #include <cstdio>
 #include <iomanip>
 #include <memory>
@@ -101,13 +100,19 @@ NetMonInputDetail(const fhicl::ParameterSet& ps,
     //  Get the root classes needed for reading.
     //
     static TClass* string_class = TClass::GetClass("std::string");
-    assert(string_class != nullptr && "NetMonInputDetail: "
-           "Could not get TClass for std::string!");
+    if (string_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "NetMonInputDetail: "
+            "Could not get TClass for std::string!";
+    }
     static TClass* product_list_class = TClass::GetClass("map<art::BranchKey,"
         "art::BranchDescription>");
-    assert(product_list_class != nullptr && "NetMonInputDetail: "
-           "Could not get TClass for "
-           "map<art::BranchKey,art::BranchDescription>!");
+    if (product_list_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "NetMonInputDetail: "
+            "Could not get TClass for "
+            "map<art::BranchKey,art::BranchDescription>!";
+    }
     //static TClass* branch_id_lists_class = TClass::GetClass(
     //    "std::vector<std::vector<art::BranchID::value_type> >");
     //assert(branch_id_lists_class != nullptr && "NetMonInputDetail: "
@@ -118,15 +123,21 @@ NetMonInputDetail(const fhicl::ParameterSet& ps,
     //    "std::map<const art::ProcessHistoryID,art::ProcessHistory>");
     static TClass* phm_class = TClass::GetClass(
         "std::map<const art::Hash<2>,art::ProcessHistory>");
-    assert(phm_class != nullptr && "NetMonInputDetail: "
-           "Could not get TClass for "
-           "std::map<const art::Hash<2>,art::ProcessHistory>!");
+    if (phm_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "NetMonInputDetail: "
+            "Could not get TClass for "
+            "std::map<const art::Hash<2>,art::ProcessHistory>!";
+    }
     //typedef std::map<const ParentageID,Parentage> ParentageMap;
     static TClass* parentage_map_class = TClass::GetClass(
         "std::map<const art::Hash<5>,art::Parentage>");
-    assert(parentage_map_class != nullptr && "NetMonInputDetail: "
-           "Could not get TClass for "
-           "std::map<const art::Hash<5>,art::Parentage>!");
+    if (parentage_map_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "NetMonInputDetail: "
+            "Could not get TClass for "
+            "std::map<const art::Hash<5>,art::Parentage>!";
+    }
     //
     //  Start server and listen for a connection.
     //
@@ -141,8 +152,10 @@ NetMonInputDetail(const fhicl::ParameterSet& ps,
     transport->receiveMessage(msg_ptr);
     FDEBUG(1) << "NetMonInputDetail: receiveMessage returned.  ptr: 0x"
               << std::hex << (unsigned long) msg_ptr << std::dec << '\n';
-    assert(msg_ptr != nullptr &&
-           "NetMonInputDetail: Could not receive message!");
+    if (msg_ptr == nullptr) {
+        throw art::Exception(art::errors::DataCorruption) <<
+            "NetMonInputDetail: Could not receive message!";
+    }
     std::unique_ptr<TBufferFile> msg(msg_ptr);
     msg_ptr = 0;
     void* p = 0;
@@ -318,17 +331,29 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
     //  Get root classes necessary for reading.
     //
     static TClass* run_aux_class = TClass::GetClass("art::RunAuxiliary");
-    assert(run_aux_class != nullptr && "readAndConstructPrincipal: "
-           "Could not get TClass for art::RunAuxiliary!");
+    if (run_aux_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "readAndConstructPrincipal: "
+            "Could not get TClass for art::RunAuxiliary!";
+    }
     static TClass* subrun_aux_class = TClass::GetClass("art::SubRunAuxiliary");
-    assert(subrun_aux_class != nullptr && "readAndConstructPrincipal: "
-           "Could not get TClass for art::SubRunAuxiliary!");
+    if (subrun_aux_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "readAndConstructPrincipal: "
+            "Could not get TClass for art::SubRunAuxiliary!";
+    }
     static TClass* event_aux_class = TClass::GetClass("art::EventAuxiliary");
-    assert(event_aux_class != nullptr && "readAndConstructPrincipal: "
-           "Could not get TClass for art::EventAuxiliary!");
+    if (event_aux_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "readAndConstructPrincipal: "
+            "Could not get TClass for art::EventAuxiliary!";
+    }
     static TClass* history_class = TClass::GetClass("art::History");
-    assert(history_class != nullptr && "readAndConstructPrincipal: "
-           "Could not get TClass for art::History!");
+    if (history_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "readAndConstructPrincipal: "
+            "Could not get TClass for art::History!";
+    }
     //
     //  Now process the message.
     //
@@ -348,8 +373,11 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
             p = msg.ReadObjectAny(run_aux_class);
             FDEBUG(2) << "readAndConstructPrincipal: p: 0x" << std::hex
                       << (unsigned long) p << std::dec << '\n';
-            assert(p != nullptr && "readAndConstructPrincipal: "
-                   "Could not read art::RunAuxiliary!");
+            if (p == nullptr) {
+                throw art::Exception(art::errors::DataCorruption) <<
+                    "readAndConstructPrincipal: "
+                    "Could not read art::RunAuxiliary!";
+            }
             run_aux.reset(reinterpret_cast<art::RunAuxiliary*>(p));
             p = 0;
             FDEBUG(1) << "readAndConstructPrincipal: got art::RunAuxiliary.\n";
@@ -385,8 +413,11 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
             p = msg.ReadObjectAny(subrun_aux_class);
             FDEBUG(2) << "readAndConstructPrincipal: p: 0x" << std::hex
                       << (unsigned long) p << std::dec << '\n';
-            assert(p != nullptr && "readAndConstructPrincipal: "
-                   "Could not read art::SubRunAuxiliary!");
+            if (p == nullptr) {
+                throw art::Exception(art::errors::DataCorruption) <<
+                    "readAndConstructPrincipal: "
+                    "Could not read art::SubRunAuxiliary!";
+            }
             subrun_aux.reset(reinterpret_cast<art::SubRunAuxiliary*>(p));
             p = 0;
             FDEBUG(1) << "readAndConstructPrincipal: "
@@ -417,8 +448,11 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
             p = msg.ReadObjectAny(run_aux_class);
             FDEBUG(2) << "readAndConstructPrincipal: p: 0x" << std::hex
                       << (unsigned long) p << std::dec << '\n';
-            assert(p != nullptr && "readAndConstructPrincipal: "
-                   "Could not read art::RunAuxiliary!");
+            if (p == nullptr) {
+                throw art::Exception(art::errors::DataCorruption) <<
+                    "readAndConstructPrincipal: "
+                    "Could not read art::RunAuxiliary!";
+            }
             run_aux.reset(reinterpret_cast<art::RunAuxiliary*>(p));
             p = 0;
             FDEBUG(1) << "readAndConstructPrincipal: "
@@ -446,8 +480,11 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
             p = msg.ReadObjectAny(subrun_aux_class);
             FDEBUG(2) << "readAndConstructPrincipal: p: 0x" << std::hex
                       << (unsigned long) p << std::dec << '\n';
-            assert(p != nullptr && "readAndConstructPrincipal: "
-                   "Could not read art::SubRunAuxiliary!");
+            if (p == nullptr) {
+                throw art::Exception(art::errors::DataCorruption) <<
+                    "readAndConstructPrincipal: "
+                    "Could not read art::SubRunAuxiliary!";
+            }
             subrun_aux.reset(reinterpret_cast<art::SubRunAuxiliary*>(p));
             p = 0;
             FDEBUG(1) << "readAndConstructPrincipal: "
@@ -475,8 +512,11 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
             p = msg.ReadObjectAny(event_aux_class);
             FDEBUG(2) << "readAndConstructPrincipal: p: 0x" << std::hex
                       << (unsigned long) p << std::dec << '\n';
-            assert(p != nullptr && "readAndConstructPrincipal: "
-                   "Could not read art::EventAuxiliary!");
+            if (p == nullptr) {
+                throw art::Exception(art::errors::DataCorruption) <<
+                    "readAndConstructPrincipal: "
+                    "Could not read art::EventAuxiliary!";
+            }
             event_aux.reset(reinterpret_cast<art::EventAuxiliary*>(p));
             p = 0;
             FDEBUG(1) << "readAndConstructPrincipal: "
@@ -491,8 +531,11 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
             p = msg.ReadObjectAny(history_class);
             FDEBUG(2) << "readAndConstructPrincipal: p: 0x" << std::hex
                       << (unsigned long) p << std::dec << '\n';
-            assert(p != nullptr && "readAndConstructPrincipal: "
-                   "Could not read art::History!");
+            if (p == nullptr) {
+                throw art::Exception(art::errors::DataCorruption) <<
+                    "readAndConstructPrincipal: "
+                    "Could not read art::History!";
+            }
             history.reset(new art::History(
                           *reinterpret_cast<art::History*>(p)));
             p = 0;
@@ -618,9 +661,11 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "processing Event message ...\n";
         // FIXME: This need to be an exception throw!
-        assert(history->processHistoryID().isValid() &&
-               "readAndConstructPrincipal: processHistoryID of history in "
-               "Event message is invalid!");
+        if (!history->processHistoryID().isValid()) {
+            throw art::Exception(art::errors::DataCorruption) <<
+                "readAndConstructPrincipal: processHistoryID of history in "
+                "Event message is invalid!";
+        }
         const ProcessHistory& processHistory =
             ProcessHistoryRegistry::get(history->processHistoryID());
         if ((inR == nullptr) || !inR->id().isValid() ||
@@ -662,11 +707,17 @@ readDataProducts(TBufferFile& msg, T*& outPrincipal)
     //  Get the root classes we need for reading.
     //
     static TClass* branch_key_class = TClass::GetClass("art::BranchKey");
-    assert(branch_key_class != nullptr && "readDataProducts: "
-           "Could not get TClass for art::BranchKey!");
+    if (branch_key_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "readDataProducts: "
+            "Could not get TClass for art::BranchKey!";
+    }
     static TClass* prdprov_class = TClass::GetClass("art::ProductProvenance");
-    assert(prdprov_class != nullptr && "readDataProducts: "
-           "Could not get TClass for art::ProductProvenance!");
+    if (prdprov_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "readDataProducts: "
+            "Could not get TClass for art::ProductProvenance!";
+    }
     //
     //  Read the data product count.
     //
@@ -785,8 +836,11 @@ readNext(art::RunPrincipal* const inR, art::SubRunPrincipal* const inSR,
                      "receiveMessage returned." << '\n';
         FDEBUG(2) << "NetMonInputDetail::readNext: ptr: 0x" << std::hex
                   << (unsigned long) msg_ptr << std::dec << '\n';
-        assert(msg_ptr != nullptr && "NetMonInputDetail::readNext: "
-               "Could not receive message!");
+        if (msg_ptr == nullptr) {
+            throw art::Exception(art::errors::DataCorruption) <<
+                "NetMonInputDetail::readNext: "
+                "Could not receive message!";
+        }
         msg.reset(msg_ptr);
         msg_ptr = 0;
     }
