@@ -777,11 +777,6 @@ readNext(art::RunPrincipal* const inR, art::SubRunPrincipal* const inSR,
                      "receiveMessage returned." << '\n';
         FDEBUG(2) << "NetMonInputDetail::readNext: ptr: 0x" << std::hex
                   << (unsigned long) msg_ptr << std::dec << '\n';
-        if (msg_ptr == nullptr) {
-            throw art::Exception(art::errors::DataCorruption) <<
-                "NetMonInputDetail::readNext: "
-                "Could not receive message!";
-        }
         msg.reset(msg_ptr);
         msg_ptr = 0;
     }
