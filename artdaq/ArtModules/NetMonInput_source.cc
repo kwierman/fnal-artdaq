@@ -116,10 +116,9 @@ NetMonInputDetail(const fhicl::ParameterSet& ps,
     //typedef std::map<const ProcessHistoryID,ProcessHistory> ProcessHistoryMap;
     //static TClass* phm_class = TClass::GetClass(
     //    "std::map<const art::ProcessHistoryID,art::ProcessHistory>");
-    //FIXME: Replace the hard-coded Hash<2> here with an ostringstream
-    //       output of the enumerator value.  ROOT has to have the actual
-    //       value, but we want to robustly deal with possible future
-    //       changes of the value.
+    //FIXME: Instead of using the by-name version of GetClass here, we
+    //       should use the type_info version so that we do not have
+    //       to hard-code the enumerator value into the Hash<..> name.
     static TClass* phm_class = TClass::GetClass(
         "std::map<const art::Hash<2>,art::ProcessHistory>");
     if (phm_class == nullptr) {
@@ -129,10 +128,9 @@ NetMonInputDetail(const fhicl::ParameterSet& ps,
             "std::map<const art::Hash<2>,art::ProcessHistory>!";
     }
     //typedef std::map<const ParentageID,Parentage> ParentageMap;
-    //FIXME: Replace the hard-coded Hash<5> here with an ostringstream
-    //       output of the enumerator value.  ROOT has to have the actual
-    //       value, but we want to robustly deal with possible future
-    //       changes of the value.
+    //FIXME: Instead of using the by-name version of GetClass here, we
+    //       should use the type_info version so that we do not have
+    //       to hard-code the enumerator value into the Hash<..> name.
     static TClass* parentage_map_class = TClass::GetClass(
         "std::map<const art::Hash<5>,art::Parentage>");
     if (parentage_map_class == nullptr) {
