@@ -781,7 +781,7 @@ readNext(art::RunPrincipal* const inR, art::SubRunPrincipal* const inSR,
         msg_ptr = 0;
     }
 
-    if (msg == nullptr) {
+    if (!msg) {
       shutdownMsgReceived_ = true;
       return false;
     }
