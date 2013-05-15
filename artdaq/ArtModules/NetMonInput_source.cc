@@ -113,14 +113,13 @@ NetMonInputDetail(const fhicl::ParameterSet& ps,
             "Could not get TClass for "
             "map<art::BranchKey,art::BranchDescription>!";
     }
-    //static TClass* branch_id_lists_class = TClass::GetClass(
-    //    "std::vector<std::vector<art::BranchID::value_type> >");
-    //assert(branch_id_lists_class != nullptr && "NetMonInputDetail: "
-    //       "Could not get TClass for "
-    //       "std::vector<std::vector<art::BranchID::value_type> >!");
     //typedef std::map<const ProcessHistoryID,ProcessHistory> ProcessHistoryMap;
     //static TClass* phm_class = TClass::GetClass(
     //    "std::map<const art::ProcessHistoryID,art::ProcessHistory>");
+    //FIXME: Replace the hard-coded Hash<2> here with an ostringstream
+    //       output of the enumerator value.  ROOT has to have the actual
+    //       value, but we want to robustly deal with possible future
+    //       changes of the value.
     static TClass* phm_class = TClass::GetClass(
         "std::map<const art::Hash<2>,art::ProcessHistory>");
     if (phm_class == nullptr) {
@@ -130,6 +129,10 @@ NetMonInputDetail(const fhicl::ParameterSet& ps,
             "std::map<const art::Hash<2>,art::ProcessHistory>!";
     }
     //typedef std::map<const ParentageID,Parentage> ParentageMap;
+    //FIXME: Replace the hard-coded Hash<5> here with an ostringstream
+    //       output of the enumerator value.  ROOT has to have the actual
+    //       value, but we want to robustly deal with possible future
+    //       changes of the value.
     static TClass* parentage_map_class = TClass::GetClass(
         "std::map<const art::Hash<5>,art::Parentage>");
     if (parentage_map_class == nullptr) {
@@ -365,7 +368,7 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
     if (msg_type_code == 2) {
         // EndRun message.
         //
-        //  Read the RunAxiliary.
+        //  Read the RunAuxiliary.
         //
         {
             FDEBUG(1) << "readAndConstructPrincipal: "
@@ -405,7 +408,7 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
     else if (msg_type_code == 3) {
         // EndSubRun message.
         //
-        //  Read the SubRunAxiliary.
+        //  Read the SubRunAuxiliary.
         //
         {
             FDEBUG(1) << "readAndConstructPrincipal: "
@@ -564,35 +567,17 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
                      "processing EndRun message ...\n";
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "making flush RunPrincipal ...\n";
-        // Note: We cannot do this because the run auxiliary
-        //       process history id is the invalid hash because
-        //       the EmptyEvent source never sets it.
-        //const ProcessHistory& processHistory =
-        //    ProcessHistoryRegistry::get(run_aux->processHistoryID());
-        //RunAuxiliary flushRunAux(RunID::flushRun(), run_aux->beginTime(),
-        //    run_aux->endTime());
-        //flushRunAux.setProcessHistoryID(run_aux->processHistoryID());
-        //outR = new RunPrincipal(flushRunAux, processHistory.data().back());
         outR = pm_.makeRunPrincipal(RunID::flushRun(), run_aux->beginTime());
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "finished making flush RunPrincipal.\n";
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "making flush SubRunPrincipal ...\n";
-        //SubRunAuxiliary flushSubRunAux(SubRunID::flushSubRun(),
-        //    run_aux->beginTime(), run_aux->endTime());
-        //flushSubRunAux.setProcessHistoryID(run_aux->processHistoryID());
-        //outSR = new SubRunPrincipal(flushSubRunAux,
-        //                            processHistory.data().back());
         outSR = pm_.makeSubRunPrincipal(SubRunID::flushSubRun(),
                                         run_aux->beginTime());
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "finished making flush SubRunPrincipal.\n";
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "making flush EventPrincipal ...\n";
-        //EventAuxiliary flushEventAux(EventID::flushEvent(),
-        //    run_aux->endTime(), true);
-        //outE = new EventPrincipal(flushEventAux,
-        //                          processHistory.data().back());
         outE = pm_.makeEventPrincipal(EventID::flushEvent(),
                                       run_aux->endTime(), true,
                                       EventAuxiliary::Any);
@@ -607,47 +592,17 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
                      "processing EndSubRun message ...\n";
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "making flush RunPrincipal ...\n";
-        // Note: We cannot do this because the run auxiliary
-        //       process history id is the invalid hash because
-        //       the EmptyEvent source never sets it.
-        //const ProcessHistory& processHistory =
-        //    ProcessHistoryRegistry::get(run_aux->processHistoryID());
-        //RunAuxiliary flushRunAux(RunID::flushRun(), run_aux->beginTime(),
-        //    run_aux->endTime());
-        //flushRunAux.setProcessHistoryID(run_aux->processHistoryID());
-        //outR = new RunPrincipal(flushRunAux, processHistory.data().back());
         outR = pm_.makeRunPrincipal(RunID::flushRun(), subrun_aux->beginTime());
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "finished making flush RunPrincipal.\n";
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "making flush SubRunPrincipal ...\n";
-        // Note: We cannot do this because the subrun auxiliary
-        //       process history id is the invalid hash because
-        //       the EmptyEvent source never sets it.
-        //const ProcessHistory& processHistory =
-        //    ProcessHistoryRegistry::get(subrun_aux->processHistoryID());
-        //SubRunAuxiliary flushSubRunAux(SubRunID::flushSubRun(
-        //    subrun_aux->runID()), subrun_aux->beginTime(),
-        //    subrun_aux->endTime());
-        //flushSubRunAux.setProcessHistoryID(subrun_aux->processHistoryID());
-        //outSR = new SubRunPrincipal(flushSubRunAux,
-        //                            processHistory.data().back());
-        //outSR = pm_.makeSubRunPrincipal(SubRunID::flushSubRun(
-        //                                subrun_aux->runID()),
-        //                                subrun_aux->beginTime());
         outSR = pm_.makeSubRunPrincipal(SubRunID::flushSubRun(),
                                         subrun_aux->beginTime());
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "finished making flush SubRunPrincipal.\n";
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "making flush EventPrincipal ...\n";
-        //EventAuxiliary flushEventAux(EventID::flushEvent(subrun_aux->runID()),
-        //    subrun_aux->endTime(), true);
-        //outE = new EventPrincipal(flushEventAux,
-        //                          processHistory.data().back());
-        //outE = pm_.makeEventPrincipal(EventID::flushEvent(subrun_aux->runID()),
-        //                              subrun_aux->endTime(), true,
-        //                              EventAuxiliary::Any);
         outE = pm_.makeEventPrincipal(EventID::flushEvent(),
                                       subrun_aux->endTime(), true,
                                       EventAuxiliary::Any);
