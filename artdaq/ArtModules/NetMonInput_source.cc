@@ -34,7 +34,6 @@
 
 #include "artdaq/ArtModules/NetMonTransportService.h"
 
-#include <cassert>
 #include <cstdio>
 #include <iomanip>
 #include <memory>
@@ -101,32 +100,45 @@ NetMonInputDetail(const fhicl::ParameterSet& ps,
     //  Get the root classes needed for reading.
     //
     static TClass* string_class = TClass::GetClass("std::string");
-    assert(string_class != nullptr && "NetMonInputDetail: "
-           "Could not get TClass for std::string!");
+    if (string_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "NetMonInputDetail: "
+            "Could not get TClass for std::string!";
+    }
     static TClass* product_list_class = TClass::GetClass("map<art::BranchKey,"
         "art::BranchDescription>");
-    assert(product_list_class != nullptr && "NetMonInputDetail: "
-           "Could not get TClass for "
-           "map<art::BranchKey,art::BranchDescription>!");
-    //static TClass* branch_id_lists_class = TClass::GetClass(
-    //    "std::vector<std::vector<art::BranchID::value_type> >");
-    //assert(branch_id_lists_class != nullptr && "NetMonInputDetail: "
-    //       "Could not get TClass for "
-    //       "std::vector<std::vector<art::BranchID::value_type> >!");
+    if (product_list_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "NetMonInputDetail: "
+            "Could not get TClass for "
+            "map<art::BranchKey,art::BranchDescription>!";
+    }
     //typedef std::map<const ProcessHistoryID,ProcessHistory> ProcessHistoryMap;
     //static TClass* phm_class = TClass::GetClass(
     //    "std::map<const art::ProcessHistoryID,art::ProcessHistory>");
+    //FIXME: Instead of using the by-name version of GetClass here, we
+    //       should use the type_info version so that we do not have
+    //       to hard-code the enumerator value into the Hash<..> name.
     static TClass* phm_class = TClass::GetClass(
         "std::map<const art::Hash<2>,art::ProcessHistory>");
-    assert(phm_class != nullptr && "NetMonInputDetail: "
-           "Could not get TClass for "
-           "std::map<const art::Hash<2>,art::ProcessHistory>!");
+    if (phm_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "NetMonInputDetail: "
+            "Could not get TClass for "
+            "std::map<const art::Hash<2>,art::ProcessHistory>!";
+    }
     //typedef std::map<const ParentageID,Parentage> ParentageMap;
+    //FIXME: Instead of using the by-name version of GetClass here, we
+    //       should use the type_info version so that we do not have
+    //       to hard-code the enumerator value into the Hash<..> name.
     static TClass* parentage_map_class = TClass::GetClass(
         "std::map<const art::Hash<5>,art::Parentage>");
-    assert(parentage_map_class != nullptr && "NetMonInputDetail: "
-           "Could not get TClass for "
-           "std::map<const art::Hash<5>,art::Parentage>!");
+    if (parentage_map_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "NetMonInputDetail: "
+            "Could not get TClass for "
+            "std::map<const art::Hash<5>,art::Parentage>!";
+    }
     //
     //  Start server and listen for a connection.
     //
@@ -141,8 +153,10 @@ NetMonInputDetail(const fhicl::ParameterSet& ps,
     transport->receiveMessage(msg_ptr);
     FDEBUG(1) << "NetMonInputDetail: receiveMessage returned.  ptr: 0x"
               << std::hex << (unsigned long) msg_ptr << std::dec << '\n';
-    assert(msg_ptr != nullptr &&
-           "NetMonInputDetail: Could not receive message!");
+    if (msg_ptr == nullptr) {
+        throw art::Exception(art::errors::DataCorruption) <<
+            "NetMonInputDetail: Could not receive message!";
+    }
     std::unique_ptr<TBufferFile> msg(msg_ptr);
     msg_ptr = 0;
     void* p = 0;
@@ -318,17 +332,29 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
     //  Get root classes necessary for reading.
     //
     static TClass* run_aux_class = TClass::GetClass("art::RunAuxiliary");
-    assert(run_aux_class != nullptr && "readAndConstructPrincipal: "
-           "Could not get TClass for art::RunAuxiliary!");
+    if (run_aux_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "readAndConstructPrincipal: "
+            "Could not get TClass for art::RunAuxiliary!";
+    }
     static TClass* subrun_aux_class = TClass::GetClass("art::SubRunAuxiliary");
-    assert(subrun_aux_class != nullptr && "readAndConstructPrincipal: "
-           "Could not get TClass for art::SubRunAuxiliary!");
+    if (subrun_aux_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "readAndConstructPrincipal: "
+            "Could not get TClass for art::SubRunAuxiliary!";
+    }
     static TClass* event_aux_class = TClass::GetClass("art::EventAuxiliary");
-    assert(event_aux_class != nullptr && "readAndConstructPrincipal: "
-           "Could not get TClass for art::EventAuxiliary!");
+    if (event_aux_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "readAndConstructPrincipal: "
+            "Could not get TClass for art::EventAuxiliary!";
+    }
     static TClass* history_class = TClass::GetClass("art::History");
-    assert(history_class != nullptr && "readAndConstructPrincipal: "
-           "Could not get TClass for art::History!");
+    if (history_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "readAndConstructPrincipal: "
+            "Could not get TClass for art::History!";
+    }
     //
     //  Now process the message.
     //
@@ -340,7 +366,7 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
     if (msg_type_code == 2) {
         // EndRun message.
         //
-        //  Read the RunAxiliary.
+        //  Read the RunAuxiliary.
         //
         {
             FDEBUG(1) << "readAndConstructPrincipal: "
@@ -348,8 +374,11 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
             p = msg.ReadObjectAny(run_aux_class);
             FDEBUG(2) << "readAndConstructPrincipal: p: 0x" << std::hex
                       << (unsigned long) p << std::dec << '\n';
-            assert(p != nullptr && "readAndConstructPrincipal: "
-                   "Could not read art::RunAuxiliary!");
+            if (p == nullptr) {
+                throw art::Exception(art::errors::DataCorruption) <<
+                    "readAndConstructPrincipal: "
+                    "Could not read art::RunAuxiliary!";
+            }
             run_aux.reset(reinterpret_cast<art::RunAuxiliary*>(p));
             p = 0;
             FDEBUG(1) << "readAndConstructPrincipal: got art::RunAuxiliary.\n";
@@ -377,7 +406,7 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
     else if (msg_type_code == 3) {
         // EndSubRun message.
         //
-        //  Read the SubRunAxiliary.
+        //  Read the SubRunAuxiliary.
         //
         {
             FDEBUG(1) << "readAndConstructPrincipal: "
@@ -385,8 +414,11 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
             p = msg.ReadObjectAny(subrun_aux_class);
             FDEBUG(2) << "readAndConstructPrincipal: p: 0x" << std::hex
                       << (unsigned long) p << std::dec << '\n';
-            assert(p != nullptr && "readAndConstructPrincipal: "
-                   "Could not read art::SubRunAuxiliary!");
+            if (p == nullptr) {
+                throw art::Exception(art::errors::DataCorruption) <<
+                    "readAndConstructPrincipal: "
+                    "Could not read art::SubRunAuxiliary!";
+            }
             subrun_aux.reset(reinterpret_cast<art::SubRunAuxiliary*>(p));
             p = 0;
             FDEBUG(1) << "readAndConstructPrincipal: "
@@ -417,8 +449,11 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
             p = msg.ReadObjectAny(run_aux_class);
             FDEBUG(2) << "readAndConstructPrincipal: p: 0x" << std::hex
                       << (unsigned long) p << std::dec << '\n';
-            assert(p != nullptr && "readAndConstructPrincipal: "
-                   "Could not read art::RunAuxiliary!");
+            if (p == nullptr) {
+                throw art::Exception(art::errors::DataCorruption) <<
+                    "readAndConstructPrincipal: "
+                    "Could not read art::RunAuxiliary!";
+            }
             run_aux.reset(reinterpret_cast<art::RunAuxiliary*>(p));
             p = 0;
             FDEBUG(1) << "readAndConstructPrincipal: "
@@ -446,8 +481,11 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
             p = msg.ReadObjectAny(subrun_aux_class);
             FDEBUG(2) << "readAndConstructPrincipal: p: 0x" << std::hex
                       << (unsigned long) p << std::dec << '\n';
-            assert(p != nullptr && "readAndConstructPrincipal: "
-                   "Could not read art::SubRunAuxiliary!");
+            if (p == nullptr) {
+                throw art::Exception(art::errors::DataCorruption) <<
+                    "readAndConstructPrincipal: "
+                    "Could not read art::SubRunAuxiliary!";
+            }
             subrun_aux.reset(reinterpret_cast<art::SubRunAuxiliary*>(p));
             p = 0;
             FDEBUG(1) << "readAndConstructPrincipal: "
@@ -475,8 +513,11 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
             p = msg.ReadObjectAny(event_aux_class);
             FDEBUG(2) << "readAndConstructPrincipal: p: 0x" << std::hex
                       << (unsigned long) p << std::dec << '\n';
-            assert(p != nullptr && "readAndConstructPrincipal: "
-                   "Could not read art::EventAuxiliary!");
+            if (p == nullptr) {
+                throw art::Exception(art::errors::DataCorruption) <<
+                    "readAndConstructPrincipal: "
+                    "Could not read art::EventAuxiliary!";
+            }
             event_aux.reset(reinterpret_cast<art::EventAuxiliary*>(p));
             p = 0;
             FDEBUG(1) << "readAndConstructPrincipal: "
@@ -491,8 +532,11 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
             p = msg.ReadObjectAny(history_class);
             FDEBUG(2) << "readAndConstructPrincipal: p: 0x" << std::hex
                       << (unsigned long) p << std::dec << '\n';
-            assert(p != nullptr && "readAndConstructPrincipal: "
-                   "Could not read art::History!");
+            if (p == nullptr) {
+                throw art::Exception(art::errors::DataCorruption) <<
+                    "readAndConstructPrincipal: "
+                    "Could not read art::History!";
+            }
             history.reset(new art::History(
                           *reinterpret_cast<art::History*>(p)));
             p = 0;
@@ -521,35 +565,17 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
                      "processing EndRun message ...\n";
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "making flush RunPrincipal ...\n";
-        // Note: We cannot do this because the run auxiliary
-        //       process history id is the invalid hash because
-        //       the EmptyEvent source never sets it.
-        //const ProcessHistory& processHistory =
-        //    ProcessHistoryRegistry::get(run_aux->processHistoryID());
-        //RunAuxiliary flushRunAux(RunID::flushRun(), run_aux->beginTime(),
-        //    run_aux->endTime());
-        //flushRunAux.setProcessHistoryID(run_aux->processHistoryID());
-        //outR = new RunPrincipal(flushRunAux, processHistory.data().back());
         outR = pm_.makeRunPrincipal(RunID::flushRun(), run_aux->beginTime());
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "finished making flush RunPrincipal.\n";
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "making flush SubRunPrincipal ...\n";
-        //SubRunAuxiliary flushSubRunAux(SubRunID::flushSubRun(),
-        //    run_aux->beginTime(), run_aux->endTime());
-        //flushSubRunAux.setProcessHistoryID(run_aux->processHistoryID());
-        //outSR = new SubRunPrincipal(flushSubRunAux,
-        //                            processHistory.data().back());
         outSR = pm_.makeSubRunPrincipal(SubRunID::flushSubRun(),
                                         run_aux->beginTime());
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "finished making flush SubRunPrincipal.\n";
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "making flush EventPrincipal ...\n";
-        //EventAuxiliary flushEventAux(EventID::flushEvent(),
-        //    run_aux->endTime(), true);
-        //outE = new EventPrincipal(flushEventAux,
-        //                          processHistory.data().back());
         outE = pm_.makeEventPrincipal(EventID::flushEvent(),
                                       run_aux->endTime(), true,
                                       EventAuxiliary::Any);
@@ -564,47 +590,17 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
                      "processing EndSubRun message ...\n";
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "making flush RunPrincipal ...\n";
-        // Note: We cannot do this because the run auxiliary
-        //       process history id is the invalid hash because
-        //       the EmptyEvent source never sets it.
-        //const ProcessHistory& processHistory =
-        //    ProcessHistoryRegistry::get(run_aux->processHistoryID());
-        //RunAuxiliary flushRunAux(RunID::flushRun(), run_aux->beginTime(),
-        //    run_aux->endTime());
-        //flushRunAux.setProcessHistoryID(run_aux->processHistoryID());
-        //outR = new RunPrincipal(flushRunAux, processHistory.data().back());
         outR = pm_.makeRunPrincipal(RunID::flushRun(), subrun_aux->beginTime());
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "finished making flush RunPrincipal.\n";
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "making flush SubRunPrincipal ...\n";
-        // Note: We cannot do this because the subrun auxiliary
-        //       process history id is the invalid hash because
-        //       the EmptyEvent source never sets it.
-        //const ProcessHistory& processHistory =
-        //    ProcessHistoryRegistry::get(subrun_aux->processHistoryID());
-        //SubRunAuxiliary flushSubRunAux(SubRunID::flushSubRun(
-        //    subrun_aux->runID()), subrun_aux->beginTime(),
-        //    subrun_aux->endTime());
-        //flushSubRunAux.setProcessHistoryID(subrun_aux->processHistoryID());
-        //outSR = new SubRunPrincipal(flushSubRunAux,
-        //                            processHistory.data().back());
-        //outSR = pm_.makeSubRunPrincipal(SubRunID::flushSubRun(
-        //                                subrun_aux->runID()),
-        //                                subrun_aux->beginTime());
         outSR = pm_.makeSubRunPrincipal(SubRunID::flushSubRun(),
                                         subrun_aux->beginTime());
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "finished making flush SubRunPrincipal.\n";
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "making flush EventPrincipal ...\n";
-        //EventAuxiliary flushEventAux(EventID::flushEvent(subrun_aux->runID()),
-        //    subrun_aux->endTime(), true);
-        //outE = new EventPrincipal(flushEventAux,
-        //                          processHistory.data().back());
-        //outE = pm_.makeEventPrincipal(EventID::flushEvent(subrun_aux->runID()),
-        //                              subrun_aux->endTime(), true,
-        //                              EventAuxiliary::Any);
         outE = pm_.makeEventPrincipal(EventID::flushEvent(),
                                       subrun_aux->endTime(), true,
                                       EventAuxiliary::Any);
@@ -617,19 +613,12 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
         // Event message.
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "processing Event message ...\n";
-        // FIXME: This need to be an exception throw!
-        assert(history->processHistoryID().isValid() &&
-               "readAndConstructPrincipal: processHistoryID of history in "
-               "Event message is invalid!");
-        const ProcessHistory& processHistory =
-            ProcessHistoryRegistry::get(history->processHistoryID());
         if ((inR == nullptr) || !inR->id().isValid() ||
                 (inR->run() != event_aux->run())) {
             // New run, either we have no input RunPrincipal, or the
             // input run number does not match the event run number.
             FDEBUG(1) << "readAndConstructPrincipal: making RunPrincipal ...\n";
-            outR = new RunPrincipal(*run_aux.get(),
-                                    processHistory.data().back());
+            outR = pm_.makeRunPrincipal(*run_aux.get());
             FDEBUG(1) << "readAndConstructPrincipal: made RunPrincipal.\n";
         }
         if ((inSR == nullptr) || !inSR->id().isValid() ||
@@ -638,15 +627,12 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
             // input subRun number does not match the event subRun number.
             FDEBUG(1) << "readAndConstructPrincipal: "
                          "making SubRunPrincipal ...\n";
-            outSR = new SubRunPrincipal(*subrun_aux.get(),
-                                        processHistory.data().back());
+            outSR = pm_.makeSubRunPrincipal(*subrun_aux.get());
             FDEBUG(1) << "readAndConstructPrincipal: "
                          "made SubRunPrincipal.\n";
         }
         FDEBUG(1) << "readAndConstructPrincipal: making EventPrincipal ...\n";
-        outE = new EventPrincipal(*event_aux.get(),
-                                  processHistory.data().back(),
-                                  history);
+        outE = pm_.makeEventPrincipal(*event_aux.get(), std::move(history));
         FDEBUG(1) << "readAndConstructPrincipal: made EventPrincipal.\n";
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "finished processing Event message.\n";
@@ -662,11 +648,17 @@ readDataProducts(TBufferFile& msg, T*& outPrincipal)
     //  Get the root classes we need for reading.
     //
     static TClass* branch_key_class = TClass::GetClass("art::BranchKey");
-    assert(branch_key_class != nullptr && "readDataProducts: "
-           "Could not get TClass for art::BranchKey!");
+    if (branch_key_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "readDataProducts: "
+            "Could not get TClass for art::BranchKey!";
+    }
     static TClass* prdprov_class = TClass::GetClass("art::ProductProvenance");
-    assert(prdprov_class != nullptr && "readDataProducts: "
-           "Could not get TClass for art::ProductProvenance!");
+    if (prdprov_class == nullptr) {
+        throw art::Exception(art::errors::DictionaryNotFound) <<
+            "readDataProducts: "
+            "Could not get TClass for art::ProductProvenance!";
+    }
     //
     //  Read the data product count.
     //
@@ -785,13 +777,11 @@ readNext(art::RunPrincipal* const inR, art::SubRunPrincipal* const inSR,
                      "receiveMessage returned." << '\n';
         FDEBUG(2) << "NetMonInputDetail::readNext: ptr: 0x" << std::hex
                   << (unsigned long) msg_ptr << std::dec << '\n';
-        assert(msg_ptr != nullptr && "NetMonInputDetail::readNext: "
-               "Could not receive message!");
         msg.reset(msg_ptr);
         msg_ptr = 0;
     }
 
-    if (msg == nullptr) {
+    if (!msg) {
       shutdownMsgReceived_ = true;
       return false;
     }

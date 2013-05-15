@@ -29,9 +29,7 @@ set(CMAKE_MODULE_PATH $ENV{ART_DIR}/Modules
 include(CetCMakeEnv)
 cet_cmake_env()
 
-# We are not yet ready to spend the time necessary to get the build to work with NO_UNDEFINED
 cet_set_compiler_flags(DIAGS VIGILANT WERROR NO_UNDEFINED EXTRA_FLAGS -pedantic)
-#cet_set_compiler_flags(DIAGS VIGILANT WERROR EXTRA_FLAGS -pedantic)
 
 cet_have_qual( e2 )
 if ( ${CET_HAVE_QUAL} )

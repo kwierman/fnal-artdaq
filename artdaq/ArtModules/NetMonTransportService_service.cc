@@ -21,7 +21,6 @@
 #include "TBuffer.h"
 #include "TBufferFile.h"
 
-#include <cassert>
 #include <iomanip>
 #include <iostream>
 #include <string>
