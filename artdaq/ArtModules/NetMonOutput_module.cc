@@ -186,12 +186,6 @@ send_init_message()
             "Could not get TClass for "
             "map<art::BranchKey,art::BranchDescription>!";
     }
-    //static TClass* branch_id_list_registry_class = TClass::GetClass(
-    //    "std::vector<std::vector<art::BranchID::value_type> >");
-    //assert(branch_id_list_registry_class != nullptr &&
-    //       "NetMonOutput static send_init_message(): "
-    //       "Could not get class for "
-    //       "std::vector<std::vector<art::BranchID::value_type> >!");
     //typedef std::map<const ProcessHistoryID,ProcessHistory> ProcessHistoryMap;
     //TClass* process_history_map_class = TClass::GetClass(
     //    "std::map<const art::ProcessHistoryID,art::ProcessHistory>");
