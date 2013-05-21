@@ -202,7 +202,7 @@ send_init_message()
     //    "std::map<const art::ParentageID,art::Parentage>");
     //FIXME: Replace the "5" here with a use of the proper enum value!
     static TClass* parentage_map_class = TClass::GetClass(
-        "std::map<const art::Hash<5>,art::Parentage>");
+        "std::map<art::Hash<5>,art::Parentage>");
     if (parentage_map_class == nullptr) {
         throw art::Exception(art::errors::DictionaryNotFound) <<
             "NetMonOutput static send_init_message(): "
