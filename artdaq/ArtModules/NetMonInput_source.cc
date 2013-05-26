@@ -613,12 +613,20 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
         // Event message.
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "processing Event message ...\n";
+        // FIXME: This need to be an exception throw!
+        assert(history->processHistoryID().isValid() &&
+               "readAndConstructPrincipal: processHistoryID of history in "
+               "Event message is invalid!");
+        //const ProcessHistory& processHistory =
+        //    ProcessHistoryRegistry::get(history->processHistoryID());
         if ((inR == nullptr) || !inR->id().isValid() ||
                 (inR->run() != event_aux->run())) {
             // New run, either we have no input RunPrincipal, or the
             // input run number does not match the event run number.
             FDEBUG(1) << "readAndConstructPrincipal: making RunPrincipal ...\n";
-            outR = pm_.makeRunPrincipal(*run_aux.get());
+            //outR = new RunPrincipal(*run_aux.get(),
+            //                        processHistory.data().back());
+	    outR = pm_.makeRunPrincipal(*run_aux.get());
             FDEBUG(1) << "readAndConstructPrincipal: made RunPrincipal.\n";
         }
         if ((inSR == nullptr) || !inSR->id().isValid() ||
@@ -627,12 +635,17 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
             // input subRun number does not match the event subRun number.
             FDEBUG(1) << "readAndConstructPrincipal: "
                          "making SubRunPrincipal ...\n";
-            outSR = pm_.makeSubRunPrincipal(*subrun_aux.get());
+            //outSR = new SubRunPrincipal(*subrun_aux.get(),
+            //                            processHistory.data().back());
+	    outSR = pm_.makeSubRunPrincipal(*subrun_aux.get());
             FDEBUG(1) << "readAndConstructPrincipal: "
                          "made SubRunPrincipal.\n";
         }
         FDEBUG(1) << "readAndConstructPrincipal: making EventPrincipal ...\n";
-        outE = pm_.makeEventPrincipal(*event_aux.get(), std::move(history));
+        //outE = new EventPrincipal(*event_aux.get(),
+        //                          processHistory.data().back(),
+        //                          history);
+	outE = pm_.makeEventPrincipal(*event_aux.get(), std::move(history));
         FDEBUG(1) << "readAndConstructPrincipal: made EventPrincipal.\n";
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "finished processing Event message.\n";
