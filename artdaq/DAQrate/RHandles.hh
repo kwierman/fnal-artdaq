@@ -35,7 +35,7 @@ public:
   // source of that fragment as its return value.
   //
   // It is a precondition that a sources_sending() != 0.
-  size_t recvFragment(Fragment & frag);
+  size_t recvFragment(Fragment & frag, size_t timeout_usec = 0);
 
   // Number of sources still not done.
   size_t sourcesActive() const;

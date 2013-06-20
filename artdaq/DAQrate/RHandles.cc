@@ -56,16 +56,41 @@ artdaq::RHandles::
 
 size_t
 artdaq::RHandles::
-recvFragment(Fragment & output)
+recvFragment(Fragment & output, size_t timeout_usec)
 {
   if (!anySourceActive()) {
     return MPI_ANY_SOURCE; // Nothing to do.
   }
   // Debug << "recv entered" << flusher;
   RecvMeas rm;
+  int wait_result;
   int which;
   MPI_Status status;
-  int wait_result = MPI_Waitany(buffer_count_, &reqs_[0], &which, &status);
+
+  if (timeout_usec > 0) {
+    int readyFlag;
+    wait_result = MPI_Testany(buffer_count_, &reqs_[0], &which, &readyFlag, &status);
+    if (! readyFlag) {
+      size_t sleep_loops = 10;
+      size_t sleep_time = timeout_usec / sleep_loops;
+      if (timeout_usec > 10000) {
+        sleep_time = 1000;
+        sleep_loops = timeout_usec / sleep_time;
+      }
+      for (size_t idx = 0; idx < sleep_loops; ++idx) {
+        usleep(sleep_time);
+        wait_result = MPI_Testany(buffer_count_, &reqs_[0], &which, &readyFlag, &status);
+        if (readyFlag) {break;}
+      }
+      if (! readyFlag) {
+        return MPI_ANY_SOURCE;
+      }
+    }
+  }
+  else {
+    wait_result = MPI_Waitany(buffer_count_, &reqs_[0], &which, &status);
+  }
+
   size_t src_index(indexFromSource_(status.MPI_SOURCE));
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
