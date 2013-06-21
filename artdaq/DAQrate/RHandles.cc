@@ -9,6 +9,8 @@
 #include "cetlib/exception.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
+const size_t artdaq::RHandles::RECV_TIMEOUT = 0xfedcba98;
+
 artdaq::RHandles::RHandles(size_t buffer_count,
                            uint64_t max_payload_size,
                            size_t src_count,
@@ -83,7 +85,7 @@ recvFragment(Fragment & output, size_t timeout_usec)
         if (readyFlag) {break;}
       }
       if (! readyFlag) {
-        return MPI_ANY_SOURCE;
+        return RECV_TIMEOUT;
       }
     }
   }
@@ -198,7 +200,7 @@ waitAll_()
   // clean up the remaining buffers
   for (size_t i = 0; i < buffer_count_; ++i) {
     if (req_sources_[i] != MPI_ANY_SOURCE) {
-      cancelReq_(i);
+      cancelReq_(i, false);
     }
   }
 }
@@ -222,7 +224,7 @@ nextSource_()
 
 void
 artdaq::RHandles::
-cancelReq_(size_t buf)
+cancelReq_(size_t buf, bool blocking_wait)
 {
   Debug << "Cancelling post for buffer "
         << buf
@@ -230,7 +232,27 @@ cancelReq_(size_t buf)
   int result = MPI_Cancel(&reqs_[buf]);
   if (result == MPI_SUCCESS) {
     MPI_Status status;
-    MPI_Wait(&reqs_[buf], &status);
+    if (blocking_wait) {
+      MPI_Wait(&reqs_[buf], &status);
+    }
+    else {
+      int doneFlag;
+      MPI_Test(&reqs_[buf], &doneFlag, &status);
+      if (! doneFlag) {
+        size_t sleep_loops = 10;
+        size_t sleep_time = 100000;
+        for (size_t idx = 0; idx < sleep_loops; ++idx) {
+          usleep(sleep_time);
+          MPI_Test(&reqs_[buf], &doneFlag, &status);
+          if (doneFlag) {break;}
+        }
+        if (! doneFlag) {
+          mf::LogError("RHandles")
+            << "Timeout waiting to cancel the request for MPI buffer "
+            << buf;
+        }
+      }
+    }
   }
   else {
     switch (result) {
