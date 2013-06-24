@@ -25,6 +25,8 @@ namespace artdaq {
 
 class artdaq::RHandles {
 public:
+  static const size_t RECV_TIMEOUT;
+
   RHandles(size_t buffer_count,
            uint64_t max_payload_size,
            size_t src_count,
@@ -35,7 +37,7 @@ public:
   // source of that fragment as its return value.
   //
   // It is a precondition that a sources_sending() != 0.
-  size_t recvFragment(Fragment & frag);
+  size_t recvFragment(Fragment & frag, size_t timeout_usec = 0);
 
   // Number of sources still not done.
   size_t sourcesActive() const;
@@ -55,7 +57,7 @@ private:
 
   int nextSource_();
 
-  void cancelReq_(size_t buf);
+  void cancelReq_(size_t buf, bool blocking_wait = true);
   void post_(size_t buf, size_t src);
   void cancelAndRepost_(size_t src);
 
