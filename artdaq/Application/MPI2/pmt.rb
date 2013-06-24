@@ -183,7 +183,7 @@ class MPIHandler
     # First step is to iterate through all of the configured executables and
     # make sure that everything is idle and nothing has been started already.
     @executables.each { |optionsHash|
-      if optionsHash["state"] != "idle":
+      if optionsHash["state"] != "idle"
           return
       end
     }
@@ -205,7 +205,7 @@ class MPIHandler
       # it more than likely means that mpirun_rsh exited and we don't really
       # know what is happening with our MPI application.
       @executables.each { |optionsHash|
-        if optionsHash["state"] != "finished":
+        if optionsHash["state"] != "finished"
             optionsHash["state"] = "interrupted"
         end
         }
@@ -304,7 +304,7 @@ class PMT
   def start
     # If we've been passed our executable list via the command line we need
     # to spawn off the MPI processes right away.
-    if @mpiHandler.executables.size > 0:
+    if @mpiHandler.executables.size > 0
         @mpiHandler.start
     end
 

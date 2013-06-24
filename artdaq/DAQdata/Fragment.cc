@@ -13,14 +13,14 @@ bool artdaq::fragmentSequenceIDCompare(Fragment i, Fragment j)
 artdaq::Fragment::Fragment() :
   vals_(RawFragmentHeader::num_words(), 0)
 {
-  updateSize_();
+  updateFragmentHeaderWC_();
   fragmentHeader()->metadata_word_count = 0;
 }
 
 artdaq::Fragment::Fragment(std::size_t n) :
   vals_(n + RawFragmentHeader::num_words(), 0)
 {
-  updateSize_();
+  updateFragmentHeaderWC_();
   fragmentHeader()->type        = Fragment::InvalidFragmentType;
   fragmentHeader()->sequence_id = Fragment::InvalidSequenceID;
   fragmentHeader()->fragment_id = Fragment::InvalidFragmentID;
@@ -32,7 +32,7 @@ artdaq::Fragment::Fragment(sequence_id_t sequenceID,
                            type_t type) :
   vals_(RawFragmentHeader::num_words(), 0)
 {
-  updateSize_();
+  updateFragmentHeaderWC_();
   if (type == Fragment::DataFragmentType) {
     // this value is special because it is the default specified
     // in the constructor declaration

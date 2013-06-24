@@ -25,6 +25,8 @@ namespace artdaq {
 
 class artdaq::RHandles {
 public:
+  static const size_t RECV_TIMEOUT;
+
   RHandles(size_t buffer_count,
            uint64_t max_payload_size,
            size_t src_count,
@@ -35,10 +37,13 @@ public:
   // source of that fragment as its return value.
   //
   // It is a precondition that a sources_sending() != 0.
-  size_t recvFragment(Fragment & frag);
+  size_t recvFragment(Fragment & frag, size_t timeout_usec = 0);
 
   // Number of sources still not done.
   size_t sourcesActive() const;
+
+  // Are any sources still active (faster)?
+  bool anySourceActive() const;
 
   // Number of sources pending (last fragments still in-flight).
   size_t sourcesPending() const;
@@ -48,11 +53,11 @@ private:
 
   void waitAll_();
 
-  size_t indexForSource_(size_t src) const;
+  size_t indexFromSource_(size_t src) const;
 
   int nextSource_();
 
-  void cancelReq_(size_t buf);
+  void cancelReq_(size_t buf, bool blocking_wait = true);
   void post_(size_t buf, size_t src);
   void cancelAndRepost_(size_t src);
 
@@ -82,6 +87,18 @@ sourcesActive() const
 }
 
 inline
+bool
+artdaq::RHandles::
+anySourceActive() const {
+  return
+    std::any_of(src_status_.begin(),
+                src_status_.end(),
+                [](status_t const & s)
+                { return s != status_t::DONE; }
+               );
+}
+
+inline
 size_t
 artdaq::RHandles::
 sourcesPending() const
@@ -94,22 +111,9 @@ sourcesPending() const
 inline
 size_t
 artdaq::RHandles::
-indexForSource_(size_t src) const
+indexFromSource_(size_t src) const
 {
   return src - src_start_;
-}
-
-inline
-int
-artdaq::RHandles::
-nextSource_()
-{
-  int result = last_source_posted_;
-  do {
-    result = (result + 1) % src_count_ + src_start_;
-  }
-  while (src_status_[indexForSource_(result)] == status_t::DONE);
-  return result;
 }
 
 #endif /* artdaq_DAQrate_RHandles_hh */
