@@ -8,6 +8,7 @@
 #include "cetlib/container_algorithms.h"
 #include "cetlib/exception.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
+#include "boost/lexical_cast.hpp"
 
 const size_t artdaq::RHandles::RECV_TIMEOUT = 0xfedcba98;
 
@@ -69,24 +70,80 @@ recvFragment(Fragment & output, size_t timeout_usec)
   int which;
   MPI_Status status;
 
+#if 0
+  for (size_t i = 0; i < buffer_count_; ++i) {
+    mf::LogDebug("RHandles")
+      << "Buffer " << i << " sequence id = " << payload_[i].sequenceID()
+      << " header address = 0x" << std::hex << payload_[i].headerAddress() << std::dec;
+  }
+#endif
+
   if (timeout_usec > 0) {
-    int readyFlag;
-    wait_result = MPI_Testany(buffer_count_, &reqs_[0], &which, &readyFlag, &status);
-    if (! readyFlag) {
-      size_t sleep_loops = 10;
-      size_t sleep_time = timeout_usec / sleep_loops;
-      if (timeout_usec > 10000) {
-        sleep_time = 1000;
-        sleep_loops = timeout_usec / sleep_time;
+    if (ready_indices_.size() == 0) {
+      ready_indices_.resize(buffer_count_, -1);
+      ready_statuses_.resize(buffer_count_);
+
+      int readyCount = 0;
+      wait_result = MPI_Testsome(buffer_count_, &reqs_[0], &readyCount,
+                                 &ready_indices_[0], &ready_statuses_[0]);
+      if (readyCount > 0) {
+        saved_wait_result_ = wait_result;
+        ready_indices_.resize(readyCount);
+        ready_statuses_.resize(readyCount);
+#if 0
+        std::string indexString;
+        for (size_t idx = 0; idx < ready_indices_.size(); ++idx) {
+          indexString.append(" ");
+          indexString.append(boost::lexical_cast<std::string>(ready_indices_[idx]));
+        }
+        mf::LogDebug("RHandles")
+          << "Testsome call returned " << readyCount << " buffers. Indices: "
+          << indexString;
+#endif
       }
-      for (size_t idx = 0; idx < sleep_loops; ++idx) {
-        usleep(sleep_time);
-        wait_result = MPI_Testany(buffer_count_, &reqs_[0], &which, &readyFlag, &status);
-        if (readyFlag) {break;}
+      else {
+        size_t sleep_loops = 10;
+        size_t sleep_time = timeout_usec / sleep_loops;
+        if (timeout_usec > 10000) {
+          sleep_time = 1000;
+          sleep_loops = timeout_usec / sleep_time;
+        }
+        for (size_t idx = 0; idx < sleep_loops; ++idx) {
+          usleep(sleep_time);
+          wait_result = MPI_Testsome(buffer_count_, &reqs_[0], &readyCount,
+                                     &ready_indices_[0], &ready_statuses_[0]);
+          if (readyCount > 0) {break;}
+        }
+        if (readyCount > 0) {
+          saved_wait_result_ = wait_result;
+          ready_indices_.resize(readyCount);
+          ready_statuses_.resize(readyCount);
+#if 0
+          std::string indexString;
+          for (size_t idx = 0; idx < ready_indices_.size(); ++idx) {
+            indexString.append(" ");
+            indexString.append(boost::lexical_cast<std::string>(ready_indices_[idx]));
+          }
+          mf::LogDebug("RHandles")
+            << "Testsome call returned " << readyCount << " buffers. Indices: "
+            << indexString;
+#endif
+        }
+        else {
+          ready_indices_.clear();
+          ready_statuses_.clear();
+        }
       }
-      if (! readyFlag) {
-        return RECV_TIMEOUT;
-      }
+    }
+    if (ready_indices_.size() > 0) {
+      wait_result = saved_wait_result_;
+      which = ready_indices_.front();
+      status = ready_statuses_.front();
+      ready_indices_.erase(ready_indices_.begin());
+      ready_statuses_.erase(ready_statuses_.begin());
+    }
+    else {
+      return RECV_TIMEOUT;
     }
   }
   else {
@@ -103,6 +160,14 @@ recvFragment(Fragment & output, size_t timeout_usec)
   { throw art::Exception(art::errors::LogicError, "RHandles: ")
       << "INTERNAL ERROR: req is not MPI_REQUEST_NULL in recvFragment.\n"; }
   Fragment::sequence_id_t sequence_id = payload_[which].sequenceID();
+  if (sequence_id > 100000000 &&
+      ! artdaq::Fragment::isSystemFragmentType(payload_[which].type())) {
+    mf::LogWarning("RHandles")
+      << "Suspicious sequenceID: " << sequence_id
+      << " with fragment id " << payload_[which].fragmentID()
+      << " and type " << ((int) payload_[which].type());
+  }
+
   Debug << "recv: " << rank
         << " idx=" << which
         << " Waitany_error=" << wait_result
@@ -135,6 +200,9 @@ recvFragment(Fragment & output, size_t timeout_usec)
   output.swap(payload_[which]);
   // Reset our buffer.
   Fragment tmp(max_payload_size_);
+#if 0
+  tmp.setSequenceID(987654000 + which);
+#endif
   payload_[which].swap(tmp);
   // Performance measurement.
   rm.woke(sequence_id, which);
@@ -276,6 +344,7 @@ post_(size_t buf, size_t src)
   Debug << "Posting buffer " << buf
         << " size=" << payload_[buf].size()
         << " for receive src=" << src
+        << " header address=0x" << std::hex << payload_[buf].headerAddress() << std::dec
         << flusher;
   MPI_Irecv(&*payload_[buf].headerBegin(),
             (payload_[buf].size() * sizeof(Fragment::value_type)),
