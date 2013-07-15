@@ -8,7 +8,6 @@
 #include "cetlib/container_algorithms.h"
 #include "cetlib/exception.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
-#include "boost/lexical_cast.hpp"
 
 const size_t artdaq::RHandles::RECV_TIMEOUT = 0xfedcba98;
 
@@ -70,14 +69,6 @@ recvFragment(Fragment & output, size_t timeout_usec)
   int which;
   MPI_Status status;
 
-#if 0
-  for (size_t i = 0; i < buffer_count_; ++i) {
-    mf::LogDebug("RHandles")
-      << "Buffer " << i << " sequence id = " << payload_[i].sequenceID()
-      << " header address = 0x" << std::hex << payload_[i].headerAddress() << std::dec;
-  }
-#endif
-
   if (timeout_usec > 0) {
     if (ready_indices_.size() == 0) {
       ready_indices_.resize(buffer_count_, -1);
@@ -90,16 +81,6 @@ recvFragment(Fragment & output, size_t timeout_usec)
         saved_wait_result_ = wait_result;
         ready_indices_.resize(readyCount);
         ready_statuses_.resize(readyCount);
-#if 0
-        std::string indexString;
-        for (size_t idx = 0; idx < ready_indices_.size(); ++idx) {
-          indexString.append(" ");
-          indexString.append(boost::lexical_cast<std::string>(ready_indices_[idx]));
-        }
-        mf::LogDebug("RHandles")
-          << "Testsome call returned " << readyCount << " buffers. Indices: "
-          << indexString;
-#endif
       }
       else {
         size_t sleep_loops = 10;
@@ -118,16 +99,6 @@ recvFragment(Fragment & output, size_t timeout_usec)
           saved_wait_result_ = wait_result;
           ready_indices_.resize(readyCount);
           ready_statuses_.resize(readyCount);
-#if 0
-          std::string indexString;
-          for (size_t idx = 0; idx < ready_indices_.size(); ++idx) {
-            indexString.append(" ");
-            indexString.append(boost::lexical_cast<std::string>(ready_indices_[idx]));
-          }
-          mf::LogDebug("RHandles")
-            << "Testsome call returned " << readyCount << " buffers. Indices: "
-            << indexString;
-#endif
         }
         else {
           ready_indices_.clear();
@@ -160,14 +131,6 @@ recvFragment(Fragment & output, size_t timeout_usec)
   { throw art::Exception(art::errors::LogicError, "RHandles: ")
       << "INTERNAL ERROR: req is not MPI_REQUEST_NULL in recvFragment.\n"; }
   Fragment::sequence_id_t sequence_id = payload_[which].sequenceID();
-  if (sequence_id > 100000000 &&
-      ! artdaq::Fragment::isSystemFragmentType(payload_[which].type())) {
-    mf::LogWarning("RHandles")
-      << "Suspicious sequenceID: " << sequence_id
-      << " with fragment id " << payload_[which].fragmentID()
-      << " and type " << ((int) payload_[which].type());
-  }
-
   Debug << "recv: " << rank
         << " idx=" << which
         << " Waitany_error=" << wait_result
@@ -200,9 +163,6 @@ recvFragment(Fragment & output, size_t timeout_usec)
   output.swap(payload_[which]);
   // Reset our buffer.
   Fragment tmp(max_payload_size_);
-#if 0
-  tmp.setSequenceID(987654000 + which);
-#endif
   payload_[which].swap(tmp);
   // Performance measurement.
   rm.woke(sequence_id, which);
