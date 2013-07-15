@@ -74,6 +74,10 @@ private:
   int last_source_posted_;
 
   Fragments payload_;
+
+  int saved_wait_result_;
+  std::vector<int> ready_indices_;
+  std::vector<MPI_Status> ready_statuses_;
 };
 
 inline
