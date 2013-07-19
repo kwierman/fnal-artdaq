@@ -13,8 +13,8 @@
 int main(int argc, char *argv[])
 {
   // initialization
-  int const wanted_threading_level { MPI_THREAD_MULTIPLE };
-  artdaq::MPISentry mpiSentry(&argc, &argv, MPI_THREAD_FUNNELED);
+  int const wanted_threading_level { MPI_THREAD_FUNNELED };
+  artdaq::MPISentry mpiSentry(&argc, &argv, wanted_threading_level);
   artdaq::configureMessageFacility("boardreader");
   mf::LogDebug("BoardReader::main")
     << "MPI initialized with requested thread support level of "
