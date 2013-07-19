@@ -22,5 +22,4 @@ art_make(SUBDIRS detail
   )
 
 install_headers(SUBDIRS detail)
-install_source()
 install_source(SUBDIRS detail)

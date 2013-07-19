@@ -10,5 +10,4 @@ art_make(
 simple_plugin(GenericFragmentSimulator "generator" artdaq_DAQdata)
 
 install_headers(SUBDIRS detail)
-install_source()
 install_source(SUBDIRS detail)
