@@ -64,3 +64,6 @@ simple_plugin(NetMonTransportService "service"
   ${ROOT_NET}
   ${ROOT_CORE}
 )
+
+install_headers(SUBDIRS detail)                                                         
+install_source(SUBDIRS detail)
