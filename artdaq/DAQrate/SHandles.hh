@@ -31,7 +31,7 @@ public:
            uint64_t max_payload_size,
            size_t dest_count,
            size_t dest_start,
-           bool broadcast_sends);
+           bool broadcast_sends = false);
 
   // Make sure we clean up and wait for in-flight sends.
   ~SHandles();
