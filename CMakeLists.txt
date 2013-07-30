@@ -29,13 +29,14 @@ set(CMAKE_MODULE_PATH $ENV{ART_DIR}/Modules
 include(CetCMakeEnv)
 cet_cmake_env()
 
-cet_set_compiler_flags(DIAGS VIGILANT WERROR NO_UNDEFINED EXTRA_FLAGS -pedantic)
+# -D_GLIBCXX_USE_NANOSLEEP is needed to make std::this_thread::sleep_for available.
+cet_set_compiler_flags(DIAGS VIGILANT
+  WERROR
+  NO_UNDEFINED
+  EXTRA_FLAGS -pedantic
+  EXTRA_CXX_FLAGS -std=c++11  -D_GLIBCXX_USE_NANOSLEEP
+)
 
-cet_have_qual( e2 )
-if ( ${CET_HAVE_QUAL} )
-  # -D_GLIBCXX_USE_NANOSLEEP is needed to make std::this_thread::sleep_for available.
-  cet_add_compiler_flags(CXX -std=c++11 -D_GLIBCXX_USE_NANOSLEEP)
-endif()
 cet_report_compiler_flags()
 
 # these are minimum required versions, not the actual product versions
