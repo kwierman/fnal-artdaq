@@ -130,7 +130,22 @@ int main(int argc, char * argv[]) try
 
     if (events_to_generate != 0 && event_count >= events_to_generate) {break;}
   }
-  return store.endOfData();
+
+  int readerReturnValue;
+  bool endSucceeded = false;
+  int attemptsToEnd = 1;
+  endSucceeded = store.endOfData(readerReturnValue);
+  while (! endSucceeded && attemptsToEnd < 3) {
+    ++attemptsToEnd;
+    endSucceeded = store.endOfData(readerReturnValue);
+  }
+  if (! endSucceeded) {
+    std::cerr << "Failed to shut down the reader and the event store "
+              << "because the endOfData marker could not be pushed "
+              << "onto the queue." << std::endl;
+  }
+
+  return readerReturnValue;
 }
 
 catch (std::string & x)

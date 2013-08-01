@@ -49,7 +49,15 @@ int main(int argc, char * argv[])
         events.insert(std::move(frag));
       }
     }
-    rc = events.endOfData();
+
+    int readerReturnValue;
+    bool endSucceeded = events.endOfData(readerReturnValue);
+    if (endSucceeded) {
+      rc = readerReturnValue;
+    }
+    else {
+      rc = 15;
+    }
   }
   catch (cet::exception & x) {
     std::cerr << argv[0] << " failure\n" << x << std::endl;

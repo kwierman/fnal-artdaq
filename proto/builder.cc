@@ -249,8 +249,23 @@ void Program::sink()
     }
     // Make the reader application finish, and capture its return
     // status.
-    int rc = events.endOfData();
-    Debug << "Sink: reader is done, exit status was: " << rc << flusher;
+    int readerReturnValue;
+    bool endSucceeded = false;
+    int attemptsToEnd = 1;
+    endSucceeded = events.endOfData(readerReturnValue);
+    while (! endSucceeded && attemptsToEnd < 3) {
+      ++attemptsToEnd;
+      endSucceeded = events.endOfData(readerReturnValue);
+    }
+    if (endSucceeded) {
+      Debug << "Sink: reader is done, its exit status was: "
+            << readerReturnValue << flusher;
+    }
+    else {
+      Debug << "Sink: reader failed to complete because the "
+            << "endOfData marker could not be pushed onto the queue."
+            << flusher;
+    }
   } // end of lifetime of 'events'
   Debug << "Sink done " << conf_.rank_ << flusher;
   MPI_Barrier(MPI_COMM_WORLD);

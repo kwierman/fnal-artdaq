@@ -52,7 +52,8 @@ BOOST_AUTO_TEST_CASE(Trivial)
     testFragment.reset(new artdaq::Fragment(sequenceID[i], fragmentID[i]));
     eventStore->insert(std::move(testFragment));
   }
-  eventStore->endOfData();
+  int readerReturnValue;
+  eventStore->endOfData(readerReturnValue);
 
   artdaq::RawEventQueue &queue(artdaq::getGlobalQueue());
   
@@ -87,7 +88,8 @@ BOOST_AUTO_TEST_CASE(SequenceMod)
     testFragment.reset(new artdaq::Fragment(sequenceID[i], fragmentID[i]));
     eventStore->insert(std::move(testFragment));
   }
-  eventStore->endOfData();
+  int readerReturnValue;
+  eventStore->endOfData(readerReturnValue);
 
   artdaq::RawEventQueue &queue(artdaq::getGlobalQueue());
   
