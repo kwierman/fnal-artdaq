@@ -12,13 +12,19 @@ class LoggerIO
   # a file at the same time.  This class implemented the interface the logging
   # class expects for a file handle (mainly a write and a close method) and will
   # optionally write to stdout and a file.  It will also handle file rotation.
-  def openFile
+  def openFile(logPath)
     @fileIndex += 1
     if @fileIndex > @maxFiles
       @fileIndex = 1
     end
-    
-    logFileName = "pmt-%d.%d.log" % [ Process.pid, @fileIndex ]
+
+    currentTime = Time.now
+    logFileName = "pmt-%d.%d-%d%02d%02d%02d%02d%02d.log" %
+      [ Process.pid, @fileIndex, currentTime.year, currentTime.month,
+        currentTime.day, currentTime.hour, currentTime.min, currentTime.sec]
+    if (logPath != "")
+      logFileName = String(logPath) + "/pmt/" + String(logFileName)
+    end
     puts "Log file name: %s" % [logFileName]
     
     if @fileHandle != nil
@@ -27,16 +33,17 @@ class LoggerIO
     @fileHandle = File.open(logFileName, "w")
   end
   
-  def initialize(logToStdout = True)
+  def initialize(logToStdout = true, logPath = "")
     @logToStdout = logToStdout
+    @logPath = logPath
     @fileSize = 0
     @fileIndex = 0
     @fileHandle = nil
     
-    @maxFiles = 5
+    @maxFiles = 9
     @maxFileSize = 1048576
     
-    self.openFile
+    self.openFile(@logPath)
   end
   
   def write(*args)
@@ -44,7 +51,7 @@ class LoggerIO
       args.each { |arg|
         if arg.length + @fileSize > @maxFileSize
           @fileSize = 0
-          self.openFile
+          self.openFile(@logPath)
         end
         @fileSize += arg.length
         @fileHandle.write(*args)
@@ -69,18 +76,20 @@ class MPIHandler
     @executables
   end
 
-  def createLogger(logToStdout)
-    @logger = Logger.new(LoggerIO.new(logToStdout))
+  def createLogger(logToStdout, logPath)
+    @logger = Logger.new(LoggerIO.new(logToStdout, logPath))
     @logger.level = Logger::INFO
     @logger.formatter = proc do |severity, datetime, progname, msg|
       "#{datetime}: #{msg}\n"
     end
   end
 
-  def initialize(logToStdout)
+  def initialize(logToStdout, logPath, onmonDisplay)
     @mpiThread = nil
     @executables = []
-    self.createLogger(logToStdout)
+    @logPath = logPath
+    self.createLogger(logToStdout, logPath)
+    @onmonDisplay = onmonDisplay
   end
 
   def addExecutable(program, host, options)
@@ -105,8 +114,16 @@ class MPIHandler
     }
         
     disableCpuAffinity = "export MV2_ENABLE_AFFINITY=0;"
-    mpiCmd = "mpirun -launcher rsh -configfile %s -f %s" % [configFileHandle.path,
-                                                            hostsFileHandle.path]
+    displayString = ""
+    if @onmonDisplay != nil
+      displayString = "-genv DISPLAY " + @onmonDisplay
+    end
+    logString = ""
+    if @logPath != ""
+      logString = "-genv DS50DAQ_LOG_ROOT " + @logPath
+    end
+    mpiCmd = "mpirun %s %s -launcher rsh -configfile %s -f %s" %
+      [displayString, logString, configFileHandle.path, hostsFileHandle.path]
     configFileHandle.rewind
     hostsFileHandle.rewind
     return disableCpuAffinity + mpiCmd
@@ -279,14 +296,15 @@ class PMTRPCHandler
 
   def stopSystem
     # Shut down any applications that have been configured.
+    @mpiHandler.stop
     return true
   end
 end
 
 class PMT
-  def initialize(parameterFile, portNumber, logToStdout)
+  def initialize(parameterFile, portNumber, logToStdout, logPath, onmonDisplay)
     @rpcThread = nil
-    @mpiHandler = MPIHandler.new(logToStdout)
+    @mpiHandler = MPIHandler.new(logToStdout, logPath, onmonDisplay)
 
     if parameterFile != nil
       IO.foreach(parameterFile) { |definition|
@@ -305,7 +323,7 @@ class PMT
     # If we've been passed our executable list via the command line we need
     # to spawn off the MPI processes right away.
     if @mpiHandler.executables.size > 0
-        @mpiHandler.start
+      @mpiHandler.start
     end
 
     # Startup the RPC server in a new thread so that we can actually return from
@@ -332,6 +350,8 @@ if __FILE__ == $0
   options.portNumber = 8080
   options.parameterFile = nil
   options.doCleanup = false
+  options.onmonDisplay = nil
+  options.logPath = ""
 
   optParser = OptionParser.new do |opts|
     opts.banner = "Usage: pmt.rb [options]"
@@ -357,6 +377,16 @@ if __FILE__ == $0
       options.parameterFile = defs
     end
 
+    opts.on("-x", "--display [display]",
+            "The X display to use for online monitoring.") do |disp|
+      options.onmonDisplay = disp
+    end
+
+    opts.on("-l", "--logpath [path]",
+            "Root directory for log files.") do |path|
+      options.logPath = path
+    end
+
     opts.on_tail("-h", "--help", "Show this message.") do
       puts opts
       exit
@@ -369,7 +399,9 @@ if __FILE__ == $0
     exit
   end
 
-  pmt = PMT.new(options.parameterFile, options.portNumber, options.logToStdout)
+  pmt = PMT.new(options.parameterFile, options.portNumber,
+                options.logToStdout, options.logPath,
+                options.onmonDisplay)
 
   if options.doCleanup and options.parameterFile == nil
     puts "A program definition file needs to be specified for the cleanup"

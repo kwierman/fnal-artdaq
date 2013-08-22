@@ -70,23 +70,51 @@ recvFragment(Fragment & output, size_t timeout_usec)
   MPI_Status status;
 
   if (timeout_usec > 0) {
-    int readyFlag;
-    wait_result = MPI_Testany(buffer_count_, &reqs_[0], &which, &readyFlag, &status);
-    if (! readyFlag) {
-      size_t sleep_loops = 10;
-      size_t sleep_time = timeout_usec / sleep_loops;
-      if (timeout_usec > 10000) {
-        sleep_time = 1000;
-        sleep_loops = timeout_usec / sleep_time;
+    if (ready_indices_.size() == 0) {
+      ready_indices_.resize(buffer_count_, -1);
+      ready_statuses_.resize(buffer_count_);
+
+      int readyCount = 0;
+      wait_result = MPI_Testsome(buffer_count_, &reqs_[0], &readyCount,
+                                 &ready_indices_[0], &ready_statuses_[0]);
+      if (readyCount > 0) {
+        saved_wait_result_ = wait_result;
+        ready_indices_.resize(readyCount);
+        ready_statuses_.resize(readyCount);
       }
-      for (size_t idx = 0; idx < sleep_loops; ++idx) {
-        usleep(sleep_time);
-        wait_result = MPI_Testany(buffer_count_, &reqs_[0], &which, &readyFlag, &status);
-        if (readyFlag) {break;}
+      else {
+        size_t sleep_loops = 10;
+        size_t sleep_time = timeout_usec / sleep_loops;
+        if (timeout_usec > 10000) {
+          sleep_time = 1000;
+          sleep_loops = timeout_usec / sleep_time;
+        }
+        for (size_t idx = 0; idx < sleep_loops; ++idx) {
+          usleep(sleep_time);
+          wait_result = MPI_Testsome(buffer_count_, &reqs_[0], &readyCount,
+                                     &ready_indices_[0], &ready_statuses_[0]);
+          if (readyCount > 0) {break;}
+        }
+        if (readyCount > 0) {
+          saved_wait_result_ = wait_result;
+          ready_indices_.resize(readyCount);
+          ready_statuses_.resize(readyCount);
+        }
+        else {
+          ready_indices_.clear();
+          ready_statuses_.clear();
+        }
       }
-      if (! readyFlag) {
-        return RECV_TIMEOUT;
-      }
+    }
+    if (ready_indices_.size() > 0) {
+      wait_result = saved_wait_result_;
+      which = ready_indices_.front();
+      status = ready_statuses_.front();
+      ready_indices_.erase(ready_indices_.begin());
+      ready_statuses_.erase(ready_statuses_.begin());
+    }
+    else {
+      return RECV_TIMEOUT;
     }
   }
   else {
@@ -276,6 +304,7 @@ post_(size_t buf, size_t src)
   Debug << "Posting buffer " << buf
         << " size=" << payload_[buf].size()
         << " for receive src=" << src
+        << " header address=0x" << std::hex << payload_[buf].headerAddress() << std::dec
         << flusher;
   MPI_Irecv(&*payload_[buf].headerBegin(),
             (payload_[buf].size() * sizeof(Fragment::value_type)),
