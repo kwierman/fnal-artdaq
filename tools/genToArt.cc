@@ -213,7 +213,15 @@ namespace {
       }
       frags.clear();
     }
-    return store.endOfData();
+
+    int readerReturnValue;
+    bool endSucceeded = store.endOfData(readerReturnValue);
+    if (endSucceeded) {
+      return readerReturnValue;
+    }
+    else {
+      return 15;
+    }
   }
 }
 

@@ -3,7 +3,6 @@
 
 #include "art/Framework/Services/Registry/ServiceMacros.h"
 
-class TMessage;
 class TBufferFile;
 
 class NetMonTransportServiceInterface {

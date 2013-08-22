@@ -12,7 +12,8 @@
 artdaq::SHandles::SHandles(size_t buffer_count,
                            uint64_t max_payload_size,
                            size_t dest_count,
-                           size_t dest_start)
+                           size_t dest_start,
+			   bool broadcast_sends)
   :
   buffer_count_(buffer_count),
   max_payload_size_(max_payload_size),
@@ -20,6 +21,7 @@ artdaq::SHandles::SHandles(size_t buffer_count,
   dest_start_(dest_start),
   pos_(),
   sent_frag_count_(dest_count, dest_start),
+  broadcast_sends_(broadcast_sends),
   reqs_(buffer_count_, MPI_REQUEST_NULL),
   payload_(buffer_count_)
 {
@@ -66,9 +68,21 @@ sendFragment(Fragment && frag)
         << "EOD fragments should not be sent on as received: "
         << "use sendEODFrag() instead.";
   }
-  size_t dest = calcDest(frag.sequenceID());
-  sendFragTo(std::move(frag), dest);
-  sent_frag_count_.incSlot(dest);
+  size_t dest;
+  if (broadcast_sends_) {
+    size_t dest_end = dest_start_ + dest_count_;
+    for (dest = dest_start_; dest != dest_end; ++dest) {
+      // Gross, we have to copy.
+      Fragment fragCopy(frag);
+      sendFragTo(std::move(fragCopy), dest);
+      sent_frag_count_.incSlot(dest);
+    }
+  } else {
+    dest = calcDest(frag.sequenceID());
+    sendFragTo(std::move(frag), dest);
+    sent_frag_count_.incSlot(dest);
+  }
+
   return dest;
 }
 

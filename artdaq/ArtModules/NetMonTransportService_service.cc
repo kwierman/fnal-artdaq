@@ -1,5 +1,4 @@
 #include "artdaq/ArtModules/NetMonTransportService.h"
-#include "artdaq/DAQrate/RHandles.hh"
 #include "artdaq/DAQrate/SHandles.hh"
 #include "artdaq/DAQrate/GlobalQueue.hh"
 
@@ -16,9 +15,6 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include "TClass.h"
-#include "TServerSocket.h"
-#include "TMessage.h"
-#include "TBuffer.h"
 #include "TBufferFile.h"
 
 #include <iomanip>
@@ -43,10 +39,9 @@ NetMonTransportService(ParameterSet const& pset, art::ActivityRegistry&)
   : NetMonTransportServiceInterface(),
     mpi_buffer_count_(pset.get<size_t>("mpi_buffer_count", 5)),
     max_fragment_size_words_(pset.get<uint64_t>("max_fragment_size_words", 512 * 1024)),
-    first_data_sender_rank_(pset.get<size_t>("first_data_sender_rank", 0)),
     first_data_receiver_rank_(pset.get<size_t>("first_data_receiver_rank", 0)),
-    data_sender_count_(pset.get<size_t>("data_sender_count", 1)),
     data_receiver_count_(pset.get<size_t>("data_receiver_count", 1)),
+    broadcast_sends_(pset.get<bool>("broadcast_sends", false)),
     sender_ptr_(nullptr),
     incoming_events_(artdaq::getGlobalQueue()),
     recvd_fragments_(nullptr) { }
@@ -56,9 +51,10 @@ NetMonTransportService::
 connect()
 {
   sender_ptr_.reset(new artdaq::SHandles(mpi_buffer_count_,
-                                         max_fragment_size_words_,
-                                         data_receiver_count_,
-                                         first_data_receiver_rank_));
+					 max_fragment_size_words_,
+					 data_receiver_count_,
+					 first_data_receiver_rank_,
+					 broadcast_sends_));
 }
 
 void

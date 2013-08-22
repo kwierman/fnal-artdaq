@@ -38,10 +38,11 @@ namespace artdaq {
                          bool printSummaryStats) :
     id_(store_id),
     num_fragments_per_event_(num_fragments_per_event),
+    max_queue_size_(50),
     run_id_(run),
     subrun_id_(0),
     events_(),
-    queue_(getGlobalQueue(50)),
+    queue_(getGlobalQueue(max_queue_size_)),
     reader_thread_(std::async(std::launch::async, reader, argc, argv)),
     seqIDModulus_(1),
     lastFlushedSeqID_(0),
@@ -60,10 +61,11 @@ namespace artdaq {
                          bool printSummaryStats) :
     id_(store_id),
     num_fragments_per_event_(num_fragments_per_event),
+    max_queue_size_(50),
     run_id_(run),
     subrun_id_(0),
     events_(),
-    queue_(getGlobalQueue(50)),
+    queue_(getGlobalQueue(max_queue_size_)),
     reader_thread_(std::async(std::launch::async, reader, configString)),
     seqIDModulus_(1),
     lastFlushedSeqID_(0),
@@ -80,15 +82,16 @@ namespace artdaq {
                          int argc,
                          char * argv[],
                          ART_CMDLINE_FCN * reader,
-                         int max_art_queue_size,
+                         size_t max_art_queue_size,
                          double enq_timeout_sec,
                          bool printSummaryStats) :
     id_(store_id),
     num_fragments_per_event_(num_fragments_per_event),
+    max_queue_size_(max_art_queue_size),
     run_id_(run),
     subrun_id_(0),
     events_(),
-    queue_(getGlobalQueue(max_art_queue_size)),
+    queue_(getGlobalQueue(max_queue_size_)),
     reader_thread_(std::async(std::launch::async, reader, argc, argv)),
     seqIDModulus_(1),
     lastFlushedSeqID_(0),
@@ -104,15 +107,16 @@ namespace artdaq {
                          int store_id,
                          const std::string& configString,
                          ART_CFGSTRING_FCN * reader,
-                         int max_art_queue_size,
+                         size_t max_art_queue_size,
                          double enq_timeout_sec,
                          bool printSummaryStats) :
     id_(store_id),
     num_fragments_per_event_(num_fragments_per_event),
+    max_queue_size_(max_art_queue_size),
     run_id_(run),
     subrun_id_(0),
     events_(),
-    queue_(getGlobalQueue(max_art_queue_size)),
+    queue_(getGlobalQueue(max_queue_size_)),
     reader_thread_(std::async(std::launch::async, reader, configString)),
     seqIDModulus_(1),
     lastFlushedSeqID_(0),
@@ -130,7 +134,8 @@ namespace artdaq {
     }
   }
 
-  void EventStore::insert(FragmentPtr pfrag)
+  void EventStore::insert(FragmentPtr pfrag,
+                          bool printWarningWhenFragmentIsDropped)
   {
     // We should never get a null pointer, nor should we get a
     // Fragment without a good fragment ID.
@@ -186,8 +191,16 @@ namespace artdaq {
       }
       bool enqSuccess = queue_.enqTimedWait(complete_event, enq_timeout_);
       if (! enqSuccess) {
-        mf::LogError("EventStore") << "Enqueueing event " << sequence_id
-                                   << " FAILED , queue size = " << queue_.size();
+        if (printWarningWhenFragmentIsDropped) {
+          mf::LogWarning("EventStore") << "Enqueueing event " << sequence_id
+                                       << " FAILED , queue size = "
+                                       << queue_.size();
+        }
+        else {
+          mf::LogDebug("EventStore") << "Enqueueing event " << sequence_id
+                                     << " FAILED , queue size = "
+                                     << queue_.size();
+        }
       }
     }
     MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
@@ -197,18 +210,37 @@ namespace artdaq {
     }
   }
 
-  int
-  EventStore::endOfData()
+  bool EventStore::insert(FragmentPtr pfrag, FragmentPtr& rejectedFragment)
+  {
+    // Test whether this fragment can be safely accepted. If we accept
+    // it, and it completes an event, then we want to be sure that it
+    // can be pushed onto the event queue.  If not, we return it and
+    // let the caller know that we didn't accept it.
+    if (queue_.size() >= max_queue_size_) {
+      size_t sleepTime = 1000000 * (enq_timeout_.count() / 10.0);
+      while (queue_.size() >= max_queue_size_) {
+        usleep(sleepTime);
+      }
+      if (queue_.size() >= max_queue_size_) {
+        rejectedFragment = std::move(pfrag);
+        return false;
+      }
+    }
+
+    insert(std::move(pfrag));
+    return true;
+  }
+
+  bool
+  EventStore::endOfData(int& readerReturnValue)
   {
     RawEvent_ptr end_of_data(nullptr);
     bool enqSuccess = queue_.enqTimedWait(end_of_data, enq_timeout_);
     if (! enqSuccess) {
-      mf::LogError("EventStore") << "Enqueueing END_OF_DATA event "
-                                 << end_of_data->sequenceID()
-                                 << " FAILED , queue size = "
-                                 << queue_.size();
+      return false;
     }
-    return reader_thread_.get();
+    readerReturnValue = reader_thread_.get();
+    return true;
   }
 
   void EventStore::setSeqIDModulus(unsigned int seqIDModulus)
@@ -216,12 +248,14 @@ namespace artdaq {
     seqIDModulus_ = seqIDModulus;
   }
 
-  void EventStore::flushData()
+  bool EventStore::flushData()
   {
     bool enqSuccess;
-    mf::LogDebug("EventStore")
-      << "Flushing " << events_.size() << " stale events from the EventStore.";
+    size_t initialStoreSize = events_.size();
+    mf::LogDebug("EventStore") << "Flushing " << initialStoreSize
+                               << " stale events from the EventStore.";
     EventMap::iterator loc;
+    size_t flushCount = 0;
     for (loc = events_.begin(); loc != events_.end(); ++loc) {
       RawEvent_ptr complete_event(loc->second);
       MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
@@ -231,17 +265,18 @@ namespace artdaq {
       }
       enqSuccess = queue_.enqTimedWait(complete_event, enq_timeout_);
       if (! enqSuccess) {
-        mf::LogError("EventStore") << "Enqueueing event "
-                                   << complete_event->sequenceID()
-                                   << " FAILED , queue size = "
-                                   << queue_.size();
+        break;
+      }
+      else {
+        events_.erase(loc->first);
+        ++flushCount;
       }
     }
-    events_.clear();
-    mf::LogDebug("EventStore")
-      << "Done flushing stale events from the EventStore.";
+    mf::LogDebug("EventStore") << "Done flushing " << flushCount
+                               << " stale events from the EventStore.";
 
     lastFlushedSeqID_ = highestSeqIDSeen_;
+    return (flushCount == initialStoreSize);
   }
 
   void EventStore::startRun(run_id_t runID)
@@ -257,7 +292,7 @@ namespace artdaq {
     ++subrun_id_;
   }
 
-  void EventStore::endRun()
+  bool EventStore::endRun()
   {
     RawEvent_ptr endOfRunEvent(new RawEvent(run_id_, subrun_id_, 0));
     std::unique_ptr<artdaq::Fragment>
@@ -270,15 +305,10 @@ namespace artdaq {
     *endOfRunFrag->dataBegin() = id_;
     endOfRunEvent->insertFragment(std::move(endOfRunFrag));
 
-    bool enqSuccess = queue_.enqTimedWait(endOfRunEvent, enq_timeout_);
-    if (! enqSuccess) {
-        mf::LogError("EventStore") << "Enqueueing end of run event "
-                                   << " FAILED , queue size = "
-                                   << queue_.size();
-    }
+    return queue_.enqTimedWait(endOfRunEvent, enq_timeout_);
   }
 
-  void EventStore::endSubrun()
+  bool EventStore::endSubrun()
   {
     RawEvent_ptr endOfSubrunEvent(new RawEvent(run_id_, subrun_id_, 0));
     std::unique_ptr<artdaq::Fragment>
@@ -291,12 +321,7 @@ namespace artdaq {
     *endOfSubrunFrag->dataBegin() = id_;
     endOfSubrunEvent->insertFragment(std::move(endOfSubrunFrag));
 
-    bool enqSuccess = queue_.enqTimedWait(endOfSubrunEvent, enq_timeout_);
-    if (! enqSuccess) {
-        mf::LogError("EventStore") << "Enqueueing end of subrun event "
-                                   << " FAILED , queue size = "
-                                   << queue_.size();
-    }
+    return queue_.enqTimedWait(endOfSubrunEvent, enq_timeout_);
   }
 
   void
