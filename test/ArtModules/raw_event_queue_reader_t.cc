@@ -131,23 +131,22 @@ fake_single_process_branch(std::string const & tag,
                            std::string const & processName,
                            std::string const & productInstanceName)
 {
-  art::ModuleDescription mod;
   std::string moduleLabel = processName + "dummyMod";
   std::string moduleClass("DummyModule");
-  art::TypeID dummyType(typeid(int));
   fhicl::ParameterSet modParams;
   modParams.put<std::string>("module_type", moduleClass);
   modParams.put<std::string>("module_label", moduleLabel);
-  mod.parameterSetID_ = modParams.id();
-  mod.moduleName_ = moduleClass;
-  mod.moduleLabel_ = moduleLabel;
   art::ProcessConfiguration * process =
     fake_single_module_process(tag, processName, modParams);
-  mod.processConfiguration_ = *process;
+  art::ModuleDescription mod(modParams.id(),
+                             moduleClass,
+                             moduleLabel,
+                             *process);
+  art::TypeID dummyType(typeid(int));
   art::BranchDescription * result =
     new art::BranchDescription(art::TypeLabel(art::InEvent,
-                               dummyType,
-                               productInstanceName),
+                                              dummyType,
+                                              productInstanceName),
                                mod);
   branchKeys_.insert(std::make_pair(tag, art::BranchKey(*result)));
   return std::unique_ptr<art::BranchDescription>(result);
@@ -158,13 +157,12 @@ struct REQRTestFixture {
     static bool once(true);
     if (once) {
       (void) reader(); // Force initialization.
-      ModuleDescription md;
+      ModuleDescription md(ParameterSet().id(),
+                           "_NAMEERROR_",
+                           "_LABELERROR_",
+                           *gf().processConfigurations_["daq"]);
       // These _xERROR_ strings should never appear in branch names; they
       // are here as tracers to help identify any failures in coding.
-      md.moduleName_ = "_NAMEERROR_";
-      md.moduleLabel_ = "_LABELERROR_";
-      md.processConfiguration_.processName_ = gf().processConfigurations_["daq"]->processName_;
-      md.parameterSetID_ = ParameterSet().id(); // Dummy
       helper().registerProducts(gf().productRegistry_, md);
       gf().finalize();
       once = false;
@@ -196,7 +194,7 @@ struct REQRTestFixture {
     s_reader(pset,
              helper(),
              principal_maker(),
-	     gf().productRegistry_);
+       gf().productRegistry_);
     return s_reader;
   }
 };

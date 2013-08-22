@@ -65,5 +65,15 @@ simple_plugin(NetMonTransportService "service"
   ${ROOT_CORE}
 )
 
+_check_if_version_greater(art ${ART_VERSION} v1_08_00)
+if (NOT ${product_version_less})
+  simple_plugin(InFlightConfiguration "service"
+    ${ART_FRAMEWORK_SERVICES_REGISTRY}
+    ${ART_FRAMEWORK_SERVICES_USERINTERACTION}
+    ${ART_FRAMEWORK_SERVICES_SYSTEM_PATHSELECTION_SERVICE}
+    ${ART_UTILITIES}
+    )
+endif()
+
 install_headers(SUBDIRS detail)                                                         
 install_source(SUBDIRS detail)

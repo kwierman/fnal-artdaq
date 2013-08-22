@@ -1,5 +1,5 @@
-#ifndef artdaq_DAQrate_Config_hh
-#define artdaq_DAQrate_Config_hh
+#ifndef proto_Config_hh
+#define proto_Config_hh
 
 #include <iostream>
 #include <string>
@@ -61,4 +61,4 @@ inline std::ostream & operator<<(std::ostream & ost, Config const & c)
   return ost;
 }
 
-#endif /* artdaq_DAQrate_Config_hh */
+#endif /* proto_Config_hh */

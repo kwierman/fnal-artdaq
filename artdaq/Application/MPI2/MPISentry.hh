@@ -1,5 +1,5 @@
-#ifndef artdaq_DAQrate_MPISentry_hh
-#define artdaq_DAQrate_MPISentry_hh
+#ifndef artdaq_Application_MPI2_MPISentry_hh
+#define artdaq_Application_MPI2_MPISentry_hh
 
 namespace artdaq {
   class MPISentry;
@@ -25,4 +25,4 @@ private:
 };
 
 
-#endif /* artdaq_DAQrate_MPISentry_hh */
+#endif /* artdaq_Application_MPI2_MPISentry_hh */

@@ -1,5 +1,5 @@
-#ifndef artdaq_DAQrate_MPIProg_hh
-#define artdaq_DAQrate_MPIProg_hh
+#ifndef proto_MPIProg_hh
+#define proto_MPIProg_hh
 
 #include "artdaq/DAQrate/quiet_mpi.hh"
 
@@ -17,4 +17,4 @@ struct MPIProg {
 };
 
 
-#endif /* artdaq_DAQrate_MPIProg_hh */
+#endif /* proto_MPIProg_hh */
