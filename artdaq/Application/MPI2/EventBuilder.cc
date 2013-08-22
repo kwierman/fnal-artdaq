@@ -233,8 +233,15 @@ bool artdaq::EventBuilder::shutdown()
      shutdown state is from a state where there is no data taking.  All we have
      to do is signal the art input module that we're done taking data so that
      it can wrap up whatever it needs to do. */
-  event_store_ptr_->endOfData();
-  return true;
+  int readerReturnValue;
+  bool endSucceeded = false;
+  int attemptsToEnd = 1;
+  endSucceeded = event_store_ptr_->endOfData(readerReturnValue);
+  while (! endSucceeded && attemptsToEnd < 3) {
+    ++attemptsToEnd;
+    endSucceeded = event_store_ptr_->endOfData(readerReturnValue);
+  }
+  return endSucceeded;
 }
 
 bool artdaq::EventBuilder::soft_initialize(fhicl::ParameterSet const& pset)
