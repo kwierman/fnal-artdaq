@@ -164,6 +164,8 @@ endJob()
     FDEBUG(1) << "End:   NetMonOutput::endJob()\n";
 }
 
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
 static
 void
 send_init_message()
@@ -341,6 +343,7 @@ send_init_message()
     }
     FDEBUG(1) << "End:   NetMonOutput static send_init_message()\n";
 }
+#pragma GCC pop_options
 
 void
 art::NetMonOutput::

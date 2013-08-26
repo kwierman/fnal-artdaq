@@ -255,7 +255,7 @@ namespace artdaq {
     mf::LogDebug("EventStore") << "Flushing " << initialStoreSize
                                << " stale events from the EventStore.";
     EventMap::iterator loc;
-    size_t flushCount = 0;
+    std::vector<sequence_id_t> flushList;
     for (loc = events_.begin(); loc != events_.end(); ++loc) {
       RawEvent_ptr complete_event(loc->second);
       MonitoredQuantityPtr mqPtr = StatisticsCollection::getInstance().
@@ -268,15 +268,17 @@ namespace artdaq {
         break;
       }
       else {
-        events_.erase(loc->first);
-        ++flushCount;
+        flushList.push_back(loc->first);
       }
     }
-    mf::LogDebug("EventStore") << "Done flushing " << flushCount
+    for (size_t idx=0; idx < flushList.size(); ++idx) {
+      events_.erase(flushList[idx]);
+    }
+    mf::LogDebug("EventStore") << "Done flushing " << flushList.size()
                                << " stale events from the EventStore.";
 
     lastFlushedSeqID_ = highestSeqIDSeen_;
-    return (flushCount == initialStoreSize);
+    return (flushList.size() >= initialStoreSize);
   }
 
   void EventStore::startRun(run_id_t runID)
