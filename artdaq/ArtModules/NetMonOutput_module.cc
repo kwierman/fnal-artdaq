@@ -598,6 +598,11 @@ writeRun(const RunPrincipal& rp)
     //
     FDEBUG(1) << "Begin: NetMonOutput::writeRun(const RunPrincipal& rp)\n";
     (void) rp;
+    static bool init_message_sent{false};
+    if (!init_message_sent) {
+        send_init_message();
+        init_message_sent = true;
+    }
 #if 0
     //
     //  Fetch the class dictionaries we need for
@@ -702,6 +707,11 @@ art::NetMonOutput::writeSubRun(const SubRunPrincipal& srp)
     //
     FDEBUG(1) << "Begin: NetMonOutput::"
                  "writeSubRun(const SubRunPrincipal& srp)\n";
+    static bool init_message_sent{false};
+    if (!init_message_sent) {
+        send_init_message();
+        init_message_sent = true;
+    }
     //
     //  Fetch the class dictionaries we need for
     //  writing out the auxiliary information.
