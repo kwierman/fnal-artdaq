@@ -110,6 +110,13 @@ bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal * const & i
   // fragment and that fragment is marked as EndRun or EndSubrun we'll create
   // the special principals for that.
   art::Timestamp runstart;
+
+  // make new run if inR is 0 or if the run has changed
+  if (inR == 0 || inR->run() != popped_event->runID()) {
+    outR = pmaker.makeRunPrincipal(popped_event->runID(),
+                                   runstart);
+  }
+
   if (popped_event->numFragments() == 1) {
     if (popped_event->releaseProduct(Fragment::EndOfRunFragmentType)->size() == 1) {
       art::EventID const evid(art::EventID::flushEvent());
@@ -118,20 +125,42 @@ bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal * const & i
       outE = pmaker.makeEventPrincipal(evid, runstart);
       return true;
     } else if(popped_event->releaseProduct(Fragment::EndOfSubrunFragmentType)->size() == 1) {
-      art::EventID const evid(art::EventID::flushEvent(inR->id()));
-      outSR = pmaker.makeSubRunPrincipal(evid.subRunID(), runstart);
-      outE = pmaker.makeEventPrincipal(evid, runstart);
+      // Check if inR == 0 or is a new run
+      if(inR == 0 || inR->run() != popped_event->runID()){
+        outSR = pmaker.makeSubRunPrincipal(popped_event->runID(),
+                                           popped_event->subrunID(),
+                                           runstart);
+        art::EventID const evid(art::EventID::flushEvent(outR->id(),outSR->id()));
+        outE = pmaker.makeEventPrincipal(evid, runstart);
+      } else {
+        // If the previous subrun was neither 0 nor flush and was identical with the current
+	// subrun, then it must have been associated with a data event.  In that case, we need
+	// to generate a flush event with a valid run but flush subrun and event number in order
+	// to end the subrun.
+	if(inSR!=0 && !inSR->id().isFlush() && inSR->subRun() == popped_event->subrunID()){
+          art::EventID const evid(art::EventID::flushEvent(inR->id()));        
+          outSR = pmaker.makeSubRunPrincipal(evid.subRunID(), runstart);
+          outE = pmaker.makeEventPrincipal(evid, runstart);
+	// If this is either a new or another empty subrun, then generate a flush event with
+	// valid run and subrun numbers but flush event number 
+	//} else if(inSR==0 || inSR->id().isFlush()){
+	} else {
+          outSR = pmaker.makeSubRunPrincipal(popped_event->runID(),
+					     popped_event->subrunID(),
+					     runstart);
+          art::EventID const evid(art::EventID::flushEvent(inR->id(),outSR->id()));
+          outE = pmaker.makeEventPrincipal(evid, runstart);
+	// Possible error condition
+	//} else {
+	}
+	outR = 0;
+      }
       outputFileCloseNeeded = true;
       return true;
     }
   }
 
-  // make new runs or subruns if in* are 0 or if the run/subrun
-  // have changed
-  if (inR == 0 || inR->run() != popped_event->runID()) {
-    outR = pmaker.makeRunPrincipal(popped_event->runID(),
-                                   runstart);
-  }
+  // make new subrun if inSR is 0 or if the subrun has changed
   art::SubRunID subrun_check(popped_event->runID(), popped_event->subrunID());
   if (inSR == 0 || subrun_check != inSR->id()) {
     outSR = pmaker.makeSubRunPrincipal(popped_event->runID(),

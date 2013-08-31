@@ -859,6 +859,23 @@ readNext(art::RunPrincipal* const inR, art::SubRunPrincipal* const inSR,
     }
     else if (msg_type_code == 3) {
         // EndSubRun message.
+	// From the code above, EndRun and EndSubRun messages cause
+	// the construction of principals that have:
+	//    Run:Subrun:Event=flush:flush:flush.
+	// This is a problem when you have two neighboring EndSubRuns
+	// which are both associated with empty subruns because art will
+	// complain that you a new subrun with a subrun number identical
+	// to that of the previous subrun.  So the solution is to not
+	// return new principals.
+        if(inR!=0 && inSR!=0 && outR!=0 && outSR!=0){
+	  if( inR->id().isFlush() &&  inSR->id().isFlush() &&
+	      outR->id().isFlush() && outSR->id().isFlush()){
+            outR=0;
+	    outSR=0;
+            outputFileCloseNeeded_ = true;
+	    return true;
+	  }
+	}
         // FIXME: We need to merge these into the input SubRunPrincipal.
         readDataProducts(*msg.get(), outSR);
         // Remember that we should ask for file close next time
