@@ -10,7 +10,7 @@ art_make_library(SOURCE
   artdaq_DAQrate
   artdaq_Application
   ${ART_FRAMEWORK_ART}
-  ${MPI_LIBRARIES}
+  ${MPI_C_LIBRARIES}
   ${MF_MESSAGELOGGER}
   ${FHICLCPP}
   ${CETLIB}
