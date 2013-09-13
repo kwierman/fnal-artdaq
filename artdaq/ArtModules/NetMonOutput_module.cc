@@ -69,11 +69,12 @@ private:
     void writeDataProducts(TBufferFile&, const Principal&,
                            std::vector<BranchKey*>&);
 private:
+    bool initMsgSent_;
 };
 
 art::NetMonOutput::
 NetMonOutput(ParameterSet const& ps)
-    : OutputModule(ps)
+    : OutputModule(ps), initMsgSent_(false)
 {
     FDEBUG(1) << "Begin: NetMonOutput::NetMonOutput(ParameterSet const& ps)\n";
     ServiceHandle<NetMonTransportService> transport;
@@ -474,10 +475,9 @@ write(const EventPrincipal& ep)
     //
     FDEBUG(1) << "Begin: NetMonOutput::"
                  "write(const EventPrincipal& ep)\n";
-    static bool init_message_sent{false};
-    if (!init_message_sent) {
+    if (!initMsgSent_) {
         send_init_message();
-        init_message_sent = true;
+        initMsgSent_ = true;
     }
     //
     //  Get root classes needed for I/O.
@@ -598,10 +598,9 @@ writeRun(const RunPrincipal& rp)
     //
     FDEBUG(1) << "Begin: NetMonOutput::writeRun(const RunPrincipal& rp)\n";
     (void) rp;
-    static bool init_message_sent{false};
-    if (!init_message_sent) {
+    if (!initMsgSent_) {
         send_init_message();
-        init_message_sent = true;
+        initMsgSent_ = true;
     }
 #if 0
     //
@@ -707,10 +706,9 @@ art::NetMonOutput::writeSubRun(const SubRunPrincipal& srp)
     //
     FDEBUG(1) << "Begin: NetMonOutput::"
                  "writeSubRun(const SubRunPrincipal& srp)\n";
-    static bool init_message_sent{false};
-    if (!init_message_sent) {
+    if (!initMsgSent_) {
         send_init_message();
-        init_message_sent = true;
+        initMsgSent_ = true;
     }
     //
     //  Fetch the class dictionaries we need for
