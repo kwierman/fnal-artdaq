@@ -19,7 +19,7 @@ bindir      fq_dir      bin
 product		version		optional
 gcc		v4_8_1
 art		v1_08_07
-mvapich2	v1_7_0
+mvapich2	v1_9_0
 mpich		v3_0_4
 xmlrpc_c	v1_25_24
 
