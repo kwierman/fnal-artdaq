@@ -1,8 +1,6 @@
-if(WANT_MPI)
-  include_directories(${MPI_INCLUDE_PATH})
-  cet_test(daqrate PREBUILT NO_AUTO INSTALL_BIN)
-  cet_test(builder.sh PREBUILT NO_AUTO INSTALL_BIN)
-endif()
+include_directories(${MPI_INCLUDE_PATH})
+cet_test(daqrate PREBUILT NO_AUTO INSTALL_BIN)
+cet_test(builder.sh PREBUILT NO_AUTO INSTALL_BIN)
 
 cet_script(numawrap)
 

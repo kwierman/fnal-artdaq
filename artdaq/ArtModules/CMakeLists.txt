@@ -1,6 +1,4 @@
-if(WANT_MPI)
-  include_directories(${MPI_INCLUDE_PATH})
-endif()
+include_directories(${MPI_INCLUDE_PATH})
 
 art_make(SUBDIRS detail
   NO_PLUGINS

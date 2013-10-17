@@ -34,6 +34,7 @@ namespace artdaq {
   };
 
   FragmentSniffer::FragmentSniffer(fhicl::ParameterSet const & p) :
+    art::EDAnalyzer(p),
     raw_label_(p.get<std::string>("raw_label")),
     product_instance_name_(p.get<std::string>("product_instance_name")),
     num_frags_per_event_(p.get<size_t>("num_frags_per_event")),

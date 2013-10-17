@@ -73,14 +73,7 @@ if(BTYPE_UC STREQUAL DEBUG)
   add_definitions(-DDEBUGME)
 endif()
 
-cet_have_qual( nompi )
-if(NOT ${CET_HAVE_QUAL})
-  set(WANT_MPI TRUE)
-endif()
-
-if(${WANT_MPI})
-  find_package(MPI QUIET)
-endif()
+find_package(MPI QUIET)
 
 # macros for artdaq_dictionary and simple_plugin
 include(ArtDictionary)
