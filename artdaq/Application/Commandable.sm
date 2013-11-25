@@ -130,10 +130,6 @@ Running
   pause  [ctxt.do_pause()]  Paused  {}
   pause  nil        {}
   stop   pop(stop)  {}
-//  init(pset: fhicl::ParameterSet const&)  pop(init, pset)  {}
-//  reinit(pset: fhicl::ParameterSet const&)  Paused  {do_reinitialize(pset);}
-//  soft_init(pset: fhicl::ParameterSet const&)  nil  {do_soft_initialize(pset);}
-//  shutdown  pop(shutdown)  {}
 }
 
 Paused
@@ -143,10 +139,6 @@ Paused
   resume  [ctxt.do_resume()]  Running  {}
   resume  nil        {}
   stop    pop(stop)  {}
-//  init(pset: fhicl::ParameterSet const&)  pop(init, pset)  {}
-//  reinit(pset: fhicl::ParameterSet const&)  Paused  {do_reinitialize(pset);}
-//  soft_init(pset: fhicl::ParameterSet const&)  nil  {do_soft_initialize(pset);}
-//  shutdown  pop(shutdown)  {}
 }
 
 %%
