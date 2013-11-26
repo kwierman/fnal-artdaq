@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  mf::SetApplicationName("BoardReader-" + boost::lexical_cast<std::string>(vm["port"].as<unsigned short> ()));
+  artdaq::setMsgFacAppName("BoardReader", vm["port"].as<unsigned short> ()); 
 
   // create the BoardReaderApp
   artdaq::BoardReaderApp br_app;

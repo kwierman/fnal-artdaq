@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  mf::SetApplicationName("EventBuilder-" + boost::lexical_cast<std::string>(vm["port"].as<unsigned short> ()));
+  artdaq::setMsgFacAppName("EventBuilder", vm["port"].as<unsigned short> ()); 
 
   // create the EventBuilderApp
   artdaq::EventBuilderApp evb_app(mpiSentry.rank());;

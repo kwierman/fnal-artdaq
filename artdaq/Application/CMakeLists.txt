@@ -10,6 +10,9 @@ art_make_library(SOURCE
   ${MF_MESSAGELOGGER}
   ${MF_UTILITIES}
   ${CETLIB}
+  ${Boost_FILESYSTEM_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
+  ${FHICLCPP}
   )
 
 install_headers()

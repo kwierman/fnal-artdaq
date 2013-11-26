@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  mf::SetApplicationName("Commandable-" + boost::lexical_cast<std::string>(vm["port"].as<unsigned short> ()));
+  artdaq::setMsgFacAppName("Commandable", vm["port"].as<unsigned short> ());
 
   // create the Commandable object
   artdaq::Commandable commandable;
