@@ -5,6 +5,7 @@ art_make_library(SOURCE
   EventBuilder.cc
   EventBuilderApp.cc
   FragmentReceiver.cc
+  StatisticsHelper.cc
   MPISentry.cc
   LIBRARIES
   artdaq_DAQrate
