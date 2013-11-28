@@ -59,10 +59,12 @@ bool artdaq::BoardReaderApp::do_stop()
     return false;
   }
 
-  int number_of_fragments_sent = fragment_processing_future_.get();
-  mf::LogDebug("BoardReaderApp::do_stop()")
-    << "Number of fragments sent = " << number_of_fragments_sent
-    << ".";
+  if (fragment_processing_future_.valid()) {
+    int number_of_fragments_sent = fragment_processing_future_.get();
+    mf::LogDebug("BoardReaderApp::do_stop()")
+      << "Number of fragments sent = " << number_of_fragments_sent
+      << ".";
+  }
 
   return external_request_status_;
 }
@@ -75,10 +77,12 @@ bool artdaq::BoardReaderApp::do_pause()
     report_string_ = "Error pausing the FragmentReceiver.";
   }
 
-  int number_of_fragments_sent = fragment_processing_future_.get();
-  mf::LogDebug("BoardReaderApp::do_pause()")
-    << "Number of fragments sent = " << number_of_fragments_sent
-    << ".";
+  if (fragment_processing_future_.valid()) {
+    int number_of_fragments_sent = fragment_processing_future_.get();
+    mf::LogDebug("BoardReaderApp::do_pause()")
+      << "Number of fragments sent = " << number_of_fragments_sent
+      << ".";
+  }
 
   return external_request_status_;
 }
