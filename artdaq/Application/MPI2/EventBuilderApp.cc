@@ -58,7 +58,9 @@ bool artdaq::EventBuilderApp::do_stop()
     report_string_ = "Error stopping the EventBuilder.";
   }
 
-  event_building_future_.get();
+  if (event_building_future_.valid()) {
+    event_building_future_.get();
+  }
   return external_request_status_;
 }
 
@@ -70,7 +72,9 @@ bool artdaq::EventBuilderApp::do_pause()
     report_string_ = "Error pausing the EventBuilder.";
   }
 
-  event_building_future_.get();
+  if (event_building_future_.valid()) {
+    event_building_future_.get();
+  }
   return external_request_status_;
 }
 
