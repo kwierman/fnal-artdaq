@@ -18,14 +18,14 @@ bindir      fq_dir      bin
 #
 product		version		optional
 gcc		v4_8_1
-art		v1_08_09
+art		v1_08_10
 mvapich2	v1_9_0
 mpich		v3_0_4
-xmlrpc_c	v1_25_24
+xmlrpc_c	v1_25_26
 
 # list products required ONLY for the build
 # any products here must NOT have qualifiers
-only_for_build	cetbuildtools	v3_06_07
+only_for_build	cetbuildtools	v3_07_03
 only_for_build	smc_compiler	v6_1_0
 
 # e4  - with gcc 4.8.1 and -std=c++11
