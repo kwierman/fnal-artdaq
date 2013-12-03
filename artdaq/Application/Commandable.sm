@@ -93,17 +93,17 @@ InRun
 Exit  { InRunExit(); }
 {
   stop  [ctxt.do_stop()]  Ready  {}
-  stop  Error  {}
-  init(pset: fhicl::ParameterSet const&)  [ctxt.do_stop()]  pop(init, pset)  {}
-  init(pset: fhicl::ParameterSet const&)  Error  {}
-  shutdown  [ctxt.do_stop()]  pop(shutdown)  {}
-  shutdown  pop(shutdown)  {}
+  //stop  Error  {}
+  //init(pset: fhicl::ParameterSet const&)  [ctxt.do_stop()]  pop(init, pset)  {}
+  //init(pset: fhicl::ParameterSet const&)  Error  {}
+  //shutdown  [ctxt.do_stop()]  pop(shutdown)  {}
+  //shutdown  pop(shutdown)  {}
 }
 
-Error
-{
-  init(pset: fhicl::ParameterSet const&)  pop(init, pset)  {}
-}
+//Error
+//{
+//  init(pset: fhicl::ParameterSet const&)  pop(init, pset)  {}
+//}
 
 %%
 
