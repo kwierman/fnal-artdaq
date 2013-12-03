@@ -218,7 +218,9 @@ namespace artdaq {
     // let the caller know that we didn't accept it.
     if (queue_.size() >= max_queue_size_) {
       size_t sleepTime = 1000000 * (enq_timeout_.count() / 10.0);
-      while (queue_.size() >= max_queue_size_) {
+      int loopCount = 0;
+      while (loopCount < 10 && queue_.size() >= max_queue_size_) {
+        ++loopCount;
         usleep(sleepTime);
       }
       if (queue_.size() >= max_queue_size_) {
