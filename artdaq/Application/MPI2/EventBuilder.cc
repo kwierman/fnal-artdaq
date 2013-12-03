@@ -1,4 +1,3 @@
-#include "artdaq/Application/TaskType.hh"
 #include "artdaq/Application/MPI2/EventBuilder.hh"
 #include "art/Utilities/Exception.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
@@ -15,8 +14,8 @@ const std::string artdaq::EventBuilder::STORE_EVENT_WAIT_STAT_KEY("EventBuilderS
 /**
  * Constructor.
  */
-artdaq::EventBuilder::EventBuilder(int mpi_rank) :
-  mpi_rank_(mpi_rank), local_group_defined_(false),
+artdaq::EventBuilder::EventBuilder(int mpi_rank, MPI_Comm local_group_comm) :
+  mpi_rank_(mpi_rank), local_group_comm_(local_group_comm),
   data_sender_count_(0), art_initialized_(false),
   stop_requested_(false), pause_requested_(false), run_is_paused_(false)
 {
@@ -24,26 +23,6 @@ artdaq::EventBuilder::EventBuilder(int mpi_rank) :
   statsHelper_.addMonitoredQuantityName(INPUT_FRAGMENTS_STAT_KEY);
   statsHelper_.addMonitoredQuantityName(INPUT_WAIT_STAT_KEY);
   statsHelper_.addMonitoredQuantityName(STORE_EVENT_WAIT_STAT_KEY);
-
-  // set up an MPI communication group with other EventBuilders
-  int status =
-    MPI_Comm_split(MPI_COMM_WORLD, artdaq::TaskType::EventBuilderTask, 0,
-                   &local_group_comm_);
-  if (status == MPI_SUCCESS) {
-    local_group_defined_ = true;
-    int temp_rank;
-    MPI_Comm_rank(local_group_comm_, &temp_rank);
-    mf::LogDebug("EventBuilder")
-      << "Successfully created local communicator for type "
-      << artdaq::TaskType::EventBuilderTask << ", identifier = 0x"
-      << std::hex << local_group_comm_ << std::dec
-      << ", rank = " << temp_rank << ".";
-  }
-  else {
-    mf::LogError("EventBuilder")
-      << "Failed to create the local MPI communicator group for "
-      << "EventBuilders, status code = " << status << ".";
-  }
 }
 
 /**
@@ -51,9 +30,6 @@ artdaq::EventBuilder::EventBuilder(int mpi_rank) :
  */
 artdaq::EventBuilder::~EventBuilder()
 {
-  if (local_group_defined_) {
-    MPI_Comm_free(&local_group_comm_);
-  }
   mf::LogDebug("EventBuilder") << "Destructor";
 }
 
@@ -106,14 +82,6 @@ bool artdaq::EventBuilder::initialize(fhicl::ParameterSet const& pset)
     mf::LogError("EventBuilder")
       << "Unable to find the event_builder parameters in the DAQ "
       << "initialization ParameterSet: \"" + daq_pset.to_string() + "\".";
-    return false;
-  }
-
-  // verify that the MPI group was set up successfully
-  if (! local_group_defined_) {
-    mf::LogError("EventBuilder")
-      << "The necessary MPI group was not created in an earlier step, "
-      << "and initialization can not proceed without that.";
     return false;
   }
 

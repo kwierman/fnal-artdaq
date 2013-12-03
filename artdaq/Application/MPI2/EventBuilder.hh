@@ -25,7 +25,7 @@ public:
   static const std::string INPUT_WAIT_STAT_KEY;
   static const std::string STORE_EVENT_WAIT_STAT_KEY;
 
-  EventBuilder(int mpi_rank);
+  EventBuilder(int mpi_rank, MPI_Comm local_group_comm);
   EventBuilder(EventBuilder const&) = delete;
   ~EventBuilder();
   EventBuilder& operator=(EventBuilder const&) = delete;
@@ -47,7 +47,6 @@ private:
   void initializeEventStore();
 
   int mpi_rank_;
-  bool local_group_defined_;
   MPI_Comm local_group_comm_;
 
   std::string init_string_;
