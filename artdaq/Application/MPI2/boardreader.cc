@@ -1,3 +1,4 @@
+#include "artdaq/Application/TaskType.hh"
 #include "artdaq/Application/MPI2/BoardReaderApp.hh"
 #include "artdaq/Application/MPI2/MPISentry.hh"
 #include "artdaq/Application/configureMessageFacility.hh"
@@ -25,6 +26,27 @@ int main(int argc, char *argv[])
     << mpiSentry.procs()
     << ", rank = "
     << mpiSentry.rank();
+
+ // set up an MPI communication group with other BoardReaders
+  MPI_Comm local_group_comm;
+  int status =
+    MPI_Comm_split(MPI_COMM_WORLD, artdaq::TaskType::FragmentReceiverTask, 0,
+                   &local_group_comm);
+  if (status == MPI_SUCCESS) {
+    int temp_rank;
+    MPI_Comm_rank(local_group_comm, &temp_rank);
+    
+    mf::LogDebug("BoardReader")
+      << "Successfully created local communicator for type "
+      << artdaq::TaskType::FragmentReceiverTask << ", identifier = 0x"
+      << std::hex << local_group_comm << std::dec
+      << ", rank = " << temp_rank << ".";
+  }
+  else {
+    mf::LogError("BoardReader")
+      << "Failed to create the local MPI communicator group for "
+      << "BoardReaders, status code = " << status << ".";
+  }
 
   // handle the command-line arguments
   std::string usage = std::string(argv[0]) + " -p port_number <other-options>";
@@ -56,9 +78,12 @@ int main(int argc, char *argv[])
   artdaq::setMsgFacAppName("BoardReader", vm["port"].as<unsigned short> ()); 
 
   // create the BoardReaderApp
-  artdaq::BoardReaderApp br_app;
+  artdaq::BoardReaderApp br_app(local_group_comm);
 
   // create the xmlrpc_commander and run it
   xmlrpc_commander commander(vm["port"].as<unsigned short> (), br_app);
   commander.run();
+
+  // cleanup
+  MPI_Finalize();
 }

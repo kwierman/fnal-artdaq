@@ -81,7 +81,7 @@ namespace artdaq {
     // The following functions are not yet implemented, and their
     // signatures may be subject to change.
 
-    // std::string report();
+    virtual std::string report() ;
     // void reset();
     // void shutdown();
 

@@ -41,3 +41,8 @@ void artdaq::FragmentGenerator::resume() {
   subrun_number_ += 1;
   resume_();
 }
+
+std::string artdaq::FragmentGenerator::report() 
+{
+  return "Fragment generator stats not implemented.";
+}

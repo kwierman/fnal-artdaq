@@ -8,33 +8,23 @@
 #include <pthread.h>
 #include <sched.h>
 
+const std::string artdaq::FragmentReceiver::
+  FRAGMENTS_PROCESSED_STAT_KEY("FragmentReceiverFragmentsProcessed");
+const std::string artdaq::FragmentReceiver::
+  INPUT_WAIT_STAT_KEY("FragmentReceiverInputWaitTime");
+const std::string artdaq::FragmentReceiver::
+  OUTPUT_WAIT_STAT_KEY("FragmentReceiverOutputWaitTime");
+
 /**
  * Default constructor.
  */
-artdaq::FragmentReceiver::FragmentReceiver() :
-  local_group_defined_(false), generator_ptr_(nullptr)
+artdaq::FragmentReceiver::FragmentReceiver(MPI_Comm local_group_comm) :
+  local_group_comm_(local_group_comm), generator_ptr_(nullptr)
 {
   mf::LogDebug("FragmentReceiver") << "Constructor";
-
-  // set up an MPI communication group with other FragmentReceivers
-  int status =
-    MPI_Comm_split(MPI_COMM_WORLD, artdaq::TaskType::FragmentReceiverTask, 0,
-                   &local_group_comm_);
-  if (status == MPI_SUCCESS) {
-    local_group_defined_ = true;
-    MPI_Comm_rank(local_group_comm_, &mpi_rank_);
-
-    mf::LogDebug("FragmentReceiver")
-      << "Successfully created local communicator for type "
-      << artdaq::TaskType::FragmentReceiverTask << ", identifier = 0x"
-      << std::hex << local_group_comm_ << std::dec
-      << ", rank = " << mpi_rank_ << ".";
-  }
-  else {
-    mf::LogError("FragmentReceiver")
-      << "Failed to create the local MPI communicator group for "
-      << "FragmentReceivers, status code = " << status << ".";
-  }
+  statsHelper_.addMonitoredQuantityName(FRAGMENTS_PROCESSED_STAT_KEY);
+  statsHelper_.addMonitoredQuantityName(INPUT_WAIT_STAT_KEY);
+  statsHelper_.addMonitoredQuantityName(OUTPUT_WAIT_STAT_KEY);
 }
 
 /**
@@ -42,9 +32,6 @@ artdaq::FragmentReceiver::FragmentReceiver() :
  */
 artdaq::FragmentReceiver::~FragmentReceiver()
 {
-  if (local_group_defined_) {
-    MPI_Comm_free(&local_group_comm_);
-  }
   mf::LogDebug("FragmentReceiver") << "Destructor";
 }
 
@@ -56,14 +43,6 @@ bool artdaq::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
   mf::LogDebug("FragmentReceiver") << "initialize method called with "
                                    << "ParameterSet = \"" << pset.to_string()
                                    << "\".";
-
-  // verify that the MPI group was set up successfully
-  if (! local_group_defined_) {
-    mf::LogError("FragmentReceiver")
-      << "The necessary MPI group was not created in an earlier step, "
-      << "and initialization can not proceed without that.";
-    return false;
-  }
 
   // pull out the relevant parts of the ParameterSet
   fhicl::ParameterSet daq_pset;
@@ -159,29 +138,46 @@ bool artdaq::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
   }
   rt_priority_ = fr_pset.get<int>("rt_priority", 0);
 
+  // fetch the monitoring parameters and create the MonitoredQuantity instances
+  statsHelper_.createCollectors(fr_pset, 100, 30.0, 180.0);
+
   return true;
 }
 
 bool artdaq::FragmentReceiver::start(art::RunID id)
 {
+  fragment_count_ = 0;
+  prev_seq_id_ = 0;
+  statsHelper_.resetStatistics();
+
   generator_ptr_->start(id.run());
+  run_id_ = id;
+
+  mf::LogDebug("FragmentReceiver") << "Started run " << run_id_.run();
   return true;
 }
 
 bool artdaq::FragmentReceiver::stop()
 {
+  mf::LogDebug("FragmentReceiver") << "Stopping run " << run_id_.run()
+                                   << " after " << fragment_count_
+                                   << " fragments.";
   generator_ptr_->stop();
   return true;
 }
 
 bool artdaq::FragmentReceiver::pause()
 {
+  mf::LogDebug("FragmentReceiver") << "Pausing run " << run_id_.run()
+                                   << " after " << fragment_count_
+                                   << " fragments.";
   generator_ptr_->pause();
   return true;
 }
 
 bool artdaq::FragmentReceiver::resume()
 {
+  mf::LogDebug("FragmentReceiver") << "Resuming run " << run_id_.run();
   generator_ptr_->resume();
   return true;
 }
@@ -242,7 +238,8 @@ size_t artdaq::FragmentReceiver::process_fragments()
   sender_ptr_.reset(new artdaq::SHandles(mpi_buffer_count_,
                                          max_fragment_size_words_,
                                          evb_count_,
-                                         first_evb_rank_));
+                                         first_evb_rank_,
+                                         false));
 
   MPI_Barrier(local_group_comm_);
 
