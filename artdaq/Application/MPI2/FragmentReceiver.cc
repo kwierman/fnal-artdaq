@@ -216,8 +216,6 @@ size_t artdaq::FragmentReceiver::process_fragments()
 #pragma GCC diagnostic pop
   }
 
-  size_t fragment_count = 0;
-
   // try-catch block here?
 
   // how to turn RT PRI off?
@@ -244,27 +242,57 @@ size_t artdaq::FragmentReceiver::process_fragments()
   MPI_Barrier(local_group_comm_);
 
   mf::LogDebug("FragmentReceiver") << "Waiting for first fragment.";
-  artdaq::Fragment::sequence_id_t prev_seq_id = 0;
+artdaq::MonitoredQuantity::TIME_POINT_T startTime;
   artdaq::FragmentPtrs frags;
-  while (generator_ptr_->getNext(frags)) {
+  bool active = true;
+  while (active) {
+    startTime = artdaq::MonitoredQuantity::getCurrentTime();
+    active = generator_ptr_->getNext(frags);
+    artdaq::MonitoredQuantity::TIME_POINT_T readTimePerFragment = 0.0;
+    if (frags.size() > 0) {
+      readTimePerFragment = (artdaq::MonitoredQuantity::getCurrentTime() - startTime) /
+        frags.size();
+    }
+    if (! active) {break;}
+
     for (auto & fragPtr : frags) {
       artdaq::Fragment::sequence_id_t sequence_id = fragPtr->sequenceID();
-      if ((fragment_count % 250) == 0) {
+      statsHelper_.addSample(FRAGMENTS_PROCESSED_STAT_KEY, fragPtr->size());
+      statsHelper_.addSample(INPUT_WAIT_STAT_KEY, readTimePerFragment);
+
+      if ((fragment_count_ % 250) == 0) {
         mf::LogDebug("FragmentReceiver")
-          << "Sending fragment " << fragment_count
+          << "Sending fragment " << fragment_count_
           << " with sequence id " << sequence_id << ".";
       }
 
       // check for continous sequence IDs
-      if (abs(sequence_id-prev_seq_id) > 1) {
+      if (abs(sequence_id-prev_seq_id_) > 1) {
         mf::LogWarning("FragmentReceiver")
           << "Missing sequence IDs: current sequence ID = "
           << sequence_id << ", previous sequence ID = "
-          << prev_seq_id << ".";
+          << prev_seq_id_ << ".";
       }
-      prev_seq_id = sequence_id;
+      prev_seq_id_ = sequence_id;
+
+      startTime = artdaq::MonitoredQuantity::getCurrentTime();
       sender_ptr_->sendFragment(std::move(*fragPtr));
-      ++fragment_count;
+      statsHelper_.addSample(OUTPUT_WAIT_STAT_KEY,
+                             artdaq::MonitoredQuantity::getCurrentTime() - startTime);
+
+      ++fragment_count_;
+      bool readyToReport =
+        statsHelper_.readyToReport(FRAGMENTS_PROCESSED_STAT_KEY,
+                                   fragment_count_);
+      if (readyToReport) {
+        std::string statString = buildStatisticsString_();
+        mf::LogDebug("FragmentReceiver") << statString;
+      }
+      if (fragment_count_ == 1 || readyToReport) {
+        mf::LogDebug("FragmentReceiver")
+          << "Sending fragment " << fragment_count_
+          << " with sequence id " << sequence_id << ".";
+      }
     }
     frags.clear();
   }
@@ -275,10 +303,58 @@ size_t artdaq::FragmentReceiver::process_fragments()
   //MPI_Barrier(local_group_comm_);
 
   sender_ptr_.reset(nullptr);
-  return fragment_count;
+  return fragment_count_;
 }
 
 std::string artdaq::FragmentReceiver::report(std::string const&) const
 {
-  return "Fragment receiver stats coming soon.";
+  return generator_ptr_->report();
+}
+
+std::string artdaq::FragmentReceiver::buildStatisticsString_()
+{
+  std::ostringstream oss;
+  artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(FRAGMENTS_PROCESSED_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    artdaq::MonitoredQuantity::Stats stats;
+    mqPtr->getStats(stats);
+    oss << "Fragment statistics: "
+        << stats.recentSampleCount << " fragments received at "
+        << stats.recentSampleRate  << " fragments/sec, date rate = "
+        << (stats.recentValueRate * sizeof(artdaq::RawDataType)
+            / 1024.0 / 1024.0) << " MB/sec, monitor window = "
+        << stats.recentDuration << " sec, min::max event size = "
+        << (stats.recentValueMin * sizeof(artdaq::RawDataType)
+            / 1024.0 / 1024.0)
+        << "::"
+        << (stats.recentValueMax * sizeof(artdaq::RawDataType)
+            / 1024.0 / 1024.0)
+        << " MB" << std::endl;
+    oss << "Average times per fragment: ";
+    if (stats.recentSampleRate > 0.0) {
+      oss << " elapsed time = "
+          << (1.0 / stats.recentSampleRate) << " sec";
+    }
+  }
+
+  mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(INPUT_WAIT_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    artdaq::MonitoredQuantity::Stats stats;
+    mqPtr->getStats(stats);
+    oss << ", input wait time = "
+        << stats.recentValueAverage << " sec";
+  }
+
+  mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(OUTPUT_WAIT_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    artdaq::MonitoredQuantity::Stats stats;
+    mqPtr->getStats(stats);
+    oss << ", output wait time = "
+        << stats.recentValueAverage << " sec";
+  }
+
+  return oss.str();
 }

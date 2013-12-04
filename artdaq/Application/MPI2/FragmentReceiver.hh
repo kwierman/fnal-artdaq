@@ -61,9 +61,7 @@ private:
 
   // attributes and methods for statistics gathering & reporting
   artdaq::StatisticsHelper statsHelper_;
- 
-// John, 12/3/13 -- buildStatisticsString_ not yet implemented
-// std::string buildStatisticsString_();
+  std::string buildStatisticsString_();
 };
 
 #endif /* artdaq_Application_MPI2_FragmentReceiver_hh */
