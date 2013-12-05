@@ -62,28 +62,28 @@ namespace artdaq {
     // subrun number 1. Calling start also resets the event number to 1.
     // After a call to start(), and until a call to stop, getNext() will
     // always return true, even if it returns no fragments.
-    void start(int run);
+    virtual void start(int run);
 
     // After a call to stop(), getNext() will eventually return
     // false. This may not happen for several calls, if the
     // implementation has data to be 'drained' from the system.
-    void stop();
+    virtual void stop();
 
     // A call to pause() is advisory. It is an indication that the
     // FragmentReceiver should stop the incoming flow of data, if it can
     // do so.
-    void pause();
+    virtual void pause();
 
     // After a call to resume(), the next Fragments returned from
     // getNext() will be part of a new SubRun.
-    void resume();
+    virtual void resume();
 
     // The following functions are not yet implemented, and their
     // signatures may be subject to change.
 
     virtual std::string report() ;
-    // void reset();
-    // void shutdown();
+    virtual void reset() {}
+    virtual void shutdown() {}
 
   protected:
 
