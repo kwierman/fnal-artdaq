@@ -150,7 +150,7 @@ bool artdaq::FragmentReceiver::start(art::RunID id)
   prev_seq_id_ = 0;
   statsHelper_.resetStatistics();
 
-  generator_ptr_->start(id.run());
+  generator_ptr_->StartCmd(id.run());
   run_id_ = id;
 
   mf::LogDebug("FragmentReceiver") << "Started run " << run_id_.run();
@@ -162,7 +162,7 @@ bool artdaq::FragmentReceiver::stop()
   mf::LogDebug("FragmentReceiver") << "Stopping run " << run_id_.run()
                                    << " after " << fragment_count_
                                    << " fragments.";
-  generator_ptr_->stop();
+  generator_ptr_->StopCmd();
   return true;
 }
 
@@ -171,14 +171,14 @@ bool artdaq::FragmentReceiver::pause()
   mf::LogDebug("FragmentReceiver") << "Pausing run " << run_id_.run()
                                    << " after " << fragment_count_
                                    << " fragments.";
-  generator_ptr_->pause();
+  generator_ptr_->PauseCmd();
   return true;
 }
 
 bool artdaq::FragmentReceiver::resume()
 {
   mf::LogDebug("FragmentReceiver") << "Resuming run " << run_id_.run();
-  generator_ptr_->resume();
+  generator_ptr_->ResumeCmd();
   return true;
 }
 
@@ -308,7 +308,7 @@ artdaq::MonitoredQuantity::TIME_POINT_T startTime;
 
 std::string artdaq::FragmentReceiver::report(std::string const&) const
 {
-  return generator_ptr_->report();
+  return generator_ptr_->ReportCmd();
 }
 
 std::string artdaq::FragmentReceiver::buildStatisticsString_()

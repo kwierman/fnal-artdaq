@@ -15,10 +15,10 @@ public:
   bool getNext_(artdaq::FragmentPtrs &) override;
   std::vector<artdaq::Fragment::fragment_id_t> fragmentIDs_() override;
   bool requiresStateMachine_() const override;
-  void start_() override;
-  void stop_() override;
-  void pause_() override;
-  void resume_() override;
+  void start() override;
+  void stop() override;
+  void pause() override;
+  void resume() override;
 };
 
 artdaqtest::FragmentGeneratorTest::FragmentGeneratorTest()
@@ -48,19 +48,19 @@ artdaqtest::FragmentGeneratorTest::requiresStateMachine_() const {
 }
 
 void
-artdaqtest::FragmentGeneratorTest::start_()
+artdaqtest::FragmentGeneratorTest::start()
 { }
 
 void
-artdaqtest::FragmentGeneratorTest::stop_()
+artdaqtest::FragmentGeneratorTest::stop()
 { }
 
 void
-artdaqtest::FragmentGeneratorTest::pause_()
+artdaqtest::FragmentGeneratorTest::pause()
 { }
 
 void
-artdaqtest::FragmentGeneratorTest::resume_()
+artdaqtest::FragmentGeneratorTest::resume()
 { }
 
 BOOST_AUTO_TEST_SUITE(FragmentGenerator_t)

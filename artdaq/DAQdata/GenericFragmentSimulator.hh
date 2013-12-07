@@ -42,10 +42,10 @@ private:
   bool getNext_(FragmentPtrs & output) override;
   std::vector<Fragment::fragment_id_t> fragmentIDs_() override;
   bool requiresStateMachine_() const override;
-  void start_() override;
-  void stop_() override;
-  void pause_() override;
-  void resume_() override;
+  void start() override;
+  void stop() override;
+  void pause() override;
+  void resume() override;
   std::size_t generateFragmentSize_();
 
   // Configuration

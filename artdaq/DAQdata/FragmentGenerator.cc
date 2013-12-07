@@ -1,5 +1,12 @@
 #include "artdaq/DAQdata/FragmentGenerator.hh"
 
+artdaq::FragmentGenerator::FragmentGenerator(const fhicl::ParameterSet &ps) :
+  run_number_(-1), subrun_number_(-1)
+{
+  board_id_ = ps.get<int> ("board_id");
+  fragment_id_ = ps.get<int> ("fragment_id");
+}
+
 bool artdaq::FragmentGenerator::getNext(FragmentPtrs & output) {
   return getNext_(output);
 }
@@ -11,38 +18,50 @@ fragmentIDs()
   return fragmentIDs_();
 }
 
-int artdaq::FragmentGenerator::run_number() const {
-  return run_number_;
-}
-
-int artdaq::FragmentGenerator::subrun_number() const {
-  return subrun_number_;
-}
-
 bool artdaq::FragmentGenerator::requiresStateMachine() const {
   return requiresStateMachine_();
 }
 
-void artdaq::FragmentGenerator::start(int run) {
+void artdaq::FragmentGenerator::StartCmd(int run) {
+  // thread not started yet
+
+  if (run < 0) throw cet::exception("FragmentGenerator") << "negative run number";
+
+  ev_counter_.store (1);
+  should_stop_.store (false);
+  exception_.store (false);
   run_number_ = run;
   subrun_number_ = 1;
-  start_();
+
+  start();
 }
 
-void artdaq::FragmentGenerator::stop() {
-  stop_();
+void artdaq::FragmentGenerator::StopCmd() {
+  should_stop_.store (true);
+  std::unique_lock<std::mutex> lk(mutex_);
+
+  stop();
 }
 
-void artdaq::FragmentGenerator::pause() {
-  pause_();
+void artdaq::FragmentGenerator::PauseCmd() {
+  should_stop_.store (true);
+  std::unique_lock<std::mutex> lk(mutex_);
+
+  pause();
 }
 
-void artdaq::FragmentGenerator::resume() {
+void artdaq::FragmentGenerator::ResumeCmd() {
+  // no lock required: thread not started yet
   subrun_number_ += 1;
-  resume_();
+  should_stop_ = false; 
+  resume();
 }
 
-std::string artdaq::FragmentGenerator::report() 
+std::string artdaq::FragmentGenerator::ReportCmd() 
 {
-  return "Fragment generator stats not implemented.";
+  if (exception_.load ()) return "exception";
+  std::lock_guard<std::mutex> lk(mutex_);
+
+  return report();
 }
+
