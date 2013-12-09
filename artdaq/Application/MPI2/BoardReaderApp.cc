@@ -4,7 +4,8 @@
 /**
  * Default constructor.
  */
-artdaq::BoardReaderApp::BoardReaderApp()
+artdaq::BoardReaderApp::BoardReaderApp(MPI_Comm local_group_comm) :
+  local_group_comm_(local_group_comm)
 {
 }
 
@@ -22,7 +23,7 @@ bool artdaq::BoardReaderApp::do_initialize(fhicl::ParameterSet const& pset)
   // produce the desired result since that creates a new instance and
   // then deletes the old one, and we need the opposite order.
   fragment_receiver_ptr_.reset(nullptr);
-  fragment_receiver_ptr_.reset(new FragmentReceiver());
+  fragment_receiver_ptr_.reset(new FragmentReceiver(local_group_comm_));
   external_request_status_ = fragment_receiver_ptr_->initialize(pset);
   if (! external_request_status_) {
     report_string_ = "Error initializing the FragmentReceiver with ";

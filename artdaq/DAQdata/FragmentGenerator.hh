@@ -1,6 +1,9 @@
 #ifndef artdaq_DAQdata_FragmentGenerator_hh
 #define artdaq_DAQdata_FragmentGenerator_hh
 
+// John F., 12/6/13: As of this writing, the FragmentGenerator
+// description below can be considered deprecated
+
 ////////////////////////////////////////////////////////////////////////
 // FragmentGenerator is an abstract class that defines the interface for
 // obtaining events. Subclasses are to override the (private) virtual
@@ -21,16 +24,22 @@
 // called may be a different thread from the one that calls getNext().
 ////////////////////////////////////////////////////////////////////////
 
+#include <atomic>
+#include <mutex>
+
 #include "fhiclcpp/fwd.h"
+#include "fhiclcpp/ParameterSet.h"
 #include "artdaq/DAQdata/Fragments.hh"
 
 namespace artdaq {
   class FragmentGenerator {
   public:
 
-    // All derived classes will invoke the default constructor for the
-    // base class. This can be done implicitly.
+    // John F., 12/6/13 -- need to think about default/deletes for
+    // constructors, copy constructors
+
     FragmentGenerator() = default;
+    FragmentGenerator(const fhicl::ParameterSet & );
 
     // Destroy the FragmentGenerator.
     virtual ~FragmentGenerator() = default;
@@ -62,28 +71,30 @@ namespace artdaq {
     // subrun number 1. Calling start also resets the event number to 1.
     // After a call to start(), and until a call to stop, getNext() will
     // always return true, even if it returns no fragments.
-    void start(int run);
+    virtual void StartCmd(int run) final;
 
     // After a call to stop(), getNext() will eventually return
     // false. This may not happen for several calls, if the
     // implementation has data to be 'drained' from the system.
-    void stop();
+    virtual void StopCmd() final;
 
     // A call to pause() is advisory. It is an indication that the
     // FragmentReceiver should stop the incoming flow of data, if it can
     // do so.
-    void pause();
+    virtual void PauseCmd() final;
 
     // After a call to resume(), the next Fragments returned from
     // getNext() will be part of a new SubRun.
-    void resume();
+    virtual void ResumeCmd() final;
 
     // The following functions are not yet implemented, and their
     // signatures may be subject to change.
 
-    // std::string report();
-    // void reset();
-    // void shutdown();
+    virtual std::string ReportCmd() final;
+
+    // John F., 12/6/13 -- do we want Reset and Shutdown commands?
+    //    virtual void ResetCmd() final {}
+    //    virtual void ShutdownCmd() final {}
 
   protected:
 
@@ -91,16 +102,34 @@ namespace artdaq {
     // particular instance of a subclass is not being used in the
     // state-machine mode, the values returned by these functions may be
     // invalid.
-    int run_number() const;
-    int subrun_number() const;
+    int run_number() const { return run_number_; }
+    int subrun_number() const { return subrun_number_; }
+    bool should_stop() const { return should_stop_.load(); }
+    bool exception() const { return exception_.load(); }
+
+    // John F., 12/6/13 -- need to figure out if these should be public
+    int board_id () const { return board_id_; }
+    int fragment_id () const { return fragment_id_; }
+    size_t ev_counter () const { return ev_counter_.load (); }
+
+
+    void set_should_stop( bool should_stop ) { should_stop_.store( should_stop ); }
+    void set_exception( bool exception ) { exception_.store( exception ); }
+    size_t ev_counter_inc (size_t step = 1) { return ev_counter_.fetch_add (step); } // returns the prev value
+
+    std::mutex mutex_;
 
   private:
 
     // In order to support the state-machine related behavior, all
     // FragmentGenerators must be able to remember a run number and a
     // subrun number.
-    int run_number_ = -1;    // default value is invalid.
-    int subrun_number_ = -1; // default value is invalid.
+    int run_number_, subrun_number_;
+
+    std::atomic<bool> should_stop_, exception_;
+    std::atomic<size_t> ev_counter_;
+
+    int board_id_, fragment_id_;
 
     // Obtain the next group of Fragments, if any are available. Return
     // false if no more data are available, if we are 'stopped', or if
@@ -127,24 +156,26 @@ namespace artdaq {
     // data read from the file must be over-written by the specified run
     // number, etc. After a call to start_(), and until a call to
     // stop_(), getNext_() is expected to return true.
-    virtual void start_() = 0;
+    virtual void start() {}
 
     // If a FragmentGenerator subclass is reading from a file, calling
     // stop_() should arrange that the next call to getNext_() returns
     // false, rather than allowing getNext_() to read to the end of the
     // file.
-    virtual void stop_() = 0;
+    virtual void stop() {}
 
     // If a FragmentGenerator subclass is reading from hardware, the
     // implementation of pause_() should tell the hardware to stop
     // sending data.
-    virtual void pause_() = 0;
+    virtual void pause() {}
 
     // The subrun number will be incremented *before* a call to
     // resume. Subclasses are responsible for assuring that, after a
     // call to resume, that getNext_() will return Fragments marked with
     // the correct subrun number (and run number).
-    virtual void resume_() = 0;
+    virtual void resume() {}
+
+    virtual std::string report() { return "Please override this"; }
   };
 
 }
