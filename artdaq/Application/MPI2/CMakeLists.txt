@@ -5,6 +5,8 @@ art_make_library(SOURCE
   EventBuilder.cc
   EventBuilderApp.cc
   FragmentReceiver.cc
+  AggregatorApp.cc
+  Aggregator.cc
   StatisticsHelper.cc
   MPISentry.cc
   LIBRARIES
@@ -15,6 +17,8 @@ art_make_library(SOURCE
   ${MF_MESSAGELOGGER}
   ${FHICLCPP}
   ${CETLIB}
+  ${XMLRPC_CLIENTPP}
+  ${XMLRPCPP}
 )
 
 art_make_exec(eventbuilder
@@ -28,6 +32,13 @@ art_make_exec(boardreader
   artdaq_Application_MPI2
   artdaq_ExternalComms
 )
+
+art_make_exec(aggregator
+  LIBRARIES
+  artdaq_Application_MPI2
+  artdaq_ExternalComms
+)
+
 
 cet_script(pmt.rb pmt_cleanup.sh pmt_mpiwrapper.sh)# REMOVE_EXTENSIONS)
 
