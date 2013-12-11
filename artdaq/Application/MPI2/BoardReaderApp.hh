@@ -5,7 +5,7 @@
 #include <thread>
 
 #include "artdaq/Application/Commandable.hh"
-#include "artdaq/Application/MPI2/FragmentReceiver.hh"
+#include "artdaq/Application/MPI2/BoardReaderCore.hh"
 
 namespace artdaq
 {
@@ -37,7 +37,7 @@ public:
 
 private:
   MPI_Comm local_group_comm_;
-  std::unique_ptr<artdaq::FragmentReceiver> fragment_receiver_ptr_;
+  std::unique_ptr<artdaq::BoardReaderCore> fragment_receiver_ptr_;
   std::future<size_t> fragment_processing_future_;
 };
 

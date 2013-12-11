@@ -69,7 +69,7 @@ namespace artdaq {
     virtual void StopCmd() final;
 
     // A call to pause() is advisory. It is an indication that the
-    // FragmentReceiver should stop the incoming flow of data, if it can
+    // BoardReader should stop the incoming flow of data, if it can
     // do so.
     virtual void PauseCmd() final;
 

@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
  // set up an MPI communication group with other BoardReaders
   MPI_Comm local_group_comm;
   int status =
-    MPI_Comm_split(MPI_COMM_WORLD, artdaq::TaskType::FragmentReceiverTask, 0,
+    MPI_Comm_split(MPI_COMM_WORLD, artdaq::TaskType::BoardReaderTask, 0,
                    &local_group_comm);
   if (status == MPI_SUCCESS) {
     int temp_rank;
@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     
     mf::LogDebug("BoardReader")
       << "Successfully created local communicator for type "
-      << artdaq::TaskType::FragmentReceiverTask << ", identifier = 0x"
+      << artdaq::TaskType::BoardReaderTask << ", identifier = 0x"
       << std::hex << local_group_comm << std::dec
       << ", rank = " << temp_rank << ".";
   }

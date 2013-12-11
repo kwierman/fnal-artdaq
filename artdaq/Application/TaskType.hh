@@ -4,7 +4,7 @@
 namespace artdaq
 {
   namespace detail {
-    enum TaskType : int {FragmentReceiverTask=1, EventBuilderTask=2, AggregatorTask=3};
+    enum TaskType : int {BoardReaderTask=1, EventBuilderTask=2, AggregatorTask=3};
   }
 
   using detail::TaskType; // Require C++2011 scoping, hide C++03 scoping.

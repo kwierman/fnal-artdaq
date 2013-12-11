@@ -3,7 +3,7 @@
 
 #include <future>
 
-#include "artdaq/Application/MPI2/Aggregator.hh"
+#include "artdaq/Application/MPI2/AggregatorCore.hh"
 #include "artdaq/Application/Commandable.hh"
 #include "artdaq/DAQrate/RHandles.hh"
 
@@ -36,7 +36,7 @@ public:
 private:
   int mpi_rank_;
   MPI_Comm local_group_comm_;
-  std::unique_ptr<Aggregator> aggregator_ptr_;
+  std::unique_ptr<AggregatorCore> aggregator_ptr_;
   std::future<size_t> aggregator_future_;
 };
 

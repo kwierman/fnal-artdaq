@@ -1,5 +1,5 @@
-#ifndef artdaq_Application_MPI2_FragmentReceiver_hh
-#define artdaq_Application_MPI2_FragmentReceiver_hh
+#ifndef artdaq_Application_MPI2_BoardReaderCore_hh
+#define artdaq_Application_MPI2_BoardReaderCore_hh
 
 #include <string>
 #include <vector>
@@ -14,20 +14,20 @@
 
 namespace artdaq
 {
-  class FragmentReceiver;
+  class BoardReaderCore;
 }
 
-class artdaq::FragmentReceiver
+class artdaq::BoardReaderCore
 {
 public:
   static const std::string FRAGMENTS_PROCESSED_STAT_KEY;
   static const std::string INPUT_WAIT_STAT_KEY;
   static const std::string OUTPUT_WAIT_STAT_KEY;
 
-  FragmentReceiver(MPI_Comm local_group_comm);
-  FragmentReceiver(FragmentReceiver const&) = delete;
-  ~FragmentReceiver();
-  FragmentReceiver& operator=(FragmentReceiver const&) = delete;
+  BoardReaderCore(MPI_Comm local_group_comm);
+  BoardReaderCore(BoardReaderCore const&) = delete;
+  ~BoardReaderCore();
+  BoardReaderCore& operator=(BoardReaderCore const&) = delete;
 
   bool initialize(fhicl::ParameterSet const&);
   bool start(art::RunID);
@@ -64,4 +64,4 @@ private:
   std::string buildStatisticsString_();
 };
 
-#endif /* artdaq_Application_MPI2_FragmentReceiver_hh */
+#endif /* artdaq_Application_MPI2_BoardReaderCore_hh */

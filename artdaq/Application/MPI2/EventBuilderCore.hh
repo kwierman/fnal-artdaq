@@ -1,5 +1,5 @@
-#ifndef artdaq_Application_MPI2_EventBuilder_hh
-#define artdaq_Application_MPI2_EventBuilder_hh
+#ifndef artdaq_Application_MPI2_EventBuilderCore_hh
+#define artdaq_Application_MPI2_EventBuilderCore_hh
 
 #include <string>
 #include <vector>
@@ -15,20 +15,20 @@
 
 namespace artdaq
 {
-  class EventBuilder;
+  class EventBuilderCore;
 }
 
-class artdaq::EventBuilder
+class artdaq::EventBuilderCore
 {
 public:
   static const std::string INPUT_FRAGMENTS_STAT_KEY;
   static const std::string INPUT_WAIT_STAT_KEY;
   static const std::string STORE_EVENT_WAIT_STAT_KEY;
 
-  EventBuilder(int mpi_rank, MPI_Comm local_group_comm);
-  EventBuilder(EventBuilder const&) = delete;
-  ~EventBuilder();
-  EventBuilder& operator=(EventBuilder const&) = delete;
+  EventBuilderCore(int mpi_rank, MPI_Comm local_group_comm);
+  EventBuilderCore(EventBuilderCore const&) = delete;
+  ~EventBuilderCore();
+  EventBuilderCore& operator=(EventBuilderCore const&) = delete;
 
   bool initialize(fhicl::ParameterSet const&);
   bool start(art::RunID);
@@ -80,7 +80,7 @@ private:
      It will be unlocked by the process_fragments() thread once EOD fragments
      and all data has been received.  The stop() and pause() methods will
      attempt to lock the mutex as well and will be blocked until all data has
-     been clocked into the EventBuilder. */
+     been clocked into the EventBuilderCore. */
   std::mutex flush_mutex_;
 
   // attributes and methods for statistics gathering & reporting
@@ -88,4 +88,4 @@ private:
   std::string buildStatisticsString_();
 };
 
-#endif /* artdaq_Application_MPI2_EventBuilder_hh */
+#endif /* artdaq_Application_MPI2_EventBuilderCore_hh */

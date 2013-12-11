@@ -2,11 +2,11 @@ include_directories(${MPI_INCLUDE_PATH})
 
 art_make_library(SOURCE
   BoardReaderApp.cc
-  EventBuilder.cc
+  EventBuilderCore.cc
   EventBuilderApp.cc
-  FragmentReceiver.cc
+  BoardReaderCore.cc
   AggregatorApp.cc
-  Aggregator.cc
+  AggregatorCore.cc
   StatisticsHelper.cc
   MPISentry.cc
   LIBRARIES
@@ -21,19 +21,19 @@ art_make_library(SOURCE
   ${XMLRPCPP}
 )
 
-art_make_exec(eventbuilder
+art_make_exec(EventBuilderMain
   LIBRARIES
   artdaq_Application_MPI2
   artdaq_ExternalComms
 )
 
-art_make_exec(boardreader
+art_make_exec(BoardReaderMain
   LIBRARIES
   artdaq_Application_MPI2
   artdaq_ExternalComms
 )
 
-art_make_exec(aggregator
+art_make_exec(AggregatorMain
   LIBRARIES
   artdaq_Application_MPI2
   artdaq_ExternalComms

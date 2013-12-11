@@ -1,5 +1,5 @@
-#ifndef artdaq_Application_MPI2_Aggregator_hh
-#define artdaq_Application_MPI2_Aggregator_hh
+#ifndef artdaq_Application_MPI2_AggregatorCore_hh
+#define artdaq_Application_MPI2_AggregatorCore_hh
 
 #include <string>
 #include <vector>
@@ -19,20 +19,20 @@
 
 namespace artdaq
 {
-  class Aggregator;
+  class AggregatorCore;
 }
 
-class artdaq::Aggregator
+class artdaq::AggregatorCore
 {
 public:
   static const std::string INPUT_EVENTS_STAT_KEY;
   static const std::string INPUT_WAIT_STAT_KEY;
   static const std::string STORE_EVENT_WAIT_STAT_KEY;
 
-  Aggregator(int mpi_rank, MPI_Comm local_group_comm);
-  Aggregator(Aggregator const&) = delete;
-  ~Aggregator();
-  Aggregator& operator=(Aggregator const&) = delete;
+  AggregatorCore(int mpi_rank, MPI_Comm local_group_comm);
+  AggregatorCore(AggregatorCore const&) = delete;
+  ~AggregatorCore();
+  AggregatorCore& operator=(AggregatorCore const&) = delete;
 
   bool initialize(fhicl::ParameterSet const&);
   bool start(art::RunID);

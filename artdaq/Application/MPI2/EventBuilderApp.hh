@@ -4,7 +4,7 @@
 #include <future>
 
 #include "artdaq/Application/Commandable.hh"
-#include "artdaq/Application/MPI2/EventBuilder.hh"
+#include "artdaq/Application/MPI2/EventBuilderCore.hh"
 
 namespace artdaq
 {
@@ -37,7 +37,7 @@ public:
 private:
   int mpi_rank_;
   MPI_Comm local_group_comm_;
-  std::unique_ptr<artdaq::EventBuilder> event_builder_ptr_;
+  std::unique_ptr<artdaq::EventBuilderCore> event_builder_ptr_;
   std::future<size_t> event_building_future_;
 };
 

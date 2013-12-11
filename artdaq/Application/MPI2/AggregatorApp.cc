@@ -1,5 +1,5 @@
 #include "artdaq/Application/MPI2/AggregatorApp.hh"
-#include "artdaq/Application/MPI2/Aggregator.hh"
+#include "artdaq/Application/MPI2/AggregatorCore.hh"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include "artdaq/DAQrate/RHandles.hh"
@@ -22,11 +22,11 @@ bool artdaq::AggregatorApp::do_initialize(fhicl::ParameterSet const& pset)
 
   //aggregator_ptr_.reset(nullptr);
   if (aggregator_ptr_.get() == 0) {
-    aggregator_ptr_.reset(new Aggregator(mpi_rank_, local_group_comm_));
+    aggregator_ptr_.reset(new AggregatorCore(mpi_rank_, local_group_comm_));
   }
   external_request_status_ = aggregator_ptr_->initialize(pset);
   if (!external_request_status_) {
-    report_string_ = "Error initializing the Aggregator with ";
+    report_string_ = "Error initializing the AggregatorCore with ";
     report_string_.append("ParameterSet = \"" + pset.to_string() + "\".");
   }
 
@@ -38,14 +38,14 @@ bool artdaq::AggregatorApp::do_start(art::RunID id)
   report_string_ = "";
   external_request_status_ = aggregator_ptr_->start(id);
   if (!external_request_status_) {
-    report_string_ = "Error starting the Aggregator for run ";
+    report_string_ = "Error starting the AggregatorCore for run ";
     report_string_.append("number ");
     report_string_.append(boost::lexical_cast<std::string>(id.run()));
     report_string_.append(".");
   }
 
   aggregator_future_ =
-    std::async(std::launch::async, &Aggregator::process_fragments,
+    std::async(std::launch::async, &AggregatorCore::process_fragments,
                aggregator_ptr_.get());
 
   return external_request_status_;
@@ -57,7 +57,7 @@ bool artdaq::AggregatorApp::do_stop()
   report_string_ = "";
   external_request_status_ = aggregator_ptr_->stop();
   if (!external_request_status_) {
-    report_string_ = "Error stopping the Aggregator";
+    report_string_ = "Error stopping the AggregatorCore";
   }
 
   if (aggregator_future_.valid()) {
@@ -71,7 +71,7 @@ bool artdaq::AggregatorApp::do_pause()
   report_string_ = "";
   external_request_status_ = aggregator_ptr_->pause();
   if (!external_request_status_) {
-    report_string_ = "Error pausing the Aggregator";
+    report_string_ = "Error pausing the AggregatorCore";
   }
 
   if (aggregator_future_.valid()) {
@@ -85,11 +85,11 @@ bool artdaq::AggregatorApp::do_resume()
   report_string_ = "";
   external_request_status_ = aggregator_ptr_->resume();
   if (!external_request_status_) {
-    report_string_ = "Error resuming the Aggregator";
+    report_string_ = "Error resuming the AggregatorCore";
   }
 
   aggregator_future_ =
-    std::async(std::launch::async, &Aggregator::process_fragments,
+    std::async(std::launch::async, &AggregatorCore::process_fragments,
                aggregator_ptr_.get());
 
   return external_request_status_;
@@ -100,7 +100,7 @@ bool artdaq::AggregatorApp::do_shutdown()
   report_string_ = "";
   external_request_status_ = aggregator_ptr_->shutdown();
   if (!external_request_status_) {
-    report_string_ = "Error shutting down the Aggregator";
+    report_string_ = "Error shutting down the AggregatorCore";
   }
 
   return external_request_status_;
