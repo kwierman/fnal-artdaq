@@ -5,7 +5,7 @@
 #include <vector>
 #include <iostream>
 
-#include "artdaq/DAQdata/FragmentGenerator.hh"
+#include "artdaq/DAQdata/CommandableFragmentGenerator.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "art/Persistency/Provenance/RunID.h"
 #include "artdaq/DAQrate/quiet_mpi.hh"
@@ -45,7 +45,7 @@ public:
 private:
   int mpi_rank_;
   MPI_Comm local_group_comm_;
-  std::unique_ptr<FragmentGenerator> generator_ptr_;
+  std::unique_ptr<CommandableFragmentGenerator> generator_ptr_;
   art::RunID run_id_;
 
   uint64_t max_fragment_size_words_;

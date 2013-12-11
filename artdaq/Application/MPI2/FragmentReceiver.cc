@@ -1,7 +1,7 @@
 #include "artdaq/Application/TaskType.hh"
 #include "artdaq/Application/MPI2/FragmentReceiver.hh"
 #include "artdaq/DAQdata/Fragments.hh"
-#include "artdaq/DAQdata/makeFragmentGenerator.hh"
+#include "artdaq/DAQdata/makeCommandableFragmentGenerator.hh"
 #include "art/Utilities/Exception.h"
 #include "cetlib/exception.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
@@ -66,7 +66,7 @@ bool artdaq::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
     return false;
   }
 
-  // create the requested FragmentGenerator
+  // create the requested CommandableFragmentGenerator
   std::string frag_gen_name = fr_pset.get<std::string>("generator", "");
   if (frag_gen_name.length() == 0) {
     mf::LogError("FragmentReceiver")
@@ -77,25 +77,25 @@ bool artdaq::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
   }
 
   try {
-    generator_ptr_ = artdaq::makeFragmentGenerator(frag_gen_name, fr_pset);
+    generator_ptr_ = artdaq::makeCommandableFragmentGenerator(frag_gen_name, fr_pset);
   }
   catch (art::Exception& excpt) {
     mf::LogError("FragmentReceiver")
-      << "Exception creating a FragmentGenerator of type \""
+      << "Exception creating a CommandableFragmentGenerator of type \""
       << frag_gen_name << "\" with parameter set \"" << fr_pset.to_string()
       << "\", exception = " << excpt;
     return false;
   }
   catch (cet::exception& excpt) {
     mf::LogError("FragmentReceiver")
-      << "Exception creating a FragmentGenerator of type \""
+      << "Exception creating a CommandableFragmentGenerator of type \""
       << frag_gen_name << "\" with parameter set \"" << fr_pset.to_string()
       << "\", exception = " << excpt;
     return false;
   }
   catch (...) {
     mf::LogError("FragmentReceiver")
-      << "Unknown exception creating a FragmentGenerator of type \""
+      << "Unknown exception creating a CommandableFragmentGenerator of type \""
       << frag_gen_name << "\" with parameter set \"" << fr_pset.to_string()
       << "\".";
     return false;

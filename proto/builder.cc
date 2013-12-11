@@ -1,8 +1,8 @@
 #include "art/Framework/Art/artapp.h"
 #include "artdaq/DAQdata/Debug.hh"
-#include "artdaq/DAQdata/FragmentGenerator.hh"
+#include "artdaq/DAQdata/CommandableFragmentGenerator.hh"
 #include "artdaq/DAQdata/Fragments.hh"
-#include "artdaq/DAQdata/makeFragmentGenerator.hh"
+#include "artdaq/DAQdata/makeCommandableFragmentGenerator.hh"
 #include "Config.hh"
 #include "artdaq/DAQrate/EventStore.hh"
 #include "MPIProg.hh"
@@ -164,8 +164,8 @@ void Program::detector()
     ((detectors_size > static_cast<size_t>(detector_rank)) ?
      detectors[detector_rank] :
      detectors[0]);
-  std::unique_ptr<artdaq::FragmentGenerator> const
-    gen(artdaq::makeFragmentGenerator
+  std::unique_ptr<artdaq::CommandableFragmentGenerator> const
+    gen(artdaq::makeCommandableFragmentGenerator
         (det_ps.get<std::string>("generator"),
          det_ps));
   { // Block to handle lifetime of h, below.

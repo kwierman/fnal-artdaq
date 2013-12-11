@@ -84,13 +84,6 @@ fragmentIDs_()
   return fragment_ids_;
 }
 
-bool
-artdaq::GenericFragmentSimulator::
-requiresStateMachine_() const
-{
-  return false;
-}
-
 void
 artdaq::GenericFragmentSimulator::
 start()
