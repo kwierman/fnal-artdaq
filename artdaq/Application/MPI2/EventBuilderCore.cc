@@ -1,5 +1,5 @@
 #include "artdaq/Application/TaskType.hh"
-#include "artdaq/Application/MPI2/EventBuilder.hh"
+#include "artdaq/Application/MPI2/EventBuilderCore.hh"
 #include "art/Utilities/Exception.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "artdaq/DAQrate/EventStore.hh"
@@ -11,45 +11,45 @@
 /**
  * Constructor.
  */
-artdaq::EventBuilder::EventBuilder(int mpi_rank) :
+artdaq::EventBuilderCore::EventBuilderCore(int mpi_rank) :
   mpi_rank_(mpi_rank), local_group_defined_(false),
   data_sender_count_(0), art_initialized_(false)
 {
-  mf::LogDebug("EventBuilder") << "Constructor";
+  mf::LogDebug("EventBuilderCore") << "Constructor";
 
-  // set up an MPI communication group with other EventBuilders
+  // set up an MPI communication group with other EventBuilderCores
   int status =
-    MPI_Comm_split(MPI_COMM_WORLD, artdaq::TaskType::EventBuilderTask, 0,
+    MPI_Comm_split(MPI_COMM_WORLD, artdaq::TaskType::EventBuilderCoreTask, 0,
                    &local_group_comm_);
   if (status == MPI_SUCCESS) {
     local_group_defined_ = true;
     int temp_rank;
     MPI_Comm_rank(local_group_comm_, &temp_rank);
-    mf::LogDebug("EventBuilder")
+    mf::LogDebug("EventBuilderCore")
       << "Successfully created local communicator for type "
-      << artdaq::TaskType::EventBuilderTask << ", identifier = 0x"
+      << artdaq::TaskType::EventBuilderCoreTask << ", identifier = 0x"
       << std::hex << local_group_comm_ << std::dec
       << ", rank = " << temp_rank << ".";
   }
   else {
-    mf::LogError("EventBuilder")
+    mf::LogError("EventBuilderCore")
       << "Failed to create the local MPI communicator group for "
-      << "EventBuilders, status code = " << status << ".";
+      << "EventBuilderCores, status code = " << status << ".";
   }
 }
 
 /**
  * Destructor.
  */
-artdaq::EventBuilder::~EventBuilder()
+artdaq::EventBuilderCore::~EventBuilderCore()
 {
   if (local_group_defined_) {
     MPI_Comm_free(&local_group_comm_);
   }
-  mf::LogDebug("EventBuilder") << "Destructor";
+  mf::LogDebug("EventBuilderCore") << "Destructor";
 }
 
-void artdaq::EventBuilder::initializeEventStore()
+void artdaq::EventBuilderCore::initializeEventStore()
 {
   if (use_art_) {
     artdaq::EventStore::ART_CFGSTRING_FCN * reader = &artapp_string_config;
@@ -73,10 +73,10 @@ void artdaq::EventBuilder::initializeEventStore()
 /**
  * Processes the initialize request.
  */
-bool artdaq::EventBuilder::initialize(fhicl::ParameterSet const& pset)
+bool artdaq::EventBuilderCore::initialize(fhicl::ParameterSet const& pset)
 {
   init_string_ = pset.to_string();
-  mf::LogDebug("EventBuilder") << "initialize method called with DAQ "
+  mf::LogDebug("EventBuilderCore") << "initialize method called with DAQ "
                                << "ParameterSet = \"" << init_string_ << "\".";
 
   // pull out the relevant parts of the ParameterSet
@@ -85,7 +85,7 @@ bool artdaq::EventBuilder::initialize(fhicl::ParameterSet const& pset)
     daq_pset = pset.get<fhicl::ParameterSet>("daq");
   }
   catch (...) {
-    mf::LogError("EventBuilder")
+    mf::LogError("EventBuilderCore")
       << "Unable to find the DAQ parameters in the initialization "
       << "ParameterSet: \"" + pset.to_string() + "\".";
     return false;
@@ -95,7 +95,7 @@ bool artdaq::EventBuilder::initialize(fhicl::ParameterSet const& pset)
     evb_pset = daq_pset.get<fhicl::ParameterSet>("event_builder");
   }
   catch (...) {
-    mf::LogError("EventBuilder")
+    mf::LogError("EventBuilderCore")
       << "Unable to find the event_builder parameters in the DAQ "
       << "initialization ParameterSet: \"" + daq_pset.to_string() + "\".";
     return false;
@@ -103,7 +103,7 @@ bool artdaq::EventBuilder::initialize(fhicl::ParameterSet const& pset)
 
   // verify that the MPI group was set up successfully
   if (! local_group_defined_) {
-    mf::LogError("EventBuilder")
+    mf::LogError("EventBuilderCore")
       << "The necessary MPI group was not created in an earlier step, "
       << "and initialization can not proceed without that.";
     return false;
@@ -114,7 +114,7 @@ bool artdaq::EventBuilder::initialize(fhicl::ParameterSet const& pset)
     max_fragment_size_words_ = daq_pset.get<uint64_t>("max_fragment_size_words");
   }
   catch (...) {
-    mf::LogError("EventBuilder")
+    mf::LogError("EventBuilderCore")
       << "The max_fragment_size_words parameter was not specified "
       << "in the DAQ initialization PSet: \""
       << daq_pset.to_string() << "\".";
@@ -122,7 +122,7 @@ bool artdaq::EventBuilder::initialize(fhicl::ParameterSet const& pset)
   }
   try {mpi_buffer_count_ = evb_pset.get<size_t>("mpi_buffer_count");}
   catch (...) {
-    mf::LogError("EventBuilder")
+    mf::LogError("EventBuilderCore")
       << "The  mpi_buffer_count parameter was not specified "
       << "in the event_builder initialization PSet: \""
       << evb_pset.to_string() << "\".";
@@ -132,7 +132,7 @@ bool artdaq::EventBuilder::initialize(fhicl::ParameterSet const& pset)
     first_data_sender_rank_ = evb_pset.get<size_t>("first_fragment_receiver_rank");
   }
   catch (...) {
-    mf::LogError("EventBuilder")
+    mf::LogError("EventBuilderCore")
       << "The first_fragment_receiver_rank parameter was not specified "
       << "in the event_builder initialization PSet: \""
       << evb_pset.to_string() << "\".";
@@ -140,7 +140,7 @@ bool artdaq::EventBuilder::initialize(fhicl::ParameterSet const& pset)
   }
   try {data_sender_count_ = evb_pset.get<size_t>("fragment_receiver_count");}
   catch (...) {
-    mf::LogError("EventBuilder")
+    mf::LogError("EventBuilderCore")
       << "The fragment_receiver_count parameter was not specified "
       << "in the event_builder initialization PSet: \""
       << evb_pset.to_string() << "\".";
@@ -150,7 +150,7 @@ bool artdaq::EventBuilder::initialize(fhicl::ParameterSet const& pset)
     expected_fragments_per_event_ =
       evb_pset.get<size_t>("expected_fragments_per_event");}
   catch (...) {
-    mf::LogError("EventBuilder")
+    mf::LogError("EventBuilderCore")
       << "The expected_fragments_per_event parameter was not specified "
       << "in the event_builder initialization PSet: \"" << pset.to_string()
       << "\".";
@@ -160,7 +160,7 @@ bool artdaq::EventBuilder::initialize(fhicl::ParameterSet const& pset)
   // other parameters
   try {use_art_ = evb_pset.get<bool>("use_art");}
   catch (...) {
-    mf::LogError("EventBuilder")
+    mf::LogError("EventBuilderCore")
       << "The use_art parameter was not specified "
       << "in the event_builder initialization PSet: \""
       << evb_pset.to_string() << "\".";
@@ -183,7 +183,7 @@ bool artdaq::EventBuilder::initialize(fhicl::ParameterSet const& pset)
     fhicl::ParameterSet tmp = pset;
     tmp.erase("daq");
     if (tmp != previous_pset_) {
-      mf::LogError("EventBuilder")
+      mf::LogError("EventBuilderCore")
 	<< "The art configuration can not be altered after art "
 	<< "has been configured.";
       return false;
@@ -193,7 +193,7 @@ bool artdaq::EventBuilder::initialize(fhicl::ParameterSet const& pset)
   return true;
 }
 
-bool artdaq::EventBuilder::start(art::RunID id)
+bool artdaq::EventBuilderCore::start(art::RunID id)
 {
   run_id_ = id;
   eod_fragments_received_ = 0;
@@ -202,7 +202,7 @@ bool artdaq::EventBuilder::start(art::RunID id)
   return true;
 }
 
-bool artdaq::EventBuilder::stop()
+bool artdaq::EventBuilderCore::stop()
 {
   flush_mutex_.lock();
   event_store_ptr_->endSubrun();
@@ -211,7 +211,7 @@ bool artdaq::EventBuilder::stop()
   return true;
 }
 
-bool artdaq::EventBuilder::pause()
+bool artdaq::EventBuilderCore::pause()
 {
   flush_mutex_.lock();
   event_store_ptr_->endSubrun();
@@ -219,7 +219,7 @@ bool artdaq::EventBuilder::pause()
   return true;
 }
 
-bool artdaq::EventBuilder::resume()
+bool artdaq::EventBuilderCore::resume()
 {
   eod_fragments_received_ = 0;
   flush_mutex_.lock();
@@ -227,7 +227,7 @@ bool artdaq::EventBuilder::resume()
   return true;
 }
 
-bool artdaq::EventBuilder::shutdown()
+bool artdaq::EventBuilderCore::shutdown()
 {
   /* We don't care about flushing data here.  The only way to transition to the
      shutdown state is from a state where there is no data taking.  All we have
@@ -244,23 +244,23 @@ bool artdaq::EventBuilder::shutdown()
   return endSucceeded;
 }
 
-bool artdaq::EventBuilder::soft_initialize(fhicl::ParameterSet const& pset)
+bool artdaq::EventBuilderCore::soft_initialize(fhicl::ParameterSet const& pset)
 {
-  mf::LogDebug("EventBuilder") << "soft_initialize method called with DAQ "
+  mf::LogDebug("EventBuilderCore") << "soft_initialize method called with DAQ "
                                << "ParameterSet = \"" << pset.to_string()
                                << "\".";
   return true;
 }
 
-bool artdaq::EventBuilder::reinitialize(fhicl::ParameterSet const& pset)
+bool artdaq::EventBuilderCore::reinitialize(fhicl::ParameterSet const& pset)
 {
-  mf::LogDebug("EventBuilder") << "reinitialize method called with DAQ "
+  mf::LogDebug("EventBuilderCore") << "reinitialize method called with DAQ "
                                << "ParameterSet = \"" << pset.to_string()
                                << "\".";
   return true;
 }
 
-size_t artdaq::EventBuilder::process_fragments()
+size_t artdaq::EventBuilderCore::process_fragments()
 {
   bool process_fragments = true;
   size_t senderSlot;
@@ -274,7 +274,7 @@ size_t artdaq::EventBuilder::process_fragments()
 
   MPI_Barrier(local_group_comm_);
 
-  mf::LogDebug("EventBuilder") << "Waiting for first fragment.";
+  mf::LogDebug("EventBuilderCore") << "Waiting for first fragment.";
   while (process_fragments) {
     artdaq::FragmentPtr pfragment(new artdaq::Fragment);
     senderSlot = receiver_ptr_->recvFragment(*pfragment);
@@ -289,7 +289,7 @@ size_t artdaq::EventBuilder::process_fragments()
       fragments_sent[senderSlot] = *pfragment->dataBegin() + 1;
     }
   
-    /* If we've received EOD fragments from all of the FragmentReceivers we can
+    /* If we've received EOD fragments from all of the BoardReaders we can
        verify that we've also received every fragment that they have sent.  If
        all fragments are accounted for we can flush the EventStore, unlock the 
        mutex and exit out of this thread.*/
@@ -314,7 +314,7 @@ size_t artdaq::EventBuilder::process_fragments()
   return 0;
 }
 
-std::string artdaq::EventBuilder::report(std::string const&) const
+std::string artdaq::EventBuilderCore::report(std::string const&) const
 {
   // lots of cool stuff that we can do here
   // - report on the number of fragments received and the number

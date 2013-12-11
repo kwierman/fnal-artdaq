@@ -2,9 +2,9 @@ include_directories(${MPI_INCLUDE_PATH})
 
 art_make_library(SOURCE
   BoardReaderApp.cc
-  EventBuilder.cc
+  EventBuilderCore.cc
   EventBuilderApp.cc
-  FragmentReceiver.cc
+  BoardReaderCore.cc
   MPISentry.cc
   LIBRARIES
   artdaq_DAQrate
@@ -16,13 +16,13 @@ art_make_library(SOURCE
   ${CETLIB}
 )
 
-art_make_exec(eventbuilder
+art_make_exec(EventBuilderMain
   LIBRARIES
   artdaq_Application_MPI2
   artdaq_ExternalComms
 )
 
-art_make_exec(boardreader
+art_make_exec(BoardReaderMain
   LIBRARIES
   artdaq_Application_MPI2
   artdaq_ExternalComms

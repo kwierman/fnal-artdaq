@@ -1,5 +1,5 @@
 #include "artdaq/Application/TaskType.hh"
-#include "artdaq/Application/MPI2/FragmentReceiver.hh"
+#include "artdaq/Application/MPI2/BoardReaderCore.hh"
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQdata/makeFragmentGenerator.hh"
 #include "art/Utilities/Exception.h"
@@ -11,55 +11,55 @@
 /**
  * Default constructor.
  */
-artdaq::FragmentReceiver::FragmentReceiver() :
+artdaq::BoardReaderCore::BoardReaderCore() :
   local_group_defined_(false), generator_ptr_(nullptr)
 {
-  mf::LogDebug("FragmentReceiver") << "Constructor";
+  mf::LogDebug("BoardReaderCore") << "Constructor";
 
-  // set up an MPI communication group with other FragmentReceivers
+  // set up an MPI communication group with other BoardReaderCores
   int status =
-    MPI_Comm_split(MPI_COMM_WORLD, artdaq::TaskType::FragmentReceiverTask, 0,
+    MPI_Comm_split(MPI_COMM_WORLD, artdaq::TaskType::BoardReaderCoreTask, 0,
                    &local_group_comm_);
   if (status == MPI_SUCCESS) {
     local_group_defined_ = true;
     MPI_Comm_rank(local_group_comm_, &mpi_rank_);
 
-    mf::LogDebug("FragmentReceiver")
+    mf::LogDebug("BoardReaderCore")
       << "Successfully created local communicator for type "
-      << artdaq::TaskType::FragmentReceiverTask << ", identifier = 0x"
+      << artdaq::TaskType::BoardReaderCoreTask << ", identifier = 0x"
       << std::hex << local_group_comm_ << std::dec
       << ", rank = " << mpi_rank_ << ".";
   }
   else {
-    mf::LogError("FragmentReceiver")
+    mf::LogError("BoardReaderCore")
       << "Failed to create the local MPI communicator group for "
-      << "FragmentReceivers, status code = " << status << ".";
+      << "BoardReaderCores, status code = " << status << ".";
   }
 }
 
 /**
  * Destructor.
  */
-artdaq::FragmentReceiver::~FragmentReceiver()
+artdaq::BoardReaderCore::~BoardReaderCore()
 {
   if (local_group_defined_) {
     MPI_Comm_free(&local_group_comm_);
   }
-  mf::LogDebug("FragmentReceiver") << "Destructor";
+  mf::LogDebug("BoardReaderCore") << "Destructor";
 }
 
 /**
  * Processes the initialize request.
  */
-bool artdaq::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
+bool artdaq::BoardReaderCore::initialize(fhicl::ParameterSet const& pset)
 {
-  mf::LogDebug("FragmentReceiver") << "initialize method called with "
+  mf::LogDebug("BoardReaderCore") << "initialize method called with "
                                    << "ParameterSet = \"" << pset.to_string()
                                    << "\".";
 
   // verify that the MPI group was set up successfully
   if (! local_group_defined_) {
-    mf::LogError("FragmentReceiver")
+    mf::LogError("BoardReaderCore")
       << "The necessary MPI group was not created in an earlier step, "
       << "and initialization can not proceed without that.";
     return false;
@@ -71,7 +71,7 @@ bool artdaq::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
     daq_pset = pset.get<fhicl::ParameterSet>("daq");
   }
   catch (...) {
-    mf::LogError("FragmentReceiver")
+    mf::LogError("BoardReaderCore")
       << "Unable to find the DAQ parameters in the initialization "
       << "ParameterSet: \"" + pset.to_string() + "\".";
     return false;
@@ -81,7 +81,7 @@ bool artdaq::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
     fr_pset = daq_pset.get<fhicl::ParameterSet>("fragment_receiver");
   }
   catch (...) {
-    mf::LogError("FragmentReceiver")
+    mf::LogError("BoardReaderCore")
       << "Unable to find the fragment_receiver parameters in the DAQ "
       << "initialization ParameterSet: \"" + daq_pset.to_string() + "\".";
     return false;
@@ -90,7 +90,7 @@ bool artdaq::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
   // create the requested FragmentGenerator
   std::string frag_gen_name = fr_pset.get<std::string>("generator", "");
   if (frag_gen_name.length() == 0) {
-    mf::LogError("FragmentReceiver")
+    mf::LogError("BoardReaderCore")
       << "No fragment generator (parameter name = \"generator\") was "
       << "specified in the fragment_receiver ParameterSet.  The "
       << "DAQ initialization PSet was \"" << daq_pset.to_string() << "\".";
@@ -101,21 +101,21 @@ bool artdaq::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
     generator_ptr_ = artdaq::makeFragmentGenerator(frag_gen_name, fr_pset);
   }
   catch (art::Exception& excpt) {
-    mf::LogError("FragmentReceiver")
+    mf::LogError("BoardReaderCore")
       << "Exception creating a FragmentGenerator of type \""
       << frag_gen_name << "\" with parameter set \"" << fr_pset.to_string()
       << "\", exception = " << excpt;
     return false;
   }
   catch (cet::exception& excpt) {
-    mf::LogError("FragmentReceiver")
+    mf::LogError("BoardReaderCore")
       << "Exception creating a FragmentGenerator of type \""
       << frag_gen_name << "\" with parameter set \"" << fr_pset.to_string()
       << "\", exception = " << excpt;
     return false;
   }
   catch (...) {
-    mf::LogError("FragmentReceiver")
+    mf::LogError("BoardReaderCore")
       << "Unknown exception creating a FragmentGenerator of type \""
       << frag_gen_name << "\" with parameter set \"" << fr_pset.to_string()
       << "\".";
@@ -127,7 +127,7 @@ bool artdaq::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
     max_fragment_size_words_ = daq_pset.get<uint64_t>("max_fragment_size_words");
   }
   catch (...) {
-    mf::LogError("FragmentReceiver")
+    mf::LogError("BoardReaderCore")
       << "The max_fragment_size_words parameter was not specified "
       << "in the DAQ initialization PSet: \""
       << daq_pset.to_string() << "\".";
@@ -135,7 +135,7 @@ bool artdaq::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
   }
   try {mpi_buffer_count_ = fr_pset.get<size_t>("mpi_buffer_count");}
   catch (...) {
-    mf::LogError("FragmentReceiver")
+    mf::LogError("BoardReaderCore")
       << "The mpi_buffer_count parameter was not specified "
       << "in the fragment_receiver initialization PSet: \""
       << fr_pset.to_string() << "\".";
@@ -143,7 +143,7 @@ bool artdaq::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
   }
   try {first_evb_rank_ = fr_pset.get<size_t>("first_event_builder_rank");}
   catch (...) {
-    mf::LogError("FragmentReceiver")
+    mf::LogError("BoardReaderCore")
       << "The first_event_builder_rank parameter was not specified "
       << "in the fragment_receiver initialization PSet: \""
       << fr_pset.to_string() << "\".";
@@ -151,7 +151,7 @@ bool artdaq::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
   }
   try {evb_count_ = fr_pset.get<size_t>("event_builder_count");}
   catch (...) {
-    mf::LogError("FragmentReceiver")
+    mf::LogError("BoardReaderCore")
       << "The event_builder_count parameter was not specified "
       << "in the fragment_receiver initialization PSet: \""
       << fr_pset.to_string() << "\".";
@@ -162,53 +162,53 @@ bool artdaq::FragmentReceiver::initialize(fhicl::ParameterSet const& pset)
   return true;
 }
 
-bool artdaq::FragmentReceiver::start(art::RunID id)
+bool artdaq::BoardReaderCore::start(art::RunID id)
 {
   generator_ptr_->start(id.run());
   return true;
 }
 
-bool artdaq::FragmentReceiver::stop()
+bool artdaq::BoardReaderCore::stop()
 {
   generator_ptr_->stop();
   return true;
 }
 
-bool artdaq::FragmentReceiver::pause()
+bool artdaq::BoardReaderCore::pause()
 {
   generator_ptr_->pause();
   return true;
 }
 
-bool artdaq::FragmentReceiver::resume()
+bool artdaq::BoardReaderCore::resume()
 {
   generator_ptr_->resume();
   return true;
 }
 
-bool artdaq::FragmentReceiver::shutdown()
+bool artdaq::BoardReaderCore::shutdown()
 {
   generator_ptr_.reset(nullptr);
   return true;
 }
 
-bool artdaq::FragmentReceiver::soft_initialize(fhicl::ParameterSet const& pset)
+bool artdaq::BoardReaderCore::soft_initialize(fhicl::ParameterSet const& pset)
 {
-  mf::LogDebug("FragmentReceiver") << "soft_initialize method called with "
+  mf::LogDebug("BoardReaderCore") << "soft_initialize method called with "
                                    << "ParameterSet = \"" << pset.to_string()
                                    << "\".";
   return true;
 }
 
-bool artdaq::FragmentReceiver::reinitialize(fhicl::ParameterSet const& pset)
+bool artdaq::BoardReaderCore::reinitialize(fhicl::ParameterSet const& pset)
 {
-  mf::LogDebug("FragmentReceiver") << "reinitialize method called with "
+  mf::LogDebug("BoardReaderCore") << "reinitialize method called with "
                                    << "ParameterSet = \"" << pset.to_string()
                                    << "\".";
   return true;
 }
 
-size_t artdaq::FragmentReceiver::process_fragments()
+size_t artdaq::BoardReaderCore::process_fragments()
 {
   if (rt_priority_ > 0) {
 #pragma GCC diagnostic push
@@ -216,7 +216,7 @@ size_t artdaq::FragmentReceiver::process_fragments()
     sched_param s_param = {};
     s_param.sched_priority = rt_priority_;
     if (pthread_setschedparam(pthread_self(), SCHED_RR, &s_param))
-      mf::LogWarning("FragmentReceiver") << "setting realtime prioriry failed";
+      mf::LogWarning("BoardReaderCore") << "setting realtime prioriry failed";
 #pragma GCC diagnostic pop
   }
 
@@ -232,7 +232,7 @@ size_t artdaq::FragmentReceiver::process_fragments()
     s_param.sched_priority = rt_priority_;
     int status = pthread_setschedparam(pthread_self(), SCHED_RR, &s_param);
     if (status != 0) {
-      mf::LogError("FragmentReceiver")
+      mf::LogError("BoardReaderCore")
         << "Failed to set realtime priority to " << rt_priority_
         << ", return code = " << status;
     }
@@ -246,21 +246,21 @@ size_t artdaq::FragmentReceiver::process_fragments()
 
   MPI_Barrier(local_group_comm_);
 
-  mf::LogDebug("FragmentReceiver") << "Waiting for first fragment.";
+  mf::LogDebug("BoardReaderCore") << "Waiting for first fragment.";
   artdaq::Fragment::sequence_id_t prev_seq_id = 0;
   artdaq::FragmentPtrs frags;
   while (generator_ptr_->getNext(frags)) {
     for (auto & fragPtr : frags) {
       artdaq::Fragment::sequence_id_t sequence_id = fragPtr->sequenceID();
       if ((fragment_count % 250) == 0) {
-        mf::LogDebug("FragmentReceiver")
+        mf::LogDebug("BoardReaderCore")
           << "Sending fragment " << fragment_count
           << " with sequence id " << sequence_id << ".";
       }
 
       // check for continous sequence IDs
       if (abs(sequence_id-prev_seq_id) > 1) {
-        mf::LogWarning("FragmentReceiver")
+        mf::LogWarning("BoardReaderCore")
           << "Missing sequence IDs: current sequence ID = "
           << sequence_id << ", previous sequence ID = "
           << prev_seq_id << ".";
@@ -281,7 +281,7 @@ size_t artdaq::FragmentReceiver::process_fragments()
   return fragment_count;
 }
 
-std::string artdaq::FragmentReceiver::report(std::string const&) const
+std::string artdaq::BoardReaderCore::report(std::string const&) const
 {
   return "Fragment receiver stats coming soon.";
 }
