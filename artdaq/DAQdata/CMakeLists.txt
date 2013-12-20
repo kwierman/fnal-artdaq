@@ -5,6 +5,8 @@ art_make(
   ${ART_UTILITIES}
   ${FHICLCPP}
   ${CETLIB}
+  ${MF_MESSAGELOGGER}
+  ${MF_UTILITIES}
   )
 
 simple_plugin(GenericFragmentSimulator "generator" artdaq_DAQdata)

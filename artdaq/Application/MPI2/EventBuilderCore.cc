@@ -1,4 +1,3 @@
-#include "artdaq/Application/TaskType.hh"
 #include "artdaq/Application/MPI2/EventBuilderCore.hh"
 #include "art/Utilities/Exception.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
@@ -8,34 +7,22 @@
 #include "artdaq/Utilities/SimpleLookupPolicy.h"
 #include "artdaq/DAQdata/NetMonHeader.hh"
 
+const std::string artdaq::EventBuilderCore::INPUT_FRAGMENTS_STAT_KEY("EventBuilderCoreInputFragments");
+const std::string artdaq::EventBuilderCore::INPUT_WAIT_STAT_KEY("EventBuilderCoreInputWaitTime");
+const std::string artdaq::EventBuilderCore::STORE_EVENT_WAIT_STAT_KEY("EventBuilderCoreStoreEventWaitTime");
+
 /**
  * Constructor.
  */
-artdaq::EventBuilderCore::EventBuilderCore(int mpi_rank) :
-  mpi_rank_(mpi_rank), local_group_defined_(false),
-  data_sender_count_(0), art_initialized_(false)
+artdaq::EventBuilderCore::EventBuilderCore(int mpi_rank, MPI_Comm local_group_comm) :
+  mpi_rank_(mpi_rank), local_group_comm_(local_group_comm),
+  data_sender_count_(0), art_initialized_(false),
+  stop_requested_(false), pause_requested_(false), run_is_paused_(false)
 {
   mf::LogDebug("EventBuilderCore") << "Constructor";
-
-  // set up an MPI communication group with other EventBuilderCores
-  int status =
-    MPI_Comm_split(MPI_COMM_WORLD, artdaq::TaskType::EventBuilderCoreTask, 0,
-                   &local_group_comm_);
-  if (status == MPI_SUCCESS) {
-    local_group_defined_ = true;
-    int temp_rank;
-    MPI_Comm_rank(local_group_comm_, &temp_rank);
-    mf::LogDebug("EventBuilderCore")
-      << "Successfully created local communicator for type "
-      << artdaq::TaskType::EventBuilderCoreTask << ", identifier = 0x"
-      << std::hex << local_group_comm_ << std::dec
-      << ", rank = " << temp_rank << ".";
-  }
-  else {
-    mf::LogError("EventBuilderCore")
-      << "Failed to create the local MPI communicator group for "
-      << "EventBuilderCores, status code = " << status << ".";
-  }
+  statsHelper_.addMonitoredQuantityName(INPUT_FRAGMENTS_STAT_KEY);
+  statsHelper_.addMonitoredQuantityName(INPUT_WAIT_STAT_KEY);
+  statsHelper_.addMonitoredQuantityName(STORE_EVENT_WAIT_STAT_KEY);
 }
 
 /**
@@ -43,9 +30,6 @@ artdaq::EventBuilderCore::EventBuilderCore(int mpi_rank) :
  */
 artdaq::EventBuilderCore::~EventBuilderCore()
 {
-  if (local_group_defined_) {
-    MPI_Comm_free(&local_group_comm_);
-  }
   mf::LogDebug("EventBuilderCore") << "Destructor";
 }
 
@@ -98,14 +82,6 @@ bool artdaq::EventBuilderCore::initialize(fhicl::ParameterSet const& pset)
     mf::LogError("EventBuilderCore")
       << "Unable to find the event_builder parameters in the DAQ "
       << "initialization ParameterSet: \"" + daq_pset.to_string() + "\".";
-    return false;
-  }
-
-  // verify that the MPI group was set up successfully
-  if (! local_group_defined_) {
-    mf::LogError("EventBuilderCore")
-      << "The necessary MPI group was not created in an earlier step, "
-      << "and initialization can not proceed without that.";
     return false;
   }
 
@@ -167,6 +143,12 @@ bool artdaq::EventBuilderCore::initialize(fhicl::ParameterSet const& pset)
     return false;
   }
   print_event_store_stats_ = evb_pset.get<bool>("print_event_store_stats", false);
+  inRunRecvTimeoutUSec_=evb_pset.get<size_t>("inrun_recv_timeout_usec",    100000);
+  endRunRecvTimeoutUSec_=evb_pset.get<size_t>("endrun_recv_timeout_usec",20000000);
+  pauseRunRecvTimeoutUSec_=evb_pset.get<size_t>("endrun_recv_timeout_usec",3000000);
+
+  // fetch the monitoring parameters and create the MonitoredQuantity instances
+  statsHelper_.createCollectors(evb_pset, 100, 20.0, 60.0);
 
   /* Once art has been initialized we can't tear it down or change it's
      configuration.  We'll keep track of when we have initialized it.  Once it
@@ -195,35 +177,98 @@ bool artdaq::EventBuilderCore::initialize(fhicl::ParameterSet const& pset)
 
 bool artdaq::EventBuilderCore::start(art::RunID id)
 {
+  stop_requested_.store(false);
+  pause_requested_.store(false);
+  run_is_paused_.store(false);
   run_id_ = id;
   eod_fragments_received_ = 0;
+  fragment_count_in_run_ = 0;
+  statsHelper_.resetStatistics();
   flush_mutex_.lock();
   event_store_ptr_->startRun(id.run());
+
+  mf::LogDebug("EventBuilderCore") << "Started run " << run_id_.run();
   return true;
 }
 
 bool artdaq::EventBuilderCore::stop()
 {
+  mf::LogDebug("EventBuilderCore") << "Stopping run " << run_id_.run();
+  bool endSucceeded;
+  int attemptsToEnd;
+
+  // 21-Jun-2013, KAB - the stop_requested_ variable must be set
+  // before the flush lock so that the processFragments loop will
+  // exit (after the timeout), the lock will be released (in the
+  // processFragments method), and this method can continue.
+  stop_requested_.store(true);
+
   flush_mutex_.lock();
-  event_store_ptr_->endSubrun();
-  event_store_ptr_->endRun();
+  if (! run_is_paused_.load()) {
+    endSucceeded = false;
+    attemptsToEnd = 1;
+    endSucceeded = event_store_ptr_->endSubrun();
+    while (! endSucceeded && attemptsToEnd < 3) {
+      ++attemptsToEnd;
+      mf::LogDebug("EventBuilderCore") << "Retrying EventStore::endSubrun()";
+      endSucceeded = event_store_ptr_->endSubrun();
+    }
+    if (! endSucceeded) {
+      mf::LogError("EventBuilderCore")
+        << "EventStore::endSubrun in stop method failed after three tries.";
+    }
+  }
+
+  endSucceeded = false;
+  attemptsToEnd = 1;
+  endSucceeded = event_store_ptr_->endRun();
+  while (! endSucceeded && attemptsToEnd < 3) {
+    ++attemptsToEnd;
+    mf::LogDebug("EventBuilderCore") << "Retrying EventStore::endRun()";
+    endSucceeded = event_store_ptr_->endRun();
+  }
+  if (! endSucceeded) {
+    mf::LogError("EventBuilderCore")
+      << "EventStore::endRun in stop method failed after three tries.";
+  }
+
   flush_mutex_.unlock();
+  run_is_paused_.store(false);
   return true;
 }
 
 bool artdaq::EventBuilderCore::pause()
 {
+  mf::LogDebug("EventBuilderCore") << "Pausing run " << run_id_.run();
+  pause_requested_.store(true);
   flush_mutex_.lock();
-  event_store_ptr_->endSubrun();
+
+  bool endSucceeded = false;
+  int attemptsToEnd = 1;
+  endSucceeded = event_store_ptr_->endSubrun();
+  while (! endSucceeded && attemptsToEnd < 3) {
+    ++attemptsToEnd;
+    mf::LogDebug("EventBuilderCore") << "Retrying EventStore::endSubrun()";
+    endSucceeded = event_store_ptr_->endSubrun();
+  }
+  if (! endSucceeded) {
+    mf::LogError("EventBuilderCore")
+      << "EventStore::endSubrun in pause method failed after three tries.";
+  }
+
   flush_mutex_.unlock();
+  run_is_paused_.store(true);
   return true;
 }
 
 bool artdaq::EventBuilderCore::resume()
 {
+  mf::LogDebug("EventBuilderCore") << "Resuming run " << run_id_.run();
   eod_fragments_received_ = 0;
+  pause_requested_.store(false);
   flush_mutex_.lock();
   event_store_ptr_->startSubrun();
+  run_is_paused_.store(false);
   return true;
 }
 
@@ -239,6 +284,7 @@ bool artdaq::EventBuilderCore::shutdown()
   endSucceeded = event_store_ptr_->endOfData(readerReturnValue);
   while (! endSucceeded && attemptsToEnd < 3) {
     ++attemptsToEnd;
+    mf::LogDebug("EventBuilderCore") << "Retrying EventStore::endOfData()";
     endSucceeded = event_store_ptr_->endOfData(readerReturnValue);
   }
   return endSucceeded;
@@ -275,10 +321,70 @@ size_t artdaq::EventBuilderCore::process_fragments()
   MPI_Barrier(local_group_comm_);
 
   mf::LogDebug("EventBuilderCore") << "Waiting for first fragment.";
+  artdaq::MonitoredQuantity::TIME_POINT_T startTime;
   while (process_fragments) {
     artdaq::FragmentPtr pfragment(new artdaq::Fragment);
-    senderSlot = receiver_ptr_->recvFragment(*pfragment);
+
+    size_t recvTimeout = inRunRecvTimeoutUSec_;
+    if (stop_requested_.load()) {recvTimeout = endRunRecvTimeoutUSec_;}
+    else if (pause_requested_.load()) {recvTimeout = pauseRunRecvTimeoutUSec_;}
+    startTime = artdaq::MonitoredQuantity::getCurrentTime();
+    senderSlot = receiver_ptr_->recvFragment(*pfragment, recvTimeout);
+    statsHelper_.addSample(INPUT_WAIT_STAT_KEY,
+                           (artdaq::MonitoredQuantity::getCurrentTime() - startTime));
+    if (senderSlot == (size_t) MPI_ANY_SOURCE) {
+      mf::LogInfo("EventBuilderCore")
+        << "The receiving of data has stopped - ending the run.";
+      event_store_ptr_->flushData();
+      flush_mutex_.unlock();
+      process_fragments = false;
+      continue;
+    }
+    else if (senderSlot == artdaq::RHandles::RECV_TIMEOUT) {
+      if (stop_requested_.load() &&
+          recvTimeout == endRunRecvTimeoutUSec_) {
+        mf::LogInfo("EventBuilderCore")
+          << "Stop timeout expired - forcibly ending the run.";
+	event_store_ptr_->flushData();
+	flush_mutex_.unlock();
+	process_fragments = false;
+      }
+      else if (pause_requested_.load() &&
+               recvTimeout == pauseRunRecvTimeoutUSec_) {
+        mf::LogInfo("EventBuilderCore")
+          << "Pause timeout expired - forcibly pausing the run.";
+	event_store_ptr_->flushData();
+	flush_mutex_.unlock();
+	process_fragments = false;
+      }
+      continue;
+    }
+    if (senderSlot >= fragments_received.size()) {
+        mf::LogError("EventBuilderCore")
+          << "Invalid senderSlot received from RHandles::recvFragment: "
+          << senderSlot;
+        continue;
+    }
     fragments_received[senderSlot] += 1;
+    if (artdaq::Fragment::isSystemFragmentType(pfragment->type())) {
+      mf::LogDebug("EventBuilderCore")
+        << "Sender slot = " << senderSlot
+        << ", fragment type = " << ((int)pfragment->type())
+        << ", sequence ID = " << pfragment->sequenceID();
+    }
+
+    ++fragment_count_in_run_;
+    statsHelper_.addSample(INPUT_FRAGMENTS_STAT_KEY, pfragment->size());
+    if (statsHelper_.readyToReport(INPUT_FRAGMENTS_STAT_KEY,
+                                   fragment_count_in_run_)) {
+      std::string statString = buildStatisticsString_();
+      mf::LogDebug("EventBuilderCore") << statString;
+      mf::LogDebug("EventBuilderCore")
+        << "Received fragment " << fragment_count_in_run_
+        << " with sequence id " << pfragment->sequenceID();
+    }
+
+    startTime = artdaq::MonitoredQuantity::getCurrentTime();
     if (pfragment->type() != artdaq::Fragment::EndOfDataFragmentType) {
       event_store_ptr_->insert(std::move(pfragment));
     } else {
@@ -288,7 +394,9 @@ size_t artdaq::EventBuilderCore::process_fragments()
 	 the total expected fragments. */
       fragments_sent[senderSlot] = *pfragment->dataBegin() + 1;
     }
-  
+    statsHelper_.addSample(STORE_EVENT_WAIT_STAT_KEY,
+                           artdaq::MonitoredQuantity::getCurrentTime() - startTime);
+
     /* If we've received EOD fragments from all of the BoardReaders we can
        verify that we've also received every fragment that they have sent.  If
        all fragments are accounted for we can flush the EventStore, unlock the 
@@ -324,4 +432,54 @@ std::string artdaq::EventBuilderCore::report(std::string const&) const
   std::string tmpString = "Event Builder run number = ";
   tmpString.append(boost::lexical_cast<std::string>(run_id_.run()));
   return tmpString;
+}
+
+
+std::string artdaq::EventBuilderCore::buildStatisticsString_()
+{
+  std::ostringstream oss;
+  artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(INPUT_FRAGMENTS_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    //mqPtr->waitUntilAccumulatorsHaveBeenFlushed(3.0);
+    artdaq::MonitoredQuantity::Stats stats;
+    mqPtr->getStats(stats);
+    oss << "Input statistics: "
+        << stats.recentSampleCount << " fragments received at "
+        << stats.recentSampleRate  << " fragments/sec, date rate = "
+        << (stats.recentValueRate * sizeof(artdaq::RawDataType)
+            / 1024.0 / 1024.0) << " MB/sec, monitor window = "
+        << stats.recentDuration << " sec, min::max event size = "
+        << (stats.recentValueMin * sizeof(artdaq::RawDataType)
+            / 1024.0 / 1024.0)
+        << "::"
+        << (stats.recentValueMax * sizeof(artdaq::RawDataType)
+            / 1024.0 / 1024.0)
+        << " MB" << std::endl;
+    oss << "Average times per fragment: ";
+    if (stats.recentSampleRate > 0.0) {
+      oss << " elapsed time = "
+          << (1.0 / stats.recentSampleRate) << " sec";
+    }
+  }
+
+  mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(INPUT_WAIT_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    artdaq::MonitoredQuantity::Stats stats;
+    mqPtr->getStats(stats);
+    oss << ", input wait time = "
+        << stats.recentValueAverage << " sec";
+  }
+
+  mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(STORE_EVENT_WAIT_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    artdaq::MonitoredQuantity::Stats stats;
+    mqPtr->getStats(stats);
+    oss << ", event store wait time = "
+        << stats.recentValueAverage << " sec";
+  }
+
+  return oss.str();
 }

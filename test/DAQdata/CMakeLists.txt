@@ -7,7 +7,7 @@ cet_test(RawEvent_t USE_BOOST_UNIT
   LIBRARIES artdaq_DAQdata
   )
 
-cet_test(FragmentGenerator_t USE_BOOST_UNIT
+cet_test(CommandableFragmentGenerator_t USE_BOOST_UNIT
   LIBRARIES artdaq_DAQdata
   )
 

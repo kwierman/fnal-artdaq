@@ -5,6 +5,9 @@ art_make_library(SOURCE
   EventBuilderCore.cc
   EventBuilderApp.cc
   BoardReaderCore.cc
+  AggregatorApp.cc
+  AggregatorCore.cc
+  StatisticsHelper.cc
   MPISentry.cc
   LIBRARIES
   artdaq_DAQrate
@@ -14,6 +17,8 @@ art_make_library(SOURCE
   ${MF_MESSAGELOGGER}
   ${FHICLCPP}
   ${CETLIB}
+  ${XMLRPC_CLIENTPP}
+  ${XMLRPCPP}
 )
 
 art_make_exec(EventBuilderMain
@@ -27,6 +32,13 @@ art_make_exec(BoardReaderMain
   artdaq_Application_MPI2
   artdaq_ExternalComms
 )
+
+art_make_exec(AggregatorMain
+  LIBRARIES
+  artdaq_Application_MPI2
+  artdaq_ExternalComms
+)
+
 
 cet_script(pmt.rb pmt_cleanup.sh pmt_mpiwrapper.sh)# REMOVE_EXTENSIONS)
 

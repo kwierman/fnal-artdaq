@@ -10,10 +10,10 @@
 //
 
 #include "art/Framework/Art/artapp.h"
-#include "artdaq/DAQdata/FragmentGenerator.hh"
+#include "artdaq/DAQdata/CommandableFragmentGenerator.hh"
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQdata/GenericFragmentSimulator.hh"
-#include "artdaq/DAQdata/makeFragmentGenerator.hh"
+#include "artdaq/DAQdata/makeCommandableFragmentGenerator.hh"
 #include "artdaq/DAQrate/EventStore.hh"
 #include "MPIProg.hh"
 #include "artdaq/DAQrate/SimpleQueueReader.hh"
@@ -77,8 +77,8 @@ int main(int argc, char * argv[]) try
   cet::filepath_lookup_after1 lookup_policy("FHICL_FILE_PATH");
   make_ParameterSet(vm["config"].as<std::string>(), lookup_policy, pset);
   ParameterSet fragment_receiver_pset = pset.get<ParameterSet>("fragment_receiver");
-  std::unique_ptr<artdaq::FragmentGenerator> const
-    gen(artdaq::makeFragmentGenerator(fragment_receiver_pset.get<std::string>("generator"),
+  std::unique_ptr<artdaq::CommandableFragmentGenerator> const
+    gen(artdaq::makeCommandableFragmentGenerator(fragment_receiver_pset.get<std::string>("generator"),
                                       fragment_receiver_pset));
   artdaq::FragmentPtrs frags;
   //////////////////////////////////////////////////////////////////////

@@ -6,6 +6,7 @@ require "tempfile"
 require "logger"
 require "optparse"
 require "ostruct"
+require "socket"
 
 class LoggerIO
   # The standard ruby logger doesn't really support writing to both STDOUT and
@@ -113,20 +114,20 @@ class MPIHandler
       hostsFileHandle.write(optionsHash["host"] + "\n")
     }
         
-    disableCpuAffinity = "export MV2_ENABLE_AFFINITY=0;"
+    mpiEnvironmentSetup = "export MV2_ENABLE_AFFINITY=0; export MV2_IBA_HCA=\"mlx4_0\"; "
     displayString = ""
     if @onmonDisplay != nil
       displayString = "-genv DISPLAY " + @onmonDisplay
     end
     logString = ""
     if @logPath != ""
-      logString = "-genv DS50DAQ_LOG_ROOT " + @logPath
+      logString = "-genv ARTDAQ_LOG_ROOT " + @logPath
     end
     mpiCmd = "mpirun %s %s -launcher rsh -configfile %s -f %s" %
       [displayString, logString, configFileHandle.path, hostsFileHandle.path]
     configFileHandle.rewind
     hostsFileHandle.rewind
-    return disableCpuAffinity + mpiCmd
+    return mpiEnvironmentSetup + mpiCmd
   end
 
   def parseOutput(line)
@@ -137,21 +138,29 @@ class MPIHandler
     parts = line.chomp.split(":")
     if parts.count == 4 and parts[0] == "STARTING"
       @executables.each { |optionsHash|
-        if parts[2] == optionsHash["program"] and parts[1] == optionsHash["host"] and 
-            parts[3] == optionsHash["options"]
-          optionsHash["state"] = "running"
-          puts "%s on %s is starting." % [parts[2], parts[1]]
-          break
+        if parts[2] == optionsHash["program"] and parts[3] == optionsHash["options"]
+          hostname = Socket.gethostname
+          hostParts = hostname.chomp.split(".")
+          if parts[1] == optionsHash["host"] or
+              (optionsHash["host"] == "localhost" and parts[1] == hostParts[0])
+            optionsHash["state"] = "running"
+            puts "%s on %s is starting." % [parts[2], parts[1]]
+            break
+          end
         end
       }
     elsif parts.count == 5 and parts[0] == "EXITING"
       @executables.each { |optionsHash|
-        if parts[3] == optionsHash["program"] and parts[1] == optionsHash["host"] and
-            parts[4] == optionsHash["options"]
-          optionsHash["state"] = "finished"
-          optionsHash["exitcode"] = parts[2]
-          puts "%s on %s is exiting." % [parts[3], parts[1]]
-          break
+        if parts[3] == optionsHash["program"] and parts[4] == optionsHash["options"]
+          hostname = Socket.gethostname
+          hostParts = hostname.chomp.split(".")
+          if parts[1] == optionsHash["host"] or
+              (optionsHash["host"] == "localhost" and parts[1] == hostParts[0])
+            optionsHash["state"] = "finished"
+            optionsHash["exitcode"] = parts[2]
+            puts "%s on %s is exiting." % [parts[3], parts[1]]
+            break
+          end
         end
       }
     end
@@ -199,9 +208,10 @@ class MPIHandler
     #
     # First step is to iterate through all of the configured executables and
     # make sure that everything is idle and nothing has been started already.
+    # 16-Jul-2013, KAB: also allow starts from the finished state.
     @executables.each { |optionsHash|
-      if optionsHash["state"] != "idle"
-          return
+      if optionsHash["state"] != "idle" and optionsHash["state"] != "finished"
+        return
       end
     }
 
@@ -230,16 +240,19 @@ class MPIHandler
   end
 
   def stop
-    # I have yet to find a good way to clean up.  Killing off the mpirun_rsh
-    # process does nothing to the child processes.  For the time being we'll use
-    # the sledge hammer approach and use MPI to submit jobs to kill off everything
-    # that we spawned.
+    # 15-Sep-2013, KAB - with mpirun in mvapich2 1.9, it seems like the "right"
+    # way to stop the MPI program is to send a signal to mpirun - the previous
+    # method of killing off the children no longer reliably kills all of them
+    # So, I am commenting out the old way and switching to the new way.
+    # Here is the old comment from Steve:
+    ## I have yet to find a good way to clean up.  Killing off the mpirun_rsh
+    ## process does nothing to the child processes.  For the time being we'll use
+    ## the sledge hammer approach and use MPI to submit jobs to kill off everything
+    ## that we spawned.
     configFile = Tempfile.new("config")
     hostsFile = Tempfile.new("hosts")
     begin
-      mpiCmd = self.buildMPICommand(configFile, hostsFile, "pmt_cleanup.sh")
-
-      Open3.popen3(mpiCmd) { |stdin, stdout, stderr|
+      Open3.popen3("killall -15 mpirun; sleep 1; killall -9 mpirun") { |stdin, stdout, stderr|
         # Block until this is done.
         stdout.each { |line|
           puts line
@@ -253,6 +266,12 @@ class MPIHandler
       configFile.close!
       hostsFile.close!
     end
+
+    # 16-Jul-2013, KAB: set the status for each executable to finished in
+    # case all of the MPI exit messages were not captured and processed
+    @executables.each { |optionsHash|
+      optionsHash["state"] = "finished"
+    }
   end
 end
 
@@ -297,6 +316,12 @@ class PMTRPCHandler
   def stopSystem
     # Shut down any applications that have been configured.
     @mpiHandler.stop
+    return true
+  end
+
+  def exit
+    # send a TERM signal to ourself to initiate the exit sequence
+    Process.kill("TERM", 0)
     return true
   end
 end

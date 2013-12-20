@@ -3,13 +3,15 @@
 
 #include <string>
 #include <vector>
+#include <atomic>
 
 #include "fhiclcpp/ParameterSet.h"
 #include "art/Persistency/Provenance/RunID.h"
 #include "artdaq/DAQrate/quiet_mpi.hh"
-#include "artdaq/DAQdata/FragmentGenerator.hh"
+#include "artdaq/DAQdata/CommandableFragmentGenerator.hh"
 #include "artdaq/DAQrate/RHandles.hh"
 #include "artdaq/DAQrate/EventStore.hh"
+#include "artdaq/Application/MPI2/StatisticsHelper.hh"
 
 namespace artdaq
 {
@@ -19,7 +21,11 @@ namespace artdaq
 class artdaq::EventBuilderCore
 {
 public:
-  EventBuilderCore(int mpi_rank);
+  static const std::string INPUT_FRAGMENTS_STAT_KEY;
+  static const std::string INPUT_WAIT_STAT_KEY;
+  static const std::string STORE_EVENT_WAIT_STAT_KEY;
+
+  EventBuilderCore(int mpi_rank, MPI_Comm local_group_comm);
   EventBuilderCore(EventBuilderCore const&) = delete;
   ~EventBuilderCore();
   EventBuilderCore& operator=(EventBuilderCore const&) = delete;
@@ -41,7 +47,6 @@ private:
   void initializeEventStore();
 
   int mpi_rank_;
-  bool local_group_defined_;
   MPI_Comm local_group_comm_;
 
   std::string init_string_;
@@ -60,6 +65,14 @@ private:
   std::unique_ptr<artdaq::RHandles> receiver_ptr_;
   std::unique_ptr<artdaq::EventStore> event_store_ptr_;
   bool art_initialized_;
+  std::atomic<bool> stop_requested_;
+  std::atomic<bool> pause_requested_;
+  std::atomic<bool> run_is_paused_;
+  size_t inRunRecvTimeoutUSec_;
+  size_t endRunRecvTimeoutUSec_;
+  size_t pauseRunRecvTimeoutUSec_;
+
+  size_t fragment_count_in_run_;
 
   /* This is used for syncronization between the thread running 
      process_fragments() and XMLRPC calls.  This will be locked before data
@@ -69,6 +82,10 @@ private:
      attempt to lock the mutex as well and will be blocked until all data has
      been clocked into the EventBuilderCore. */
   std::mutex flush_mutex_;
+
+  // attributes and methods for statistics gathering & reporting
+  artdaq::StatisticsHelper statsHelper_;
+  std::string buildStatisticsString_();
 };
 
 #endif /* artdaq_Application_MPI2_EventBuilderCore_hh */

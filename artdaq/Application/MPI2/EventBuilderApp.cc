@@ -4,7 +4,8 @@
 /**
  * Constructor.
  */
-artdaq::EventBuilderApp::EventBuilderApp(int mpi_rank) : mpi_rank_(mpi_rank)
+artdaq::EventBuilderApp::EventBuilderApp(int mpi_rank, MPI_Comm local_group_comm) :
+  mpi_rank_(mpi_rank), local_group_comm_(local_group_comm)
 {
 }
 
@@ -21,9 +22,11 @@ bool artdaq::EventBuilderApp::do_initialize(fhicl::ParameterSet const& pset)
   // instance, then create a new one.  Doing it in one step does not
   // produce the desired result since that creates a new instance and
   // then deletes the old one, and we need the opposite order.
-  event_builder_ptr_.reset(nullptr);
-  event_builder_ptr_.reset(new EventBuilderCore(mpi_rank_));
-  external_request_status_ = event_builder_ptr_->initialize(pset);
+  //event_builder_ptr_.reset(nullptr);
+  if (event_builder_ptr_.get() == 0) {
+    event_builder_ptr_.reset(new EventBuilderCore(mpi_rank_, local_group_comm_));
+    external_request_status_ = event_builder_ptr_->initialize(pset);
+  }
   if (! external_request_status_) {
     report_string_ = "Error initializing the EventBuilderCore with ";
     report_string_.append("ParameterSet = \"" + pset.to_string() + "\".");
@@ -58,7 +61,9 @@ bool artdaq::EventBuilderApp::do_stop()
     report_string_ = "Error stopping the EventBuilderCore.";
   }
 
-  event_building_future_.get();
+  if (event_building_future_.valid()) {
+    event_building_future_.get();
+  }
   return external_request_status_;
 }
 
@@ -70,7 +75,9 @@ bool artdaq::EventBuilderApp::do_pause()
     report_string_ = "Error pausing the EventBuilderCore.";
   }
 
-  event_building_future_.get();
+  if (event_building_future_.valid()) {
+    event_building_future_.get();
+  }
   return external_request_status_;
 }
 
