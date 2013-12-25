@@ -1,7 +1,7 @@
 #include "artdaq/Application/TaskType.hh"
 #include "artdaq/Application/MPI2/BoardReaderCore.hh"
 #include "artdaq/DAQdata/Fragments.hh"
-#include "artdaq/DAQdata/makeCommandableFragmentGenerator.hh"
+#include "artdaq/Application/makeCommandableFragmentGenerator.hh"
 #include "art/Utilities/Exception.h"
 #include "cetlib/exception.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"

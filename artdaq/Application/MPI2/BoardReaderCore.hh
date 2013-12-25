@@ -5,7 +5,7 @@
 #include <vector>
 #include <iostream>
 
-#include "artdaq/DAQdata/CommandableFragmentGenerator.hh"
+#include "artdaq/Application/CommandableFragmentGenerator.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "art/Persistency/Provenance/RunID.h"
 #include "artdaq/DAQrate/quiet_mpi.hh"
