@@ -1,4 +1,4 @@
-#include "artdaq/DAQdata/CommandableFragmentGenerator.hh"
+#include "artdaq/Application/CommandableFragmentGenerator.hh"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 artdaq::CommandableFragmentGenerator::CommandableFragmentGenerator() :

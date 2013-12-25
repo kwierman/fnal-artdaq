@@ -1,4 +1,4 @@
-#include "artdaq/DAQdata/makeCommandableFragmentGenerator.hh"
+#include "artdaq/Application/makeCommandableFragmentGenerator.hh"
 
 #include "art/Utilities/LibraryManager.h"
 #include "art/Utilities/Exception.h"
