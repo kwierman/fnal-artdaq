@@ -6,7 +6,11 @@ art_make_library(SOURCE
   ${SMC_LIB_SOURCE}
   Commandable.cc
   configureMessageFacility
+  CommandableFragmentGenerator
+  makeCommandableFragmentGenerator
   LIBRARIES
+  artdaq_DAQrate
+  ${ART_UTILITIES}
   ${MF_MESSAGELOGGER}
   ${MF_UTILITIES}
   ${CETLIB}
