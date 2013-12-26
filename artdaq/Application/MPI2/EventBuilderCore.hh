@@ -8,7 +8,6 @@
 #include "fhiclcpp/ParameterSet.h"
 #include "art/Persistency/Provenance/RunID.h"
 #include "artdaq/DAQrate/quiet_mpi.hh"
-#include "artdaq/Application/CommandableFragmentGenerator.hh"
 #include "artdaq/DAQrate/RHandles.hh"
 #include "artdaq/DAQrate/EventStore.hh"
 #include "artdaq/Application/MPI2/StatisticsHelper.hh"
