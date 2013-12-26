@@ -13,7 +13,7 @@ std::size_t const NUM_EVENTS = 2;
 std::size_t const NUM_FRAGS_PER_EVENT = 5;
 std::size_t const FRAGMENT_SIZE = 110;
 
-BOOST_AUTO_TEST_SUITE(CommandableFragmentGenerator_t)
+BOOST_AUTO_TEST_SUITE(GenericFragmentSimulator_t)
 
 BOOST_AUTO_TEST_CASE(Simple)
 {
