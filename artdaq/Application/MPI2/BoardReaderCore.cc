@@ -1,7 +1,7 @@
 #include "artdaq/Application/TaskType.hh"
 #include "artdaq/Application/MPI2/BoardReaderCore.hh"
 #include "artdaq/DAQdata/Fragments.hh"
-#include "artdaq/DAQdata/makeCommandableFragmentGenerator.hh"
+#include "artdaq/Application/makeCommandableFragmentGenerator.hh"
 #include "art/Utilities/Exception.h"
 #include "cetlib/exception.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
@@ -141,6 +141,9 @@ bool artdaq::BoardReaderCore::initialize(fhicl::ParameterSet const& pset)
   // fetch the monitoring parameters and create the MonitoredQuantity instances
   statsHelper_.createCollectors(fr_pset, 100, 30.0, 180.0);
 
+  // check if we should skip the sequence ID test...
+  skip_seqId_test_ = (generator_ptr_->fragmentIDs().size() > 1);
+
   return true;
 }
 
@@ -267,7 +270,7 @@ artdaq::MonitoredQuantity::TIME_POINT_T startTime;
       }
 
       // check for continous sequence IDs
-      if (abs(sequence_id-prev_seq_id_) > 1) {
+      if (! skip_seqId_test_ && abs(sequence_id-prev_seq_id_) > 1) {
         mf::LogWarning("BoardReaderCore")
           << "Missing sequence IDs: current sequence ID = "
           << sequence_id << ", previous sequence ID = "

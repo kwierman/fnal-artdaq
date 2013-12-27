@@ -1,8 +1,8 @@
-#include "artdaq/DAQdata/makeCommandableFragmentGenerator.hh"
+#include "artdaq/Application/makeCommandableFragmentGenerator.hh"
 
 #include "art/Utilities/LibraryManager.h"
 #include "art/Utilities/Exception.h"
-#include "artdaq/DAQdata/GeneratorMacros.hh"
+#include "artdaq/Application/GeneratorMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
 
 std::unique_ptr<artdaq::CommandableFragmentGenerator>

@@ -1,5 +1,5 @@
-#ifndef artdaq_DAQdata_CommandableFragmentGenerator_hh
-#define artdaq_DAQdata_CommandableFragmentGenerator_hh
+#ifndef artdaq_Application_CommandableFragmentGenerator_hh
+#define artdaq_Application_CommandableFragmentGenerator_hh
 
 ////////////////////////////////////////////////////////////////////////
 // CommandableFragmentGenerator is a FragmentGenerator-derived
@@ -171,4 +171,4 @@ namespace artdaq {
 
 }
 
-#endif /* artdaq_DAQdata_CommandableFragmentGenerator_hh */
+#endif /* artdaq_Application_CommandableFragmentGenerator_hh */

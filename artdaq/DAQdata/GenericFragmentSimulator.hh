@@ -2,7 +2,7 @@
 #define artdaq_DAQdata_GenericFragmentSimulator_hh
 
 #include "artdaq/DAQdata/Fragments.hh"
-#include "artdaq/DAQdata/CommandableFragmentGenerator.hh"
+#include "artdaq/DAQdata/FragmentGenerator.hh"
 #include "fhiclcpp/fwd.h"
 
 #include <random>
@@ -21,7 +21,7 @@ namespace artdaq {
 // Event size and content are both configurable; see the implementation for
 // details.
 
-class artdaq::GenericFragmentSimulator : public artdaq::CommandableFragmentGenerator {
+class artdaq::GenericFragmentSimulator : public artdaq::FragmentGenerator {
 public:
   explicit GenericFragmentSimulator(fhicl::ParameterSet const & ps);
 
@@ -33,18 +33,21 @@ enum class content_selector_t : uint8_t {
   };
 
   // Not part of virtual interface: generate a specific fragment.
-  using CommandableFragmentGenerator::getNext;
+  using FragmentGenerator::getNext;
   bool getNext(Fragment::sequence_id_t,
                Fragment::fragment_id_t,
                FragmentPtr & frag_ptr);
 
+  bool getNext(FragmentPtrs & output) override {
+    return getNext_(output);
+  }
+  std::vector<Fragment::fragment_id_t> fragmentIDs() override {
+    return fragmentIDs_();
+  }
+
 private:
-  bool getNext_(FragmentPtrs & output) override;
-  std::vector<Fragment::fragment_id_t> fragmentIDs_() override;
-  void start() override;
-  void stop() override;
-  void pause() override;
-  void resume() override;
+  bool getNext_(FragmentPtrs & output);
+  std::vector<Fragment::fragment_id_t> fragmentIDs_();
   std::size_t generateFragmentSize_();
 
   // Configuration

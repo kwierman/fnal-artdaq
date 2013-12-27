@@ -84,25 +84,6 @@ fragmentIDs_()
   return fragment_ids_;
 }
 
-void
-artdaq::GenericFragmentSimulator::
-start()
-{ }
-
-void
-artdaq::GenericFragmentSimulator::
-stop()
-{ }
-
-void
-artdaq::GenericFragmentSimulator::
-pause()
-{ }
-
-void
-artdaq::GenericFragmentSimulator::
-resume() { }
-
 std::size_t
 artdaq::GenericFragmentSimulator::
 generateFragmentSize_()

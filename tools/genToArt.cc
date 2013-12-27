@@ -12,10 +12,10 @@
 #include "art/Framework/Art/artapp.h"
 #include "art/Utilities/Exception.h"
 #include "artdaq/Application/MPI2/MPISentry.hh"
-#include "artdaq/DAQdata/CommandableFragmentGenerator.hh"
+#include "artdaq/DAQdata/FragmentGenerator.hh"
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQdata/GenericFragmentSimulator.hh"
-#include "artdaq/DAQdata/makeCommandableFragmentGenerator.hh"
+#include "artdaq/DAQdata/makeFragmentGenerator.hh"
 #include "artdaq/DAQrate/EventStore.hh"
 #include "artdaq/DAQrate/SimpleQueueReader.hh"
 #include "artdaq/Utilities/SimpleLookupPolicy.h"
@@ -79,12 +79,12 @@ namespace {
                        fhicl::ParameterSet const & ps);
     bool getNext(artdaq::FragmentPtrs & newFrags);
     size_t numFragIDs() const;
-    artdaq::CommandableFragmentGenerator & generator() const;
+    artdaq::FragmentGenerator & generator() const;
 
   private:
     bool generateFragments_();
 
-    std::unique_ptr<artdaq::CommandableFragmentGenerator> generator_;
+    std::unique_ptr<artdaq::FragmentGenerator> generator_;
     size_t const numFragIDs_;
     std::map < artdaq::Fragment::fragment_id_t,
         std::deque<artdaq::FragmentPtr >> frags_;
@@ -94,7 +94,7 @@ namespace {
   ThrottledGenerator(std::string const & generator,
                      fhicl::ParameterSet const & ps)
     :
-    generator_(artdaq::makeCommandableFragmentGenerator(generator, ps)),
+    generator_(artdaq::makeFragmentGenerator(generator, ps)),
     numFragIDs_(generator_->fragmentIDs().size()),
     frags_()
   {
@@ -139,7 +139,7 @@ namespace {
     return numFragIDs_;
   }
 
-  artdaq::CommandableFragmentGenerator &
+  artdaq::FragmentGenerator &
   ThrottledGenerator::
   generator() const
   {

@@ -9,7 +9,6 @@
 #include "fhiclcpp/ParameterSet.h"
 #include "art/Persistency/Provenance/RunID.h"
 #include "artdaq/DAQrate/quiet_mpi.hh"
-#include "artdaq/DAQdata/CommandableFragmentGenerator.hh"
 #include "artdaq/DAQrate/RHandles.hh"
 #include "artdaq/DAQrate/GlobalQueue.hh"
 #include "artdaq/DAQrate/EventStore.hh"

@@ -5,7 +5,7 @@
 #include <vector>
 #include <iostream>
 
-#include "artdaq/DAQdata/CommandableFragmentGenerator.hh"
+#include "artdaq/Application/CommandableFragmentGenerator.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "art/Persistency/Provenance/RunID.h"
 #include "artdaq/DAQrate/quiet_mpi.hh"
@@ -53,6 +53,7 @@ private:
   size_t first_evb_rank_;
   size_t evb_count_;
   int rt_priority_;
+  bool skip_seqId_test_;
 
   std::unique_ptr<artdaq::SHandles> sender_ptr_;
 
