@@ -11,7 +11,7 @@ namespace artdaq {
   (makeFunc_t) (fhicl::ParameterSet const & ps);
 }
 
-#define DEFINE_ARTDAQ_APPLICATION_GENERATOR(klass)                    \
+#define DEFINE_ARTDAQ_COMMANDABLE_GENERATOR(klass)                    \
   extern "C"                                                          \
   std::unique_ptr<artdaq::CommandableFragmentGenerator>               \
   make(fhicl::ParameterSet const & ps) {                              \
