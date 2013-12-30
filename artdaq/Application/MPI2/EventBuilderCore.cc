@@ -146,6 +146,7 @@ bool artdaq::EventBuilderCore::initialize(fhicl::ParameterSet const& pset)
   inRunRecvTimeoutUSec_=evb_pset.get<size_t>("inrun_recv_timeout_usec",    100000);
   endRunRecvTimeoutUSec_=evb_pset.get<size_t>("endrun_recv_timeout_usec",20000000);
   pauseRunRecvTimeoutUSec_=evb_pset.get<size_t>("endrun_recv_timeout_usec",3000000);
+  verbose_ = evb_pset.get<bool>("verbose", false);
 
   // fetch the monitoring parameters and create the MonitoredQuantity instances
   statsHelper_.createCollectors(evb_pset, 100, 20.0, 60.0);
@@ -187,13 +188,13 @@ bool artdaq::EventBuilderCore::start(art::RunID id)
   flush_mutex_.lock();
   event_store_ptr_->startRun(id.run());
 
-  mf::LogDebug("EventBuilderCore") << "Started run " << run_id_.run();
+  logMessage_("Started run " + boost::lexical_cast<std::string>(run_id_.run()));
   return true;
 }
 
 bool artdaq::EventBuilderCore::stop()
 {
-  mf::LogDebug("EventBuilderCore") << "Stopping run " << run_id_.run();
+  logMessage_("Stopping run " + boost::lexical_cast<std::string>(run_id_.run()));
   bool endSucceeded;
   int attemptsToEnd;
 
@@ -239,7 +240,7 @@ bool artdaq::EventBuilderCore::stop()
 
 bool artdaq::EventBuilderCore::pause()
 {
-  mf::LogDebug("EventBuilderCore") << "Pausing run " << run_id_.run();
+  logMessage_("Pausing run " + boost::lexical_cast<std::string>(run_id_.run()));
   pause_requested_.store(true);
   flush_mutex_.lock();
 
@@ -263,7 +264,7 @@ bool artdaq::EventBuilderCore::pause()
 
 bool artdaq::EventBuilderCore::resume()
 {
-  mf::LogDebug("EventBuilderCore") << "Resuming run " << run_id_.run();
+  logMessage_("Resuming run " + boost::lexical_cast<std::string>(run_id_.run()));
   eod_fragments_received_ = 0;
   pause_requested_.store(false);
   flush_mutex_.lock();
@@ -378,10 +379,11 @@ size_t artdaq::EventBuilderCore::process_fragments()
     if (statsHelper_.readyToReport(INPUT_FRAGMENTS_STAT_KEY,
                                    fragment_count_in_run_)) {
       std::string statString = buildStatisticsString_();
-      mf::LogDebug("EventBuilderCore") << statString;
-      mf::LogDebug("EventBuilderCore")
-        << "Received fragment " << fragment_count_in_run_
-        << " with sequence id " << pfragment->sequenceID();
+      logMessage_(statString);
+      logMessage_("Received fragment " +
+                  boost::lexical_cast<std::string>(fragment_count_in_run_) +
+                  " with sequence ID " +
+                  boost::lexical_cast<std::string>(pfragment->sequenceID()));
     }
 
     startTime = artdaq::MonitoredQuantity::getCurrentTime();
@@ -482,4 +484,14 @@ std::string artdaq::EventBuilderCore::buildStatisticsString_()
   }
 
   return oss.str();
+}
+
+void artdaq::EventBuilderCore::logMessage_(std::string const& text)
+{
+  if (verbose_) {
+    mf::LogInfo("EventBuilderCore") << text;
+  }
+  else {
+    mf::LogDebug("EventBuilderCore") << text;
+  }
 }

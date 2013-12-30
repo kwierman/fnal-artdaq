@@ -70,6 +70,7 @@ private:
   size_t inRunRecvTimeoutUSec_;
   size_t endRunRecvTimeoutUSec_;
   size_t pauseRunRecvTimeoutUSec_;
+  bool verbose_;
 
   size_t fragment_count_in_run_;
 
@@ -85,6 +86,8 @@ private:
   // attributes and methods for statistics gathering & reporting
   artdaq::StatisticsHelper statsHelper_;
   std::string buildStatisticsString_();
+
+  void logMessage_(std::string const& text);
 };
 
 #endif /* artdaq_Application_MPI2_EventBuilderCore_hh */
