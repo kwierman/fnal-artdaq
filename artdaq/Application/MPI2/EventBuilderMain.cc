@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include <boost/program_options.hpp>
 #include <boost/lexical_cast.hpp>
 #include "messagefacility/MessageLogger/MessageLogger.h"
@@ -8,16 +9,27 @@
 #include "artdaq/ExternalComms/xmlrpc_commander.hh"
 #include "artdaq/Application/MPI2/MPISentry.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
+#include "cetlib/exception.h"
 
 int main(int argc, char *argv[])
 {
   artdaq::configureMessageFacility("eventbuilder");
 
   // initialization
-  int const wanted_threading_level { MPI_THREAD_MULTIPLE };
-  artdaq::MPISentry mpiSentry(&argc, &argv, wanted_threading_level);
 
-  mpiSentry.create_local_group(artdaq::TaskType::EventBuilderTask);
+  int const wanted_threading_level { MPI_THREAD_MULTIPLE };
+  MPI_Comm local_group_comm;
+  std::unique_ptr<artdaq::MPISentry> mpiSentry;
+
+  try {
+
+    mpiSentry.reset( new artdaq::MPISentry(&argc, &argv, wanted_threading_level, artdaq::TaskType::EventBuilderTask, local_group_comm) );
+
+  } catch (cet::exception& errormsg) {
+    mf::LogError("EventBuilderMain") << errormsg ;
+    mf::LogError("EventBuilderMain") << "MPISentry error encountered in EventBuilderMain; exiting...";
+    throw errormsg;
+  }
 
   // handle the command-line arguments
   std::string usage = std::string(argv[0]) + " -p port_number <other-options>";
@@ -49,7 +61,7 @@ int main(int argc, char *argv[])
   artdaq::setMsgFacAppName("EventBuilder", vm["port"].as<unsigned short> ()); 
 
   // create the EventBuilderApp
-  artdaq::EventBuilderApp evb_app(mpiSentry.rank(), mpiSentry.local_group() );
+  artdaq::EventBuilderApp evb_app(mpiSentry->rank(), local_group_comm );
 
   // create the xmlrpc_commander and run it
   xmlrpc_commander commander(vm["port"].as<unsigned short> (), evb_app);

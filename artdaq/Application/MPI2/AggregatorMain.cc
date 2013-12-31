@@ -8,6 +8,7 @@
 #include "artdaq/ExternalComms/xmlrpc_commander.hh"
 #include "artdaq/Application/MPI2/MPISentry.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
+#include "cetlib/exception.h"
 
 int main(int argc, char *argv[])
 {
@@ -16,9 +17,20 @@ int main(int argc, char *argv[])
   // initialization
 
   int const wanted_threading_level { MPI_THREAD_FUNNELED };
-  artdaq::MPISentry mpiSentry(&argc, &argv, wanted_threading_level);
 
-  mpiSentry.create_local_group(artdaq::TaskType::AggregatorTask);
+  MPI_Comm local_group_comm;
+  std::unique_ptr<artdaq::MPISentry> mpiSentry;
+
+  try {
+
+    mpiSentry.reset( new artdaq::MPISentry(&argc, &argv, wanted_threading_level, artdaq::TaskType::AggregatorTask, local_group_comm) );
+
+  } catch (cet::exception& errormsg) {
+    mf::LogError("AggregatorMain") << errormsg ;
+    mf::LogError("AggregatorMain") << "MPISentry error encountered in AggregatorMain; exiting...";
+    throw errormsg;
+  }
+
 
   // handle the command-line arguments
   std::string usage = std::string(argv[0]) + " -p port_number <other-options>";
@@ -50,7 +62,7 @@ int main(int argc, char *argv[])
   artdaq::setMsgFacAppName("Aggregator", vm["port"].as<unsigned short> ()); 
 
   // create the AggregatorApp
-  artdaq::AggregatorApp agg_app(mpiSentry.rank(), mpiSentry.local_group() );
+  artdaq::AggregatorApp agg_app(mpiSentry->rank(), local_group_comm );
 
   // create the xmlrpc_commander and run it
   xmlrpc_commander commander(vm["port"].as<unsigned short> (), agg_app);
