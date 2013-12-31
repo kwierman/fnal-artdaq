@@ -6,45 +6,19 @@
 #include "artdaq/Application/configureMessageFacility.hh"
 #include "artdaq/Application/MPI2/AggregatorApp.hh"
 #include "artdaq/ExternalComms/xmlrpc_commander.hh"
+#include "artdaq/Application/MPI2/MPISentry.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 
 int main(int argc, char *argv[])
 {
+  artdaq::configureMessageFacility("aggregator");
+
   // initialization
-  artdaq::configureMessageFacility("aggregator"); 
 
-  int threading_result;
-  MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &threading_result);
-  mf::LogDebug("Aggregator::main")
-    << "MPI initialized with requested thread support level of "
-    << MPI_THREAD_FUNNELED << ", actual support level = "
-    << threading_result << ".";
-  int procs;
-  int rank;
-  MPI_Comm_size(MPI_COMM_WORLD, &procs);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  mf::LogDebug("Aggregator::main") << "size = " << procs << ", rank = " << rank;
+  int const wanted_threading_level { MPI_THREAD_FUNNELED };
+  artdaq::MPISentry mpiSentry(&argc, &argv, wanted_threading_level);
 
-  // set up an MPI communication group with other Aggregators
-  MPI_Comm local_group_comm;
-  int status =
-    MPI_Comm_split(MPI_COMM_WORLD, artdaq::TaskType::AggregatorTask, 0,
-                   &local_group_comm);
-  if (status == MPI_SUCCESS) {
-    int temp_rank;
-    MPI_Comm_rank(local_group_comm, &temp_rank);
-    mf::LogDebug("Aggregator")
-      << "Successfully created local communicator for type "
-      << artdaq::TaskType::AggregatorTask << ", identifier = 0x"
-      << std::hex << local_group_comm << std::dec
-      << ", rank = " << temp_rank << ".";
-  }
-  else {
-    mf::LogError("Aggregator")
-      << "Failed to create the local MPI communicator group for "
-      << "Aggregators, status code = " << status << ".";
-    return 3;
-  }
+  mpiSentry.create_local_group(artdaq::TaskType::AggregatorTask);
 
   // handle the command-line arguments
   std::string usage = std::string(argv[0]) + " -p port_number <other-options>";
@@ -76,12 +50,10 @@ int main(int argc, char *argv[])
   artdaq::setMsgFacAppName("Aggregator", vm["port"].as<unsigned short> ()); 
 
   // create the AggregatorApp
-  artdaq::AggregatorApp agg_app(rank, local_group_comm);
+  artdaq::AggregatorApp agg_app(mpiSentry.rank(), mpiSentry.local_group() );
 
   // create the xmlrpc_commander and run it
   xmlrpc_commander commander(vm["port"].as<unsigned short> (), agg_app);
   commander.run();
 
-  // cleanup
-  MPI_Finalize();
 }

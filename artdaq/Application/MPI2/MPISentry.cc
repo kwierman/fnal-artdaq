@@ -1,3 +1,6 @@
+
+#include "messagefacility/MessageLogger/MessageLogger.h"
+#include "artdaq/Application/configureMessageFacility.hh"
 #include "artdaq/Application/MPI2/MPISentry.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 
@@ -23,6 +26,18 @@ MPISentry(int * argc_ptr,
 {
   MPI_Init_thread(argc_ptr, argv_ptr, threading_level, &threading_level_);
   initialize_();
+
+  mf::LogDebug("MPISentry")
+    << "MPI initialized with requested thread support level of "
+    << threading_level << ", actual support level = "
+    << threading_level_ << ".";
+  mf::LogDebug("MPISentry")
+    << "size = "
+    << procs_
+    << ", rank = "
+    << rank_ ;
+
+
 }
 
 artdaq::MPISentry::
@@ -57,4 +72,26 @@ artdaq::MPISentry::
 initialize_() {
   MPI_Comm_size(MPI_COMM_WORLD, &procs_);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
+}
+
+void
+artdaq::MPISentry::
+create_local_group(artdaq::TaskType type) {
+  int status = MPI_Comm_split(MPI_COMM_WORLD, type, 0, &local_group_comm_);
+
+  if (status == MPI_SUCCESS) {
+    int temp_rank;
+    MPI_Comm_rank(local_group_comm_, &temp_rank);
+    mf::LogDebug("")
+      << "Successfully created local communicator for type "
+      << type << ", identifier = 0x"
+      << std::hex << local_group_comm_ << std::dec
+      << ", rank = " << temp_rank << ".";
+  }
+  else {
+    mf::LogError("")
+      << "Failed to create the local MPI communicator group for "
+      << "task type #" << type << ", status code = " << status << ".";
+  }
+  
 }

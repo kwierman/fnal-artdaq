@@ -11,41 +11,13 @@
 
 int main(int argc, char *argv[])
 {
+  artdaq::configureMessageFacility("eventbuilder");
+
   // initialization
   int const wanted_threading_level { MPI_THREAD_MULTIPLE };
   artdaq::MPISentry mpiSentry(&argc, &argv, wanted_threading_level);
-  artdaq::configureMessageFacility("eventbuilder");
-  mf::LogDebug("EventBuilder::main")
-    << "MPI initialized with requested thread support level of "
-    << wanted_threading_level << ", actual support level = "
-    << mpiSentry.threading_level() << ".";
-  mf::LogDebug("EventBuilder::main")
-    << "size = "
-    << mpiSentry.procs()
-    << ", rank = "
-    << mpiSentry.rank();
 
-
- // set up an MPI communication group with other EventBuilders
-  MPI_Comm local_group_comm;
-  int status =
-    MPI_Comm_split(MPI_COMM_WORLD, artdaq::TaskType::EventBuilderTask, 0,
-                   &local_group_comm);
-  if (status == MPI_SUCCESS) {
-    int temp_rank;
-    MPI_Comm_rank(local_group_comm, &temp_rank);
-    mf::LogDebug("EventBuilder")
-      << "Successfully created local communicator for type "
-      << artdaq::TaskType::EventBuilderTask << ", identifier = 0x"
-      << std::hex << local_group_comm << std::dec
-      << ", rank = " << temp_rank << ".";
-  }
-  else {
-    mf::LogError("EventBuilder")
-      << "Failed to create the local MPI communicator group for "
-      << "EventBuilders, status code = " << status << ".";
-  }
-
+  mpiSentry.create_local_group(artdaq::TaskType::EventBuilderTask);
 
   // handle the command-line arguments
   std::string usage = std::string(argv[0]) + " -p port_number <other-options>";
@@ -77,7 +49,7 @@ int main(int argc, char *argv[])
   artdaq::setMsgFacAppName("EventBuilder", vm["port"].as<unsigned short> ()); 
 
   // create the EventBuilderApp
-  artdaq::EventBuilderApp evb_app(mpiSentry.rank(), local_group_comm);;
+  artdaq::EventBuilderApp evb_app(mpiSentry.rank(), mpiSentry.local_group() );
 
   // create the xmlrpc_commander and run it
   xmlrpc_commander commander(vm["port"].as<unsigned short> (), evb_app);

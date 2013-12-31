@@ -1,3 +1,5 @@
+include_directories(${MPI_INCLUDE_PATH})
+
 simple_plugin(FragmentSniffer "module"
   artdaq_DAQdata
   ${ART_FRAMEWORK_CORE}
@@ -22,6 +24,7 @@ cet_test(raw_event_queue_reader_t USE_BOOST_UNIT
 cet_test(daq_flow_t
   LIBRARIES
   ${ART_FRAMEWORK_ART}
+  ${MPI_C_LIBRARIES}
   artdaq_DAQdata_GenericFragmentSimulator_generator
   artdaq_Application_MPI2
   artdaq_DAQrate
