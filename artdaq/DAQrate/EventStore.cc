@@ -193,12 +193,12 @@ namespace artdaq {
       if (! enqSuccess) {
         if (printWarningWhenFragmentIsDropped) {
           mf::LogWarning("EventStore") << "Enqueueing event " << sequence_id
-                                       << " FAILED , queue size = "
+                                       << " FAILED, queue size = "
                                        << queue_.size();
         }
         else {
           mf::LogDebug("EventStore") << "Enqueueing event " << sequence_id
-                                     << " FAILED , queue size = "
+                                     << " FAILED, queue size = "
                                      << queue_.size();
         }
       }
@@ -289,6 +289,13 @@ namespace artdaq {
     subrun_id_ = 1;
     lastFlushedSeqID_ = 0;
     highestSeqIDSeen_ = 0;
+    mf::LogDebug("EventStore") << "Starting run " << run_id_
+                               << ", max queue size = "
+                               << max_queue_size_
+                               << ", queue capacity = "
+                               << queue_.capacity()
+                               << ", queue size = "
+                               << queue_.size();
   }
 
   void EventStore::startSubrun()

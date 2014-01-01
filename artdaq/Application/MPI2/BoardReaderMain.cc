@@ -1,30 +1,38 @@
+#include "artdaq/Application/TaskType.hh"
 #include "artdaq/Application/MPI2/BoardReaderApp.hh"
 #include "artdaq/Application/MPI2/MPISentry.hh"
 #include "artdaq/Application/configureMessageFacility.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 #include "artdaq/ExternalComms/xmlrpc_commander.hh"
 #include "messagefacility/MessageLogger/MessageLogger.h"
+#include "cetlib/exception.h"
 
 #include "boost/program_options.hpp"
 #include "boost/lexical_cast.hpp"
 
 #include <iostream>
+#include <memory>
 
 int main(int argc, char *argv[])
 {
+  artdaq::configureMessageFacility("boardreader");
+
   // initialization
   int const wanted_threading_level { MPI_THREAD_FUNNELED };
-  artdaq::MPISentry mpiSentry(&argc, &argv, wanted_threading_level);
-  artdaq::configureMessageFacility("boardreader");
-  mf::LogDebug("BoardReader::main")
-    << "MPI initialized with requested thread support level of "
-    << wanted_threading_level << ", actual support level = "
-    << mpiSentry.threading_level() << ".";
-  mf::LogDebug("BoardReader::main")
-    << "size = "
-    << mpiSentry.procs()
-    << ", rank = "
-    << mpiSentry.rank();
+
+  MPI_Comm local_group_comm;
+  std::unique_ptr<artdaq::MPISentry> mpiSentry;
+
+  try {
+
+    mpiSentry.reset( new artdaq::MPISentry(&argc, &argv, wanted_threading_level, artdaq::TaskType::BoardReaderTask, local_group_comm) );
+
+  } catch (cet::exception& errormsg) {
+    mf::LogError("BoardReaderMain") << errormsg ;
+    mf::LogError("BoardReaderMain") << "MPISentry error encountered in BoardReaderMain; exiting...";
+    throw errormsg;
+  }
+
 
   // handle the command-line arguments
   std::string usage = std::string(argv[0]) + " -p port_number <other-options>";
@@ -53,10 +61,10 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  mf::SetApplicationName("BoardReader-" + boost::lexical_cast<std::string>(vm["port"].as<unsigned short> ()));
+  artdaq::setMsgFacAppName("BoardReader", vm["port"].as<unsigned short> ()); 
 
   // create the BoardReaderApp
-  artdaq::BoardReaderApp br_app;
+  artdaq::BoardReaderApp br_app(local_group_comm );
 
   // create the xmlrpc_commander and run it
   xmlrpc_commander commander(vm["port"].as<unsigned short> (), br_app);

@@ -1,30 +1,36 @@
-#include "artdaq/Application/MPI2/EventBuilderApp.hh"
-#include "artdaq/Application/MPI2/MPISentry.hh"
-#include "artdaq/Application/configureMessageFacility.hh"
-#include "artdaq/DAQrate/quiet_mpi.hh"
-#include "artdaq/ExternalComms/xmlrpc_commander.hh"
-#include "messagefacility/MessageLogger/MessageLogger.h"
-
-#include "boost/program_options.hpp"
-#include "boost/lexical_cast.hpp"
-
 #include <iostream>
+#include <boost/program_options.hpp>
+#include <boost/lexical_cast.hpp>
+#include "artdaq/Application/TaskType.hh"
+#include "messagefacility/MessageLogger/MessageLogger.h"
+#include "artdaq/Application/configureMessageFacility.hh"
+#include "artdaq/Application/MPI2/AggregatorApp.hh"
+#include "artdaq/ExternalComms/xmlrpc_commander.hh"
+#include "artdaq/Application/MPI2/MPISentry.hh"
+#include "artdaq/DAQrate/quiet_mpi.hh"
+#include "cetlib/exception.h"
 
 int main(int argc, char *argv[])
 {
+  artdaq::configureMessageFacility("aggregator");
+
   // initialization
-  int const wanted_threading_level { MPI_THREAD_MULTIPLE };
-  artdaq::MPISentry mpiSentry(&argc, &argv, wanted_threading_level);
-  artdaq::configureMessageFacility("eventbuilder");
-  mf::LogDebug("EventBuilder::main")
-    << "MPI initialized with requested thread support level of "
-    << wanted_threading_level << ", actual support level = "
-    << mpiSentry.threading_level() << ".";
-  mf::LogDebug("EventBuilder::main")
-    << "size = "
-    << mpiSentry.procs()
-    << ", rank = "
-    << mpiSentry.rank();
+
+  int const wanted_threading_level { MPI_THREAD_FUNNELED };
+
+  MPI_Comm local_group_comm;
+  std::unique_ptr<artdaq::MPISentry> mpiSentry;
+
+  try {
+
+    mpiSentry.reset( new artdaq::MPISentry(&argc, &argv, wanted_threading_level, artdaq::TaskType::AggregatorTask, local_group_comm) );
+
+  } catch (cet::exception& errormsg) {
+    mf::LogError("AggregatorMain") << errormsg ;
+    mf::LogError("AggregatorMain") << "MPISentry error encountered in AggregatorMain; exiting...";
+    throw errormsg;
+  }
+
 
   // handle the command-line arguments
   std::string usage = std::string(argv[0]) + " -p port_number <other-options>";
@@ -33,7 +39,7 @@ int main(int argc, char *argv[])
   desc.add_options ()
     ("port,p", boost::program_options::value<unsigned short>(), "Port number")
     ("help,h", "produce help message");
-
+  
   boost::program_options::variables_map vm;
   try {
     boost::program_options::store (boost::program_options::command_line_parser(argc, argv).options(desc).run(), vm);
@@ -53,12 +59,13 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  mf::SetApplicationName("EventBuilder-" + boost::lexical_cast<std::string>(vm["port"].as<unsigned short> ()));
+  artdaq::setMsgFacAppName("Aggregator", vm["port"].as<unsigned short> ()); 
 
-  // create the EventBuilderApp
-  artdaq::EventBuilderApp evb_app(mpiSentry.rank());;
+  // create the AggregatorApp
+  artdaq::AggregatorApp agg_app(mpiSentry->rank(), local_group_comm );
 
   // create the xmlrpc_commander and run it
-  xmlrpc_commander commander(vm["port"].as<unsigned short> (), evb_app);
+  xmlrpc_commander commander(vm["port"].as<unsigned short> (), agg_app);
   commander.run();
+
 }

@@ -1,28 +1,33 @@
-#ifndef artdaq_Application_MPI2_EventBuilder_hh
-#define artdaq_Application_MPI2_EventBuilder_hh
+#ifndef artdaq_Application_MPI2_EventBuilderCore_hh
+#define artdaq_Application_MPI2_EventBuilderCore_hh
 
 #include <string>
 #include <vector>
+#include <atomic>
 
 #include "fhiclcpp/ParameterSet.h"
 #include "art/Persistency/Provenance/RunID.h"
 #include "artdaq/DAQrate/quiet_mpi.hh"
-#include "artdaq/DAQdata/FragmentGenerator.hh"
 #include "artdaq/DAQrate/RHandles.hh"
 #include "artdaq/DAQrate/EventStore.hh"
+#include "artdaq/Application/MPI2/StatisticsHelper.hh"
 
 namespace artdaq
 {
-  class EventBuilder;
+  class EventBuilderCore;
 }
 
-class artdaq::EventBuilder
+class artdaq::EventBuilderCore
 {
 public:
-  EventBuilder(int mpi_rank);
-  EventBuilder(EventBuilder const&) = delete;
-  ~EventBuilder();
-  EventBuilder& operator=(EventBuilder const&) = delete;
+  static const std::string INPUT_FRAGMENTS_STAT_KEY;
+  static const std::string INPUT_WAIT_STAT_KEY;
+  static const std::string STORE_EVENT_WAIT_STAT_KEY;
+
+  EventBuilderCore(int mpi_rank, MPI_Comm local_group_comm);
+  EventBuilderCore(EventBuilderCore const&) = delete;
+  ~EventBuilderCore();
+  EventBuilderCore& operator=(EventBuilderCore const&) = delete;
 
   bool initialize(fhicl::ParameterSet const&);
   bool start(art::RunID);
@@ -41,7 +46,6 @@ private:
   void initializeEventStore();
 
   int mpi_rank_;
-  bool local_group_defined_;
   MPI_Comm local_group_comm_;
 
   std::string init_string_;
@@ -60,6 +64,15 @@ private:
   std::unique_ptr<artdaq::RHandles> receiver_ptr_;
   std::unique_ptr<artdaq::EventStore> event_store_ptr_;
   bool art_initialized_;
+  std::atomic<bool> stop_requested_;
+  std::atomic<bool> pause_requested_;
+  std::atomic<bool> run_is_paused_;
+  size_t inRunRecvTimeoutUSec_;
+  size_t endRunRecvTimeoutUSec_;
+  size_t pauseRunRecvTimeoutUSec_;
+  bool verbose_;
+
+  size_t fragment_count_in_run_;
 
   /* This is used for syncronization between the thread running 
      process_fragments() and XMLRPC calls.  This will be locked before data
@@ -67,8 +80,14 @@ private:
      It will be unlocked by the process_fragments() thread once EOD fragments
      and all data has been received.  The stop() and pause() methods will
      attempt to lock the mutex as well and will be blocked until all data has
-     been clocked into the EventBuilder. */
+     been clocked into the EventBuilderCore. */
   std::mutex flush_mutex_;
+
+  // attributes and methods for statistics gathering & reporting
+  artdaq::StatisticsHelper statsHelper_;
+  std::string buildStatisticsString_();
+
+  void logMessage_(std::string const& text);
 };
 
-#endif /* artdaq_Application_MPI2_EventBuilder_hh */
+#endif /* artdaq_Application_MPI2_EventBuilderCore_hh */

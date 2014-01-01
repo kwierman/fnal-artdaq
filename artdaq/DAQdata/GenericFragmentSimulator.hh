@@ -38,14 +38,16 @@ enum class content_selector_t : uint8_t {
                Fragment::fragment_id_t,
                FragmentPtr & frag_ptr);
 
+  bool getNext(FragmentPtrs & output) override {
+    return getNext_(output);
+  }
+  std::vector<Fragment::fragment_id_t> fragmentIDs() override {
+    return fragmentIDs_();
+  }
+
 private:
-  bool getNext_(FragmentPtrs & output) override;
-  std::vector<Fragment::fragment_id_t> fragmentIDs_() override;
-  bool requiresStateMachine_() const override;
-  void start_() override;
-  void stop_() override;
-  void pause_() override;
-  void resume_() override;
+  bool getNext_(FragmentPtrs & output);
+  std::vector<Fragment::fragment_id_t> fragmentIDs_();
   std::size_t generateFragmentSize_();
 
   // Configuration
