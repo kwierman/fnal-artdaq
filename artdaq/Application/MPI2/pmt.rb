@@ -1,4 +1,7 @@
 #!/usr/bin/env ruby
+# pmt - Process Management Tool
+# This script mainly executes mpirun and watches it's output to make
+# sure all the process are started and stopped.
 
 require "xmlrpc/server"
 require "open3"
