@@ -136,7 +136,7 @@ class MPIHandler
     #   STARTING:hostname:executable:command line options
     #   EXITING:hostname:return code:executable:command line options
     parts = line.chomp.split(":")
-    if parts.count == 4 and parts[0] == "STARTING"
+    if parts.length == 4 and parts[0] == "STARTING"
       @executables.each { |optionsHash|
         if parts[2] == optionsHash["program"] and parts[3] == optionsHash["options"]
           hostname = Socket.gethostname
@@ -149,7 +149,7 @@ class MPIHandler
           end
         end
       }
-    elsif parts.count == 5 and parts[0] == "EXITING"
+    elsif parts.length == 5 and parts[0] == "EXITING"
       @executables.each { |optionsHash|
         if parts[3] == optionsHash["program"] and parts[4] == optionsHash["options"]
           hostname = Socket.gethostname
