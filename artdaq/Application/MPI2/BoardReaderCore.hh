@@ -23,6 +23,7 @@ public:
   static const std::string FRAGMENTS_PROCESSED_STAT_KEY;
   static const std::string INPUT_WAIT_STAT_KEY;
   static const std::string OUTPUT_WAIT_STAT_KEY;
+  static const std::string FRAGMENTS_PER_READ_STAT_KEY;
 
   BoardReaderCore(MPI_Comm local_group_comm);
   BoardReaderCore(BoardReaderCore const&) = delete;
