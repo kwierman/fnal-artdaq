@@ -599,6 +599,9 @@ size_t artdaq::AggregatorCore::process_fragments()
           if (pause_thread_.get() != 0) {
             pause_thread_->join();
           }
+          mf::LogDebug("AggregatorCore") << "Starting sendPauseAndResume thread "
+                                         << ", event count in subrun = "
+                                         << event_count_in_subrun_;
           pause_thread_.reset(new std::thread(&AggregatorCore::sendPauseAndResume_, this));
 
           // these should already have been done elsewhere, but just to be sure...
@@ -700,7 +703,10 @@ std::string artdaq::AggregatorCore::report(std::string const& which) const
 
 size_t artdaq::AggregatorCore::getLatestFileSize_() const
 {
-  if (disk_writing_directory_.size() == 0) {return 0;}
+  if (disk_writing_directory_.size() == 0) {
+    mf::LogDebug("AggregatorCore") << "Latest file size = 0 (no directory)";
+    return 0;
+  }
   BFS::path outputDir(disk_writing_directory_);
   BFS::directory_iterator endIter;
 
@@ -720,9 +726,12 @@ size_t artdaq::AggregatorCore::getLatestFileSize_() const
   }
   time_t now = time(0);
   if ((now - latestFileTime) < 60) {
+    mf::LogDebug("AggregatorCore") << "Latest file size = "
+                                   << latestFileSize;
     return latestFileSize;
   }
   else {
+    mf::LogDebug("AggregatorCore") << "Latest file size = 0 (too old)";
     return 0;
   }
 }
@@ -730,26 +739,31 @@ size_t artdaq::AggregatorCore::getLatestFileSize_() const
 bool artdaq::AggregatorCore::sendPauseAndResume_()
 {
   xmlrpc_c::clientSimple myClient;
+  mf::LogInfo("AggregatorCore") << "Starting automatic pause...";
   for (size_t igrp = 0; igrp < xmlrpc_client_lists_.size(); ++igrp) {
     for (size_t idx = 0; idx < xmlrpc_client_lists_[igrp].size(); ++idx) {
       //sleep(2);
       xmlrpc_c::value result;
       myClient.call((xmlrpc_client_lists_[igrp])[idx], "daq.pause", &result);
       std::string const resultString = xmlrpc_c::value_string(result);
-      mf::LogDebug("AggregatorCore") << (xmlrpc_client_lists_[igrp])[idx]
-                                 << " " << resultString;
+      mf::LogDebug("AggregatorCore") << "Pause: "
+                                     << (xmlrpc_client_lists_[igrp])[idx]
+                                     << " " << resultString;
     }
   }
+  mf::LogInfo("AggregatorCore") << "Starting automatic resume...";
   for (int igrp = (xmlrpc_client_lists_.size()-1); igrp >= 0; --igrp) {
     for (size_t idx = 0; idx < xmlrpc_client_lists_[igrp].size(); ++idx) {
       //sleep(2);
       xmlrpc_c::value result;
       myClient.call((xmlrpc_client_lists_[igrp])[idx], "daq.resume", &result);
       std::string const resultString = xmlrpc_c::value_string(result);
-      mf::LogDebug("AggregatorCore") << (xmlrpc_client_lists_[igrp])[idx]
-                                 << " " << resultString;
+      mf::LogDebug("AggregatorCore") << "Resume: "
+                                     << (xmlrpc_client_lists_[igrp])[idx]
+                                     << " " << resultString;
     }
   }
+  mf::LogInfo("AggregatorCore") << "Done with automatic resume...";
   system_pause_requested_.store(false);
   return true;
 }
