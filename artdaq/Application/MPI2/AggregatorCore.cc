@@ -33,7 +33,9 @@ artdaq::AggregatorCore::AggregatorCore(int mpi_rank, MPI_Comm local_group_comm) 
   art_initialized_(false),
   data_sender_count_(0), event_queue_(artdaq::getGlobalQueue(10)),
   stop_requested_(false), local_pause_requested_(false),
-  system_pause_requested_(false), shm_segment_id_(-1), shm_ptr_(NULL)
+  processing_fragments_(false),
+  system_pause_requested_(false), previous_run_duration_(-1.0),
+  shm_segment_id_(-1), shm_ptr_(NULL)
 {
   mf::LogDebug("AggregatorCore") << "Constructor";
   stats_helper_.addMonitoredQuantityName(INPUT_EVENTS_STAT_KEY);
@@ -258,6 +260,7 @@ bool artdaq::AggregatorCore::start(art::RunID id)
   subrun_start_time_ = time(0);
   fragment_count_to_shm_ = 0;
   stats_helper_.resetStatistics();
+  previous_run_duration_ = -1.0;
 
   stop_requested_.store(false);
   local_pause_requested_.store(false);
@@ -273,18 +276,6 @@ bool artdaq::AggregatorCore::stop()
   logMessage_("Stopping run " + boost::lexical_cast<std::string>(run_id_.run()) +
               ", " + boost::lexical_cast<std::string>(event_count_in_run_) +
               " events of all types received so far.");
-
-  artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
-    getMonitoredQuantity(INPUT_EVENTS_STAT_KEY);
-  if (mqPtr.get() != 0) {
-    artdaq::MonitoredQuantity::Stats stats;
-    mqPtr->getStats(stats);
-    std::ostringstream oss;
-    oss << "Run " << run_id_.run() << " had an overall event rate of ";
-    oss << std::fixed << std::setprecision(1) << stats.fullSampleRate;
-    oss << " events/sec.";
-    logMessage_(oss.str());
-  }
 
   /* Nothing to do here.  The aggregator we clean up after itself once it has
      received all of the EOD fragments it expects.  Higher level code will block
@@ -348,6 +339,7 @@ bool artdaq::AggregatorCore::reinitialize(fhicl::ParameterSet const& pset)
 
 size_t artdaq::AggregatorCore::process_fragments()
 {
+  processing_fragments_.store(true);
   size_t true_data_sender_count = data_sender_count_;
   if (is_online_monitor_) {
     true_data_sender_count = 1;
@@ -646,6 +638,19 @@ size_t artdaq::AggregatorCore::process_fragments()
               boost::lexical_cast<std::string>(event_count_in_run_) +
               " events of all types so far in this run.");
 
+  artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(INPUT_EVENTS_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    artdaq::MonitoredQuantity::Stats stats;
+    mqPtr->getStats(stats);
+    std::ostringstream oss;
+    oss << "Run " << run_id_.run() << " had an overall event rate of ";
+    oss << std::fixed << std::setprecision(1) << stats.fullSampleRate;
+    oss << " events/sec.";
+    logMessage_(oss.str());
+    previous_run_duration_ = stats.fullDuration;
+  }
+
   receiver_ptr_.reset(nullptr);
   if (is_online_monitor_) {
     detachFromSharedMemory_(true);
@@ -653,6 +658,7 @@ size_t artdaq::AggregatorCore::process_fragments()
   else {
     detachFromSharedMemory_(false);
   }
+  processing_fragments_.store(false);
   return 0;
 }
 
@@ -672,18 +678,21 @@ std::string artdaq::AggregatorCore::report(std::string const& which) const
   }
 
   if (which == "run_duration") {
-    artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
-      getMonitoredQuantity(INPUT_EVENTS_STAT_KEY);
-    if (mqPtr.get() != 0) {
-      artdaq::MonitoredQuantity::Stats stats;
-      mqPtr->getStats(stats);
-      std::ostringstream oss;
-      oss << std::fixed << std::setprecision(1) << stats.fullDuration;
-      return oss.str();
+    // 17-Jan-2014, KAB: if we are not processing fragments, return
+    // the previous run duration
+    double duration = previous_run_duration_;
+    if (processing_fragments_.load()) {
+      artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
+        getMonitoredQuantity(INPUT_EVENTS_STAT_KEY);
+      if (mqPtr.get() != 0) {
+        artdaq::MonitoredQuantity::Stats stats;
+        mqPtr->getStats(stats);
+        duration = stats.fullDuration;
+      }
     }
-    else {
-      return "-1";
-    }
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(1) << duration;
+    return oss.str();
   }
 
   if (which == "file_size") {
