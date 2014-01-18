@@ -85,8 +85,8 @@ recvFragment(Fragment & output, size_t timeout_usec)
       else {
         size_t sleep_loops = 10;
         size_t sleep_time = timeout_usec / sleep_loops;
-        if (timeout_usec > 10000) {
-          sleep_time = 1000;
+        if (sleep_time > 250) {
+          sleep_time = 250;
           sleep_loops = timeout_usec / sleep_time;
         }
         for (size_t idx = 0; idx < sleep_loops; ++idx) {
