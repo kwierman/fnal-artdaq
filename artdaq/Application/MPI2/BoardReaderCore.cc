@@ -317,15 +317,17 @@ std::string artdaq::BoardReaderCore::report(std::string const&) const
 std::string artdaq::BoardReaderCore::buildStatisticsString_()
 {
   std::ostringstream oss;
+  oss << "BoardReaderCore statistics:" << std::endl;
+
   double fragmentCount = 1.0;
   artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
     getMonitoredQuantity(FRAGMENTS_PROCESSED_STAT_KEY);
   if (mqPtr.get() != 0) {
     artdaq::MonitoredQuantity::Stats stats;
     mqPtr->getStats(stats);
-    oss << "Fragment statistics: "
+    oss << "  Fragment statistics: "
         << stats.recentSampleCount << " fragments received at "
-        << stats.recentSampleRate  << " fragments/sec, date rate = "
+        << stats.recentSampleRate  << " fragments/sec, effective date rate = "
         << (stats.recentValueRate * sizeof(artdaq::RawDataType)
             / 1024.0 / 1024.0) << " MB/sec, monitor window = "
         << stats.recentDuration << " sec, min::max event size = "
@@ -336,7 +338,7 @@ std::string artdaq::BoardReaderCore::buildStatisticsString_()
             / 1024.0 / 1024.0)
         << " MB" << std::endl;
     fragmentCount = std::max(double(stats.recentSampleCount), 1.0);
-    oss << "Average times per fragment: ";
+    oss << "  Average times per fragment: ";
     if (stats.recentSampleRate > 0.0) {
       oss << " elapsed time = "
           << (1.0 / stats.recentSampleRate) << " sec";
@@ -361,7 +363,7 @@ std::string artdaq::BoardReaderCore::buildStatisticsString_()
         << (stats.recentValueSum / fragmentCount) << " sec";
   }
 
-  oss << std::endl << "Fragments per read: ";
+  oss << std::endl << "  Fragments per read: ";
   mqPtr = artdaq::StatisticsCollection::getInstance().
     getMonitoredQuantity(FRAGMENTS_PER_READ_STAT_KEY);
   if (mqPtr.get() != 0) {
