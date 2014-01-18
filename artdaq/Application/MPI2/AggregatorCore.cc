@@ -23,6 +23,8 @@ namespace BFS = boost::filesystem;
 const std::string artdaq::AggregatorCore::INPUT_EVENTS_STAT_KEY("AggregatorCoreInputEvents");
 const std::string artdaq::AggregatorCore::INPUT_WAIT_STAT_KEY("AggregatorCoreInputWaitTime");
 const std::string artdaq::AggregatorCore::STORE_EVENT_WAIT_STAT_KEY("AggregatorCoreStoreEventWaitTime");
+const std::string artdaq::AggregatorCore::SHM_COPY_TIME_STAT_KEY("AggregatorCoreShmCopyTime");
+const std::string artdaq::AggregatorCore::FILE_CHECK_TIME_STAT_KEY("AggregatorCoreFileCheckTime");
 
 /**
  * Constructor.
@@ -41,6 +43,8 @@ artdaq::AggregatorCore::AggregatorCore(int mpi_rank, MPI_Comm local_group_comm) 
   stats_helper_.addMonitoredQuantityName(INPUT_EVENTS_STAT_KEY);
   stats_helper_.addMonitoredQuantityName(INPUT_WAIT_STAT_KEY);
   stats_helper_.addMonitoredQuantityName(STORE_EVENT_WAIT_STAT_KEY);
+  stats_helper_.addMonitoredQuantityName(SHM_COPY_TIME_STAT_KEY);
+  stats_helper_.addMonitoredQuantityName(FILE_CHECK_TIME_STAT_KEY);
 }
 
 /**
@@ -509,12 +513,15 @@ size_t artdaq::AggregatorCore::process_fragments()
                   ").");
     }
 
+    startTime = artdaq::MonitoredQuantity::getCurrentTime();
     bool fragmentWasCopied = false;
     if (is_data_logger_ && (event_count_in_run_ % onmon_event_prescale_) == 0) {
       copyFragmentToSharedMemory_(fragmentWasCopied,
                                   esrWasCopied, eodWasCopied,
                                   *fragmentPtr, 0);
     }
+    stats_helper_.addSample(SHM_COPY_TIME_STAT_KEY,
+                            (artdaq::MonitoredQuantity::getCurrentTime() - startTime));
 
     startTime = artdaq::MonitoredQuantity::getCurrentTime();
     if (!art_initialized_) {
@@ -576,6 +583,7 @@ size_t artdaq::AggregatorCore::process_fragments()
                             artdaq::MonitoredQuantity::getCurrentTime() - startTime);
 
     // 27-Sep-2013, KAB - added automatic file closing
+    startTime = artdaq::MonitoredQuantity::getCurrentTime();
     if (is_data_logger_ && disk_writing_directory_.size() > 0 &&
         ! stop_requested_.load() && ! system_pause_requested_.load() &&
         (event_count_in_run_ % 50) == 0) {
@@ -602,6 +610,8 @@ size_t artdaq::AggregatorCore::process_fragments()
         }
       }
     }
+    stats_helper_.addSample(FILE_CHECK_TIME_STAT_KEY,
+                            (artdaq::MonitoredQuantity::getCurrentTime() - startTime));
 
     /* If we've received EOD fragments from all of the EventBuilders we can
        verify that we've also received every fragment that they have sent.  If
@@ -832,6 +842,24 @@ std::string artdaq::AggregatorCore::buildStatisticsString_()
     artdaq::MonitoredQuantity::Stats stats;
     mqPtr->getStats(stats);
     oss << ", event store wait time = "
+        << (stats.recentValueSum / eventCount) << " sec";
+  }
+
+  mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(SHM_COPY_TIME_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    artdaq::MonitoredQuantity::Stats stats;
+    mqPtr->getStats(stats);
+    oss << ", shared memory copy time = "
+        << (stats.recentValueSum / eventCount) << " sec";
+  }
+
+  mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(FILE_CHECK_TIME_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    artdaq::MonitoredQuantity::Stats stats;
+    mqPtr->getStats(stats);
+    oss << ", file size test time = "
         << (stats.recentValueSum / eventCount) << " sec";
   }
 

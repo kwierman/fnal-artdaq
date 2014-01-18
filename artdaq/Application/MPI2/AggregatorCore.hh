@@ -27,6 +27,8 @@ public:
   static const std::string INPUT_EVENTS_STAT_KEY;
   static const std::string INPUT_WAIT_STAT_KEY;
   static const std::string STORE_EVENT_WAIT_STAT_KEY;
+  static const std::string SHM_COPY_TIME_STAT_KEY;
+  static const std::string FILE_CHECK_TIME_STAT_KEY;
 
   AggregatorCore(int mpi_rank, MPI_Comm local_group_comm);
   AggregatorCore(AggregatorCore const&) = delete;
