@@ -124,12 +124,7 @@ std::string artdaq::AggregatorApp::report(std::string const& which) const
   }
 
   if (which == "event_count" || which == "run_duration" || which == "file_size") {
-    if (status() == "Running" || status() == "Paused") {
-      return aggregator_ptr_->report(which);
-    }
-    else {
-      return "-1";
-    }
+    return aggregator_ptr_->report(which);
   }
 
   return "Unknown request: " + which;

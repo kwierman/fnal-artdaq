@@ -23,6 +23,8 @@ namespace BFS = boost::filesystem;
 const std::string artdaq::AggregatorCore::INPUT_EVENTS_STAT_KEY("AggregatorCoreInputEvents");
 const std::string artdaq::AggregatorCore::INPUT_WAIT_STAT_KEY("AggregatorCoreInputWaitTime");
 const std::string artdaq::AggregatorCore::STORE_EVENT_WAIT_STAT_KEY("AggregatorCoreStoreEventWaitTime");
+const std::string artdaq::AggregatorCore::SHM_COPY_TIME_STAT_KEY("AggregatorCoreShmCopyTime");
+const std::string artdaq::AggregatorCore::FILE_CHECK_TIME_STAT_KEY("AggregatorCoreFileCheckTime");
 
 /**
  * Constructor.
@@ -33,12 +35,16 @@ artdaq::AggregatorCore::AggregatorCore(int mpi_rank, MPI_Comm local_group_comm) 
   art_initialized_(false),
   data_sender_count_(0), event_queue_(artdaq::getGlobalQueue(10)),
   stop_requested_(false), local_pause_requested_(false),
-  system_pause_requested_(false), shm_segment_id_(-1), shm_ptr_(NULL)
+  processing_fragments_(false),
+  system_pause_requested_(false), previous_run_duration_(-1.0),
+  shm_segment_id_(-1), shm_ptr_(NULL)
 {
   mf::LogDebug("AggregatorCore") << "Constructor";
   stats_helper_.addMonitoredQuantityName(INPUT_EVENTS_STAT_KEY);
   stats_helper_.addMonitoredQuantityName(INPUT_WAIT_STAT_KEY);
   stats_helper_.addMonitoredQuantityName(STORE_EVENT_WAIT_STAT_KEY);
+  stats_helper_.addMonitoredQuantityName(SHM_COPY_TIME_STAT_KEY);
+  stats_helper_.addMonitoredQuantityName(FILE_CHECK_TIME_STAT_KEY);
 }
 
 /**
@@ -258,6 +264,7 @@ bool artdaq::AggregatorCore::start(art::RunID id)
   subrun_start_time_ = time(0);
   fragment_count_to_shm_ = 0;
   stats_helper_.resetStatistics();
+  previous_run_duration_ = -1.0;
 
   stop_requested_.store(false);
   local_pause_requested_.store(false);
@@ -273,18 +280,6 @@ bool artdaq::AggregatorCore::stop()
   logMessage_("Stopping run " + boost::lexical_cast<std::string>(run_id_.run()) +
               ", " + boost::lexical_cast<std::string>(event_count_in_run_) +
               " events of all types received so far.");
-
-  artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
-    getMonitoredQuantity(INPUT_EVENTS_STAT_KEY);
-  if (mqPtr.get() != 0) {
-    artdaq::MonitoredQuantity::Stats stats;
-    mqPtr->getStats(stats);
-    std::ostringstream oss;
-    oss << "Run " << run_id_.run() << " had an overall event rate of ";
-    oss << std::fixed << std::setprecision(1) << stats.fullSampleRate;
-    oss << " events/sec.";
-    logMessage_(oss.str());
-  }
 
   /* Nothing to do here.  The aggregator we clean up after itself once it has
      received all of the EOD fragments it expects.  Higher level code will block
@@ -348,6 +343,7 @@ bool artdaq::AggregatorCore::reinitialize(fhicl::ParameterSet const& pset)
 
 size_t artdaq::AggregatorCore::process_fragments()
 {
+  processing_fragments_.store(true);
   size_t true_data_sender_count = data_sender_count_;
   if (is_online_monitor_) {
     true_data_sender_count = 1;
@@ -517,12 +513,15 @@ size_t artdaq::AggregatorCore::process_fragments()
                   ").");
     }
 
+    startTime = artdaq::MonitoredQuantity::getCurrentTime();
     bool fragmentWasCopied = false;
     if (is_data_logger_ && (event_count_in_run_ % onmon_event_prescale_) == 0) {
       copyFragmentToSharedMemory_(fragmentWasCopied,
                                   esrWasCopied, eodWasCopied,
                                   *fragmentPtr, 0);
     }
+    stats_helper_.addSample(SHM_COPY_TIME_STAT_KEY,
+                            (artdaq::MonitoredQuantity::getCurrentTime() - startTime));
 
     startTime = artdaq::MonitoredQuantity::getCurrentTime();
     if (!art_initialized_) {
@@ -584,6 +583,7 @@ size_t artdaq::AggregatorCore::process_fragments()
                             artdaq::MonitoredQuantity::getCurrentTime() - startTime);
 
     // 27-Sep-2013, KAB - added automatic file closing
+    startTime = artdaq::MonitoredQuantity::getCurrentTime();
     if (is_data_logger_ && disk_writing_directory_.size() > 0 &&
         ! stop_requested_.load() && ! system_pause_requested_.load() &&
         (event_count_in_run_ % 50) == 0) {
@@ -599,6 +599,9 @@ size_t artdaq::AggregatorCore::process_fragments()
           if (pause_thread_.get() != 0) {
             pause_thread_->join();
           }
+          mf::LogDebug("AggregatorCore") << "Starting sendPauseAndResume thread "
+                                         << ", event count in subrun = "
+                                         << event_count_in_subrun_;
           pause_thread_.reset(new std::thread(&AggregatorCore::sendPauseAndResume_, this));
 
           // these should already have been done elsewhere, but just to be sure...
@@ -607,6 +610,8 @@ size_t artdaq::AggregatorCore::process_fragments()
         }
       }
     }
+    stats_helper_.addSample(FILE_CHECK_TIME_STAT_KEY,
+                            (artdaq::MonitoredQuantity::getCurrentTime() - startTime));
 
     /* If we've received EOD fragments from all of the EventBuilders we can
        verify that we've also received every fragment that they have sent.  If
@@ -643,6 +648,19 @@ size_t artdaq::AggregatorCore::process_fragments()
               boost::lexical_cast<std::string>(event_count_in_run_) +
               " events of all types so far in this run.");
 
+  artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(INPUT_EVENTS_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    artdaq::MonitoredQuantity::Stats stats;
+    mqPtr->getStats(stats);
+    std::ostringstream oss;
+    oss << "Run " << run_id_.run() << " had an overall event rate of ";
+    oss << std::fixed << std::setprecision(1) << stats.fullSampleRate;
+    oss << " events/sec.";
+    logMessage_(oss.str());
+    previous_run_duration_ = stats.fullDuration;
+  }
+
   receiver_ptr_.reset(nullptr);
   if (is_online_monitor_) {
     detachFromSharedMemory_(true);
@@ -650,6 +668,7 @@ size_t artdaq::AggregatorCore::process_fragments()
   else {
     detachFromSharedMemory_(false);
   }
+  processing_fragments_.store(false);
   return 0;
 }
 
@@ -669,18 +688,21 @@ std::string artdaq::AggregatorCore::report(std::string const& which) const
   }
 
   if (which == "run_duration") {
-    artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
-      getMonitoredQuantity(INPUT_EVENTS_STAT_KEY);
-    if (mqPtr.get() != 0) {
-      artdaq::MonitoredQuantity::Stats stats;
-      mqPtr->getStats(stats);
-      std::ostringstream oss;
-      oss << std::fixed << std::setprecision(1) << stats.fullDuration;
-      return oss.str();
+    // 17-Jan-2014, KAB: if we are not processing fragments, return
+    // the previous run duration
+    double duration = previous_run_duration_;
+    if (processing_fragments_.load()) {
+      artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
+        getMonitoredQuantity(INPUT_EVENTS_STAT_KEY);
+      if (mqPtr.get() != 0) {
+        artdaq::MonitoredQuantity::Stats stats;
+        mqPtr->getStats(stats);
+        duration = stats.fullDuration;
+      }
     }
-    else {
-      return "-1";
-    }
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(1) << duration;
+    return oss.str();
   }
 
   if (which == "file_size") {
@@ -700,7 +722,10 @@ std::string artdaq::AggregatorCore::report(std::string const& which) const
 
 size_t artdaq::AggregatorCore::getLatestFileSize_() const
 {
-  if (disk_writing_directory_.size() == 0) {return 0;}
+  if (disk_writing_directory_.size() == 0) {
+    mf::LogDebug("AggregatorCore") << "Latest file size = 0 (no directory)";
+    return 0;
+  }
   BFS::path outputDir(disk_writing_directory_);
   BFS::directory_iterator endIter;
 
@@ -720,9 +745,12 @@ size_t artdaq::AggregatorCore::getLatestFileSize_() const
   }
   time_t now = time(0);
   if ((now - latestFileTime) < 60) {
+    mf::LogDebug("AggregatorCore") << "Latest file size = "
+                                   << latestFileSize;
     return latestFileSize;
   }
   else {
+    mf::LogDebug("AggregatorCore") << "Latest file size = 0 (too old)";
     return 0;
   }
 }
@@ -730,26 +758,31 @@ size_t artdaq::AggregatorCore::getLatestFileSize_() const
 bool artdaq::AggregatorCore::sendPauseAndResume_()
 {
   xmlrpc_c::clientSimple myClient;
+  mf::LogInfo("AggregatorCore") << "Starting automatic pause...";
   for (size_t igrp = 0; igrp < xmlrpc_client_lists_.size(); ++igrp) {
     for (size_t idx = 0; idx < xmlrpc_client_lists_[igrp].size(); ++idx) {
       //sleep(2);
       xmlrpc_c::value result;
       myClient.call((xmlrpc_client_lists_[igrp])[idx], "daq.pause", &result);
       std::string const resultString = xmlrpc_c::value_string(result);
-      mf::LogDebug("AggregatorCore") << (xmlrpc_client_lists_[igrp])[idx]
-                                 << " " << resultString;
+      mf::LogDebug("AggregatorCore") << "Pause: "
+                                     << (xmlrpc_client_lists_[igrp])[idx]
+                                     << " " << resultString;
     }
   }
+  mf::LogInfo("AggregatorCore") << "Starting automatic resume...";
   for (int igrp = (xmlrpc_client_lists_.size()-1); igrp >= 0; --igrp) {
     for (size_t idx = 0; idx < xmlrpc_client_lists_[igrp].size(); ++idx) {
       //sleep(2);
       xmlrpc_c::value result;
       myClient.call((xmlrpc_client_lists_[igrp])[idx], "daq.resume", &result);
       std::string const resultString = xmlrpc_c::value_string(result);
-      mf::LogDebug("AggregatorCore") << (xmlrpc_client_lists_[igrp])[idx]
-                                 << " " << resultString;
+      mf::LogDebug("AggregatorCore") << "Resume: "
+                                     << (xmlrpc_client_lists_[igrp])[idx]
+                                     << " " << resultString;
     }
   }
+  mf::LogInfo("AggregatorCore") << "Done with automatic resume...";
   system_pause_requested_.store(false);
   return true;
 }
@@ -767,6 +800,7 @@ void artdaq::AggregatorCore::logMessage_(std::string const& text)
 std::string artdaq::AggregatorCore::buildStatisticsString_()
 {
   std::ostringstream oss;
+  double eventCount = 1.0;
   artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
     getMonitoredQuantity(INPUT_EVENTS_STAT_KEY);
   if (mqPtr.get() != 0) {
@@ -785,7 +819,8 @@ std::string artdaq::AggregatorCore::buildStatisticsString_()
         << (stats.recentValueMax * sizeof(artdaq::RawDataType)
             / 1024.0 / 1024.0)
         << " MB" << std::endl;
-    oss << "Average times per fragment: ";
+    eventCount = std::max(double(stats.recentSampleCount), 1.0);
+    oss << "Average times per event: ";
     if (stats.recentSampleRate > 0.0) {
       oss << " elapsed time = "
           << (1.0 / stats.recentSampleRate) << " sec";
@@ -798,7 +833,7 @@ std::string artdaq::AggregatorCore::buildStatisticsString_()
     artdaq::MonitoredQuantity::Stats stats;
     mqPtr->getStats(stats);
     oss << ", input wait time = "
-        << stats.recentValueAverage << " sec";
+        << (stats.recentValueSum / eventCount) << " sec";
   }
 
   mqPtr = artdaq::StatisticsCollection::getInstance().
@@ -807,7 +842,25 @@ std::string artdaq::AggregatorCore::buildStatisticsString_()
     artdaq::MonitoredQuantity::Stats stats;
     mqPtr->getStats(stats);
     oss << ", event store wait time = "
-        << stats.recentValueAverage << " sec";
+        << (stats.recentValueSum / eventCount) << " sec";
+  }
+
+  mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(SHM_COPY_TIME_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    artdaq::MonitoredQuantity::Stats stats;
+    mqPtr->getStats(stats);
+    oss << ", shared memory copy time = "
+        << (stats.recentValueSum / eventCount) << " sec";
+  }
+
+  mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(FILE_CHECK_TIME_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    artdaq::MonitoredQuantity::Stats stats;
+    mqPtr->getStats(stats);
+    oss << ", file size test time = "
+        << (stats.recentValueSum / eventCount) << " sec";
   }
 
   return oss.str();
@@ -818,8 +871,18 @@ void artdaq::AggregatorCore::attachToSharedMemory_(bool initialize)
   shm_segment_id_ = -1;
   shm_ptr_ = NULL;
 
+  int shmKey = 0x40470000;
+  char* keyChars = getenv("ARTDAQ_SHM_KEY");
+  if (keyChars != nullptr) {
+    std::string keyString(keyChars);
+    try {
+      shmKey = boost::lexical_cast<int>(keyString);
+    }
+    catch (...) {}
+  }
+
   shm_segment_id_ =
-    shmget(0x4f4d4f4e, (max_fragment_size_words_ * sizeof(artdaq::RawDataType)),
+    shmget(shmKey, (max_fragment_size_words_ * sizeof(artdaq::RawDataType)),
            IPC_CREAT | 0666);
 
   if (shm_segment_id_ > -1) {

@@ -27,6 +27,8 @@ public:
   static const std::string INPUT_EVENTS_STAT_KEY;
   static const std::string INPUT_WAIT_STAT_KEY;
   static const std::string STORE_EVENT_WAIT_STAT_KEY;
+  static const std::string SHM_COPY_TIME_STAT_KEY;
+  static const std::string FILE_CHECK_TIME_STAT_KEY;
 
   AggregatorCore(int mpi_rank, MPI_Comm local_group_comm);
   AggregatorCore(AggregatorCore const&) = delete;
@@ -72,6 +74,7 @@ private:
   fhicl::ParameterSet previous_pset_;
   std::atomic<bool> stop_requested_;
   std::atomic<bool> local_pause_requested_;
+  std::atomic<bool> processing_fragments_;
 
   size_t event_count_in_run_;
   size_t event_count_in_subrun_;
@@ -90,6 +93,7 @@ private:
   void logMessage_(std::string const& text);
   artdaq::StatisticsHelper stats_helper_;
   std::string buildStatisticsString_();
+  double previous_run_duration_;
 
   // *** Shared memory declarations ***
   struct ShmStruct {

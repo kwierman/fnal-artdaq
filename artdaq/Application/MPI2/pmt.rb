@@ -1,4 +1,7 @@
 #!/usr/bin/env ruby
+# pmt - Process Management Tool
+# This script mainly executes mpirun and watches it's output to make
+# sure all the process are started and stopped.
 
 require "xmlrpc/server"
 require "open3"
@@ -85,12 +88,13 @@ class MPIHandler
     end
   end
 
-  def initialize(logToStdout, logPath, onmonDisplay)
+  def initialize(logToStdout, logPath, onmonDisplay, port)
     @mpiThread = nil
     @executables = []
     @logPath = logPath
     self.createLogger(logToStdout, logPath)
     @onmonDisplay = onmonDisplay
+    @shmKey = 1078394880 + port
   end
 
   def addExecutable(program, host, options)
@@ -123,8 +127,8 @@ class MPIHandler
     if @logPath != ""
       logString = "-genv ARTDAQ_LOG_ROOT " + @logPath
     end
-    mpiCmd = "mpirun %s %s -launcher rsh -configfile %s -f %s" %
-      [displayString, logString, configFileHandle.path, hostsFileHandle.path]
+    mpiCmd = "mpirun %s %s -genv ARTDAQ_SHM_KEY %d -launcher rsh -configfile %s -f %s" %
+      [displayString, logString, @shmKey, configFileHandle.path, hostsFileHandle.path]
     configFileHandle.rewind
     hostsFileHandle.rewind
     return mpiEnvironmentSetup + mpiCmd
@@ -329,7 +333,7 @@ end
 class PMT
   def initialize(parameterFile, portNumber, logToStdout, logPath, onmonDisplay)
     @rpcThread = nil
-    @mpiHandler = MPIHandler.new(logToStdout, logPath, onmonDisplay)
+    @mpiHandler = MPIHandler.new(logToStdout, logPath, onmonDisplay, portNumber)
 
     if parameterFile != nil
       IO.foreach(parameterFile) { |definition|
