@@ -790,6 +790,7 @@ void artdaq::AggregatorCore::logMessage_(std::string const& text)
 std::string artdaq::AggregatorCore::buildStatisticsString_()
 {
   std::ostringstream oss;
+  double eventCount = 1.0;
   artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
     getMonitoredQuantity(INPUT_EVENTS_STAT_KEY);
   if (mqPtr.get() != 0) {
@@ -808,7 +809,8 @@ std::string artdaq::AggregatorCore::buildStatisticsString_()
         << (stats.recentValueMax * sizeof(artdaq::RawDataType)
             / 1024.0 / 1024.0)
         << " MB" << std::endl;
-    oss << "Average times per fragment: ";
+    eventCount = std::max(double(stats.recentSampleCount), 1.0);
+    oss << "Average times per event: ";
     if (stats.recentSampleRate > 0.0) {
       oss << " elapsed time = "
           << (1.0 / stats.recentSampleRate) << " sec";
@@ -821,7 +823,7 @@ std::string artdaq::AggregatorCore::buildStatisticsString_()
     artdaq::MonitoredQuantity::Stats stats;
     mqPtr->getStats(stats);
     oss << ", input wait time = "
-        << stats.recentValueAverage << " sec";
+        << (stats.recentValueSum / eventCount) << " sec";
   }
 
   mqPtr = artdaq::StatisticsCollection::getInstance().
@@ -830,7 +832,7 @@ std::string artdaq::AggregatorCore::buildStatisticsString_()
     artdaq::MonitoredQuantity::Stats stats;
     mqPtr->getStats(stats);
     oss << ", event store wait time = "
-        << stats.recentValueAverage << " sec";
+        << (stats.recentValueSum / eventCount) << " sec";
   }
 
   return oss.str();
@@ -841,8 +843,18 @@ void artdaq::AggregatorCore::attachToSharedMemory_(bool initialize)
   shm_segment_id_ = -1;
   shm_ptr_ = NULL;
 
+  int shmKey = 0x40470000;
+  char* keyChars = getenv("ARTDAQ_SHM_KEY");
+  if (keyChars != nullptr) {
+    std::string keyString(keyChars);
+    try {
+      shmKey = boost::lexical_cast<int>(keyString);
+    }
+    catch (...) {}
+  }
+
   shm_segment_id_ =
-    shmget(0x4f4d4f4e, (max_fragment_size_words_ * sizeof(artdaq::RawDataType)),
+    shmget(shmKey, (max_fragment_size_words_ * sizeof(artdaq::RawDataType)),
            IPC_CREAT | 0666);
 
   if (shm_segment_id_ > -1) {
