@@ -123,7 +123,7 @@ sendFragTo(Fragment && frag, size_t dest)
   sm.found(frag.sequenceID(), buffer_idx, dest);
   Fragment & curfrag = payload_[buffer_idx];
   curfrag = std::move(frag);
-# if 1
+# if 0
   MPI_Isend(&*curfrag.headerBegin(),
             curfrag.size() * sizeof(Fragment::value_type),
             MPI_BYTE,
