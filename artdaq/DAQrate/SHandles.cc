@@ -90,7 +90,15 @@ void
 artdaq::SHandles::
 sendEODFrag(size_t dest, size_t nFragments)
 {
+  int my_rank;
+# if 0
+  MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
+  std::unique_ptr<Fragment> eod=Fragment::eodFrag(nFragments);
+  (*eod).setFragmentID( my_rank );
+  sendFragTo(std::move(*eod), dest);
+# else
   sendFragTo(std::move(*Fragment::eodFrag(nFragments)), dest);
+# endif
 }
 
 void artdaq::SHandles::waitAll()
@@ -115,6 +123,7 @@ sendFragTo(Fragment && frag, size_t dest)
   sm.found(frag.sequenceID(), buffer_idx, dest);
   Fragment & curfrag = payload_[buffer_idx];
   curfrag = std::move(frag);
+# if 1
   MPI_Isend(&*curfrag.headerBegin(),
             curfrag.size() * sizeof(Fragment::value_type),
             MPI_BYTE,
@@ -122,6 +131,14 @@ sendFragTo(Fragment && frag, size_t dest)
             MPITag::FINAL,
             MPI_COMM_WORLD,
             &reqs_[buffer_idx]);
+# else
+  MPI_Send(&*curfrag.headerBegin(),
+            curfrag.size() * sizeof(Fragment::value_type),
+            MPI_BYTE,
+            dest,
+            MPITag::FINAL,
+	   MPI_COMM_WORLD );
+# endif
   Debug << "send COMPLETE: "
         << " buffer_idx=" << buffer_idx
         << " send_size=" << curfrag.size()
