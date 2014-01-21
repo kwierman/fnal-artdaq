@@ -603,10 +603,6 @@ size_t artdaq::AggregatorCore::process_fragments()
                                          << ", event count in subrun = "
                                          << event_count_in_subrun_;
           pause_thread_.reset(new std::thread(&AggregatorCore::sendPauseAndResume_, this));
-
-          // these should already have been done elsewhere, but just to be sure...
-          event_count_in_subrun_ = 0;
-          subrun_start_time_ = now;
         }
       }
     }
@@ -644,7 +640,9 @@ size_t artdaq::AggregatorCore::process_fragments()
 
   logMessage_("A subrun in run " +
               boost::lexical_cast<std::string>(run_id_.run()) +
-              " has ended.  There have been " +
+              " has ended.  There were " +
+              boost::lexical_cast<std::string>(event_count_in_subrun_) +
+              " events of all types in this subrun, and there have been " +
               boost::lexical_cast<std::string>(event_count_in_run_) +
               " events of all types so far in this run.");
 
@@ -654,7 +652,7 @@ size_t artdaq::AggregatorCore::process_fragments()
     artdaq::MonitoredQuantity::Stats stats;
     mqPtr->getStats(stats);
     std::ostringstream oss;
-    oss << "Run " << run_id_.run() << " had an overall event rate of ";
+    oss << "Run " << run_id_.run() << " has an overall event rate of ";
     oss << std::fixed << std::setprecision(1) << stats.fullSampleRate;
     oss << " events/sec.";
     logMessage_(oss.str());
