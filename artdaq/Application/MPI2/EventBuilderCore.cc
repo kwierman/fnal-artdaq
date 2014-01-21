@@ -33,13 +33,14 @@ artdaq::EventBuilderCore::~EventBuilderCore()
   mf::LogDebug("EventBuilderCore") << "Destructor";
 }
 
-void artdaq::EventBuilderCore::initializeEventStore()
+void artdaq::EventBuilderCore::initializeEventStore(size_t depth, double wait_time)
 {
   if (use_art_) {
     artdaq::EventStore::ART_CFGSTRING_FCN * reader = &artapp_string_config;
     event_store_ptr_.reset(new artdaq::EventStore(expected_fragments_per_event_, 1,
 						  mpi_rank_, init_string_,
-						  reader, 20, 5.0, print_event_store_stats_));
+						  reader, depth, wait_time,
+                                                  print_event_store_stats_));
     art_initialized_ = true;
   }
   else {
@@ -50,7 +51,8 @@ void artdaq::EventBuilderCore::initializeEventStore()
     artdaq::EventStore::ART_CMDLINE_FCN * reader = &artdaq::simpleQueueReaderApp;
     event_store_ptr_.reset(new artdaq::EventStore(expected_fragments_per_event_, 1,
 						  mpi_rank_, 1, dummyArgs,
-						  reader, 20, 5.0, print_event_store_stats_));
+						  reader, depth, wait_time,
+                                                  print_event_store_stats_));
   }
 }
 
@@ -148,6 +150,9 @@ bool artdaq::EventBuilderCore::initialize(fhicl::ParameterSet const& pset)
   pauseRunRecvTimeoutUSec_=evb_pset.get<size_t>("endrun_recv_timeout_usec",3000000);
   verbose_ = evb_pset.get<bool>("verbose", false);
 
+  size_t event_queue_depth = evb_pset.get<size_t>("event_queue_depth", 20);
+  double event_queue_wait_time = evb_pset.get<double>("event_queue_wait_time", 5.0);
+
   // fetch the monitoring parameters and create the MonitoredQuantity instances
   statsHelper_.createCollectors(evb_pset, 100, 20.0, 60.0);
 
@@ -158,7 +163,7 @@ bool artdaq::EventBuilderCore::initialize(fhicl::ParameterSet const& pset)
      config changes we have to throw up our hands and bail out.
   */
   if (art_initialized_ == false) {
-    this->initializeEventStore();
+    this->initializeEventStore(event_queue_depth, event_queue_wait_time);
     fhicl::ParameterSet tmp = pset;
     tmp.erase("daq");
     previous_pset_ = tmp;

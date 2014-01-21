@@ -43,7 +43,7 @@ public:
   std::string report(std::string const&) const;
 
 private:
-  void initializeEventStore();
+  void initializeEventStore(size_t depth, double wait_time);
 
   int mpi_rank_;
   MPI_Comm local_group_comm_;
