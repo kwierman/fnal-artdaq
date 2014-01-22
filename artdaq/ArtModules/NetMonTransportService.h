@@ -34,6 +34,7 @@ private:
     size_t first_data_receiver_rank_;
     size_t data_receiver_count_;
     bool broadcast_sends_;
+    bool synchronous_sends_;
 
     std::unique_ptr<artdaq::SHandles> sender_ptr_;
     artdaq::RawEventQueue &incoming_events_;

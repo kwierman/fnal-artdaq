@@ -141,6 +141,7 @@ bool artdaq::BoardReaderCore::initialize(fhicl::ParameterSet const& pset)
     return false;
   }
   rt_priority_ = fr_pset.get<int>("rt_priority", 0);
+  synchronous_sends_ = fr_pset.get<bool>("synchronous_sends", true);
 
   // fetch the monitoring parameters and create the MonitoredQuantity instances
   statsHelper_.createCollectors(fr_pset, 100, 30.0, 180.0);
@@ -244,7 +245,8 @@ size_t artdaq::BoardReaderCore::process_fragments()
                                          max_fragment_size_words_,
                                          evb_count_,
                                          first_evb_rank_,
-                                         false));
+                                         false,
+                                         synchronous_sends_));
 
   MPI_Barrier(local_group_comm_);
 

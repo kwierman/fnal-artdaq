@@ -42,6 +42,7 @@ NetMonTransportService(ParameterSet const& pset, art::ActivityRegistry&)
     first_data_receiver_rank_(pset.get<size_t>("first_data_receiver_rank", 0)),
     data_receiver_count_(pset.get<size_t>("data_receiver_count", 1)),
     broadcast_sends_(pset.get<bool>("broadcast_sends", false)),
+    synchronous_sends_(pset.get<bool>("synchronous_sends", true)),
     sender_ptr_(nullptr),
     incoming_events_(artdaq::getGlobalQueue()),
     recvd_fragments_(nullptr) { }
@@ -54,7 +55,8 @@ connect()
 					 max_fragment_size_words_,
 					 data_receiver_count_,
 					 first_data_receiver_rank_,
-					 broadcast_sends_));
+					 broadcast_sends_,
+                                         synchronous_sends_));
 }
 
 void
