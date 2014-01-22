@@ -55,6 +55,7 @@ private:
   size_t evb_count_;
   int rt_priority_;
   bool skip_seqId_test_;
+  bool synchronous_sends_;
 
   std::unique_ptr<artdaq::SHandles> sender_ptr_;
 

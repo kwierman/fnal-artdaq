@@ -13,7 +13,8 @@ artdaq::SHandles::SHandles(size_t buffer_count,
                            uint64_t max_payload_size,
                            size_t dest_count,
                            size_t dest_start,
-			   bool broadcast_sends)
+			   bool broadcast_sends,
+                           bool synchronous_sends)
   :
   buffer_count_(buffer_count),
   max_payload_size_(max_payload_size),
@@ -22,6 +23,7 @@ artdaq::SHandles::SHandles(size_t buffer_count,
   pos_(),
   sent_frag_count_(dest_count, dest_start),
   broadcast_sends_(broadcast_sends),
+  synchronous_sends_(synchronous_sends),
   reqs_(buffer_count_, MPI_REQUEST_NULL),
   payload_(buffer_count_)
 {
@@ -90,7 +92,15 @@ void
 artdaq::SHandles::
 sendEODFrag(size_t dest, size_t nFragments)
 {
+# if 0
+  int my_rank;
+  MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
+  std::unique_ptr<Fragment> eod=Fragment::eodFrag(nFragments);
+  (*eod).setFragmentID( my_rank );
+  sendFragTo(std::move(*eod), dest);
+# else
   sendFragTo(std::move(*Fragment::eodFrag(nFragments)), dest);
+# endif
 }
 
 void artdaq::SHandles::waitAll()
@@ -115,13 +125,23 @@ sendFragTo(Fragment && frag, size_t dest)
   sm.found(frag.sequenceID(), buffer_idx, dest);
   Fragment & curfrag = payload_[buffer_idx];
   curfrag = std::move(frag);
-  MPI_Isend(&*curfrag.headerBegin(),
-            curfrag.size() * sizeof(Fragment::value_type),
-            MPI_BYTE,
-            dest,
-            MPITag::FINAL,
-            MPI_COMM_WORLD,
-            &reqs_[buffer_idx]);
+  if (! synchronous_sends_) {
+    MPI_Isend(&*curfrag.headerBegin(),
+              curfrag.size() * sizeof(Fragment::value_type),
+              MPI_BYTE,
+              dest,
+              MPITag::FINAL,
+              MPI_COMM_WORLD,
+              &reqs_[buffer_idx]);
+  }
+  else {
+    MPI_Send(&*curfrag.headerBegin(),
+             curfrag.size() * sizeof(Fragment::value_type),
+             MPI_BYTE,
+             dest,
+             MPITag::FINAL,
+             MPI_COMM_WORLD );
+  }
   Debug << "send COMPLETE: "
         << " buffer_idx=" << buffer_idx
         << " send_size=" << curfrag.size()

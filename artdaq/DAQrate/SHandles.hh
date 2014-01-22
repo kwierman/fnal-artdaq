@@ -31,7 +31,8 @@ public:
            uint64_t max_payload_size,
            size_t dest_count,
            size_t dest_start,
-           bool broadcast_sends = false);
+           bool broadcast_sends = false,
+           bool synchronous_sends = true);
 
   // Make sure we clean up and wait for in-flight sends.
   ~SHandles();
@@ -73,6 +74,7 @@ private:
   size_t pos_; // next slot to check
   detail::FragCounter sent_frag_count_;
   bool broadcast_sends_;
+  bool synchronous_sends_;
 
   Requests reqs_;
   Fragments payload_;
