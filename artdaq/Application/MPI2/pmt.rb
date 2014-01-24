@@ -105,6 +105,13 @@ class MPIHandler
       "state" => "idle", "exitcode" => -1}
   end
 
+  def removeExecutable(program, host, options)
+    @executables.delete({"program" => program, "options" => options, "host" => host,
+                          "state" => "idle", "exitcode" => -1})
+    @executables.delete({"program" => program, "options" => options, "host" => host,
+                          "state" => "finished", "exitcode" => -1})
+  end
+
   def buildMPICommand(configFileHandle, hostsFileHandle, wrapperScript)
     @executables.each_index { |exeIndex|
       if exeIndex != 0
@@ -302,11 +309,22 @@ class PMTRPCHandler
   end
 
   def addExecutables(configList)
+    configList = eval(configList)
     # Add one or more applications to the list of applications that PMT is 
     # managing. Note that this must be done before startSystem is called. 
     configList.each do |configItem|
       @mpiHandler.addExecutable(configItem["program"], configItem["host"],
                                 configItem["port"])
+    end
+  end
+
+  def removeExecutables(configList)
+    configList = eval(configList)
+    # Add one or more applications to the list of applications that PMT is 
+    # managing. Note that this must be done before startSystem is called. 
+    configList.each do |configItem|
+      @mpiHandler.removeExecutable(configItem["program"], configItem["host"],
+                                   configItem["port"])
     end
   end
 
