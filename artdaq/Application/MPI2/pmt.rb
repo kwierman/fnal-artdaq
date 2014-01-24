@@ -284,6 +284,10 @@ class MPIHandler
       optionsHash["state"] = "finished"
     }
   end
+
+  def logInfo(line)
+    @logger.info(line.chomp)
+  end
 end
 
 class PMTRPCHandler
@@ -308,7 +312,30 @@ class PMTRPCHandler
     return statusItems
   end
 
+  def executableSortFunction(process1, process2)
+    if /boardreader/i.match(process1["program"]) && \
+      ! /boardreader/i.match(process2["program"])
+      return -1
+    elsif /eventbuilder/i.match(process1["program"]) && \
+      /boardreader/i.match(process2["program"])
+      return 1
+    elsif /eventbuilder/i.match(process1["program"]) && \
+      /aggregator/i.match(process2["program"])
+      return -1
+    elsif /aggregator/i.match(process1["program"]) && \
+      ! /aggregator/i.match(process2["program"])
+      return 1
+    end
+
+    if process1["host"] != process2["host"]
+      return process1["host"] <=> process2["host"]
+    end
+
+    return process1["options"] <=> process2["options"]
+  end
+
   def addExecutables(configList)
+    @mpiHandler.logInfo("The addExecutables operation received the following string: \'" + configList + "\'")
     configList = eval(configList)
     # Add one or more applications to the list of applications that PMT is 
     # managing. Note that this must be done before startSystem is called. 
@@ -316,9 +343,16 @@ class PMTRPCHandler
       @mpiHandler.addExecutable(configItem["program"], configItem["host"],
                                 configItem["port"])
     end
+    @mpiHandler.executables.sort!{|a,b|executableSortFunction(a,b)}
+    @mpiHandler.logInfo("The new list of processes is the following:")
+    @mpiHandler.executables.each { |optionsHash|
+      hashString = optionsHash.inspect
+      @mpiHandler.logInfo("  " + hashString)
+    }
   end
 
   def removeExecutables(configList)
+    @mpiHandler.logInfo("The removeExecutables operation received the following string: \'" + configList + "\'")
     configList = eval(configList)
     # Add one or more applications to the list of applications that PMT is 
     # managing. Note that this must be done before startSystem is called. 
@@ -326,6 +360,11 @@ class PMTRPCHandler
       @mpiHandler.removeExecutable(configItem["program"], configItem["host"],
                                    configItem["port"])
     end
+    @mpiHandler.logInfo("The new list of processes is the following:")
+    @mpiHandler.executables.each { |optionsHash|
+      hashString = optionsHash.inspect
+      @mpiHandler.logInfo("  " + hashString)
+    }
   end
 
   def startSystem
