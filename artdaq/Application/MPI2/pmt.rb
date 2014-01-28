@@ -401,7 +401,9 @@ class PMT
     
     # Instantiate the RPC handler and then create the RPC server.
     @rpcHandler = PMTRPCHandler.new(@mpiHandler)
-    @rpcServer = XMLRPC::Server.new(port = portNumber)
+    hostname = Socket.gethostname
+    hostParts = hostname.chomp.split(".")
+    @rpcServer = XMLRPC::Server.new(port = portNumber, host = hostParts[0])
     @rpcServer.add_handler("pmt", @rpcHandler)
   end
 
