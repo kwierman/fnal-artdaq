@@ -18,6 +18,7 @@
 
 #include <boost/tokenizer.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>    
 namespace BFS = boost::filesystem;
 
 const std::string artdaq::AggregatorCore::INPUT_EVENTS_STAT_KEY("AggregatorCoreInputEvents");
@@ -759,25 +760,47 @@ bool artdaq::AggregatorCore::sendPauseAndResume_()
   mf::LogInfo("AggregatorCore") << "Starting automatic pause...";
   for (size_t igrp = 0; igrp < xmlrpc_client_lists_.size(); ++igrp) {
     for (size_t idx = 0; idx < xmlrpc_client_lists_[igrp].size(); ++idx) {
-      //sleep(2);
-      xmlrpc_c::value result;
-      myClient.call((xmlrpc_client_lists_[igrp])[idx], "daq.pause", &result);
-      std::string const resultString = xmlrpc_c::value_string(result);
-      mf::LogDebug("AggregatorCore") << "Pause: "
-                                     << (xmlrpc_client_lists_[igrp])[idx]
-                                     << " " << resultString;
+      for (size_t iAttempt = 0; iAttempt < 5; ++iAttempt) {
+        xmlrpc_c::value result;
+        myClient.call((xmlrpc_client_lists_[igrp])[idx], "daq.pause", &result);
+        std::string const resultString = xmlrpc_c::value_string(result);
+        mf::LogDebug("AggregatorCore") << "Pause: "
+                                       << (xmlrpc_client_lists_[igrp])[idx]
+                                       << " " << resultString;
+        if (std::string::npos !=
+            boost::algorithm::to_lower_copy(resultString).find("success")) {
+          break;
+        }
+        else {
+          sleep(2);
+          mf::LogWarning("AggregatorCore") << "Retrying pause command to "
+                                           << (xmlrpc_client_lists_[igrp])[idx]
+                                           << " (" << resultString << ")";
+        }
+      }
     }
   }
   mf::LogInfo("AggregatorCore") << "Starting automatic resume...";
   for (int igrp = (xmlrpc_client_lists_.size()-1); igrp >= 0; --igrp) {
     for (size_t idx = 0; idx < xmlrpc_client_lists_[igrp].size(); ++idx) {
-      //sleep(2);
-      xmlrpc_c::value result;
-      myClient.call((xmlrpc_client_lists_[igrp])[idx], "daq.resume", &result);
-      std::string const resultString = xmlrpc_c::value_string(result);
-      mf::LogDebug("AggregatorCore") << "Resume: "
-                                     << (xmlrpc_client_lists_[igrp])[idx]
-                                     << " " << resultString;
+      for (size_t iAttempt = 0; iAttempt < 5; ++iAttempt) {
+        xmlrpc_c::value result;
+        myClient.call((xmlrpc_client_lists_[igrp])[idx], "daq.resume", &result);
+        std::string const resultString = xmlrpc_c::value_string(result);
+        mf::LogDebug("AggregatorCore") << "Resume: "
+                                       << (xmlrpc_client_lists_[igrp])[idx]
+                                       << " " << resultString;
+        if (std::string::npos !=
+            boost::algorithm::to_lower_copy(resultString).find("success")) {
+          break;
+        }
+        else {
+          sleep(2);
+          mf::LogWarning("AggregatorCore") << "Retrying resume command to "
+                                           << (xmlrpc_client_lists_[igrp])[idx]
+                                           << " (" << resultString << ")";
+        }
+      }
     }
   }
   mf::LogInfo("AggregatorCore") << "Done with automatic resume...";
