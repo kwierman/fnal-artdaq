@@ -160,7 +160,7 @@ namespace artdaq {
     EventMap::iterator loc = events_.lower_bound(sequence_id);
 
     if (loc == events_.end() || events_.key_comp()(sequence_id, loc->first)) {
-      // We don't have an event with this id; create one an insert it at loc,
+      // We don't have an event with this id; create one and insert it at loc,
       // and ajust loc to point to the newly inserted event.
       RawEvent_ptr newevent(new RawEvent(run_id_, subrun_id_, pfrag->sequenceID()));
       loc =
