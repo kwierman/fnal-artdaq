@@ -25,18 +25,21 @@ art_make_exec(EventBuilderMain
   LIBRARIES
   artdaq_Application_MPI2
   artdaq_ExternalComms
+  artdaq_Version
 )
 
 art_make_exec(BoardReaderMain
   LIBRARIES
   artdaq_Application_MPI2
   artdaq_ExternalComms
+  artdaq_Version
 )
 
 art_make_exec(AggregatorMain
   LIBRARIES
   artdaq_Application_MPI2
   artdaq_ExternalComms
+  artdaq_Version
 )
 
 
