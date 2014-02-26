@@ -1,0 +1,14 @@
+#include "artdaq/Version/GetReleaseVersion.h"
+
+namespace artdaq {
+
+  std::string const & getReleaseVersion() {
+    static std::string const releaseVersion("@version@");
+    return releaseVersion;
+  }
+
+  std::string const & getBuildDateTime() {
+    static std::string const buildDateTime(std::string(__DATE__) + " " + __TIME__);
+    return buildDateTime;
+  }
+}

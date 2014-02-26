@@ -19,6 +19,8 @@ art_make_library(SOURCE
   ${FHICLCPP}
   )
 
+simple_plugin(CompositeDriver "generator" artdaq_DAQdata artdaq_Application)
+
 install_headers()
 install_source()
 

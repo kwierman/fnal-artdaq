@@ -83,6 +83,14 @@ namespace artdaq {
     // signatures may be subject to change.
 
     // John F., 12/6/13 -- do we want Reset and Shutdown commands?
+    // Kurt B., 15-Feb-2014. For the moment, I suspect that we don't
+    // want a Shutdown command. FragmentGenerator instances are 
+    // Constructed at Initialization time, and they are destructed
+    // at Shutdown time. So, any shutdown operations that need to be
+    // done should be put in the FragmentGenerator child class
+    // destructors. If we find that want shutdown (or initialization)
+    // operations that are different from destruction (construction),
+    // then we'll have to add InitCmd and ShutdownCmd methods.
 
     //    virtual void ResetCmd() final {}
     //    virtual void ShutdownCmd() final {}
