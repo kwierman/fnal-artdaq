@@ -222,7 +222,7 @@ bool artdaq::AggregatorCore::initialize(fhicl::ParameterSet const& pset)
 
   inrun_recv_timeout_usec_=agg_pset.get<size_t>("inrun_recv_timeout_usec",    100000);
   endrun_recv_timeout_usec_=agg_pset.get<size_t>("endrun_recv_timeout_usec",20000000);
-  pause_recv_timeout_usec_=agg_pset.get<size_t>("endrun_recv_timeout_usec",3000000);
+  pause_recv_timeout_usec_=agg_pset.get<size_t>("pause_recv_timeout_usec",3000000);
 
   onmon_event_prescale_ = agg_pset.get<size_t>("onmon_event_prescale", 1);
 
