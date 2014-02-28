@@ -6,6 +6,7 @@
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/Fragments.hh"
 #include "messagefacility/MessageLogger/MessageLogger.h"
+#include <sys/time.h>
 
 using std::string;
 
@@ -109,29 +110,29 @@ bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal * const & i
   // Check the number of fragments in the RawEvent.  If we have a single
   // fragment and that fragment is marked as EndRun or EndSubrun we'll create
   // the special principals for that.
-  art::Timestamp runstart;
+  art::Timestamp currentTime = time(0);
 
   // make new run if inR is 0 or if the run has changed
   if (inR == 0 || inR->run() != popped_event->runID()) {
     outR = pmaker.makeRunPrincipal(popped_event->runID(),
-                                   runstart);
+                                   currentTime);
   }
 
   if (popped_event->numFragments() == 1) {
     if (popped_event->releaseProduct(Fragment::EndOfRunFragmentType)->size() == 1) {
       art::EventID const evid(art::EventID::flushEvent());
-      outR = pmaker.makeRunPrincipal(evid.runID(), runstart);
-      outSR = pmaker.makeSubRunPrincipal(evid.subRunID(), runstart);
-      outE = pmaker.makeEventPrincipal(evid, runstart);
+      outR = pmaker.makeRunPrincipal(evid.runID(), currentTime);
+      outSR = pmaker.makeSubRunPrincipal(evid.subRunID(), currentTime);
+      outE = pmaker.makeEventPrincipal(evid, currentTime);
       return true;
     } else if(popped_event->releaseProduct(Fragment::EndOfSubrunFragmentType)->size() == 1) {
       // Check if inR == 0 or is a new run
       if(inR == 0 || inR->run() != popped_event->runID()){
         outSR = pmaker.makeSubRunPrincipal(popped_event->runID(),
                                            popped_event->subrunID(),
-                                           runstart);
+                                           currentTime);
         art::EventID const evid(art::EventID::flushEvent(outR->id(),outSR->id()));
-        outE = pmaker.makeEventPrincipal(evid, runstart);
+        outE = pmaker.makeEventPrincipal(evid, currentTime);
       } else {
         // If the previous subrun was neither 0 nor flush and was identical with the current
 	// subrun, then it must have been associated with a data event.  In that case, we need
@@ -139,17 +140,17 @@ bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal * const & i
 	// to end the subrun.
 	if(inSR!=0 && !inSR->id().isFlush() && inSR->subRun() == popped_event->subrunID()){
           art::EventID const evid(art::EventID::flushEvent(inR->id()));        
-          outSR = pmaker.makeSubRunPrincipal(evid.subRunID(), runstart);
-          outE = pmaker.makeEventPrincipal(evid, runstart);
+          outSR = pmaker.makeSubRunPrincipal(evid.subRunID(), currentTime);
+          outE = pmaker.makeEventPrincipal(evid, currentTime);
 	// If this is either a new or another empty subrun, then generate a flush event with
 	// valid run and subrun numbers but flush event number 
 	//} else if(inSR==0 || inSR->id().isFlush()){
 	} else {
           outSR = pmaker.makeSubRunPrincipal(popped_event->runID(),
 					     popped_event->subrunID(),
-					     runstart);
+					     currentTime);
           art::EventID const evid(art::EventID::flushEvent(inR->id(),outSR->id()));
-          outE = pmaker.makeEventPrincipal(evid, runstart);
+          outE = pmaker.makeEventPrincipal(evid, currentTime);
 	// Possible error condition
 	//} else {
 	}
@@ -165,12 +166,12 @@ bool artdaq::detail::RawEventQueueReader::readNext(art::RunPrincipal * const & i
   if (inSR == 0 || subrun_check != inSR->id()) {
     outSR = pmaker.makeSubRunPrincipal(popped_event->runID(),
                                        popped_event->subrunID(),
-                                       runstart);
+                                       currentTime);
   }
   outE = pmaker.makeEventPrincipal(popped_event->runID(),
                                    popped_event->subrunID(),
                                    popped_event->sequenceID(),
-                                   runstart);
+                                   currentTime);
   // get the list of fragment types that exist in the event
   std::vector<Fragment::type_t> type_list;
   popped_event->fragmentTypes(type_list);
