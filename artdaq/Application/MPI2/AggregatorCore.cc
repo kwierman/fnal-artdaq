@@ -280,7 +280,7 @@ bool artdaq::AggregatorCore::stop()
 {
   logMessage_("Stopping run " + boost::lexical_cast<std::string>(run_id_.run()) +
               ", " + boost::lexical_cast<std::string>(event_count_in_run_) +
-              " events of all types received so far.");
+              " events received so far.");
 
   /* Nothing to do here.  The aggregator we clean up after itself once it has
      received all of the EOD fragments it expects.  Higher level code will block
@@ -293,7 +293,7 @@ bool artdaq::AggregatorCore::pause()
 {
   logMessage_("Pausing run " + boost::lexical_cast<std::string>(run_id_.run()) +
               ", " + boost::lexical_cast<std::string>(event_count_in_run_) +
-              " events of all types received so far.");
+              " events received so far.");
 
   /* Nothing to do here.  The aggregator we clean up after itself once it has
      received all of the EOD fragments it expects.  Higher level code will block
@@ -491,27 +491,30 @@ size_t artdaq::AggregatorCore::process_fragments()
       continue;
     }
 
-    ++event_count_in_run_;
-    ++event_count_in_subrun_;
-    if (event_count_in_run_ == 1) {
-      logMessage_("Received event " +
-                  boost::lexical_cast<std::string>(event_count_in_run_) +
-                  " with sequence id " +
-                  boost::lexical_cast<std::string>(fragmentPtr->sequenceID()) +
-                  ".");
-    }
-    stats_helper_.addSample(INPUT_EVENTS_STAT_KEY, fragmentPtr->size());
-    if (stats_helper_.readyToReport(INPUT_EVENTS_STAT_KEY,
-                                    event_count_in_run_)) {
-      std::string statString = buildStatisticsString_();
-      logMessage_(statString);
-      logMessage_("Received event " +
-                  boost::lexical_cast<std::string>(event_count_in_run_) +
-                  " with sequence id " +
-                  boost::lexical_cast<std::string>(fragmentPtr->sequenceID()) +
-                  " (run " +
-                  boost::lexical_cast<std::string>(run_id_.run()) +
-                  ").");
+    if (artdaq::Fragment::isUserFragmentType(fragmentPtr->type()) ||
+        fragmentPtr->type() == artdaq::Fragment::DataFragmentType) {
+      ++event_count_in_run_;
+      ++event_count_in_subrun_;
+      if (event_count_in_run_ == 1) {
+        logMessage_("Received event " +
+                    boost::lexical_cast<std::string>(event_count_in_run_) +
+                    " with sequence id " +
+                    boost::lexical_cast<std::string>(fragmentPtr->sequenceID()) +
+                    ".");
+      }
+      stats_helper_.addSample(INPUT_EVENTS_STAT_KEY, fragmentPtr->size());
+      if (stats_helper_.readyToReport(INPUT_EVENTS_STAT_KEY,
+                                      event_count_in_run_)) {
+        std::string statString = buildStatisticsString_();
+        logMessage_(statString);
+        logMessage_("Received event " +
+                    boost::lexical_cast<std::string>(event_count_in_run_) +
+                    " with sequence id " +
+                    boost::lexical_cast<std::string>(fragmentPtr->sequenceID()) +
+                    " (run " +
+                    boost::lexical_cast<std::string>(run_id_.run()) +
+                    ").");
+      }
     }
 
     startTime = artdaq::MonitoredQuantity::getCurrentTime();
@@ -643,9 +646,9 @@ size_t artdaq::AggregatorCore::process_fragments()
               boost::lexical_cast<std::string>(run_id_.run()) +
               " has ended.  There were " +
               boost::lexical_cast<std::string>(event_count_in_subrun_) +
-              " events of all types in this subrun, and there have been " +
+              " events in this subrun, and there have been " +
               boost::lexical_cast<std::string>(event_count_in_run_) +
-              " events of all types so far in this run.");
+              " events so far in this run.");
 
   artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
     getMonitoredQuantity(INPUT_EVENTS_STAT_KEY);
