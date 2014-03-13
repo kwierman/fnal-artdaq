@@ -40,6 +40,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <sys/time.h>
 
 namespace art {
 class NetMonInputDetail;
@@ -591,6 +592,25 @@ readAndConstructPrincipal(TBufferFile& msg, unsigned long msg_type_code,
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "making flush RunPrincipal ...\n";
         outR = pm_.makeRunPrincipal(RunID::flushRun(), subrun_aux->beginTime());
+
+        // 28-Feb-2014, KAB: added the setting of the end time in the *current*
+        // run and subrun.  This is how we set the endTime in the RunPrincipal
+        // and SubRunPrincipal objects that are written to the disk file.
+        // This needs to happen here because:
+        // A) setting them in every event doesn't work because the RunPrincipal
+        //    only allows us to set an end time value once
+        // B) setting them in the "outputFileCloseNeeded_" block in the readNext()
+        //    method below doesn't work because that is too late.  When this
+        //    method returns an outR with a different run number (flushRun),
+        //    the art output system closes the current file then.
+        // C) setting them in the EndRun message block immediately above this
+        //    block wouldn't work because a) we're not currently sending endRun
+        //    events from the EBs to the AG, and b) because presumably that would
+        //    be too late, also.
+        art::Timestamp currentTime = time(0);
+        if (inR != nullptr) {inR->setEndTime(currentTime);}
+        if (inSR != nullptr) {inSR->setEndTime(currentTime);}
+
         FDEBUG(1) << "readAndConstructPrincipal: "
                      "finished making flush RunPrincipal.\n";
         FDEBUG(1) << "readAndConstructPrincipal: "

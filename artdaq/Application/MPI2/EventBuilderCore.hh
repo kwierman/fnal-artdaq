@@ -67,9 +67,9 @@ private:
   std::atomic<bool> stop_requested_;
   std::atomic<bool> pause_requested_;
   std::atomic<bool> run_is_paused_;
-  size_t inRunRecvTimeoutUSec_;
-  size_t endRunRecvTimeoutUSec_;
-  size_t pauseRunRecvTimeoutUSec_;
+  size_t inrun_recv_timeout_usec_;
+  size_t endrun_recv_timeout_usec_;
+  size_t pause_recv_timeout_usec_;
   bool verbose_;
 
   size_t fragment_count_in_run_;

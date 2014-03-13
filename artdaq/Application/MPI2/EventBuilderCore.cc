@@ -145,9 +145,9 @@ bool artdaq::EventBuilderCore::initialize(fhicl::ParameterSet const& pset)
     return false;
   }
   print_event_store_stats_ = evb_pset.get<bool>("print_event_store_stats", false);
-  inRunRecvTimeoutUSec_=evb_pset.get<size_t>("inrun_recv_timeout_usec",    100000);
-  endRunRecvTimeoutUSec_=evb_pset.get<size_t>("endrun_recv_timeout_usec",20000000);
-  pauseRunRecvTimeoutUSec_=evb_pset.get<size_t>("endrun_recv_timeout_usec",3000000);
+  inrun_recv_timeout_usec_=evb_pset.get<size_t>("inrun_recv_timeout_usec",    100000);
+  endrun_recv_timeout_usec_=evb_pset.get<size_t>("endrun_recv_timeout_usec",20000000);
+  pause_recv_timeout_usec_=evb_pset.get<size_t>("pause_recv_timeout_usec",3000000);
   verbose_ = evb_pset.get<bool>("verbose", false);
 
   size_t event_queue_depth = evb_pset.get<size_t>("event_queue_depth", 20);
@@ -331,9 +331,9 @@ size_t artdaq::EventBuilderCore::process_fragments()
   while (process_fragments) {
     artdaq::FragmentPtr pfragment(new artdaq::Fragment);
 
-    size_t recvTimeout = inRunRecvTimeoutUSec_;
-    if (stop_requested_.load()) {recvTimeout = endRunRecvTimeoutUSec_;}
-    else if (pause_requested_.load()) {recvTimeout = pauseRunRecvTimeoutUSec_;}
+    size_t recvTimeout = inrun_recv_timeout_usec_;
+    if (stop_requested_.load()) {recvTimeout = endrun_recv_timeout_usec_;}
+    else if (pause_requested_.load()) {recvTimeout = pause_recv_timeout_usec_;}
     startTime = artdaq::MonitoredQuantity::getCurrentTime();
     senderSlot = receiver_ptr_->recvFragment(*pfragment, recvTimeout);
     statsHelper_.addSample(INPUT_WAIT_STAT_KEY,
@@ -348,7 +348,7 @@ size_t artdaq::EventBuilderCore::process_fragments()
     }
     else if (senderSlot == artdaq::RHandles::RECV_TIMEOUT) {
       if (stop_requested_.load() &&
-          recvTimeout == endRunRecvTimeoutUSec_) {
+          recvTimeout == endrun_recv_timeout_usec_) {
         mf::LogInfo("EventBuilderCore")
           << "Stop timeout expired - forcibly ending the run.";
 	event_store_ptr_->flushData();
@@ -356,7 +356,7 @@ size_t artdaq::EventBuilderCore::process_fragments()
 	process_fragments = false;
       }
       else if (pause_requested_.load() &&
-               recvTimeout == pauseRunRecvTimeoutUSec_) {
+               recvTimeout == pause_recv_timeout_usec_) {
         mf::LogInfo("EventBuilderCore")
           << "Pause timeout expired - forcibly pausing the run.";
 	event_store_ptr_->flushData();
