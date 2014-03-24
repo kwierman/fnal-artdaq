@@ -13,7 +13,7 @@ class artdaqtest::CommandableFragmentGeneratorTest :
 public:
   CommandableFragmentGeneratorTest();
   bool getNext_(artdaq::FragmentPtrs &) override;
-  std::vector<artdaq::Fragment::fragment_id_t> fragmentIDs_() override;
+  std::vector<artdaq::Fragment::fragment_id_t> fragmentIDs() override;
   void start() override;
   void stop() override;
   void pause() override;
@@ -36,7 +36,7 @@ artdaqtest::CommandableFragmentGeneratorTest::getNext_(artdaq::FragmentPtrs & fr
 
 std::vector<artdaq::Fragment::fragment_id_t>
 artdaqtest::CommandableFragmentGeneratorTest::
-fragmentIDs_()
+fragmentIDs()
 {
   return { 1 };
 }

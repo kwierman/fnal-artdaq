@@ -19,7 +19,7 @@ namespace artdaq {
       void resume() override;
 
     private:
-      std::vector<artdaq::Fragment::fragment_id_t> fragmentIDs_() override;
+      std::vector<artdaq::Fragment::fragment_id_t> fragmentIDs() override;
       bool getNext_(artdaq::FragmentPtrs & output) override;
 
       bool makeChildGenerator_(fhicl::ParameterSet const &);
