@@ -76,7 +76,7 @@ void artdaq::CompositeDriver::resume()
   }
 }
 
-std::vector<artdaq::Fragment::fragment_id_t> artdaq::CompositeDriver::fragmentIDs_()
+std::vector<artdaq::Fragment::fragment_id_t> artdaq::CompositeDriver::fragmentIDs()
 {
   std::vector<artdaq::Fragment::fragment_id_t> workList;
   for (size_t idx = 0; idx < generator_list_.size(); ++idx) {

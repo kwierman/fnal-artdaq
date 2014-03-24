@@ -6,7 +6,7 @@ artdaq::CommandableFragmentGenerator::CommandableFragmentGenerator() :
   run_number_(-1), subrun_number_(-1),
   should_stop_(false), exception_(false),
   ev_counter_(1),
-  board_id_(-1), fragment_id_(-1),
+  board_id_(-1), 
   sleep_on_stop_us_(0)
 {
 }
@@ -17,11 +17,22 @@ artdaq::CommandableFragmentGenerator::CommandableFragmentGenerator(const fhicl::
   run_number_(-1), subrun_number_(-1),
   should_stop_(false), exception_(false),
   ev_counter_(1),
-  board_id_(-1), fragment_id_(-1),
+  board_id_(-1), 
   sleep_on_stop_us_(0)
 {
   board_id_ = ps.get<int> ("board_id");
-  fragment_id_ = ps.get<int> ("fragment_id");
+
+  fragment_ids_ = ps.get< std::vector< artdaq::Fragment::fragment_id_t > >( "fragment_ids", std::vector< artdaq::Fragment::fragment_id_t >() );
+
+  int fragment_id = ps.get< int > ("fragment_id", -99);
+
+  if (fragment_id != -99) {
+    if (fragment_ids_.size() != 0) {
+      throw cet::exception("Error in CommandableFragmentGenerator: can't both define \"fragment_id\" and \"fragment_ids\" in FHiCL document");
+    } else {
+      fragment_ids_.emplace_back( fragment_id );
+    }
+  }
 
   sleep_on_stop_us_ = ps.get<int> ("sleep_on_stop_us", 0);
 }
@@ -55,11 +66,13 @@ bool artdaq::CommandableFragmentGenerator::getNext(FragmentPtrs & output) {
 
 }
 
-std::vector<artdaq::Fragment::fragment_id_t>
-artdaq::CommandableFragmentGenerator::
-fragmentIDs()
-{
-  return fragmentIDs_();
+int artdaq::CommandableFragmentGenerator::fragment_id () const {
+
+  if (fragment_ids_.size() != 1 ) {
+    throw cet::exception("Error in CommandableFragmentGenerator: can't call fragment_id() unless member fragment_ids_ vector is length 1");
+  } else {
+    return fragment_ids_[0] ;
+  }
 }
 
 void artdaq::CommandableFragmentGenerator::StartCmd(int run) {

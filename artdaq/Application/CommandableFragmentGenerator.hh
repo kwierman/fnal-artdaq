@@ -21,6 +21,27 @@
 // single thread. getNext() will be called only from a single
 // thread. The thread from which state-machine interfaces functions are
 // called may be a different thread from the one that calls getNext().
+
+// John F., 3/24/14
+
+// After some discussion with Kurt, CommandableFragmentGenerator has
+// been updated such that it now contains a member vector
+// fragment_ids_ ; if "fragment_id" is set in the FHiCL document
+// controlling a class derived from CommandableFragmentGenerator,
+// fragment_ids_ will be booked as a length-1 vector, and the value in
+// this vector will be returned by fragment_id(). fragment_id() will
+// throw an exception if the length of the vector isn't 1. If
+// "fragment_ids" is set in the FHiCL document, then fragment_ids_ is
+// filled with the values in the list which "fragment_ids" refers to,
+// otherwise it is set to the empty vector (this is what should happen
+// if the user sets the "fragment_id" variable in the FHiCL document,
+// otherwise exceptions will end up thrown due to the logical
+// conflict). If neither "fragment_id" nor "fragment_ids" is set in
+// the FHiCL document, writers of classes derived from this one will
+// be expected to override the virtual fragmentIDs() function with
+// their own code (the CompositeDriver class is an example of this)
+
+
 ////////////////////////////////////////////////////////////////////////
 
 #include <atomic>
@@ -45,11 +66,9 @@ namespace artdaq {
     virtual bool getNext(FragmentPtrs & output) final;
 
 
-    // John F., 12/11/13 -- not sure what the comment below means
-
-    // This generator produces fragments with what distinct IDs (*not*
-    // types)?
-    virtual std::vector<Fragment::fragment_id_t> fragmentIDs() final;
+    virtual std::vector<Fragment::fragment_id_t> fragmentIDs() {
+      return fragment_ids_ ;
+    }
 
     //
     // State-machine related interface below.
@@ -106,7 +125,9 @@ namespace artdaq {
     bool exception() const { return exception_.load(); }
 
     int board_id () const { return board_id_; }
-    int fragment_id () const { return fragment_id_; }
+
+    int fragment_id () const; 
+
     size_t ev_counter () const { return ev_counter_.load (); }
 
     size_t ev_counter_inc (size_t step = 1) { return ev_counter_.fetch_add (step); } // returns the prev value
@@ -119,6 +140,8 @@ namespace artdaq {
 
   private:
 
+    std::vector< artdaq::Fragment::fragment_id_t > fragment_ids_;
+
     // In order to support the state-machine related behavior, all
     // CommandableFragmentGenerators must be able to remember a run number and a
     // subrun number.
@@ -127,7 +150,7 @@ namespace artdaq {
     std::atomic<bool> should_stop_, exception_;
     std::atomic<size_t> ev_counter_;
 
-    int board_id_, fragment_id_;
+    int board_id_;
 
 
     // Depending on what sleep_on_stop_us_ is set to, this gives the
@@ -140,11 +163,6 @@ namespace artdaq {
     // we are not running in state-machine mode. Note that getNext_()
     // must return n of each fragmentID declared by fragmentIDs_().
     virtual bool getNext_(FragmentPtrs & output) = 0;
-
-    // This generator produces fragments with what distinct IDs (*not*
-    // types)?  Can be implemented using initializer syntax if
-    // appropriate, e.g.  return { 3, 4 };
-    virtual std::vector<Fragment::fragment_id_t> fragmentIDs_() = 0;
 
     //
     // State-machine related implementor interface below.
