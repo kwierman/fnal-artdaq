@@ -321,6 +321,7 @@ bool artdaq::AggregatorCore::shutdown()
   endSucceeded = event_store_ptr_->endOfData(readerReturnValue);
   while (! endSucceeded && attemptsToEnd < 3) {
     ++attemptsToEnd;
+    mf::LogDebug("AggregatorCore") << "Retrying EventStore::endOfData()";
     endSucceeded = event_store_ptr_->endOfData(readerReturnValue);
   }
   return endSucceeded;
@@ -417,7 +418,7 @@ size_t artdaq::AggregatorCore::process_fragments()
       if (stop_requested_.load() &&
           recvTimeout == endrun_recv_timeout_usec_) {
         if (endSubRunMsg != nullptr) {
-          mf::LogInfo("AggregatorCore")
+          mf::LogWarning("AggregatorCore")
             << "Stop timeout expired - forcibly ending the run.";
           event_store_ptr_->flushData();
           artdaq::RawEvent_ptr subRunEvent(new artdaq::RawEvent(run_id_.run(), 1, 0));
@@ -445,7 +446,7 @@ size_t artdaq::AggregatorCore::process_fragments()
       else if (local_pause_requested_.load() &&
                recvTimeout == pause_recv_timeout_usec_) {
         if (endSubRunMsg != nullptr) {
-          mf::LogInfo("AggregatorCore")
+          mf::LogWarning("AggregatorCore")
             << "Pause timeout expired - forcibly pausing the run.";
           event_store_ptr_->flushData();
           artdaq::RawEvent_ptr subRunEvent(new artdaq::RawEvent(run_id_.run(), 1, 0));
@@ -552,9 +553,35 @@ size_t artdaq::AggregatorCore::process_fragments()
          modules there are no EndOfRun or Shutdown fragments. */
       if (fragmentPtr->type() == artdaq::Fragment::DataFragmentType) {
         if (is_data_logger_) {
-          // soon, we will change this to use the insert() method that
-          // gives us back the fragment if the event queue is full
-          event_store_ptr_->insert(std::move(fragmentPtr));
+          artdaq::FragmentPtr rejectedFragment;
+          bool try_again = true;
+          while (try_again) {
+            if (event_store_ptr_->insert(std::move(fragmentPtr), rejectedFragment)) {
+              try_again = false;
+            }
+            else if (stop_requested_.load()) {
+              try_again = false;
+              process_fragments = false;
+              fragmentPtr = std::move(rejectedFragment);
+              mf::LogWarning("EventBuilderCore")
+                << "Unable to process event " << fragmentPtr->sequenceID()
+                << " because of back-pressure - forcibly ending the run.";
+            }
+            else if (local_pause_requested_.load()) {
+              try_again = false;
+              process_fragments = false;
+              fragmentPtr = std::move(rejectedFragment);
+              mf::LogWarning("EventBuilderCore")
+                << "Unable to process event " << fragmentPtr->sequenceID()
+                << " because of back-pressure - forcibly pausing the run.";
+            }
+            else {
+              fragmentPtr = std::move(rejectedFragment);
+              mf::LogWarning("EventBuilderCore")
+                << "Unable to process event " << fragmentPtr->sequenceID()
+                << " because of back-pressure - retrying...";
+            }
+          }
         }
         else {
           event_store_ptr_->insert(std::move(fragmentPtr), false);
@@ -833,7 +860,7 @@ std::string artdaq::AggregatorCore::buildStatisticsString_()
     mqPtr->getStats(stats);
     oss << "Input statistics: "
         << stats.recentSampleCount << " events received at "
-        << stats.recentSampleRate  << " events/sec, date rate = "
+        << stats.recentSampleRate  << " events/sec, data rate = "
         << (stats.recentValueRate * sizeof(artdaq::RawDataType)
             / 1024.0 / 1024.0) << " MB/sec, monitor window = "
         << stats.recentDuration << " sec, min::max event size = "

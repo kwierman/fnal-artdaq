@@ -349,7 +349,7 @@ size_t artdaq::EventBuilderCore::process_fragments()
     else if (senderSlot == artdaq::RHandles::RECV_TIMEOUT) {
       if (stop_requested_.load() &&
           recvTimeout == endrun_recv_timeout_usec_) {
-        mf::LogInfo("EventBuilderCore")
+        mf::LogWarning("EventBuilderCore")
           << "Stop timeout expired - forcibly ending the run.";
 	event_store_ptr_->flushData();
 	flush_mutex_.unlock();
@@ -357,7 +357,7 @@ size_t artdaq::EventBuilderCore::process_fragments()
       }
       else if (pause_requested_.load() &&
                recvTimeout == pause_recv_timeout_usec_) {
-        mf::LogInfo("EventBuilderCore")
+        mf::LogWarning("EventBuilderCore")
           << "Pause timeout expired - forcibly pausing the run.";
 	event_store_ptr_->flushData();
 	flush_mutex_.unlock();
@@ -393,7 +393,40 @@ size_t artdaq::EventBuilderCore::process_fragments()
 
     startTime = artdaq::MonitoredQuantity::getCurrentTime();
     if (pfragment->type() != artdaq::Fragment::EndOfDataFragmentType) {
-      event_store_ptr_->insert(std::move(pfragment));
+      artdaq::FragmentPtr rejectedFragment;
+      bool try_again = true;
+      while (try_again) {
+        if (event_store_ptr_->insert(std::move(pfragment), rejectedFragment)) {
+          try_again = false;
+        }
+        else if (stop_requested_.load()) {
+          try_again = false;
+          flush_mutex_.unlock();
+          process_fragments = false;
+          pfragment = std::move(rejectedFragment);
+          mf::LogWarning("EventBuilderCore")
+            << "Unable to process fragment " << pfragment->fragmentID()
+            << " in event " << pfragment->sequenceID()
+            << " because of back-pressure - forcibly ending the run.";
+        }
+        else if (pause_requested_.load()) {
+          try_again = false;
+          flush_mutex_.unlock();
+          process_fragments = false;
+          pfragment = std::move(rejectedFragment);
+          mf::LogWarning("EventBuilderCore")
+            << "Unable to process fragment " << pfragment->fragmentID()
+            << " in event " << pfragment->sequenceID()
+            << " because of back-pressure - forcibly pausing the run.";
+        }
+        else {
+          pfragment = std::move(rejectedFragment);
+          mf::LogWarning("EventBuilderCore")
+            << "Unable to process fragment " << pfragment->fragmentID()
+            << " in event " << pfragment->sequenceID()
+            << " because of back-pressure - retrying...";
+        }
+      }
     } else {
       eod_fragments_received_++;
       /* We count the EOD fragment as a fragment received but the SHandles class
@@ -453,7 +486,7 @@ std::string artdaq::EventBuilderCore::buildStatisticsString_()
     mqPtr->getStats(stats);
     oss << "Input statistics: "
         << stats.recentSampleCount << " fragments received at "
-        << stats.recentSampleRate  << " fragments/sec, date rate = "
+        << stats.recentSampleRate  << " fragments/sec, data rate = "
         << (stats.recentValueRate * sizeof(artdaq::RawDataType)
             / 1024.0 / 1024.0) << " MB/sec, monitor window = "
         << stats.recentDuration << " sec, min::max event size = "

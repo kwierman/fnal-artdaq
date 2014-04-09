@@ -329,7 +329,7 @@ std::string artdaq::BoardReaderCore::buildStatisticsString_()
     mqPtr->getStats(stats);
     oss << "  Fragment statistics: "
         << stats.recentSampleCount << " fragments received at "
-        << stats.recentSampleRate  << " fragments/sec, effective date rate = "
+        << stats.recentSampleRate  << " fragments/sec, effective data rate = "
         << (stats.recentValueRate * sizeof(artdaq::RawDataType)
             / 1024.0 / 1024.0) << " MB/sec, monitor window = "
         << stats.recentDuration << " sec, min::max event size = "
