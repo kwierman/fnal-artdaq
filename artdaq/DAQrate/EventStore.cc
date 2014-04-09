@@ -216,14 +216,14 @@ namespace artdaq {
     // it, and it completes an event, then we want to be sure that it
     // can be pushed onto the event queue.  If not, we return it and
     // let the caller know that we didn't accept it.
-    if (queue_.size() >= max_queue_size_) {
+    if (queue_.full()) {
       size_t sleepTime = 1000000 * (enq_timeout_.count() / 10.0);
       int loopCount = 0;
-      while (loopCount < 10 && queue_.size() >= max_queue_size_) {
+      while (loopCount < 10 && queue_.full()) {
         ++loopCount;
         usleep(sleepTime);
       }
-      if (queue_.size() >= max_queue_size_) {
+      if (queue_.full()) {
         rejectedFragment = std::move(pfrag);
         return false;
       }
@@ -373,7 +373,7 @@ namespace artdaq {
       mqPtr->getStats(stats);
       outStream << "EventStore rank " << id_ << ": events processed = "
                 << stats.fullSampleCount << " at " << stats.fullSampleRate
-                << " events/sec, date rate = "
+                << " events/sec, data rate = "
                 << (stats.fullValueRate * sizeof(RawDataType)
                     / 1024.0 / 1024.0) << " MB/sec, duration = "
                 << stats.fullDuration << " sec" << std::endl
