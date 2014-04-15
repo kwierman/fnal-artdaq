@@ -590,4 +590,91 @@ BOOST_AUTO_TEST_CASE(Metadata)
   }
 }
 
+// JCF, 4/15/14 -- perform a set of tests concerning the new
+// byte-by-byte interface functions added to artdaq::Fragment
+
+BOOST_AUTO_TEST_CASE(Bytes) {
+
+  std::size_t payload_size = 5;
+
+  // seqID, fragID, type are all random
+  artdaq::Fragment::sequence_id_t seqID = 1;
+  artdaq::Fragment::fragment_id_t fragID = 1;
+  artdaq::Fragment::type_t type = 3;
+
+  // No explicit constructor necessary for Metadata -- all we care
+  // about is its size in the artdaq::Fragment, not its values
+  
+  struct Metadata {
+    uint8_t byteOne;
+    uint8_t byteTwo;
+    uint8_t byteThree;
+  };
+
+  Metadata theMetadata;
+
+  BOOST_REQUIRE( sizeof( artdaq::Fragment::byte_t) == 1);
+  
+  // Assumption in some of the arithmetic below is that RawDataType is 8 bytes 
+  BOOST_REQUIRE( sizeof( artdaq::RawDataType) == 8);
+
+  // Check that the factory function and the explicit constructor
+  // methods of creating a fragment yield identical results IF the
+  // number of bytes passed to FragmentBytes() is a multiple of the
+  // size of the RawDataType
+
+  artdaq::Fragment f1(payload_size);
+  artdaq::Fragment f1_factory = artdaq::Fragment::FragmentBytes( payload_size * 
+							 sizeof( artdaq::RawDataType ) );
+
+  BOOST_REQUIRE( f1.size() == f1_factory.size() );
+  BOOST_REQUIRE( f1.sizeBytes() == f1_factory.sizeBytes() );
+
+  artdaq::Fragment f2( payload_size, seqID, fragID, type, theMetadata);
+  artdaq::Fragment f2_factory = artdaq::Fragment::FragmentBytes( 
+					     payload_size * sizeof( artdaq::RawDataType ), 
+					     seqID, fragID, 
+					     type, theMetadata);
+
+  BOOST_REQUIRE( f2.size() == f2_factory.size() );
+  BOOST_REQUIRE( f2.sizeBytes() == f2_factory.sizeBytes() );
+
+  // Now let's make sure that data gets aligned as expected (i.e.,
+  // along boundaries separated by sizeof(RawDataType) bytes)
+
+  std::size_t offset = 3; 
+  artdaq::Fragment f3_factory = artdaq::Fragment::FragmentBytes( 
+			     payload_size * sizeof( artdaq::RawDataType ) - offset, 
+			     seqID, fragID, 
+			     type, theMetadata);
+  
+  BOOST_REQUIRE( f3_factory.size() == f2.size() );
+  BOOST_REQUIRE( f3_factory.sizeBytes() == f2.sizeBytes() );
+
+  // Make certain dataBegin(), dataBeginBytes() and the
+  // (now-deprecated, but still in legacy code) dataAddress() point to
+  // the same region in memory, i.e., the start of the payload
+
+  artdaq::Fragment::byte_t* ptr1 = reinterpret_cast<artdaq::Fragment::byte_t*>( 
+							       &*f3_factory.dataBegin());
+
+  artdaq::Fragment::byte_t* ptr2 = f3_factory.dataBeginBytes();
+
+  artdaq::Fragment::byte_t* ptr3 = reinterpret_cast<artdaq::Fragment::byte_t*>( f3_factory.dataAddress() );
+
+  BOOST_REQUIRE_EQUAL( ptr1, ptr2 );
+  BOOST_REQUIRE_EQUAL( ptr2, ptr3 );
+
+  // Make sure metadata struct gets aligned
+  // header == 3 RawDataTypes, metadata is 3 bytes (rounds up to 1 RawDataType)
+  BOOST_REQUIRE( f3_factory.dataBeginBytes() -
+		 reinterpret_cast<artdaq::Fragment::byte_t*>( 
+							     &*f3_factory.headerBegin() )
+		 == 4 * sizeof(artdaq::RawDataType) );
+
+  // Sanity check for the payload size
+  BOOST_REQUIRE( static_cast<std::size_t>( f3_factory.dataEndBytes() - f3_factory.dataBeginBytes() ) == f3_factory.dataSizeBytes() );
+		 
+}
+
 BOOST_AUTO_TEST_SUITE_END()
