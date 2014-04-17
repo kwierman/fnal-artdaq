@@ -19,6 +19,7 @@ art_make_library(SOURCE
   ${CETLIB}
   ${XMLRPC_CLIENTPP}
   ${XMLRPCPP}
+  ${TRACE}
 )
 
 art_make_exec(EventBuilderMain

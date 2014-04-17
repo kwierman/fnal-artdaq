@@ -12,6 +12,7 @@
 #include "artdaq/DAQrate/SimpleQueueReader.hh"
 #include "artdaq/DAQrate/Utils.hh"
 #include "messagefacility/MessageLogger/MessageLogger.h"
+#include "tracelib.h"
 
 // jbk note about performance measurement collection -
 // We should no longer need this "Perf" performance measurement.
@@ -26,8 +27,8 @@ using namespace std;
 
 namespace artdaq {
   const std::string EventStore::EVENT_RATE_STAT_KEY("EventStoreEventRate");
-  const std::string EventStore::
-    INCOMPLETE_EVENT_STAT_KEY("EventStoreIncompleteEvents");
+    //const std::string EventStore::ENQ_WAIT_STAT_KEY("EventStoreEnqWaitTime");
+  const std::string EventStore::INCOMPLETE_EVENT_STAT_KEY("EventStoreIncompleteEvents");
 
   EventStore::EventStore(size_t num_fragments_per_event,
                          run_id_t run,
@@ -154,6 +155,8 @@ namespace artdaq {
       highestSeqIDSeen_ = pfrag->sequenceID();
     }
     Fragment::sequence_id_t sequence_id = ((pfrag->sequenceID() - (1 + lastFlushedSeqID_)) / seqIDModulus_) + 1;
+    TRACE( 11, "EventStore::insert seq=%lu fragID=%d id=%d lastFlushed=%lu seqIDMod=%d seq=%lu"
+	  , pfrag->sequenceID(), pfrag->fragmentID(), id_, lastFlushedSeqID_, seqIDModulus_, sequence_id );
 
     // Find if the right event id is already known to events_ and, if so, where
     // it is.
@@ -189,8 +192,11 @@ namespace artdaq {
       if (mqPtr.get() != 0) {
         mqPtr->addSample(complete_event->wordCount());
       }
+      TRACE( 5,              "EventStore::insert seq=%lu enqTimedWait start", sequence_id );
       bool enqSuccess = queue_.enqTimedWait(complete_event, enq_timeout_);
+      TRACE( enqSuccess?5:0, "EventStore::insert seq=%lu enqTimedWait complete", sequence_id );
       if (! enqSuccess) {
+	  //TRACE_CNTL( "modeM", 0 );
         if (printWarningWhenFragmentIsDropped) {
           mf::LogWarning("EventStore") << "Enqueueing event " << sequence_id
                                        << " FAILED, queue size = "
