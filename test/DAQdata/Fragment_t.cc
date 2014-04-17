@@ -674,7 +674,71 @@ BOOST_AUTO_TEST_CASE(Bytes) {
 
   // Sanity check for the payload size
   BOOST_REQUIRE( static_cast<std::size_t>( f3_factory.dataEndBytes() - f3_factory.dataBeginBytes() ) == f3_factory.dataSizeBytes() );
-		 
+
+  // Check resizing
+  artdaq::Fragment f4( payload_size );
+  BOOST_REQUIRE_EQUAL( f4.dataSize(), payload_size );
+  BOOST_REQUIRE_EQUAL( f4.dataSizeBytes(), (payload_size * sizeof(artdaq::RawDataType)) );
+  f4.resize( payload_size + 1 );
+  BOOST_REQUIRE_EQUAL( f4.dataSize(), (payload_size + 1) );
+  BOOST_REQUIRE_EQUAL( f4.dataSizeBytes(), ((payload_size + 1) * sizeof(artdaq::RawDataType)) );
+  f4.resizeBytes( f4.dataSizeBytes() + 2 );
+  BOOST_REQUIRE_EQUAL( f4.dataSize(), (payload_size + 2) );
+  BOOST_REQUIRE_EQUAL( f4.dataSizeBytes(), ((payload_size + 2) * sizeof(artdaq::RawDataType)) );
+  f4.resizeBytes( f4.dataSizeBytes() + 1 );
+  BOOST_REQUIRE_EQUAL( f4.dataSize(), (payload_size + 3) );
+  BOOST_REQUIRE_EQUAL( f4.dataSizeBytes(), ((payload_size + 3) * sizeof(artdaq::RawDataType)) );
+  f4.resizeBytes( f4.dataSizeBytes() + 1 );
+  BOOST_REQUIRE_EQUAL( f4.dataSize(), (payload_size + 4) );
+  BOOST_REQUIRE_EQUAL( f4.dataSizeBytes(), ((payload_size + 4) * sizeof(artdaq::RawDataType)) );
+
+  size_t targetSize = (payload_size + 4) * sizeof(artdaq::RawDataType);
+  ++targetSize;
+  f4.resizeBytes( targetSize );
+  BOOST_REQUIRE_EQUAL( f4.dataSize(), (payload_size + 5) );
+  BOOST_REQUIRE_EQUAL( f4.dataSizeBytes(), ((payload_size + 5) * sizeof(artdaq::RawDataType)) );
+  ++targetSize;
+  f4.resizeBytes( targetSize );
+  BOOST_REQUIRE_EQUAL( f4.dataSize(), (payload_size + 5) );
+  BOOST_REQUIRE_EQUAL( f4.dataSizeBytes(), ((payload_size + 5) * sizeof(artdaq::RawDataType)) );
+  ++targetSize;
+  f4.resizeBytes( targetSize );
+  BOOST_REQUIRE_EQUAL( f4.dataSize(), (payload_size + 5) );
+  BOOST_REQUIRE_EQUAL( f4.dataSizeBytes(), ((payload_size + 5) * sizeof(artdaq::RawDataType)) );
+  ++targetSize;
+  f4.resizeBytes( targetSize );
+  BOOST_REQUIRE_EQUAL( f4.dataSize(), (payload_size + 5) );
+  BOOST_REQUIRE_EQUAL( f4.dataSizeBytes(), ((payload_size + 5) * sizeof(artdaq::RawDataType)) );
+  ++targetSize;
+  f4.resizeBytes( targetSize );
+  BOOST_REQUIRE_EQUAL( f4.dataSize(), (payload_size + 5) );
+  BOOST_REQUIRE_EQUAL( f4.dataSizeBytes(), ((payload_size + 5) * sizeof(artdaq::RawDataType)) );
+  ++targetSize;
+  f4.resizeBytes( targetSize );
+  BOOST_REQUIRE_EQUAL( f4.dataSize(), (payload_size + 5) );
+  BOOST_REQUIRE_EQUAL( f4.dataSizeBytes(), ((payload_size + 5) * sizeof(artdaq::RawDataType)) );
+  ++targetSize;
+  f4.resizeBytes( targetSize );
+  BOOST_REQUIRE_EQUAL( f4.dataSize(), (payload_size + 5) );
+  BOOST_REQUIRE_EQUAL( f4.dataSizeBytes(), ((payload_size + 5) * sizeof(artdaq::RawDataType)) );
+  ++targetSize;
+  f4.resizeBytes( targetSize );
+  BOOST_REQUIRE_EQUAL( f4.dataSize(), (payload_size + 5) );
+  BOOST_REQUIRE_EQUAL( f4.dataSizeBytes(), ((payload_size + 5) * sizeof(artdaq::RawDataType)) );
+  ++targetSize;
+  f4.resizeBytes( targetSize );
+  BOOST_REQUIRE_EQUAL( f4.dataSize(), (payload_size + 6) );
+  BOOST_REQUIRE_EQUAL( f4.dataSizeBytes(), ((payload_size + 6) * sizeof(artdaq::RawDataType)) );
+
+  // Check adding metadata after construction
+  artdaq::Fragment f5( payload_size );
+  BOOST_REQUIRE_EQUAL( f5.size(), (payload_size + artdaq::detail::RawFragmentHeader::num_words()) );
+  BOOST_REQUIRE_EQUAL( f5.sizeBytes(), ((payload_size + artdaq::detail::RawFragmentHeader::num_words()) * sizeof(artdaq::RawDataType)));
+  f5.setMetadata(theMetadata);
+  BOOST_REQUIRE_EQUAL( f5.dataSize(), payload_size );
+  BOOST_REQUIRE_EQUAL( f5.dataSizeBytes(), (payload_size * sizeof(artdaq::RawDataType)) );
+  BOOST_REQUIRE_EQUAL( f5.size(), (payload_size + 1 + artdaq::detail::RawFragmentHeader::num_words()) );
+  BOOST_REQUIRE_EQUAL( f5.sizeBytes(), ((payload_size + 1 + artdaq::detail::RawFragmentHeader::num_words()) * sizeof(artdaq::RawDataType)));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
