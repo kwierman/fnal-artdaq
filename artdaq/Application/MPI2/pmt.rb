@@ -88,13 +88,14 @@ class MPIHandler
     end
   end
 
-  def initialize(logToStdout, logPath, onmonDisplay, port)
+  def initialize(logToStdout, logPath, onmonDisplay, port, preloadLib)
     @mpiThread = nil
     @executables = []
     @logPath = logPath
     self.createLogger(logToStdout, logPath)
     @onmonDisplay = onmonDisplay
     @shmKey = 1078394880 + port
+    @preloadLib = preloadLib
   end
 
   def addExecutable(program, host, options)
@@ -124,8 +125,11 @@ class MPIHandler
                                                           optionsHash["options"]])
       hostsFileHandle.write(optionsHash["host"] + "\n")
     }
-        
+
     mpiEnvironmentSetup = "export MV2_ENABLE_AFFINITY=0; export MV2_IBA_HCA=\"mlx4_0\"; "
+    if @preloadLib != ""
+      mpiEnvironmentSetup << "export LD_PRELOAD=" << @preloadLib << "; "
+    end
     displayString = ""
     if @onmonDisplay != nil
       displayString = "-genv DISPLAY " + @onmonDisplay
@@ -388,9 +392,11 @@ class PMTRPCHandler
 end
 
 class PMT
-  def initialize(parameterFile, portNumber, logToStdout, logPath, onmonDisplay)
+  def initialize(parameterFile, portNumber, logToStdout, logPath,
+                 onmonDisplay, preloadLib)
     @rpcThread = nil
-    @mpiHandler = MPIHandler.new(logToStdout, logPath, onmonDisplay, portNumber)
+    @mpiHandler = MPIHandler.new(logToStdout, logPath, onmonDisplay,
+                                 portNumber, preloadLib)
 
     if parameterFile != nil
       IO.foreach(parameterFile) { |definition|
@@ -440,6 +446,7 @@ if __FILE__ == $0
   options.doCleanup = false
   options.onmonDisplay = nil
   options.logPath = ""
+  options.preload = ""
 
   optParser = OptionParser.new do |opts|
     opts.banner = "Usage: pmt.rb [options]"
@@ -475,6 +482,11 @@ if __FILE__ == $0
       options.logPath = path
     end
 
+    opts.on("--preload [library]",
+            "Library to be pre-loaded before the MPI program starts.") do |lib|
+      options.preload = lib
+    end
+
     opts.on_tail("-h", "--help", "Show this message.") do
       puts opts
       exit
@@ -489,7 +501,7 @@ if __FILE__ == $0
 
   pmt = PMT.new(options.parameterFile, options.portNumber,
                 options.logToStdout, options.logPath,
-                options.onmonDisplay)
+                options.onmonDisplay, options.preload)
 
   if options.doCleanup and options.parameterFile == nil
     puts "A program definition file needs to be specified for the cleanup"

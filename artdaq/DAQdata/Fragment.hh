@@ -28,6 +28,12 @@ public:
   // Create a Fragment with all header values zeroed.
   Fragment();
 
+  // JCF, 3/25/14 
+  // Add interface functions which allow users to work with the
+  // underlying data (a vector of RawDataTypes) in byte representation
+
+  typedef uint8_t byte_t;
+
   // Hide most things from ROOT.
 #if USE_MODERN_FEATURES
   typedef detail::RawFragmentHeader::version_t     version_t;
@@ -69,9 +75,18 @@ public:
   typedef std::vector<RawDataType>::difference_type difference_type;
   typedef std::vector<RawDataType>::size_type       size_type;
 
-  // Create a Fragment ready to hold n words of payload, and with
+  // Create a Fragment ready to hold n words (RawDataTypes) of payload, and with
   // all values zeroed.
   explicit Fragment(std::size_t n);
+
+  // Similar, but provide size of payload in bytes, and use a static
+  // factory function rather than a constructor to allow for the
+  // function name "FragmentBytes"
+
+  static Fragment FragmentBytes(std::size_t nbytes) {
+    RawDataType nwords = ceil( nbytes / static_cast<double>( sizeof(RawDataType) ) );
+    return Fragment( nwords );
+  }
 
   // Create a Fragment ready to hold the specified number of words
   // of payload, with the specified sequence ID, fragment ID,
@@ -79,6 +94,20 @@ public:
   template <class T>
   Fragment(std::size_t payload_size, sequence_id_t sequence_id,
            fragment_id_t fragment_id, type_t type, const T & metadata);
+
+  // Similar, but provide size of payload in bytes, and use a static
+  // factory function rather than a constructor to allow for the
+  // function name "FragmentBytes"
+
+  template <class T>
+  static Fragment FragmentBytes(std::size_t payload_size_in_bytes, 
+				sequence_id_t sequence_id,
+				fragment_id_t fragment_id, type_t type, 
+				const T & metadata)  {
+    RawDataType nwords = ceil( payload_size_in_bytes / 
+			       static_cast<double>( sizeof(RawDataType) ) );
+    return Fragment( nwords, sequence_id, fragment_id, type, metadata);
+  }
 
   // Create a fragment with the given event id and fragment id, and
   // with no data payload.
@@ -103,9 +132,17 @@ public:
   void setSequenceID(sequence_id_t sequence_id);
   void setFragmentID(fragment_id_t fragment_id);
 
+  // Size of vals_ vector ( header + (optional) metadata + payload) in bytes. 
+  std::size_t sizeBytes() const { return sizeof(RawDataType) * size(); }
+
   // Return the number of words in the data payload. This does not
   // include the number of words in the header.
   std::size_t dataSize() const;
+
+  // Similar, but use bytes instead
+  std::size_t dataSizeBytes() const {
+    return sizeof(RawDataType) * dataSize();
+  }
 
   // Test whether this Fragment has metadata
   bool hasMetadata() const;
@@ -123,6 +160,12 @@ public:
   // Resize the data payload to hold sz words.
   void resize(std::size_t sz, RawDataType v = RawDataType());
 
+  // Resize the data payload to hold szbytes bytes (padded by the
+  // 8-byte RawDataTypes, so, e.g., requesting 14 bytes will actually
+  // get you 16)
+
+  void resizeBytes(std::size_t szbytes, byte_t v = 0);
+
   // Resize the fragment to hold the number of words in the header.
   void autoResize();
 
@@ -131,13 +174,39 @@ public:
   // ... and the end
   iterator dataEnd();
 
+  // Return Fragment::byte_t* pointing at the beginning/ends of the payload
+
+  // JCF, 3/25/14 -- one nice thing about returning a pointer rather
+  // than an iterator is that we don't need to take the address of the
+  // dereferenced iterator (e.g., via &*dataBegin() ) to get ahold of the memory
+
+  byte_t* dataBeginBytes() { return reinterpret_cast<byte_t*>( &* dataBegin() ); }
+  byte_t* dataEndBytes() { return reinterpret_cast<byte_t*>( &* dataEnd() ); }
+
   // Return an iterator to the beginning of the header (should be used
   // for serialization only: use setters for preference).
   iterator headerBegin();
 
+  // Return a pointer-to-Fragment::byte_t pointing to the beginning of the header
+  byte_t* headerBeginBytes() { return reinterpret_cast<byte_t*>( &* headerBegin() ); }
+  
+
   const_iterator dataBegin() const;
   const_iterator dataEnd() const;
+
+  const byte_t* dataBeginBytes() const { 
+    return reinterpret_cast<const byte_t*>( &* dataBegin() ); }
+
+  const byte_t* dataEndBytes() const { 
+    return reinterpret_cast<const byte_t*>( &* dataEnd() ); }
+
+
   const_iterator headerBegin() const; // See note for non-const, above.
+
+  const byte_t* headerBeginBytes() const { 
+    return reinterpret_cast<const byte_t*>( &* headerBegin() ); }
+
+
   void clear();
   bool empty();
   void reserve(std::size_t cap);
@@ -389,6 +458,24 @@ artdaq::Fragment::resize(std::size_t sz, RawDataType v)
 }
 
 inline
+void 
+artdaq::Fragment::resizeBytes(std::size_t szbytes, byte_t v) 
+{
+  RawDataType defaultval;
+  byte_t* ptr = reinterpret_cast<byte_t*>( &defaultval );
+
+  for (uint8_t i = 0; i < sizeof(RawDataType); ++i) {
+    *ptr = v;
+    ptr++;
+  }
+
+  RawDataType nwords = ceil( szbytes / static_cast<double>( sizeof(RawDataType) ) );
+  
+  resize( nwords, defaultval);
+}
+
+
+inline
 void
 artdaq::Fragment::autoResize()
 {
@@ -439,6 +526,7 @@ artdaq::Fragment::headerBegin() const
 {
   return vals_.begin();
 }
+
 
 inline
 void
