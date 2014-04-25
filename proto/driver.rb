@@ -76,29 +76,29 @@ comb.inject(1) do |run,test|
   # puts "#{run} #{test}"
   if short_runs.has_key?(run)
  
-  # prepare a hostfile for the given configuration
-  np=makeNodeFile(pbs_nodefile,test[I_DETS],test[I_SRCS],test[I_SINKS],run,0)
-  hostfile="#{host_base}_#{run}.txt"
+    # prepare a hostfile for the given configuration
+    np=makeNodeFile(pbs_nodefile,test[I_DETS],test[I_SRCS],test[I_SINKS],run,0)
+    hostfile="#{host_base}_#{run}.txt"
 
-  # prepare arguments and run
-  args="#{nodes} #{short_runs[run]} #{test[I_DETS]} #{test[I_SRCS]} #{test[I_SINKS]} #{test[I_SIZE]} #{buffers} #{run}"
-  cmd="#{launcher} -hostfile #{hostfile} #{num_procs} #{np} ./builder #{args}"
+    # prepare arguments and run
+    args="#{nodes} #{short_runs[run]} #{test[I_DETS]} #{test[I_SRCS]} #{test[I_SINKS]} #{test[I_SIZE]} #{buffers} #{run}"
+    cmd="#{launcher} -hostfile #{hostfile} #{num_procs} #{np} ./builder #{args}"
 
-  if dryrun == true
-    puts "#{cmd}"
-    rc=0
-  else
-    puts "#{cmd}" if np > 0
-    # rc=`#{cmd}` if np > 0
+    if dryrun == true
+      puts "#{cmd}"
+      rc=0
+    else
+      puts "#{cmd}" if np > 0
+      # rc=`#{cmd}` if np > 0
+    end
+
+    # round up the config and performance files next
+    pfiles=Dir.glob("perf_*#{run}_*")
+    cfiles=Dir.glob("config_*#{run}_*")
+    catb(pfiles, "r_perf_#{run}.txt") unless pfiles.empty?
+    cat(cfiles, "r_conf_#{run}.txt") unless cfiles.empty?
+    FileUtils.rm(pfiles) unless pfiles.empty?
+    FileUtils.rm(cfiles) unless cfiles.empty?
   end
-
-  # round up the config and performance files next
-  pfiles=Dir.glob("perf_*#{run}_*")
-  cfiles=Dir.glob("config_*#{run}_*")
-  catb(pfiles, "r_perf_#{run}.txt") unless pfiles.empty?
-  cat(cfiles, "r_conf_#{run}.txt") unless cfiles.empty?
-  FileUtils.rm(pfiles) unless pfiles.empty?
-  FileUtils.rm(cfiles) unless cfiles.empty?
-end
   run+1
 end
