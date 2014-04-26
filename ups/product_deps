@@ -22,7 +22,7 @@ art		v1_08_10
 mvapich2	v1_9_0
 mpich		v3_0_4
 xmlrpc_c	v1_25_26
-TRACE           v3_02_02
+TRACE           v3_03_00
 
 # list products required ONLY for the build
 # any products here must NOT have qualifiers
