@@ -23,7 +23,7 @@ namespace artdaq {
   };
 
   ArtdaqBuildInfo::ArtdaqBuildInfo(fhicl::ParameterSet const &p):
-    inst_name_(p.get<std::string>("instance_name", "artdaq")),
+    inst_name_(p.get<std::string>("instance_name", "buildinfo")),
     current_run_(0)
   {
     produces<PackageBuildInfo, art::InRun>(inst_name_);
