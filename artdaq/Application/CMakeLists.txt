@@ -17,6 +17,7 @@ art_make_library(SOURCE
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   ${FHICLCPP}
+  ${TRACE}
   )
 
 simple_plugin(CompositeDriver "generator" artdaq_DAQdata artdaq_Application)

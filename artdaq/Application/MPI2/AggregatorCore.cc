@@ -8,7 +8,7 @@
 #include "artdaq/Utilities/SimpleLookupPolicy.h"
 #include "artdaq/DAQdata/NetMonHeader.hh"
 #include "artdaq/DAQdata/RawEvent.hh"
-
+#include "tracelib.h"		// TRACE
 //#include <xmlrpc-c/base.hpp>
 //#include <xmlrpc-c/registry.hpp>
 //#include <xmlrpc-c/server_abyss.hpp>
@@ -528,6 +528,12 @@ size_t artdaq::AggregatorCore::process_fragments()
     stats_helper_.addSample(SHM_COPY_TIME_STAT_KEY,
                             (artdaq::MonitoredQuantity::getCurrentTime() - startTime));
 
+
+    //----------------------------------------------------------------------------
+
+    artdaq::Fragment::sequence_id_t seq=fragmentPtr->sequenceID();
+    TRACE( 4, "AggregatorCore::process_fragments seq=%lu isLogger=%d type=%d"
+	  , fragmentPtr->sequenceID(), is_data_logger_, fragmentPtr->type() );
     startTime = artdaq::MonitoredQuantity::getCurrentTime();
     if (!art_initialized_) {
       /* The init fragment should always be the first fragment out of the
@@ -610,8 +616,10 @@ size_t artdaq::AggregatorCore::process_fragments()
         fragments_sent[senderSlot] = *fragmentPtr->dataBegin() + 1;
       }
     }
-    stats_helper_.addSample(STORE_EVENT_WAIT_STAT_KEY,
-                            artdaq::MonitoredQuantity::getCurrentTime() - startTime);
+    float delta=artdaq::MonitoredQuantity::getCurrentTime() - startTime;
+    stats_helper_.addSample(STORE_EVENT_WAIT_STAT_KEY, delta );
+    TRACE( (delta>3.0)?0:2, "AggregatorCore::process_fragments seq=%lu isLogger=%d delta=%f start=%f"
+	  , seq, is_data_logger_, delta, startTime );
 
     // 27-Sep-2013, KAB - added automatic file closing
     startTime = artdaq::MonitoredQuantity::getCurrentTime();
@@ -892,8 +900,10 @@ std::string artdaq::AggregatorCore::buildStatisticsString_()
   if (mqPtr.get() != 0) {
     artdaq::MonitoredQuantity::Stats stats;
     mqPtr->getStats(stats);
-    oss << ", event store wait time = "
-        << (stats.recentValueSum / eventCount) << " sec";
+    oss << ", ave::max event store wait time = "
+        << (stats.recentValueSum / eventCount)
+	<< "::" << stats.recentValueMax
+	<< " sec";
   }
 
   mqPtr = artdaq::StatisticsCollection::getInstance().
