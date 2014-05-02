@@ -27,7 +27,6 @@ using namespace std;
 
 namespace artdaq {
   const std::string EventStore::EVENT_RATE_STAT_KEY("EventStoreEventRate");
-    //const std::string EventStore::ENQ_WAIT_STAT_KEY("EventStoreEnqWaitTime");
   const std::string EventStore::INCOMPLETE_EVENT_STAT_KEY("EventStoreIncompleteEvents");
 
   EventStore::EventStore(size_t num_fragments_per_event,
@@ -52,6 +51,7 @@ namespace artdaq {
     printSummaryStats_(printSummaryStats)
   {
     initStatistics_();
+    TRACE( 6, "artdaq::EventStore::EventStore ctor - reader_thread_ initialized" );
   }
 
   EventStore::EventStore(size_t num_fragments_per_event,

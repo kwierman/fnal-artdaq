@@ -1,5 +1,6 @@
 #include "artdaq/Application/CommandableFragmentGenerator.hh"
 #include "messagefacility/MessageLogger/MessageLogger.h"
+#include "tracelib.h"		// TRACE
 
 artdaq::CommandableFragmentGenerator::CommandableFragmentGenerator() :
   mutex_(),
@@ -24,6 +25,7 @@ artdaq::CommandableFragmentGenerator::CommandableFragmentGenerator(const fhicl::
 
   fragment_ids_ = ps.get< std::vector< artdaq::Fragment::fragment_id_t > >( "fragment_ids", std::vector< artdaq::Fragment::fragment_id_t >() );
 
+  TRACE( 8, "artdaq::CommandableFragmentGenerator::CommandableFragmentGenerator(ps)" );
   int fragment_id = ps.get< int > ("fragment_id", -99);
 
   if (fragment_id != -99) {
