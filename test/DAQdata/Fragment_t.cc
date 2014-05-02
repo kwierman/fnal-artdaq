@@ -623,57 +623,57 @@ BOOST_AUTO_TEST_CASE(Bytes) {
   // number of bytes passed to FragmentBytes() is a multiple of the
   // size of the RawDataType
 
-  artdaq::Fragment f1(payload_size);
-  artdaq::Fragment f1_factory = artdaq::Fragment::FragmentBytes( payload_size * 
-							 sizeof( artdaq::RawDataType ) );
+  std::unique_ptr<artdaq::Fragment> f1( new artdaq::Fragment(payload_size) );
+  std::unique_ptr<artdaq::Fragment> f1_factory(artdaq::Fragment::FragmentBytes( 
+					       payload_size * sizeof( artdaq::RawDataType ) ) );
 
-  BOOST_REQUIRE( f1.size() == f1_factory.size() );
-  BOOST_REQUIRE( f1.sizeBytes() == f1_factory.sizeBytes() );
+  BOOST_REQUIRE( f1->size() == f1_factory->size() );
+  BOOST_REQUIRE( f1->sizeBytes() == f1_factory->sizeBytes() );
 
-  artdaq::Fragment f2( payload_size, seqID, fragID, type, theMetadata);
-  artdaq::Fragment f2_factory = artdaq::Fragment::FragmentBytes( 
-					     payload_size * sizeof( artdaq::RawDataType ), 
-					     seqID, fragID, 
-					     type, theMetadata);
+  std::unique_ptr<artdaq::Fragment> f2( new artdaq::Fragment( payload_size, seqID, fragID, type, theMetadata) );
+  std::unique_ptr<artdaq::Fragment> f2_factory( artdaq::Fragment::FragmentBytes( 
+						payload_size * sizeof( artdaq::RawDataType ), 
+						seqID, fragID, 
+						type, theMetadata) );
 
-  BOOST_REQUIRE( f2.size() == f2_factory.size() );
-  BOOST_REQUIRE( f2.sizeBytes() == f2_factory.sizeBytes() );
+  BOOST_REQUIRE( f2->size() == f2_factory->size() );
+  BOOST_REQUIRE( f2->sizeBytes() == f2_factory->sizeBytes() );
 
   // Now let's make sure that data gets aligned as expected (i.e.,
   // along boundaries separated by sizeof(RawDataType) bytes)
 
   std::size_t offset = 3; 
-  artdaq::Fragment f3_factory = artdaq::Fragment::FragmentBytes( 
+  std::unique_ptr<artdaq::Fragment> f3_factory( artdaq::Fragment::FragmentBytes( 
 			     payload_size * sizeof( artdaq::RawDataType ) - offset, 
 			     seqID, fragID, 
-			     type, theMetadata);
+			     type, theMetadata) );
   
-  BOOST_REQUIRE( f3_factory.size() == f2.size() );
-  BOOST_REQUIRE( f3_factory.sizeBytes() == f2.sizeBytes() );
+  BOOST_REQUIRE( f3_factory->size() == f2->size() );
+  BOOST_REQUIRE( f3_factory->sizeBytes() == f2->sizeBytes() );
 
   // Make certain dataBegin(), dataBeginBytes() and the
   // (now-deprecated, but still in legacy code) dataAddress() point to
   // the same region in memory, i.e., the start of the payload
 
   artdaq::Fragment::byte_t* ptr1 = reinterpret_cast<artdaq::Fragment::byte_t*>( 
-							       &*f3_factory.dataBegin());
+							       &*f3_factory->dataBegin());
 
-  artdaq::Fragment::byte_t* ptr2 = f3_factory.dataBeginBytes();
+  artdaq::Fragment::byte_t* ptr2 = f3_factory->dataBeginBytes();
 
-  artdaq::Fragment::byte_t* ptr3 = reinterpret_cast<artdaq::Fragment::byte_t*>( f3_factory.dataAddress() );
+  artdaq::Fragment::byte_t* ptr3 = reinterpret_cast<artdaq::Fragment::byte_t*>( f3_factory->dataAddress() );
 
   BOOST_REQUIRE_EQUAL( ptr1, ptr2 );
   BOOST_REQUIRE_EQUAL( ptr2, ptr3 );
 
   // Make sure metadata struct gets aligned
   // header == 3 RawDataTypes, metadata is 3 bytes (rounds up to 1 RawDataType)
-  BOOST_REQUIRE( f3_factory.dataBeginBytes() -
+  BOOST_REQUIRE( f3_factory->dataBeginBytes() -
 		 reinterpret_cast<artdaq::Fragment::byte_t*>( 
-							     &*f3_factory.headerBegin() )
+							     &*f3_factory->headerBegin() )
 		 == 4 * sizeof(artdaq::RawDataType) );
 
   // Sanity check for the payload size
-  BOOST_REQUIRE( static_cast<std::size_t>( f3_factory.dataEndBytes() - f3_factory.dataBeginBytes() ) == f3_factory.dataSizeBytes() );
+  BOOST_REQUIRE( static_cast<std::size_t>( f3_factory->dataEndBytes() - f3_factory->dataBeginBytes() ) == f3_factory->dataSizeBytes() );
 
   // Check resizing
   artdaq::Fragment f4( payload_size );

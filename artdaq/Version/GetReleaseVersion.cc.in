@@ -8,7 +8,7 @@ namespace artdaq {
   }
 
   std::string const & getBuildDateTime() {
-    static std::string const buildDateTime(std::string(__DATE__) + " " + __TIME__);
+    static std::string const buildDateTime("@utcDateTime@");
     return buildDateTime;
   }
 }

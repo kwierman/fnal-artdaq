@@ -83,9 +83,9 @@ public:
   // factory function rather than a constructor to allow for the
   // function name "FragmentBytes"
 
-  static Fragment FragmentBytes(std::size_t nbytes) {
+  static std::unique_ptr<Fragment> FragmentBytes(std::size_t nbytes) {
     RawDataType nwords = ceil( nbytes / static_cast<double>( sizeof(RawDataType) ) );
-    return Fragment( nwords );
+    return std::unique_ptr<Fragment>( new Fragment( nwords ) );
   }
 
   // Create a Fragment ready to hold the specified number of words
@@ -100,13 +100,13 @@ public:
   // function name "FragmentBytes"
 
   template <class T>
-  static Fragment FragmentBytes(std::size_t payload_size_in_bytes, 
+  static std::unique_ptr<Fragment> FragmentBytes(std::size_t payload_size_in_bytes, 
 				sequence_id_t sequence_id,
 				fragment_id_t fragment_id, type_t type, 
 				const T & metadata)  {
     RawDataType nwords = ceil( payload_size_in_bytes / 
 			       static_cast<double>( sizeof(RawDataType) ) );
-    return Fragment( nwords, sequence_id, fragment_id, type, metadata);
+    return std::unique_ptr<Fragment>( new Fragment( nwords, sequence_id, fragment_id, type, metadata) );
   }
 
   // Create a fragment with the given event id and fragment id, and
