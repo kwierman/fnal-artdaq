@@ -44,6 +44,7 @@ find_ups_product( art v1_03_07 )
 find_ups_product( cetbuildtools v3_03_00 )
 find_ups_product( messagefacility v1_10_00 )
 find_ups_product( xmlrpc_c v1_25_18 )
+find_ups_product( TRACE v3_03_00 )
 
 cet_check_gcc()
 
@@ -68,6 +69,7 @@ find_library( XMLRPC NAMES xmlrpc PATHS $ENV{XMLRPC_C_LIBRARY} )
 find_library( XMLRPC_UTIL NAMES xmlrpc_util PATHS $ENV{XMLRPC_C_LIBRARY} )
 find_library( XMLRPC_XMLPARSE NAMES xmlrpc_xmlparse PATHS $ENV{XMLRPC_C_LIBRARY} )
 find_library( XMLRPC_XMLTOK NAMES xmlrpc_xmltok PATHS $ENV{XMLRPC_C_LIBRARY} )
+find_library( TRACE trace PATHS $ENV{TRACE_LIB} )
 
 # Debug streamer.
 string(TOUPPER ${CMAKE_BUILD_TYPE} BTYPE_UC)

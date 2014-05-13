@@ -1,6 +1,6 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent artdaq	v1_07_00
+parent artdaq	v1_07_01
 defaultqual	e4:ib
 
 # These optional lines define the installed directories where
@@ -22,6 +22,7 @@ art		v1_08_10
 mvapich2	v1_9_0
 mpich		v3_0_4
 xmlrpc_c	v1_25_26
+TRACE           v3_03_00
 
 # list products required ONLY for the build
 # any products here must NOT have qualifiers
@@ -31,19 +32,19 @@ only_for_build	smc_compiler	v6_1_0
 # e4  - with gcc 4.8.1 and -std=c++11
 # -nq- means there is no qualifier
 # a - means the dependent product is not required by the parent and will not be setup
-qualifier		art		mvapich2	mpich		xmlrpc_c	gcc	notes
-e4:ib:debug		e4:debug	-nq-		-		e4:debug	-nq-	-std=c++11
-e4:ib:prof		e4:prof		-nq-		-		e4:prof		-nq-	-std=c++11
-nu:e4:ib:debug		nu:e4:debug	-nq-		-		e4:debug	-nq-	-std=c++11
-nu:e4:ib:prof		nu:e4:prof	-nq-		-		e4:prof		-nq-	-std=c++11
-mu2e:e4:ib:debug	mu2e:e4:debug	-nq-		-		e4:debug	-nq-	-std=c++11
-mu2e:e4:ib:prof		mu2e:e4:prof	-nq-		-		e4:prof		-nq-	-std=c++11
-e4:eth:debug		e4:debug	-		e4:debug	e4:debug	-nq-	-std=c++11
-e4:eth:prof		e4:prof		-		e4:prof		e4:prof		-nq-	-std=c++11
-nu:e4:eth:debug		nu:e4:debug	-		e4:debug	e4:debug	-nq-	-std=c++11
-nu:e4:eth:prof		nu:e4:prof	-		e4:prof		e4:prof		-nq-	-std=c++11
-mu2e:e4:eth:debug	mu2e:e4:debug	-		e4:debug	e4:debug	-nq-	-std=c++11
-mu2e:e4:eth:prof	mu2e:e4:prof	-		e4:prof		e4:prof		-nq-	-std=c++11
+qualifier		art		mvapich2	mpich		xmlrpc_c	gcc	TRACE	notes
+e4:ib:debug		e4:debug	-nq-		-		e4:debug	-nq-	-nq-	-std=c++11
+e4:ib:prof		e4:prof		-nq-		-		e4:prof		-nq-	-nq-	-std=c++11
+nu:e4:ib:debug		nu:e4:debug	-nq-		-		e4:debug	-nq-	-nq-	-std=c++11
+nu:e4:ib:prof		nu:e4:prof	-nq-		-		e4:prof		-nq-	-nq-	-std=c++11
+mu2e:e4:ib:debug	mu2e:e4:debug	-nq-		-		e4:debug	-nq-	-nq-	-std=c++11
+mu2e:e4:ib:prof		mu2e:e4:prof	-nq-		-		e4:prof		-nq-	-nq-	-std=c++11
+e4:eth:debug		e4:debug	-		e4:debug	e4:debug	-nq-	-nq-	-std=c++11
+e4:eth:prof		e4:prof		-		e4:prof		e4:prof		-nq-	-nq-	-std=c++11
+nu:e4:eth:debug		nu:e4:debug	-		e4:debug	e4:debug	-nq-	-nq-	-std=c++11
+nu:e4:eth:prof		nu:e4:prof	-		e4:prof		e4:prof		-nq-	-nq-	-std=c++11
+mu2e:e4:eth:debug	mu2e:e4:debug	-		e4:debug	e4:debug	-nq-	-nq-	-std=c++11
+mu2e:e4:eth:prof	mu2e:e4:prof	-		e4:prof		e4:prof		-nq-	-nq-	-std=c++11
 
 # Preserve tabs and formatting in emacs and vi / vim:
 

@@ -19,6 +19,7 @@ art_make(SUBDIRS detail
   ${Boost_THREAD_LIBRARY}
   ${Boost_SYSTEM_LIBRARY} 
   ${MPI_C_LIBRARIES}
+  ${TRACE}
   )
 
 install_headers(SUBDIRS detail)
