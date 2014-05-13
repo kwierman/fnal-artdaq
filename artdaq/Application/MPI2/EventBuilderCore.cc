@@ -199,7 +199,8 @@ bool artdaq::EventBuilderCore::start(art::RunID id)
 
 bool artdaq::EventBuilderCore::stop()
 {
-  logMessage_("Stopping run " + boost::lexical_cast<std::string>(run_id_.run()));
+  logMessage_("Stopping run " + boost::lexical_cast<std::string>(run_id_.run()) +
+              ", subrun " + boost::lexical_cast<std::string>(event_store_ptr_->subrunID()));
   bool endSucceeded;
   int attemptsToEnd;
 
@@ -245,7 +246,8 @@ bool artdaq::EventBuilderCore::stop()
 
 bool artdaq::EventBuilderCore::pause()
 {
-  logMessage_("Pausing run " + boost::lexical_cast<std::string>(run_id_.run()));
+  logMessage_("Pausing run " + boost::lexical_cast<std::string>(run_id_.run()) +
+              ", subrun " + boost::lexical_cast<std::string>(event_store_ptr_->subrunID()));
   pause_requested_.store(true);
   flush_mutex_.lock();
 
@@ -388,7 +390,12 @@ size_t artdaq::EventBuilderCore::process_fragments()
       logMessage_("Received fragment " +
                   boost::lexical_cast<std::string>(fragment_count_in_run_) +
                   " with sequence ID " +
-                  boost::lexical_cast<std::string>(pfragment->sequenceID()));
+                  boost::lexical_cast<std::string>(pfragment->sequenceID()) +
+                  " (run " +
+                  boost::lexical_cast<std::string>(run_id_.run()) +
+                  ", subrun " +
+                  boost::lexical_cast<std::string>(event_store_ptr_->subrunID()) +
+                  ").");
     }
 
     startTime = artdaq::MonitoredQuantity::getCurrentTime();

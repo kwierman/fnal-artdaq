@@ -514,6 +514,8 @@ size_t artdaq::AggregatorCore::process_fragments()
                     boost::lexical_cast<std::string>(fragmentPtr->sequenceID()) +
                     " (run " +
                     boost::lexical_cast<std::string>(run_id_.run()) +
+                    ", subrun " +
+                    boost::lexical_cast<std::string>(event_store_ptr_->subrunID()) +
                     ").");
       }
     }
@@ -669,8 +671,9 @@ size_t artdaq::AggregatorCore::process_fragments()
     }
   }
 
-  logMessage_("A subrun in run " +
-              boost::lexical_cast<std::string>(run_id_.run()) +
+  logMessage_("Subrun " +
+              boost::lexical_cast<std::string>(event_store_ptr_->subrunID()) +
+              " in run " + boost::lexical_cast<std::string>(run_id_.run()) +
               " has ended.  There were " +
               boost::lexical_cast<std::string>(event_count_in_subrun_) +
               " events in this subrun, and there have been " +
