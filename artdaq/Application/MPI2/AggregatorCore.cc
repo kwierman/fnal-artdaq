@@ -9,9 +9,6 @@
 #include "artdaq/DAQdata/NetMonHeader.hh"
 #include "artdaq/DAQdata/RawEvent.hh"
 #include "tracelib.h"		// TRACE
-//#include <xmlrpc-c/base.hpp>
-//#include <xmlrpc-c/registry.hpp>
-//#include <xmlrpc-c/server_abyss.hpp>
 
 #include <sstream>
 #include <iomanip>
@@ -236,10 +233,10 @@ bool artdaq::AggregatorCore::initialize(fhicl::ParameterSet const& pset)
       desired_events_per_bunch = 1;
     }
     event_store_ptr_.reset(new artdaq::EventStore(desired_events_per_bunch, 1,
-						  mpi_rank_, init_string_,
-						  reader, event_queue_depth, 
-						  event_queue_wait_time, 
-						  print_event_store_stats_));
+                                                  mpi_rank_, init_string_,
+                                                  reader, event_queue_depth, 
+                                                  event_queue_wait_time, 
+                                                  print_event_store_stats_));
     event_store_ptr_->setSeqIDModulus(desired_events_per_bunch);
     fhicl::ParameterSet tmp = pset;
     tmp.erase("daq");
@@ -535,7 +532,7 @@ size_t artdaq::AggregatorCore::process_fragments()
 
     artdaq::Fragment::sequence_id_t seq=fragmentPtr->sequenceID();
     TRACE( 4, "AggregatorCore::process_fragments seq=%lu isLogger=%d type=%d"
-	  , fragmentPtr->sequenceID(), is_data_logger_, fragmentPtr->type() );
+          , seq, is_data_logger_, fragmentPtr->type() );
     startTime = artdaq::MonitoredQuantity::getCurrentTime();
     if (!art_initialized_) {
       /* The init fragment should always be the first fragment out of the
@@ -621,7 +618,7 @@ size_t artdaq::AggregatorCore::process_fragments()
     float delta=artdaq::MonitoredQuantity::getCurrentTime() - startTime;
     stats_helper_.addSample(STORE_EVENT_WAIT_STAT_KEY, delta );
     TRACE( (delta>3.0)?0:2, "AggregatorCore::process_fragments seq=%lu isLogger=%d delta=%f start=%f"
-	  , seq, is_data_logger_, delta, startTime );
+          , seq, is_data_logger_, delta, startTime );
 
     // 27-Sep-2013, KAB - added automatic file closing
     startTime = artdaq::MonitoredQuantity::getCurrentTime();
@@ -905,8 +902,8 @@ std::string artdaq::AggregatorCore::buildStatisticsString_()
     mqPtr->getStats(stats);
     oss << ", avg::max event store wait time = "
         << (stats.recentValueSum / eventCount)
-	<< "::" << stats.recentValueMax
-	<< " sec";
+        << "::" << stats.recentValueMax
+        << " sec";
   }
 
   mqPtr = artdaq::StatisticsCollection::getInstance().
