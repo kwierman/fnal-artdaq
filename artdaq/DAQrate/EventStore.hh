@@ -104,6 +104,8 @@ namespace artdaq {
     void startRun(run_id_t runID);
     void startSubrun();
 
+    subrun_id_t subrunID() const {return subrun_id_;}
+
     // These methods return true if the relevant markers were pushed
     // onto the RawEvent queue, false if not.
     bool endRun();

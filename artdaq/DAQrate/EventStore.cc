@@ -51,7 +51,7 @@ namespace artdaq {
     printSummaryStats_(printSummaryStats)
   {
     initStatistics_();
-    TRACE( 6, "artdaq::EventStore::EventStore ctor - reader_thread_ initialized" );
+    TRACE( 12, "artdaq::EventStore::EventStore ctor - reader_thread_ initialized" );
   }
 
   EventStore::EventStore(size_t num_fragments_per_event,
@@ -155,7 +155,7 @@ namespace artdaq {
       highestSeqIDSeen_ = pfrag->sequenceID();
     }
     Fragment::sequence_id_t sequence_id = ((pfrag->sequenceID() - (1 + lastFlushedSeqID_)) / seqIDModulus_) + 1;
-    TRACE( 11, "EventStore::insert seq=%lu fragID=%d id=%d lastFlushed=%lu seqIDMod=%d seq=%lu"
+    TRACE( 13, "EventStore::insert seq=%lu fragID=%d id=%d lastFlushed=%lu seqIDMod=%d seq=%lu"
 	  , pfrag->sequenceID(), pfrag->fragmentID(), id_, lastFlushedSeqID_, seqIDModulus_, sequence_id );
 
     // Find if the right event id is already known to events_ and, if so, where
@@ -192,9 +192,9 @@ namespace artdaq {
       if (mqPtr.get() != 0) {
         mqPtr->addSample(complete_event->wordCount());
       }
-      TRACE( 5,              "EventStore::insert seq=%lu enqTimedWait start", sequence_id );
+      TRACE( 14, "EventStore::insert seq=%lu enqTimedWait start", sequence_id );
       bool enqSuccess = queue_.enqTimedWait(complete_event, enq_timeout_);
-      TRACE( enqSuccess?5:0, "EventStore::insert seq=%lu enqTimedWait complete", sequence_id );
+      TRACE( enqSuccess?14:0, "EventStore::insert seq=%lu enqTimedWait complete", sequence_id );
       if (! enqSuccess) {
 	  //TRACE_CNTL( "modeM", 0 );
         if (printWarningWhenFragmentIsDropped) {
