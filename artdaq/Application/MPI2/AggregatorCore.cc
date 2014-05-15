@@ -903,7 +903,7 @@ std::string artdaq::AggregatorCore::buildStatisticsString_()
   if (mqPtr.get() != 0) {
     artdaq::MonitoredQuantity::Stats stats;
     mqPtr->getStats(stats);
-    oss << ", ave::max event store wait time = "
+    oss << ", avg::max event store wait time = "
         << (stats.recentValueSum / eventCount)
 	<< "::" << stats.recentValueMax
 	<< " sec";
