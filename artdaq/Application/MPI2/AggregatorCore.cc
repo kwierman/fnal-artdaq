@@ -531,7 +531,7 @@ size_t artdaq::AggregatorCore::process_fragments()
     //----------------------------------------------------------------------------
 
     artdaq::Fragment::sequence_id_t seq=fragmentPtr->sequenceID();
-    TRACE( 4, "AggregatorCore::process_fragments seq=%lu isLogger=%d type=%d"
+    TRACE( 21, "AggregatorCore::process_fragments seq=%lu isLogger=%d type=%d"
           , seq, is_data_logger_, fragmentPtr->type() );
     startTime = artdaq::MonitoredQuantity::getCurrentTime();
     if (!art_initialized_) {
@@ -617,7 +617,7 @@ size_t artdaq::AggregatorCore::process_fragments()
     }
     float delta=artdaq::MonitoredQuantity::getCurrentTime() - startTime;
     stats_helper_.addSample(STORE_EVENT_WAIT_STAT_KEY, delta );
-    TRACE( (delta>3.0)?0:2, "AggregatorCore::process_fragments seq=%lu isLogger=%d delta=%f start=%f"
+    TRACE( (delta>3.0)?0:22, "AggregatorCore::process_fragments seq=%lu isLogger=%d delta=%f start=%f"
           , seq, is_data_logger_, delta, startTime );
 
     // 27-Sep-2013, KAB - added automatic file closing

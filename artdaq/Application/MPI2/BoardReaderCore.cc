@@ -263,7 +263,7 @@ size_t artdaq::BoardReaderCore::process_fragments()
 
     delta_time=artdaq::MonitoredQuantity::getCurrentTime() - startTime;
     statsHelper_.addSample(INPUT_WAIT_STAT_KEY,delta_time);
-    TRACE( 14, "BoardReaderCore::process_fragments INPUT_WAIT=%f", delta_time );
+    TRACE( 16, "BoardReaderCore::process_fragments INPUT_WAIT=%f", delta_time );
 
     if (! active) {break;}
     statsHelper_.addSample(FRAGMENTS_PER_READ_STAT_KEY, frags.size());
@@ -288,9 +288,9 @@ size_t artdaq::BoardReaderCore::process_fragments()
       }
       prev_seq_id_ = sequence_id;
 
-      TRACE( 11, "BoardReaderCore::process_fragments seq=%lu sendFragment start", sequence_id );
+      TRACE( 17, "BoardReaderCore::process_fragments seq=%lu sendFragment start", sequence_id );
       sender_ptr_->sendFragment(std::move(*fragPtr));
-      TRACE( 11, "BoardReaderCore::process_fragments seq=%lu sendFragment done", sequence_id );
+      TRACE( 17, "BoardReaderCore::process_fragments seq=%lu sendFragment done", sequence_id );
       ++fragment_count_;
       bool readyToReport =
         statsHelper_.readyToReport(FRAGMENTS_PROCESSED_STAT_KEY,

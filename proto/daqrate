@@ -102,14 +102,14 @@ def numeric_expand( ss_l ):
                 for num in range(eval('0x%s'%(start,)),eval(end)+1):
                     ret.append( '%0*x'%(len(start),num) )
         else: ret.append( sss )
-    TRACE( 17, 'numeric_expand returning %s', ret )
+    TRACE( 28, 'numeric_expand returning %s', ret )
     return ret
     # numeric_expand
 
 def expand( ss ):
     import string
     import re
-    TRACE( 18, 'expand(%s)', ss )
+    TRACE( 29, 'expand(%s)', ss )
     ssIn = ss
     try:
         placeholder_idx = 0
@@ -121,7 +121,7 @@ def expand( ss ):
             placeholder_idx = placeholder_idx + 1
         placeholder_idx = 0
         for sss in ss.split(','):
-            TRACE( 19, 'expand sss=%s of ss=%s', sss, ss )
+            TRACE( 30, 'expand sss=%s of ss=%s', sss, ss )
             place_holders = re.findall( '<[0-9]+>', sss )
             for idx in range(len(place_holders)):
                 p_holder = '<%d>'%(placeholder_idx+idx,)
@@ -139,7 +139,7 @@ def expand( ss ):
             exp_result = exp_result + sss.split(',')
             placeholder_idx = placeholder_idx + len(place_holders)
     except:  # any
-        TRACE( 10, 'except - expand' )
+        TRACE( 31, 'except - expand' )
         exc, value, tb = sys.exc_info()
         sys.stderr.write('Error expanding node list "%s": %s: %s\n'%(ssIn,exc,value) )
         sys.stderr.write('Prehaps an invalid decimal/octal/hex digit\n' )
