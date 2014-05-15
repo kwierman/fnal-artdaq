@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include <sched.h>
 #include <algorithm>
+#include "tracelib.h"
 
 const std::string artdaq::BoardReaderCore::
   FRAGMENTS_PROCESSED_STAT_KEY("BoardReaderCoreFragmentsProcessed");
@@ -252,13 +253,18 @@ size_t artdaq::BoardReaderCore::process_fragments()
 
   mf::LogDebug("BoardReaderCore") << "Waiting for first fragment.";
   artdaq::MonitoredQuantity::TIME_POINT_T startTime;
+  float delta_time;
   artdaq::FragmentPtrs frags;
   bool active = true;
   while (active) {
     startTime = artdaq::MonitoredQuantity::getCurrentTime();
+
     active = generator_ptr_->getNext(frags);
-    statsHelper_.addSample(INPUT_WAIT_STAT_KEY,
-                           artdaq::MonitoredQuantity::getCurrentTime() - startTime);
+
+    delta_time=artdaq::MonitoredQuantity::getCurrentTime() - startTime;
+    statsHelper_.addSample(INPUT_WAIT_STAT_KEY,delta_time);
+    TRACE( 16, "BoardReaderCore::process_fragments INPUT_WAIT=%f", delta_time );
+
     if (! active) {break;}
     statsHelper_.addSample(FRAGMENTS_PER_READ_STAT_KEY, frags.size());
 
@@ -282,7 +288,9 @@ size_t artdaq::BoardReaderCore::process_fragments()
       }
       prev_seq_id_ = sequence_id;
 
+      TRACE( 17, "BoardReaderCore::process_fragments seq=%lu sendFragment start", sequence_id );
       sender_ptr_->sendFragment(std::move(*fragPtr));
+      TRACE( 17, "BoardReaderCore::process_fragments seq=%lu sendFragment done", sequence_id );
       ++fragment_count_;
       bool readyToReport =
         statsHelper_.readyToReport(FRAGMENTS_PROCESSED_STAT_KEY,

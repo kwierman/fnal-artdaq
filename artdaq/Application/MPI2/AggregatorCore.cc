@@ -8,10 +8,7 @@
 #include "artdaq/Utilities/SimpleLookupPolicy.h"
 #include "artdaq/DAQdata/NetMonHeader.hh"
 #include "artdaq/DAQdata/RawEvent.hh"
-
-//#include <xmlrpc-c/base.hpp>
-//#include <xmlrpc-c/registry.hpp>
-//#include <xmlrpc-c/server_abyss.hpp>
+#include "tracelib.h"		// TRACE
 
 #include <sstream>
 #include <iomanip>
@@ -236,10 +233,10 @@ bool artdaq::AggregatorCore::initialize(fhicl::ParameterSet const& pset)
       desired_events_per_bunch = 1;
     }
     event_store_ptr_.reset(new artdaq::EventStore(desired_events_per_bunch, 1,
-						  mpi_rank_, init_string_,
-						  reader, event_queue_depth, 
-						  event_queue_wait_time, 
-						  print_event_store_stats_));
+                                                  mpi_rank_, init_string_,
+                                                  reader, event_queue_depth, 
+                                                  event_queue_wait_time, 
+                                                  print_event_store_stats_));
     event_store_ptr_->setSeqIDModulus(desired_events_per_bunch);
     fhicl::ParameterSet tmp = pset;
     tmp.erase("daq");
@@ -514,6 +511,8 @@ size_t artdaq::AggregatorCore::process_fragments()
                     boost::lexical_cast<std::string>(fragmentPtr->sequenceID()) +
                     " (run " +
                     boost::lexical_cast<std::string>(run_id_.run()) +
+                    ", subrun " +
+                    boost::lexical_cast<std::string>(event_store_ptr_->subrunID()) +
                     ").");
       }
     }
@@ -528,6 +527,12 @@ size_t artdaq::AggregatorCore::process_fragments()
     stats_helper_.addSample(SHM_COPY_TIME_STAT_KEY,
                             (artdaq::MonitoredQuantity::getCurrentTime() - startTime));
 
+
+    //----------------------------------------------------------------------------
+
+    artdaq::Fragment::sequence_id_t seq=fragmentPtr->sequenceID();
+    TRACE( 21, "AggregatorCore::process_fragments seq=%lu isLogger=%d type=%d"
+          , seq, is_data_logger_, fragmentPtr->type() );
     startTime = artdaq::MonitoredQuantity::getCurrentTime();
     if (!art_initialized_) {
       /* The init fragment should always be the first fragment out of the
@@ -610,8 +615,10 @@ size_t artdaq::AggregatorCore::process_fragments()
         fragments_sent[senderSlot] = *fragmentPtr->dataBegin() + 1;
       }
     }
-    stats_helper_.addSample(STORE_EVENT_WAIT_STAT_KEY,
-                            artdaq::MonitoredQuantity::getCurrentTime() - startTime);
+    float delta=artdaq::MonitoredQuantity::getCurrentTime() - startTime;
+    stats_helper_.addSample(STORE_EVENT_WAIT_STAT_KEY, delta );
+    TRACE( (delta>3.0)?0:22, "AggregatorCore::process_fragments seq=%lu isLogger=%d delta=%f start=%f"
+          , seq, is_data_logger_, delta, startTime );
 
     // 27-Sep-2013, KAB - added automatic file closing
     startTime = artdaq::MonitoredQuantity::getCurrentTime();
@@ -669,8 +676,9 @@ size_t artdaq::AggregatorCore::process_fragments()
     }
   }
 
-  logMessage_("A subrun in run " +
-              boost::lexical_cast<std::string>(run_id_.run()) +
+  logMessage_("Subrun " +
+              boost::lexical_cast<std::string>(event_store_ptr_->subrunID()) +
+              " in run " + boost::lexical_cast<std::string>(run_id_.run()) +
               " has ended.  There were " +
               boost::lexical_cast<std::string>(event_count_in_subrun_) +
               " events in this subrun, and there have been " +
@@ -892,8 +900,10 @@ std::string artdaq::AggregatorCore::buildStatisticsString_()
   if (mqPtr.get() != 0) {
     artdaq::MonitoredQuantity::Stats stats;
     mqPtr->getStats(stats);
-    oss << ", event store wait time = "
-        << (stats.recentValueSum / eventCount) << " sec";
+    oss << ", avg::max event store wait time = "
+        << (stats.recentValueSum / eventCount)
+        << "::" << stats.recentValueMax
+        << " sec";
   }
 
   mqPtr = artdaq::StatisticsCollection::getInstance().

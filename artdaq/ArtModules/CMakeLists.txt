@@ -73,5 +73,13 @@ if (NOT ${product_version_less})
     )
 endif()
 
+simple_plugin(ArtdaqBuildInfo "module"
+  artdaq_DAQdata
+  artdaq_Version
+  ${MF_MESSAGELOGGER}
+  ${FHICLCPP}
+  ${CETLIB}
+)
+
 install_headers(SUBDIRS detail)                                                         
 install_source(SUBDIRS detail)
