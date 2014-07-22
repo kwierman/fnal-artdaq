@@ -1,7 +1,7 @@
 #ifndef artdaq_DAQdata_GenericFragmentSimulator_hh
 #define artdaq_DAQdata_GenericFragmentSimulator_hh
 
-#include "artdaq/DAQdata/Fragments.hh"
+#include "artdaq-core/Data/Fragments.hh"
 #include "artdaq/DAQdata/FragmentGenerator.hh"
 #include "fhiclcpp/fwd.h"
 

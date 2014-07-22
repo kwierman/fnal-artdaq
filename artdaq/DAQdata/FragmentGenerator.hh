@@ -10,7 +10,7 @@
 // getNext() will be called only from a single thread
 ////////////////////////////////////////////////////////////////////////
 
-#include "artdaq/DAQdata/Fragments.hh"
+#include "artdaq-core/Data/Fragments.hh"
 
 namespace artdaq {
   class FragmentGenerator {

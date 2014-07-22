@@ -1,7 +1,7 @@
 #define BOOST_TEST_MODULE ( FragmentGenerator_t )
 #include "boost/test/auto_unit_test.hpp"
 
-#include "artdaq/DAQdata/Fragment.hh"
+#include "artdaq-core/Data/Fragment.hh"
 #include "artdaq/DAQdata/FragmentGenerator.hh"
 
 namespace artdaqtest {

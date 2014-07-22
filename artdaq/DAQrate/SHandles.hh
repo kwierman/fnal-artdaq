@@ -1,8 +1,8 @@
 #ifndef artdaq_DAQrate_SHandles_hh
 #define artdaq_DAQrate_SHandles_hh
 
-#include "artdaq/DAQdata/Fragment.hh"
-#include "artdaq/DAQdata/Fragments.hh"
+#include "artdaq-core/Data/Fragment.hh"
+#include "artdaq-core/Data/Fragments.hh"
 #include "artdaq/DAQrate/MPITag.hh"
 #include "artdaq/DAQrate/detail/FragCounter.hh"
 
