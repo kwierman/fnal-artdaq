@@ -1,6 +1,6 @@
 #include "artdaq/DAQdata/GenericFragmentSimulator.hh"
 
-#include "artdaq/DAQdata/GeneratorMacros.hh"
+#include "artdaq-generators/Generators/GeneratorMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
 
 #include <algorithm>
