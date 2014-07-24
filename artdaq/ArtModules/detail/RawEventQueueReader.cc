@@ -3,8 +3,8 @@
 #include "art/Framework/IO/Sources/put_product_in_principal.h"
 #include "art/Persistency/Provenance/FileFormatVersion.h"
 #include "art/Utilities/Exception.h"
-#include "artdaq/DAQdata/Fragment.hh"
-#include "artdaq/DAQdata/Fragments.hh"
+#include "artdaq-core/Data/Fragment.hh"
+#include "artdaq-core/Data/Fragments.hh"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include <sys/time.h>
 

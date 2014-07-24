@@ -4,7 +4,7 @@
 #include "artdaq/DAQdata/Debug.hh"
 #include "artdaq/DAQrate/MPITag.hh"
 #include "artdaq/DAQrate/Utils.hh"
-#include "artdaq/DAQdata/Fragment.hh"
+#include "artdaq-core/Data/Fragment.hh"
 #include "cetlib/exception.h"
 
 #include <algorithm>

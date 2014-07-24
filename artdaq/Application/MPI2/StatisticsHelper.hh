@@ -1,7 +1,7 @@
 #ifndef artdaq_Application_MPI2_StatisticsHelper_hh
 #define artdaq_Application_MPI2_StatisticsHelper_hh
 
-#include "artdaq/DAQrate/StatisticsCollection.hh"
+#include "artdaq-core/Core/StatisticsCollection.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include <vector>
 

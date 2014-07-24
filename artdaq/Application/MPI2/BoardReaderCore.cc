@@ -1,6 +1,6 @@
 #include "artdaq/Application/TaskType.hh"
 #include "artdaq/Application/MPI2/BoardReaderCore.hh"
-#include "artdaq/DAQdata/Fragments.hh"
+#include "artdaq-core/Data/Fragments.hh"
 #include "artdaq/Application/makeCommandableFragmentGenerator.hh"
 #include "art/Utilities/Exception.h"
 #include "cetlib/exception.h"

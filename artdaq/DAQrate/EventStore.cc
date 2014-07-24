@@ -8,8 +8,8 @@
 #include <sstream>
 
 #include "cetlib/exception.h"
-#include "artdaq/DAQrate/StatisticsCollection.hh"
-#include "artdaq/DAQrate/SimpleQueueReader.hh"
+#include "artdaq-core/Core/StatisticsCollection.hh"
+#include "artdaq-core/Core/SimpleQueueReader.hh"
 #include "artdaq/DAQrate/Utils.hh"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "tracelib.h"

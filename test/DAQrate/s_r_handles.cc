@@ -1,9 +1,9 @@
-#include "artdaq/DAQdata/Fragments.hh"
+#include "artdaq-core/Data/Fragments.hh"
 #include "artdaq/DAQrate/RHandles.hh"
 #include "artdaq/DAQrate/SHandles.hh"
 
 #include "artdaq/DAQdata/Debug.hh"
-#include "artdaq/DAQdata/Fragment.hh"
+#include "artdaq-core/Data/Fragment.hh"
 
 #include <iostream>
 #include <mpi.h>

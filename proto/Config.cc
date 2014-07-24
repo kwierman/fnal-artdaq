@@ -2,7 +2,7 @@
 #include "Config.hh"
 #include "artdaq/DAQrate/Perf.hh"
 #include "artdaq/DAQrate/infoFilename.hh"
-#include "artdaq/DAQdata/Fragment.hh"
+#include "artdaq-core/Data/Fragment.hh"
 
 #include <cstring>
 #include <iostream>

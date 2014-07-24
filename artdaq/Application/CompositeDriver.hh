@@ -3,7 +3,7 @@
 
 #include "fhiclcpp/fwd.h"
 #include "artdaq/Application/CommandableFragmentGenerator.hh"
-#include "artdaq/DAQdata/Fragments.hh"
+#include "artdaq-core/Data/Fragments.hh"
 #include <vector>
 
 namespace artdaq {

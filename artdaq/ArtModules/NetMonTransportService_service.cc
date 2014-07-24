@@ -1,10 +1,10 @@
 #include "artdaq/ArtModules/NetMonTransportService.h"
 #include "artdaq/DAQrate/SHandles.hh"
-#include "artdaq/DAQrate/GlobalQueue.hh"
+#include "artdaq-core/Core/GlobalQueue.hh"
 
-#include "artdaq/DAQdata/Fragment.hh"
+#include "artdaq-core/Data/Fragment.hh"
 #include "artdaq/DAQdata/NetMonHeader.hh"
-#include "artdaq/DAQdata/RawEvent.hh"
+#include "artdaq-core/Data/RawEvent.hh"
 
 #include "art/Framework/Services/Registry/ActivityRegistry.h"
 #include "art/Utilities/Exception.h"

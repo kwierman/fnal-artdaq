@@ -49,8 +49,8 @@
 
 #include "fhiclcpp/fwd.h"
 #include "fhiclcpp/ParameterSet.h"
-#include "artdaq/DAQdata/Fragments.hh"
-#include "artdaq/DAQdata/FragmentGenerator.hh"
+#include "artdaq-core/Data/Fragments.hh"
+#include "artdaq-core/Generators/FragmentGenerator.hh"
 
 
 namespace artdaq {

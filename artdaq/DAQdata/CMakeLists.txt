@@ -1,6 +1,8 @@
 art_make(
   EXCLUDE GenericFragmentSimulator_generator.cc
   LIB_LIBRARIES
+  ${ARTDAQ-CORE_DATA}
+  ${ARTDAQ-CORE_GENERATORS}
   ${ART_PERSISTENCY_COMMON}
   ${ART_UTILITIES}
   ${FHICLCPP}
@@ -9,7 +11,9 @@ art_make(
   ${MF_UTILITIES}
   )
 
-simple_plugin(GenericFragmentSimulator "generator" artdaq_DAQdata)
+simple_plugin(GenericFragmentSimulator "generator"
+  artdaq_DAQdata ${ARTDAQ-CORE_DATA} ${ARTDAQ-CORE_GENERATORS}
+  )
 
-install_headers(SUBDIRS detail)
-install_source(SUBDIRS detail)
+install_headers()
+install_source()
