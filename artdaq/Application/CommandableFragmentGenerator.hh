@@ -50,7 +50,7 @@
 #include "fhiclcpp/fwd.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "artdaq-core/Data/Fragments.hh"
-#include "artdaq-generators/Generators/FragmentGenerator.hh"
+#include "artdaq-core/Generators/FragmentGenerator.hh"
 
 
 namespace artdaq {

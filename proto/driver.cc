@@ -10,10 +10,10 @@
 //
 
 #include "art/Framework/Art/artapp.h"
-#include "artdaq-generators/Generators/FragmentGenerator.hh"
+#include "artdaq-core/Generators/FragmentGenerator.hh"
 #include "artdaq-core/Data/Fragments.hh"
 #include "artdaq/DAQdata/GenericFragmentSimulator.hh"
-#include "artdaq-generators/Generators/makeFragmentGenerator.hh"
+#include "artdaq-core/Generators/makeFragmentGenerator.hh"
 #include "artdaq/DAQrate/EventStore.hh"
 #include "MPIProg.hh"
 #include "artdaq-core/Core/SimpleQueueReader.hh"

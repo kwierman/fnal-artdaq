@@ -18,7 +18,7 @@ bindir      fq_dir      bin
 #
 product			version		optional
 gcc			v4_8_1
-artdaq_generators	v1_00_00
+artdaq_core 		v1_00_01
 mvapich2		v1_9_0
 mpich			v3_0_4
 xmlrpc_c		v1_25_26
@@ -32,7 +32,7 @@ only_for_build	smc_compiler	v6_1_0
 # e4  - with gcc 4.8.1 and -std=c++11
 # -nq- means there is no qualifier
 # a - means the dependent product is not required by the parent and will not be setup
-qualifier		artdaq_generators	mvapich2	mpich		xmlrpc_c	gcc	TRACE	notes
+qualifier		artdaq_core		mvapich2	mpich		xmlrpc_c	gcc	TRACE	notes
 e4:ib:debug		e4:debug		-nq-		-		e4:debug	-nq-	-nq-	-std=c++11
 e4:ib:prof		e4:prof			-nq-		-		e4:prof		-nq-	-nq-	-std=c++11
 nu:e4:ib:debug		nu:e4:debug		-nq-		-		e4:debug	-nq-	-nq-	-std=c++11
