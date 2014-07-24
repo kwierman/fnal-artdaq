@@ -1,8 +1,8 @@
 #ifndef artdaq_DAQrate_EventStore_hh
 #define artdaq_DAQrate_EventStore_hh
 
-#include "artdaq/DAQdata/RawEvent.hh"
-#include "artdaq/DAQrate/GlobalQueue.hh"
+#include "artdaq-core/Data/RawEvent.hh"
+#include "artdaq-core/Core/GlobalQueue.hh"
 
 #include <map>
 #include <memory>

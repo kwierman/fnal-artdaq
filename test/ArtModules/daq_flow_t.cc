@@ -1,5 +1,5 @@
 #include "art/Framework/Art/artapp.h"
-#include "artdaq/DAQdata/Fragments.hh"
+#include "artdaq-core/Data/Fragments.hh"
 #include "artdaq/DAQdata/GenericFragmentSimulator.hh"
 #include "artdaq/DAQrate/EventStore.hh"
 #include "artdaq/Application/MPI2/MPISentry.hh"

@@ -3,7 +3,7 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "artdaq/DAQrate/EventStore.hh"
 #include "art/Framework/Art/artapp.h"
-#include "artdaq/DAQrate/SimpleQueueReader.hh"
+#include "artdaq-core/Core/SimpleQueueReader.hh"
 #include "artdaq/Utilities/SimpleLookupPolicy.h"
 #include "artdaq/DAQdata/NetMonHeader.hh"
 

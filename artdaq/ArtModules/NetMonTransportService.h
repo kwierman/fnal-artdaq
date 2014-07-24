@@ -5,7 +5,7 @@
 
 #include "artdaq/ArtModules/NetMonTransportServiceInterface.h"
 #include "artdaq/DAQrate/SHandles.hh"
-#include "artdaq/DAQrate/GlobalQueue.hh"
+#include "artdaq-core/Core/GlobalQueue.hh"
 
 class TBufferFile;
 

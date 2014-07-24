@@ -12,9 +12,9 @@ simple_plugin(FragmentSniffer "module"
 cet_test(raw_event_queue_reader_t USE_BOOST_UNIT
   LIBRARIES
   artdaq_ArtModules
-  artdaq_DAQdata_dict
   artdaq_DAQrate
   artdaq_DAQdata
+  ${ARTDAQ-CORE_DATA_DICT}
   ${ART_FRAMEWORK_CORE}
   ${ART_FRAMEWORK_PRINCIPAL}
   ${ART_PERSISTENCY_PROVENANCE}

@@ -1,6 +1,6 @@
 #include "artdaq/ArtModules/detail/RawEventQueueReader.hh"
-#include "artdaq/DAQdata/Fragment.hh"
-#include "artdaq/DAQrate/GlobalQueue.hh"
+#include "artdaq-core/Data/Fragment.hh"
+#include "artdaq-core/Core/GlobalQueue.hh"
 
 #include "fhiclcpp/make_ParameterSet.h"
 #include "art/Framework/Core/FileBlock.h"

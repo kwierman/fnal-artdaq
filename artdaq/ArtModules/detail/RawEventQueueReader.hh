@@ -10,7 +10,7 @@
 #include "art/Framework/Principal/EventPrincipal.h"
 #include "art/Framework/Principal/RunPrincipal.h"
 #include "art/Framework/Principal/SubRunPrincipal.h"
-#include "artdaq/DAQrate/GlobalQueue.hh"
+#include "artdaq-core/Core/GlobalQueue.hh"
 #include "fhiclcpp/ParameterSet.h"
 
 #include <string>

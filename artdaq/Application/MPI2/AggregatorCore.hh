@@ -10,7 +10,7 @@
 #include "art/Persistency/Provenance/RunID.h"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 #include "artdaq/DAQrate/RHandles.hh"
-#include "artdaq/DAQrate/GlobalQueue.hh"
+#include "artdaq-core/Core/GlobalQueue.hh"
 #include "artdaq/DAQrate/EventStore.hh"
 #include "artdaq/Application/MPI2/StatisticsHelper.hh"
 

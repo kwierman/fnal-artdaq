@@ -4,7 +4,7 @@
 #include "art/Framework/Principal/Run.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
-#include "artdaq/DAQdata/PackageBuildInfo.hh"
+#include "artdaq-core/Data/PackageBuildInfo.hh"
 #include "artdaq/Version/GetReleaseVersion.h"
 
 namespace artdaq {

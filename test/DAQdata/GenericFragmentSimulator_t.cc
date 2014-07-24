@@ -2,8 +2,8 @@
 #include "boost/test/auto_unit_test.hpp"
 
 #include "fhiclcpp/ParameterSet.h"
-#include "artdaq/DAQdata/Fragment.hh"
-#include "artdaq/DAQdata/detail/RawFragmentHeader.hh"
+#include "artdaq-core/Data/Fragment.hh"
+#include "artdaq-core/Data/detail/RawFragmentHeader.hh"
 #include "artdaq/DAQrate/EventStore.hh"
 #include "artdaq/DAQdata/GenericFragmentSimulator.hh"
 
