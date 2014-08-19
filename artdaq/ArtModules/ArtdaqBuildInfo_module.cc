@@ -21,21 +21,24 @@ namespace artdaq {
   private:
     std::string const instance_name_artdaq_;
     std::string const instance_name_artdaq_core_;
-    art::RunNumber_t current_run_;
   };
 
   ArtdaqBuildInfo::ArtdaqBuildInfo(fhicl::ParameterSet const &p):
     instance_name_artdaq_(p.get<std::string>("instance_name_artdaq", "buildinfoArtdaq")),
-    instance_name_artdaq_core_(p.get<std::string>("instance_name_artdaq_core", "buildinfoArtdaqCore")),
-    current_run_(0)
+    instance_name_artdaq_core_(p.get<std::string>("instance_name_artdaq_core", "buildinfoArtdaqCore"))
   {
     produces<PackageBuildInfo, art::InRun>(instance_name_artdaq_);
     produces<PackageBuildInfo, art::InRun>(instance_name_artdaq_core_);
   }
 
   void ArtdaqBuildInfo::beginRun(art::Run &e) { 
-    if (e.run () == current_run_) return;
-    current_run_ = e.run ();
+    // 19-Aug-2014, KAB: Removed the check on whether the run number
+    // has changed.  We want the run data products to be added to each
+    // file, and since the beginRun() method is called for each file,
+    // the code in this method should take care of that.  If/when the
+    // callbacks within art are changed so that beginRun() is only
+    // called when a new run is encountered (not a new file), then we
+    // may need to move this code to the appropriate (new?) callback.
 
     std::string s1, s2;
 
