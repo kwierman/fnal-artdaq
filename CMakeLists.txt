@@ -47,8 +47,6 @@ find_ups_product( messagefacility v1_10_00 )
 find_ups_product( xmlrpc_c v1_25_18 )
 find_ups_product( TRACE v3_03_00 )
 
-cet_check_gcc()
-
 # include search path
 # notice use of ENV to invoke an external variable
 include_directories ( $ENV{LIBSIGCPP_INC}/sigc++-2.0 )

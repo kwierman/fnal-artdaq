@@ -8,6 +8,7 @@
 #include "cetlib/container_algorithms.h"
 #include "cetlib/exception.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
+#include "trace.h"		// TRACE
 
 const size_t artdaq::RHandles::RECV_TIMEOUT = 0xfedcba98;
 
@@ -63,7 +64,7 @@ recvFragment(Fragment & output, size_t timeout_usec)
   if (!anySourceActive()) {
     return MPI_ANY_SOURCE; // Nothing to do.
   }
-  // Debug << "recv entered" << flusher;
+  TRACE( 6,"recvFragment entered" );
   RecvMeas rm;
   int wait_result;
   int which;
