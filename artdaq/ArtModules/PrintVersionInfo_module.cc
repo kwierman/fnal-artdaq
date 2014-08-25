@@ -7,6 +7,24 @@
 // from cetpkgsupport v1_05_02.
 ////////////////////////////////////////////////////////////////////////
 
+
+// JCF, 8/19/14                                                                                                          
+
+// As the following function:                                                                                           
+
+// void analyze(art::Event const & e)                                                                                    
+
+// in PrintVersionInfo's base class, art::EDAnalyzer, needs to be
+// overridden, but this module only analyzes run-by-run info rather
+// than event-by-event info, there's no point in adding an
+// implementation body to the function. Thus, for this module we
+// disable the error condition usually called by an unused function
+// parameter (here, the reference-to-art::Event)
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
+
 #include "art/Framework/Core/EDAnalyzer.h"
 #include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
@@ -73,24 +91,33 @@ void artdaq::PrintVersionInfo::beginRun(art::Run const& run)
   run.getByLabel(artdaq_core_module_label_, artdaq_core_instance_label_, raw);
 
   if (raw.isValid()) {
+    std::cout << std::endl;
     std::cout << "artdaq-core package version: " << raw->getPackageVersion() << std::endl;
     std::cout << "artdaq-core package build time: " << raw->getBuildTimestamp() << std::endl;
-
+    std::cout << std::endl;
   } else {
-    std::cout << "Run " << run.run() << " appears to have no info on artdaq-core build time / version number" << std::endl;
+    std::cerr << std::endl;
+    std::cerr << "Warning in artdaq::PrintVersionInfo module: Run " << run.run() << " appears to have no info on artdaq-core build time / version number" << std::endl;
+    std::cerr << std::endl;
   }
 
 
   run.getByLabel(artdaq_module_label_, artdaq_instance_label_, raw);
 
   if (raw.isValid()) {
+    std::cout << std::endl;
     std::cout << "artdaq package version: " << raw->getPackageVersion() << std::endl;
     std::cout << "artdaq package build time: " << raw->getBuildTimestamp() << std::endl;
-
+    std::cout << std::endl;
   } else {
-    std::cout << "Run " << run.run() << " appears to have no info on artdaq build time / version number" << std::endl;
+    std::cerr << std::endl;
+    std::cerr << "Warning in artdaq::PrintVersionInfo module: Run " << run.run() << " appears to have no info on artdaq build time / version number" << std::endl;
+    std::cerr << std::endl;
   }
 
 }
+
+// Restore "unused-parameter" as a compiler error
+#pragma GCC diagnostic pop 
 
 DEFINE_ART_MODULE(artdaq::PrintVersionInfo)
