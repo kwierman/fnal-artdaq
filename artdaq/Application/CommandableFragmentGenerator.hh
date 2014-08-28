@@ -80,7 +80,9 @@ namespace artdaq {
     // subrun number 1. Calling start also resets the event number to 1.
     // After a call to start(), and until a call to stop, getNext() will
     // always return true, even if it returns no fragments.
-    virtual void StartCmd(int run, uint64_t timeout, uint64_t timestamp) final;
+    virtual void StartCmd(int run, 
+			  uint64_t timeout = std::numeric_limits<uint64_t>::max(), 
+			  uint64_t timestamp = std::numeric_limits<uint64_t>::max()) final;
 
     // After a call to stop(), getNext() will eventually return
     // false. This may not happen for several calls, if the
