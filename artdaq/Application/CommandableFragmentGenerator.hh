@@ -80,7 +80,7 @@ namespace artdaq {
     // subrun number 1. Calling start also resets the event number to 1.
     // After a call to start(), and until a call to stop, getNext() will
     // always return true, even if it returns no fragments.
-    virtual void StartCmd(int run, uint64_t timestamp) final;
+    virtual void StartCmd(int run, uint64_t timeout, uint64_t timestamp) final;
 
     // After a call to stop(), getNext() will eventually return
     // false. This may not happen for several calls, if the
@@ -121,6 +121,7 @@ namespace artdaq {
 
     int run_number() const { return run_number_; }
     int subrun_number() const { return subrun_number_; }
+    uint64_t timeout() const { return timeout_; }
     uint64_t timestamp() const { return timestamp_; }
     bool should_stop() const { return should_stop_.load(); }
     bool exception() const { return exception_.load(); }
@@ -147,6 +148,11 @@ namespace artdaq {
     // CommandableFragmentGenerators must be able to remember a run number and a
     // subrun number.
     int run_number_, subrun_number_;
+
+    // JCF, 8/28/14
+
+    // Provide a user-adjustable timeout for the start transition
+    uint64_t timeout_;
 
     // JCF, 8/21/14
 

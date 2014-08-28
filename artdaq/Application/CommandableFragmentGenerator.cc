@@ -7,6 +7,7 @@
 artdaq::CommandableFragmentGenerator::CommandableFragmentGenerator() :
   mutex_(),
   run_number_(-1), subrun_number_(-1),
+  timeout_( std::numeric_limits<uint64_t>::max() ), 
   timestamp_( std::numeric_limits<uint64_t>::max() ), 
   should_stop_(false), exception_(false),
   ev_counter_(1),
@@ -19,6 +20,7 @@ artdaq::CommandableFragmentGenerator::CommandableFragmentGenerator() :
 artdaq::CommandableFragmentGenerator::CommandableFragmentGenerator(const fhicl::ParameterSet &ps) :
   mutex_(),
   run_number_(-1), subrun_number_(-1),
+  timeout_( std::numeric_limits<uint64_t>::max() ), 
   timestamp_( std::numeric_limits<uint64_t>::max() ), 
   should_stop_(false), exception_(false),
   ev_counter_(1),
@@ -81,10 +83,11 @@ int artdaq::CommandableFragmentGenerator::fragment_id () const {
   }
 }
 
-void artdaq::CommandableFragmentGenerator::StartCmd(int run, uint64_t timestamp) {
+void artdaq::CommandableFragmentGenerator::StartCmd(int run, uint64_t timeout, uint64_t timestamp) {
 
   if (run < 0) throw cet::exception("CommandableFragmentGenerator") << "negative run number";
 
+  timeout_ = timeout;
   timestamp_ = timestamp;
   ev_counter_.store (1);
   should_stop_.store (false);

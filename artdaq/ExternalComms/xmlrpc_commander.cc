@@ -7,6 +7,7 @@
 #include <xmlrpc-c/server_abyss.hpp>
 #include <stdexcept>
 #include <iostream>
+#include <limits>
 #include "art/Persistency/Provenance/RunID.h"
 #include "artdaq/ExternalComms/xmlrpc_commander.hh"
 #include "fhiclcpp/make_ParameterSet.h"
@@ -181,6 +182,10 @@ namespace {
   };
 
   class start_: public cmd_ {
+
+    static const uint64_t defaultTimeout = 45;
+    static const uint64_t defaultTimestamp = std::numeric_limits<const uint64_t>::max();
+
     public:
       start_ (xmlrpc_commander& c):
         cmd_(c, "s:ii", "start the run") {}
@@ -188,14 +193,24 @@ namespace {
 
         if (paramList.size() > 0) {
 
-          std::string run_number_string = paramList.getString(0);
+	  uint64_t timeout = defaultTimeout;
+	  uint64_t timestamp = defaultTimestamp;
+	  std::string run_number_string = "";
+          
+	  run_number_string = paramList.getString(0);
           art::RunNumber_t run_number =
             boost::lexical_cast<art::RunNumber_t>(run_number_string);
           art::RunID run_id(run_number);
 
-	  uint64_t timestamp = boost::lexical_cast<uint64_t>(paramList.getInt(1));
+	  if (paramList.size() > 1) {
+	    timeout = boost::lexical_cast<uint64_t>(paramList.getInt(1));
+	  }
 
-	  if (_c._commandable.start(run_id, timestamp)) {
+	  if (paramList.size() > 2) {
+	    timestamp = boost::lexical_cast<uint64_t>(paramList.getInt(2));
+	  }
+
+	  if (_c._commandable.start(run_id, timeout, timestamp)) {
             *retvalP = xmlrpc_c::value_string ("Success"); 
           }
           else {
@@ -204,7 +219,7 @@ namespace {
           }
         }
         else {
-          *retvalP = xmlrpc_c::value_string ("The start message requires the run number and timestamp as arguments."); 
+          *retvalP = xmlrpc_c::value_string ("The start message requires the run number as an argument, and optionally a timeout and/or timestamp."); 
         }
       } catch (std::runtime_error &er) { 
         std::string msg = exception_msg (er, _help);

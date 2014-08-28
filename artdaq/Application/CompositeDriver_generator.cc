@@ -46,7 +46,7 @@ void artdaq::CompositeDriver::start()
     generator_active_list_[idx] = true;
   }
   for (auto& generator : generator_list_) {
-    generator->StartCmd(run_number(), timestamp());
+    generator->StartCmd(run_number(), timeout(), timestamp());
   }
 }
 

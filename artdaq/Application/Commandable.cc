@@ -35,13 +35,13 @@ bool artdaq::Commandable::initialize(fhicl::ParameterSet const& pset)
 /**
  * Processes the start request.
  */
-bool artdaq::Commandable::start(art::RunID id, uint64_t timestamp)
+bool artdaq::Commandable::start(art::RunID id, uint64_t timeout, uint64_t timestamp)
 {
   external_request_status_ = true;
   report_string_ = "All is OK.";
 
   std::string initialState = fsm_.getState().getName();
-  fsm_.start(id, timestamp);
+  fsm_.start(id, timeout, timestamp);
   if (external_request_status_) {
     std::string finalState = fsm_.getState().getName();
     mf::LogDebug("CommandableInterface")
@@ -218,7 +218,7 @@ bool artdaq::Commandable::do_initialize(fhicl::ParameterSet const&)
   return external_request_status_;
 }
 
-bool artdaq::Commandable::do_start(art::RunID, uint64_t)
+bool artdaq::Commandable::do_start(art::RunID, uint64_t, uint64_t)
 {
   mf::LogDebug("CommandableInterface") << "do_start called.";
   external_request_status_ = true;

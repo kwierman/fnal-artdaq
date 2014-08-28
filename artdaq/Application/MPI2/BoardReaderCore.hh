@@ -31,7 +31,7 @@ public:
   BoardReaderCore& operator=(BoardReaderCore const&) = delete;
 
   bool initialize(fhicl::ParameterSet const&);
-  bool start(art::RunID, uint64_t);
+  bool start(art::RunID, uint64_t, uint64_t);
   bool stop();
   bool pause();
   bool resume();
