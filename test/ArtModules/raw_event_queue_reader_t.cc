@@ -1,14 +1,11 @@
 #include "artdaq/ArtModules/detail/RawEventQueueReader.hh"
-#include "artdaq-core/Data/Fragment.hh"
-#include "artdaq-core/Core/GlobalQueue.hh"
 
-#include "fhiclcpp/make_ParameterSet.h"
 #include "art/Framework/Core/FileBlock.h"
 #include "art/Framework/Core/RootDictionaryManager.h"
 #include "art/Framework/IO/Sources/SourceHelper.h"
 #include "art/Framework/Principal/Event.h"
-#include "art/Framework/Principal/Handle.h"
 #include "art/Framework/Principal/EventPrincipal.h"
+#include "art/Framework/Principal/Handle.h"
 #include "art/Framework/Principal/RunPrincipal.h"
 #include "art/Framework/Principal/SubRunPrincipal.h"
 #include "art/Persistency/Provenance/BranchIDListHelper.h"
@@ -22,10 +19,13 @@
 #include "art/Persistency/Provenance/RunID.h"
 #include "art/Persistency/Provenance/SubRunID.h"
 #include "art/Persistency/Provenance/Timestamp.h"
+#include "art/Utilities/Exception.h"
 #include "art/Utilities/GetPassID.h"
 #include "art/Version/GetReleaseVersion.h"
-
-#include "art/Utilities/Exception.h"
+#include "artdaq-core/Core/GlobalQueue.hh"
+#include "artdaq-core/Data/Fragment.hh"
+#include "cetlib/make_unique.h"
+#include "fhiclcpp/make_ParameterSet.h"
 
 #define BOOST_TEST_MODULE ( raw_event_queue_reader_t )
 #include "boost/test/auto_unit_test.hpp"
@@ -35,8 +35,6 @@
 #include <string>
 
 using std::string;
-using std::cerr;
-using std::endl;
 
 using art::EventID;
 using art::EventPrincipal;
@@ -64,7 +62,7 @@ public:
   typedef std::map<std::string, art::BranchKey> BKmap_t;
 
   BKmap_t branchKeys_;
-  std::map<std::string, art::ProcessConfiguration *> processConfigurations_;
+  std::map<std::string, std::unique_ptr<art::ProcessConfiguration> >processConfigurations_;
 
   art::ProcessConfiguration *
   fake_single_module_process(std::string const & tag,
@@ -119,10 +117,10 @@ fake_single_module_process(std::string const & tag,
   processParams.put(processName, moduleParams);
   processParams.put<std::string>("process_name",
                                  processName);
-  art::ProcessConfiguration * result =
-    new art::ProcessConfiguration(processName, processParams.id(), release, pass);
-  processConfigurations_[tag] = result;
-  return result;
+  auto emplace_pair =
+  processConfigurations_.emplace(tag,
+                                 cet::make_unique<art::ProcessConfiguration>(processName, processParams.id(), release, pass));
+  return emplace_pair.first->second.get();
 }
 
 std::unique_ptr<art::BranchDescription>
@@ -179,12 +177,25 @@ struct REQRTestFixture {
     return s_helper;
   }
 
-  SourceHelper & principal_maker() {
-    static SourceHelper
-    s_principal_maker(*gf().fake_single_module_process("daq",
-                      "TEST",
-                      ParameterSet()));
-    return s_principal_maker;
+  art::SourceHelper & source_helper() {
+    static std::unique_ptr<art::SourceHelper>
+      s_source_helper;
+    if (!s_source_helper) {
+      ParameterSet sourceParams;
+      std::string moduleType { "DummySource" };
+      std::string moduleLabel { "daq" };
+      sourceParams.put<std::string>("module_type", moduleType);
+      sourceParams.put<std::string>("module_label", moduleLabel);
+      auto pc_ptr = gf().fake_single_module_process(moduleLabel,
+                                                    "TEST",
+                                                    sourceParams);
+      art::ModuleDescription md(sourceParams.id(),
+                                moduleType,
+                                moduleLabel,
+                                *pc_ptr);
+      s_source_helper = cet::make_unique<art::SourceHelper>(md);
+    }
+    return *s_source_helper;
   }
 
   RawEventQueueReader & reader() {
@@ -193,7 +204,7 @@ struct REQRTestFixture {
     static RawEventQueueReader
     s_reader(pset,
              helper(),
-             principal_maker(),
+             source_helper(),
        gf().productRegistry_);
     return s_reader;
   }
@@ -259,8 +270,8 @@ BOOST_AUTO_TEST_CASE(nonempty_event)
   EventID eventid(2112, 1, 3);
   Timestamp now;
   basic_test(reader(),
-             std::unique_ptr<RunPrincipal>(principal_maker().makeRunPrincipal(eventid.run(), now)),
-             std::unique_ptr<SubRunPrincipal>(principal_maker().makeSubRunPrincipal(eventid.run(), eventid.subRun(), now)),
+             std::unique_ptr<RunPrincipal>(source_helper().makeRunPrincipal(eventid.run(), now)),
+             std::unique_ptr<SubRunPrincipal>(source_helper().makeSubRunPrincipal(eventid.run(), eventid.subRun(), now)),
              eventid);
 }
 
@@ -279,8 +290,8 @@ BOOST_AUTO_TEST_CASE(new_subrun)
   EventID eventid(2112, 1, 3);
   Timestamp now;
   basic_test(reader(),
-             std::unique_ptr<RunPrincipal>(principal_maker().makeRunPrincipal(eventid.run(), now)),
-             std::unique_ptr<SubRunPrincipal>(principal_maker().makeSubRunPrincipal(eventid.run(), 0, now)),
+             std::unique_ptr<RunPrincipal>(source_helper().makeRunPrincipal(eventid.run(), now)),
+             std::unique_ptr<SubRunPrincipal>(source_helper().makeSubRunPrincipal(eventid.run(), 0, now)),
              eventid);
 }
 
@@ -289,8 +300,8 @@ BOOST_AUTO_TEST_CASE(new_run)
   EventID eventid(2112, 1, 3);
   Timestamp now;
   basic_test(reader(),
-             std::unique_ptr<RunPrincipal>(principal_maker().makeRunPrincipal(eventid.run() - 1, now)),
-             std::unique_ptr<SubRunPrincipal>(principal_maker().makeSubRunPrincipal(eventid.run() - 1,
+             std::unique_ptr<RunPrincipal>(source_helper().makeRunPrincipal(eventid.run() - 1, now)),
+             std::unique_ptr<SubRunPrincipal>(source_helper().makeSubRunPrincipal(eventid.run() - 1,
                  eventid.subRun(),
                  now)),
              eventid);
@@ -320,9 +331,9 @@ BOOST_AUTO_TEST_CASE(end_of_data)
   SubRunID subrunid(2112, 1);
   EventID eventid(2112, 1, 3);
   Timestamp now;
-  std::unique_ptr<RunPrincipal>    run(principal_maker().makeRunPrincipal(runid.run(), now));
-  std::unique_ptr<SubRunPrincipal> subrun(principal_maker().makeSubRunPrincipal(runid.run(), subrunid.subRun(), now));
-  std::unique_ptr<EventPrincipal>  event(principal_maker().makeEventPrincipal(runid.run(),
+  std::unique_ptr<RunPrincipal>    run(source_helper().makeRunPrincipal(runid.run(), now));
+  std::unique_ptr<SubRunPrincipal> subrun(source_helper().makeSubRunPrincipal(runid.run(), subrunid.subRun(), now));
+  std::unique_ptr<EventPrincipal>  event(source_helper().makeEventPrincipal(runid.run(),
                                          subrunid.subRun(),
                                          eventid.event(),
                                          now));
