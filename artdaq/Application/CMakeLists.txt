@@ -1,5 +1,3 @@
-include(ProcessSmc)
-
 process_smc(SMC_LIB_SOURCE Commandable.sm)
 
 art_make_library(SOURCE
