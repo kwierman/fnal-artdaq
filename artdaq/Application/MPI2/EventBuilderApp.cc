@@ -35,7 +35,7 @@ bool artdaq::EventBuilderApp::do_initialize(fhicl::ParameterSet const& pset)
   return external_request_status_;
 }
 
-bool artdaq::EventBuilderApp::do_start(art::RunID id)
+bool artdaq::EventBuilderApp::do_start(art::RunID id, uint64_t timestamp)
 {
   report_string_ = "";
   external_request_status_ = event_builder_ptr_->start(id);
@@ -43,6 +43,8 @@ bool artdaq::EventBuilderApp::do_start(art::RunID id)
     report_string_ = "Error starting the EventBuilderCore for run ";
     report_string_.append("number ");
     report_string_.append(boost::lexical_cast<std::string>(id.run()));
+    report_string_.append(", timestamp ");
+    report_string_.append(boost::lexical_cast<std::string>(timestamp));
     report_string_.append(".");
   }
 

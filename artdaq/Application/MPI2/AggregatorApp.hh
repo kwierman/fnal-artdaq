@@ -22,7 +22,7 @@ public:
 
   // these methods provide the operations that are used by the state machine
   bool do_initialize(fhicl::ParameterSet const&) override;
-  bool do_start(art::RunID) override;
+  bool do_start(art::RunID run, uint64_t timestamp) override;
   bool do_stop() override;
   bool do_pause() override;
   bool do_resume() override;

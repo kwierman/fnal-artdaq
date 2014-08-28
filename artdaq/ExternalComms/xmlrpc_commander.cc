@@ -183,14 +183,19 @@ namespace {
   class start_: public cmd_ {
     public:
       start_ (xmlrpc_commander& c):
-        cmd_(c, "s:i", "start the run") {}
+        cmd_(c, "s:ii", "start the run") {}
       void execute_ (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) override try {
+
         if (paramList.size() > 0) {
+
           std::string run_number_string = paramList.getString(0);
           art::RunNumber_t run_number =
             boost::lexical_cast<art::RunNumber_t>(run_number_string);
           art::RunID run_id(run_number);
-          if (_c._commandable.start(run_id)) {
+
+	  uint64_t timestamp = boost::lexical_cast<uint64_t>(paramList.getInt(1));
+
+	  if (_c._commandable.start(run_id, timestamp)) {
             *retvalP = xmlrpc_c::value_string ("Success"); 
           }
           else {
@@ -199,7 +204,7 @@ namespace {
           }
         }
         else {
-          *retvalP = xmlrpc_c::value_string ("The start message requires the run number as an argument."); 
+          *retvalP = xmlrpc_c::value_string ("The start message requires the run number and timestamp as arguments."); 
         }
       } catch (std::runtime_error &er) { 
         std::string msg = exception_msg (er, _help);
@@ -217,7 +222,7 @@ namespace {
         std::string msg = exception_msg ("Unknown exception", _help);
         *retvalP = xmlrpc_c::value_string (msg); 
         mf::LogError ("XMLRPC_Commander") << msg;
-      } 
+      }
   };
 
   class status_: public cmd_ {

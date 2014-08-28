@@ -33,14 +33,16 @@ bool artdaq::BoardReaderApp::do_initialize(fhicl::ParameterSet const& pset)
   return external_request_status_;
 }
 
-bool artdaq::BoardReaderApp::do_start(art::RunID id)
+bool artdaq::BoardReaderApp::do_start(art::RunID id, uint64_t timestamp)
 {
   report_string_ = "";
-  external_request_status_ = fragment_receiver_ptr_->start(id);
+  external_request_status_ = fragment_receiver_ptr_->start(id, timestamp);
   if (! external_request_status_) {
     report_string_ = "Error starting the BoardReaderCore for run ";
     report_string_.append("number ");
     report_string_.append(boost::lexical_cast<std::string>(id.run()));
+    report_string_.append(", timestamp ");
+    report_string_.append(boost::lexical_cast<std::string>(timestamp));
     report_string_.append(".");
   }
 

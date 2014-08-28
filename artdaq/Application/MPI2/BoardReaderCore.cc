@@ -153,16 +153,17 @@ bool artdaq::BoardReaderCore::initialize(fhicl::ParameterSet const& pset)
   return true;
 }
 
-bool artdaq::BoardReaderCore::start(art::RunID id)
+bool artdaq::BoardReaderCore::start(art::RunID id, uint64_t timestamp)
 {
   fragment_count_ = 0;
   prev_seq_id_ = 0;
   statsHelper_.resetStatistics();
 
-  generator_ptr_->StartCmd(id.run());
+  generator_ptr_->StartCmd(id.run(), timestamp);
   run_id_ = id;
 
-  mf::LogDebug("BoardReaderCore") << "Started run " << run_id_.run();
+  mf::LogDebug("BoardReaderCore") << "Started run " << run_id_.run() << 
+    ", timestamp = " << timestamp << std::endl;
   return true;
 }
 

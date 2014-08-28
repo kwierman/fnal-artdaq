@@ -23,7 +23,7 @@ public:
 
   // these methods define the externally available commands
   bool initialize(fhicl::ParameterSet const&);
-  bool start(art::RunID);
+  bool start(art::RunID id, uint64_t timestamp);
   bool stop();
   bool pause();
   bool resume();
@@ -48,7 +48,7 @@ public:
 
   // these methods provide the operations that are used by the state machine
   virtual bool do_initialize(fhicl::ParameterSet const&);
-  virtual bool do_start(art::RunID);
+  virtual bool do_start(art::RunID, uint64_t);
   virtual bool do_stop();
   virtual bool do_pause();
   virtual bool do_resume();

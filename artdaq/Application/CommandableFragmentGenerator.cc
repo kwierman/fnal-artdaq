@@ -2,9 +2,12 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "tracelib.h"		// TRACE
 
+#include <limits>
+
 artdaq::CommandableFragmentGenerator::CommandableFragmentGenerator() :
   mutex_(),
   run_number_(-1), subrun_number_(-1),
+  timestamp_( std::numeric_limits<uint64_t>::max() ), 
   should_stop_(false), exception_(false),
   ev_counter_(1),
   board_id_(-1), 
@@ -16,6 +19,7 @@ artdaq::CommandableFragmentGenerator::CommandableFragmentGenerator() :
 artdaq::CommandableFragmentGenerator::CommandableFragmentGenerator(const fhicl::ParameterSet &ps) :
   mutex_(),
   run_number_(-1), subrun_number_(-1),
+  timestamp_( std::numeric_limits<uint64_t>::max() ), 
   should_stop_(false), exception_(false),
   ev_counter_(1),
   board_id_(-1), 
@@ -77,10 +81,11 @@ int artdaq::CommandableFragmentGenerator::fragment_id () const {
   }
 }
 
-void artdaq::CommandableFragmentGenerator::StartCmd(int run) {
+void artdaq::CommandableFragmentGenerator::StartCmd(int run, uint64_t timestamp) {
 
   if (run < 0) throw cet::exception("CommandableFragmentGenerator") << "negative run number";
 
+  timestamp_ = timestamp;
   ev_counter_.store (1);
   should_stop_.store (false);
   exception_.store(false);
