@@ -8,6 +8,7 @@
 #include "cetlib/container_algorithms.h"
 #include "cetlib/exception.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
+#include "trace.h"		// TRACE
 
 const size_t artdaq::RHandles::RECV_TIMEOUT = 0xfedcba98;
 
@@ -63,7 +64,7 @@ recvFragment(Fragment & output, size_t timeout_usec)
   if (!anySourceActive()) {
     return MPI_ANY_SOURCE; // Nothing to do.
   }
-  // Debug << "recv entered" << flusher;
+  TRACE( 6,"recvFragment entered tmo=%lu us",timeout_usec  );
   RecvMeas rm;
   int wait_result;
   int which;
@@ -120,6 +121,7 @@ recvFragment(Fragment & output, size_t timeout_usec)
   else {
     wait_result = MPI_Waitany(buffer_count_, &reqs_[0], &which, &status);
   }
+  TRACE( 8, "recvFragment recvd" );
 
   size_t src_index(indexFromSource_(status.MPI_SOURCE));
   int rank;
@@ -159,11 +161,17 @@ recvFragment(Fragment & output, size_t timeout_usec)
   }
   // The Fragment at index 'which' is now available.
   // Resize (down) to size to remove trailing garbage.
+  TRACE( 7, "recvFragment before autoResize/swap" );
   payload_[which].autoResize();
   output.swap(payload_[which]);
+  TRACE( 7, "recvFragment after autoResize/swap seqID=%lu. "
+	"Reset our buffer. max=%d adr=%p"
+	, output.sequenceID(), max_payload_size_, (void*)output.headerAddress() );
   // Reset our buffer.
   Fragment tmp(max_payload_size_);
+  TRACE( 7, "recvFragment before payload_[which].swap(tmp) adr=%p", (void*)tmp.headerAddress() );
   payload_[which].swap(tmp);
+  TRACE( 7, "recvFragment after payload_[which].swap(tmp)" );
   // Performance measurement.
   rm.woke(sequence_id, which);
   // Fragment accounting.

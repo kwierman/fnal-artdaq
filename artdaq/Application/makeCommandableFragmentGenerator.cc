@@ -1,43 +1,15 @@
 #include "artdaq/Application/makeCommandableFragmentGenerator.hh"
 
-#include "art/Utilities/LibraryManager.h"
-#include "art/Utilities/Exception.h"
 #include "artdaq/Application/GeneratorMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
+#include "cetlib/BasicPluginFactory.h"
 
 std::unique_ptr<artdaq::CommandableFragmentGenerator>
 artdaq::makeCommandableFragmentGenerator(std::string const & generator_plugin_spec,
                               fhicl::ParameterSet const & ps)
 {
-  static art::LibraryManager lm("generator");
-  artdaq::makeFunc_t *makeFunc (nullptr);
-  try {
-    lm.getSymbolByLibspec(generator_plugin_spec,
-                          "make",
-                          makeFunc);
-  }
-  catch (art::Exception & e) {
-    // FIXME: this is mostly the contents of
-    // art::detail::wrapLibraryManagerException, excpt that we can't use
-    // that for linkage reasons.
-    if (e.categoryCode() == art::errors::LogicError) {
-      // Rethrow.
-      throw;
-    } else {
-      // Wrap and throw.
-      throw art::Exception(art::errors::Configuration,
-                           "Unknown generator",
-                           e)
-        << "Generator " << generator_plugin_spec
-        << " was not registered.\n"
-        << "Perhaps your generator type was misspelled or is not a framework plugin.";
-    }
-  }
-  if (makeFunc == nullptr) {
-    throw art::Exception(art::errors::Configuration, "BadPluginLibrary")
-      << "Generator "
-      << generator_plugin_spec
-      << " has internal symbol definition problems: consult an expert.";
-  }
-  return makeFunc(ps);
+  static cet::BasicPluginFactory bpf("generator", "make");
+
+  return bpf.makePlugin<std::unique_ptr<artdaq::CommandableFragmentGenerator>,
+    fhicl::ParameterSet const &>(generator_plugin_spec, ps);
 }

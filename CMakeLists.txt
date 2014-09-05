@@ -29,35 +29,31 @@ set(CMAKE_MODULE_PATH $ENV{ART_DIR}/Modules
 include(CetCMakeEnv)
 cet_cmake_env()
 
-# -D_GLIBCXX_USE_NANOSLEEP is needed to make std::this_thread::sleep_for available.
 cet_set_compiler_flags(DIAGS VIGILANT
   WERROR
   NO_UNDEFINED
   EXTRA_FLAGS -pedantic
-  EXTRA_CXX_FLAGS -std=c++11  -D_GLIBCXX_USE_NANOSLEEP
 )
 
 cet_report_compiler_flags()
 
 # these are minimum required versions, not the actual product versions
 find_ups_product( art v1_08_10 )
-find_ups_product( artdaq_core v1_00_01 )
-find_ups_product( cetbuildtools v3_07_03 )
+find_ups_product( artdaq_core v1_03_01 )
+find_ups_product( cetbuildtools v4_01_03 )
 find_ups_product( messagefacility v1_10_00 )
 find_ups_product( xmlrpc_c v1_25_18 )
 find_ups_product( TRACE v3_03_00 )
 
-cet_check_gcc()
+# Include at the top level to make sure include directory is visible
+# everywhere.
+include(ProcessSmc)
 
-# include search path
-# notice use of ENV to invoke an external variable
-include_directories ( $ENV{LIBSIGCPP_INC}/sigc++-2.0 )
-include_directories ( $ENV{LIBSIGCPP_LIB}/sigc++-2.0/include )
-include_directories ( $ENV{SMC_HOME}/lib/C++ )
-
-#  Find all the libraries needed by our dependent CMakeList.txt files
-find_library( CPPUNIT NAMES cppunit   PATHS $ENV{CPPUNIT_LIB}   NO_DEFAULT_PATH )
-find_library( SIGC    NAMES sigc-2.0  PATHS $ENV{LIBSIGCPP_LIB} NO_DEFAULT_PATH )
+check_ups_version(art "$ENV{ART_VERSION}" v1_11_00 PRODUCT_OLDER_VAR have_old_art)
+if (have_old_art)
+  cmake_policy(SET CMP0046 OLD)
+endif()
+unset(have_old_art)
 
 find_library( XMLRPC_SERVER_ABYSSPP NAMES xmlrpc_server_abyss++ PATHS $ENV{XMLRPC_C_LIBRARY} )
 find_library( XMLRPC_SERVER_ABYSS NAMES xmlrpc_server_abyss PATHS $ENV{XMLRPC_C_LIBRARY} )

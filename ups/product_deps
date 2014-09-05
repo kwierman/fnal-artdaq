@@ -1,7 +1,7 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent artdaq	v1_10_00
-defaultqual	e5:ib
+parent artdaq	v1_12_00
+defaultqual	e5:s4:ib
 
 # These optional lines define the installed directories where
 # headers, libraries, and executables will be found
@@ -17,34 +17,47 @@ bindir      fq_dir      bin
 
 #
 product			version		optional
-gcc			v4_8_2
-artdaq_core 		v1_01_01
+artdaq_core 		v1_04_00
 mvapich2		v1_9_0
 mpich			v3_1
 xmlrpc_c		v1_25_28
 TRACE			v3_03_03
+cetbuildtools		v4_01_04	-	only_for_build
+smc_compiler		v6_1_0		-	only_for_build
+end_product_list
 
-# list products required ONLY for the build
-# any products here must NOT have qualifiers
-only_for_build	cetbuildtools	v3_13_00
-only_for_build	smc_compiler	v6_1_0
 
-# e5  - with gcc 4.8.2 and -std=c++11
+# e5 - with gcc 4.8.2 and -std=c++11
+# s3 - with art v1_10_00b
+# s4 - with art v1_11_02
 # -nq- means there is no qualifier
 # a - means the dependent product is not required by the parent and will not be setup
-qualifier		artdaq_core		mvapich2	mpich		xmlrpc_c	gcc	TRACE	notes
-e5:ib:debug		e5:debug		-nq-		-		e5:debug	-nq-	-nq-	-std=c++11
-e5:ib:prof		e5:prof			-nq-		-		e5:prof		-nq-	-nq-	-std=c++11
-nu:e5:ib:debug		nu:e5:debug		-nq-		-		e5:debug	-nq-	-nq-	-std=c++11
-nu:e5:ib:prof		nu:e5:prof		-nq-		-		e5:prof		-nq-	-nq-	-std=c++11
-mu2e:e5:ib:debug	mu2e:e5:debug		-nq-		-		e5:debug	-nq-	-nq-	-std=c++11
-mu2e:e5:ib:prof		mu2e:e5:prof		-nq-		-		e5:prof		-nq-	-nq-	-std=c++11
-e5:eth:debug		e5:debug		-		e5:debug	e5:debug	-nq-	-nq-	-std=c++11
-e5:eth:prof		e5:prof			-		e5:prof		e5:prof		-nq-	-nq-	-std=c++11
-nu:e5:eth:debug		nu:e5:debug		-		e5:debug	e5:debug	-nq-	-nq-	-std=c++11
-nu:e5:eth:prof		nu:e5:prof		-		e5:prof		e5:prof		-nq-	-nq-	-std=c++11
-mu2e:e5:eth:debug	mu2e:e5:debug		-		e5:debug	e5:debug	-nq-	-nq-	-std=c++11
-mu2e:e5:eth:prof	mu2e:e5:prof		-		e5:prof		e5:prof		-nq-	-nq-	-std=c++11
+qualifier		artdaq_core		mvapich2	mpich		xmlrpc_c	TRACE	notes
+e5:ib:debug		e5:s3:debug		-nq-		-		e5:debug	-nq-	-std=c++11
+e5:ib:prof		e5:s3:prof		-nq-		-		e5:prof		-nq-	-std=c++11
+nu:e5:ib:debug		nu:e5:s3:debug		-nq-		-		e5:debug	-nq-	-std=c++11
+nu:e5:ib:prof		nu:e5:s3:prof		-nq-		-		e5:prof		-nq-	-std=c++11
+mu2e:e5:ib:debug	mu2e:e5:s3:debug	-nq-		-		e5:debug	-nq-	-std=c++11
+mu2e:e5:ib:prof		mu2e:e5:s3:prof		-nq-		-		e5:prof		-nq-	-std=c++11
+e5:eth:debug		e5:s3:debug		-		e5:debug	e5:debug	-nq-	-std=c++11
+e5:eth:prof		e5:s3:prof		-		e5:prof		e5:prof		-nq-	-std=c++11
+nu:e5:eth:debug		nu:e5:s3:debug		-		e5:debug	e5:debug	-nq-	-std=c++11
+nu:e5:eth:prof		nu:e5:s3:prof		-		e5:prof		e5:prof		-nq-	-std=c++11
+mu2e:e5:eth:debug	mu2e:e5:s3:debug	-		e5:debug	e5:debug	-nq-	-std=c++11
+mu2e:e5:eth:prof	mu2e:e5:s3:prof		-		e5:prof		e5:prof		-nq-	-std=c++11
+e5:s4:ib:debug		e5:s4:debug		-nq-		-		e5:debug	-nq-	-std=c++11
+e5:s4:ib:prof		e5:s4:prof		-nq-		-		e5:prof		-nq-	-std=c++11
+nu:e5:s4:ib:debug	nu:e5:s4:debug		-nq-		-		e5:debug	-nq-	-std=c++11
+nu:e5:s4:ib:prof	nu:e5:s4:prof		-nq-		-		e5:prof		-nq-	-std=c++11
+mu2e:e5:s4:ib:debug	mu2e:e5:s4:debug	-nq-		-		e5:debug	-nq-	-std=c++11
+mu2e:e5:s4:ib:prof	mu2e:e5:s4:prof		-nq-		-		e5:prof		-nq-	-std=c++11
+e5:s4:eth:debug		e5:s4:debug		-		e5:debug	e5:debug	-nq-	-std=c++11
+e5:s4:eth:prof		e5:s4:prof		-		e5:prof		e5:prof		-nq-	-std=c++11
+nu:e5:s4:eth:debug	nu:e5:s4:debug		-		e5:debug	e5:debug	-nq-	-std=c++11
+nu:e5:s4:eth:prof	nu:e5:s4:prof		-		e5:prof		e5:prof		-nq-	-std=c++11
+mu2e:e5:s4:eth:debug	mu2e:e5:s4:debug	-		e5:debug	e5:debug	-nq-	-std=c++11
+mu2e:e5:s4:eth:prof	mu2e:e5:s4:prof		-		e5:prof		e5:prof		-nq-	-std=c++11
+end_qualifier_list
 
 # Preserve tabs and formatting in emacs and vi / vim:
 

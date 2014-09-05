@@ -6,6 +6,7 @@
 #include "artdaq/DAQrate/Utils.hh"
 #include "artdaq-core/Data/Fragment.hh"
 #include "cetlib/exception.h"
+#include "trace.h"		// TRACE
 
 #include <algorithm>
 
@@ -125,6 +126,7 @@ sendFragTo(Fragment && frag, size_t dest)
   sm.found(frag.sequenceID(), buffer_idx, dest);
   Fragment & curfrag = payload_[buffer_idx];
   curfrag = std::move(frag);
+  TRACE( 5, "sendFragTo before send dest=%lu seqID=%lu", dest, curfrag.sequenceID() );
   if (! synchronous_sends_) {
     MPI_Isend(&*curfrag.headerBegin(),
               curfrag.size() * sizeof(Fragment::value_type),
@@ -142,6 +144,7 @@ sendFragTo(Fragment && frag, size_t dest)
              MPITag::FINAL,
              MPI_COMM_WORLD );
   }
+  TRACE( 5, "sendFragTo COMPLETE" );
   Debug << "send COMPLETE: "
         << " buffer_idx=" << buffer_idx
         << " send_size=" << curfrag.size()
