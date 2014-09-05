@@ -12,12 +12,13 @@
 
 #define SND_BUFFER_COUNT 10
 #define RCV_BUFFER_COUNT SND_BUFFER_COUNT /* snd/rcv may be different */
-#define MAX_PAYLOAD_SIZE 0x100000
+#define MAX_PAYLOAD_SIZE 0x100000-artdaq::detail::RawFragmentHeader::num_words()
 
 void do_sending(  int my_rank, int num_senders, int num_receivers
 		, int sends_each_sender )
 {
-    TRACE( 7, "do_sending entered" );
+    TRACE( 7, "do_sending entered RawFragmentHeader::num_words()=%lu"
+	  , artdaq::detail::RawFragmentHeader::num_words() );
     artdaq::SHandles sender(  SND_BUFFER_COUNT, MAX_PAYLOAD_SIZE
 			    , num_receivers // dest_count
 			    , num_senders // dest_start
