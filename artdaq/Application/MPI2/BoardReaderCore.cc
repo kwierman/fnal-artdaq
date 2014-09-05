@@ -43,7 +43,7 @@ artdaq::BoardReaderCore::~BoardReaderCore()
 /**
  * Processes the initialize request.
  */
-bool artdaq::BoardReaderCore::initialize(fhicl::ParameterSet const& pset)
+bool artdaq::BoardReaderCore::initialize(fhicl::ParameterSet const& pset, uint64_t, uint64_t )
 {
   mf::LogDebug("BoardReaderCore") << "initialize method called with "
                                    << "ParameterSet = \"" << pset.to_string()
@@ -167,38 +167,38 @@ bool artdaq::BoardReaderCore::start(art::RunID id, uint64_t timeout, uint64_t ti
   return true;
 }
 
-bool artdaq::BoardReaderCore::stop()
+bool artdaq::BoardReaderCore::stop(uint64_t timeout, uint64_t timestamp)
 {
   mf::LogDebug("BoardReaderCore") << "Stopping run " << run_id_.run()
                                    << " after " << fragment_count_
                                    << " fragments.";
-  generator_ptr_->StopCmd();
+  generator_ptr_->StopCmd(timeout, timestamp);
   return true;
 }
 
-bool artdaq::BoardReaderCore::pause()
+bool artdaq::BoardReaderCore::pause(uint64_t timeout, uint64_t timestamp)
 {
   mf::LogDebug("BoardReaderCore") << "Pausing run " << run_id_.run()
                                    << " after " << fragment_count_
                                    << " fragments.";
-  generator_ptr_->PauseCmd();
+  generator_ptr_->PauseCmd(timeout, timestamp);
   return true;
 }
 
-bool artdaq::BoardReaderCore::resume()
+bool artdaq::BoardReaderCore::resume(uint64_t timeout, uint64_t timestamp)
 {
   mf::LogDebug("BoardReaderCore") << "Resuming run " << run_id_.run();
-  generator_ptr_->ResumeCmd();
+  generator_ptr_->ResumeCmd(timeout, timestamp);
   return true;
 }
 
-bool artdaq::BoardReaderCore::shutdown()
+bool artdaq::BoardReaderCore::shutdown(uint64_t )
 {
   generator_ptr_.reset(nullptr);
   return true;
 }
 
-bool artdaq::BoardReaderCore::soft_initialize(fhicl::ParameterSet const& pset)
+bool artdaq::BoardReaderCore::soft_initialize(fhicl::ParameterSet const& pset, uint64_t, uint64_t)
 {
   mf::LogDebug("BoardReaderCore") << "soft_initialize method called with "
                                    << "ParameterSet = \"" << pset.to_string()
@@ -206,7 +206,7 @@ bool artdaq::BoardReaderCore::soft_initialize(fhicl::ParameterSet const& pset)
   return true;
 }
 
-bool artdaq::BoardReaderCore::reinitialize(fhicl::ParameterSet const& pset)
+bool artdaq::BoardReaderCore::reinitialize(fhicl::ParameterSet const& pset, uint64_t, uint64_t)
 {
   mf::LogDebug("BoardReaderCore") << "reinitialize method called with "
                                    << "ParameterSet = \"" << pset.to_string()

@@ -54,7 +54,7 @@ void artdaq::CompositeDriver::stop()
 {
   std::vector<std::unique_ptr<CommandableFragmentGenerator>>::reverse_iterator riter;
   for (riter = generator_list_.rbegin(); riter != generator_list_.rend(); ++riter) {
-    (*riter)->StopCmd();
+    (*riter)->StopCmd( timeout(), timestamp() );
   }
 }
 
@@ -62,7 +62,7 @@ void artdaq::CompositeDriver::pause()
 {
   std::vector<std::unique_ptr<CommandableFragmentGenerator>>::reverse_iterator riter;
   for (riter = generator_list_.rbegin(); riter != generator_list_.rend(); ++riter) {
-    (*riter)->PauseCmd();
+    (*riter)->PauseCmd( timeout(), timestamp() );
   }
 }
 
@@ -72,7 +72,7 @@ void artdaq::CompositeDriver::resume()
     generator_active_list_[idx] = true;
   }
   for (auto& generator : generator_list_) {
-    generator->ResumeCmd();
+    generator->ResumeCmd( timeout(), timestamp() );
   }
 }
 

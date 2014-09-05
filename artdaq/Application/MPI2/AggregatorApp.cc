@@ -16,7 +16,7 @@ artdaq::AggregatorApp::AggregatorApp(int mpi_rank, MPI_Comm local_group_comm) :
 // *** The following methods implement the state machine operations.
 // *******************************************************************
 
-bool artdaq::AggregatorApp::do_initialize(fhicl::ParameterSet const& pset)
+bool artdaq::AggregatorApp::do_initialize(fhicl::ParameterSet const& pset, uint64_t, uint64_t)
 {
   report_string_ = "";
 
@@ -33,7 +33,7 @@ bool artdaq::AggregatorApp::do_initialize(fhicl::ParameterSet const& pset)
   return external_request_status_;
 }
 
-bool artdaq::AggregatorApp::do_start(art::RunID id, uint64_t timeout, uint64_t timestamp)
+bool artdaq::AggregatorApp::do_start(art::RunID id, uint64_t, uint64_t )
 {
   report_string_ = "";
   external_request_status_ = aggregator_ptr_->start(id);
@@ -41,10 +41,6 @@ bool artdaq::AggregatorApp::do_start(art::RunID id, uint64_t timeout, uint64_t t
     report_string_ = "Error starting the AggregatorCore for run ";
     report_string_.append("number ");
     report_string_.append(boost::lexical_cast<std::string>(id.run()));
-    report_string_.append(", timeout ");
-    report_string_.append(boost::lexical_cast<std::string>(timeout));
-    report_string_.append(", timestamp ");
-    report_string_.append(boost::lexical_cast<std::string>(timestamp));
     report_string_.append(".");
   }
 
@@ -56,7 +52,7 @@ bool artdaq::AggregatorApp::do_start(art::RunID id, uint64_t timeout, uint64_t t
 
 }
 
-bool artdaq::AggregatorApp::do_stop()
+bool artdaq::AggregatorApp::do_stop(uint64_t, uint64_t)
 {
   report_string_ = "";
   external_request_status_ = aggregator_ptr_->stop();
@@ -70,7 +66,7 @@ bool artdaq::AggregatorApp::do_stop()
   return external_request_status_;
 }
 
-bool artdaq::AggregatorApp::do_pause()
+bool artdaq::AggregatorApp::do_pause(uint64_t, uint64_t)
 {
   report_string_ = "";
   external_request_status_ = aggregator_ptr_->pause();
@@ -84,7 +80,7 @@ bool artdaq::AggregatorApp::do_pause()
   return external_request_status_;
 }
 
-bool artdaq::AggregatorApp::do_resume()
+bool artdaq::AggregatorApp::do_resume(uint64_t, uint64_t)
 {
   report_string_ = "";
   external_request_status_ = aggregator_ptr_->resume();
@@ -99,7 +95,7 @@ bool artdaq::AggregatorApp::do_resume()
   return external_request_status_;
 }
 
-bool artdaq::AggregatorApp::do_shutdown()
+bool artdaq::AggregatorApp::do_shutdown(uint64_t )
 {
   report_string_ = "";
   external_request_status_ = aggregator_ptr_->shutdown();
@@ -110,12 +106,12 @@ bool artdaq::AggregatorApp::do_shutdown()
   return external_request_status_;
 }
 
-bool artdaq::AggregatorApp::do_soft_initialize(fhicl::ParameterSet const&)
+bool artdaq::AggregatorApp::do_soft_initialize(fhicl::ParameterSet const& , uint64_t, uint64_t )
 {
   return true;
 }
 
-bool artdaq::AggregatorApp::do_reinitialize(fhicl::ParameterSet const&)
+bool artdaq::AggregatorApp::do_reinitialize(fhicl::ParameterSet const& , uint64_t, uint64_t )
 {
   return true;
 }

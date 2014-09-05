@@ -87,16 +87,19 @@ namespace artdaq {
     // After a call to stop(), getNext() will eventually return
     // false. This may not happen for several calls, if the
     // implementation has data to be 'drained' from the system.
-    virtual void StopCmd() final;
+    virtual void StopCmd(uint64_t timeout = std::numeric_limits<uint64_t>::max(), 
+			 uint64_t timestamp = std::numeric_limits<uint64_t>::max()) final;
 
     // A call to pause() is advisory. It is an indication that the
     // BoardReader should stop the incoming flow of data, if it can
     // do so.
-    virtual void PauseCmd() final;
+    virtual void PauseCmd(uint64_t timeout = std::numeric_limits<uint64_t>::max(), 
+			  uint64_t timestamp = std::numeric_limits<uint64_t>::max()) final;
 
     // After a call to resume(), the next Fragments returned from
     // getNext() will be part of a new SubRun.
-    virtual void ResumeCmd() final;
+    virtual void ResumeCmd(uint64_t timeout = std::numeric_limits<uint64_t>::max(), 
+			   uint64_t timestamp = std::numeric_limits<uint64_t>::max()) final;
 
     virtual std::string ReportCmd() final;
 

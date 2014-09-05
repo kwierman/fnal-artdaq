@@ -13,7 +13,7 @@ artdaq::BoardReaderApp::BoardReaderApp(MPI_Comm local_group_comm) :
 // *** The following methods implement the state machine operations.
 // *******************************************************************
 
-bool artdaq::BoardReaderApp::do_initialize(fhicl::ParameterSet const& pset)
+bool artdaq::BoardReaderApp::do_initialize(fhicl::ParameterSet const& pset, uint64_t timeout, uint64_t timestamp)
 {
   report_string_ = "";
   external_request_status_ = true;
@@ -24,7 +24,7 @@ bool artdaq::BoardReaderApp::do_initialize(fhicl::ParameterSet const& pset)
   // then deletes the old one, and we need the opposite order.
   fragment_receiver_ptr_.reset(nullptr);
   fragment_receiver_ptr_.reset(new BoardReaderCore(local_group_comm_));
-  external_request_status_ = fragment_receiver_ptr_->initialize(pset);
+  external_request_status_ = fragment_receiver_ptr_->initialize(pset, timeout, timestamp);
   if (! external_request_status_) {
     report_string_ = "Error initializing the BoardReaderCore with ";
     report_string_.append("ParameterSet = \"" + pset.to_string() + "\".");
@@ -55,10 +55,10 @@ bool artdaq::BoardReaderApp::do_start(art::RunID id, uint64_t timeout, uint64_t 
   return external_request_status_;
 }
 
-bool artdaq::BoardReaderApp::do_stop()
+bool artdaq::BoardReaderApp::do_stop(uint64_t timeout, uint64_t timestamp)
 {
   report_string_ = "";
-  external_request_status_ = fragment_receiver_ptr_->stop();
+  external_request_status_ = fragment_receiver_ptr_->stop(timeout, timestamp);
   if (! external_request_status_) {
     report_string_ = "Error stopping the BoardReaderCore.";
     return false;
@@ -66,7 +66,7 @@ bool artdaq::BoardReaderApp::do_stop()
 
   if (fragment_processing_future_.valid()) {
     int number_of_fragments_sent = fragment_processing_future_.get();
-    mf::LogDebug("BoardReaderApp::do_stop()")
+    mf::LogDebug("BoardReaderApp::do_stop(uint64_t, uint64_t)")
       << "Number of fragments sent = " << number_of_fragments_sent
       << ".";
   }
@@ -74,17 +74,17 @@ bool artdaq::BoardReaderApp::do_stop()
   return external_request_status_;
 }
 
-bool artdaq::BoardReaderApp::do_pause()
+bool artdaq::BoardReaderApp::do_pause(uint64_t timeout, uint64_t timestamp)
 {
   report_string_ = "";
-  external_request_status_ = fragment_receiver_ptr_->pause();
+  external_request_status_ = fragment_receiver_ptr_->pause(timeout, timestamp);
   if (! external_request_status_) {
     report_string_ = "Error pausing the BoardReaderCore.";
   }
 
   if (fragment_processing_future_.valid()) {
     int number_of_fragments_sent = fragment_processing_future_.get();
-    mf::LogDebug("BoardReaderApp::do_pause()")
+    mf::LogDebug("BoardReaderApp::do_pause(uint64_t, uint64_t)")
       << "Number of fragments sent = " << number_of_fragments_sent
       << ".";
   }
@@ -92,10 +92,10 @@ bool artdaq::BoardReaderApp::do_pause()
   return external_request_status_;
 }
 
-bool artdaq::BoardReaderApp::do_resume()
+bool artdaq::BoardReaderApp::do_resume(uint64_t timeout, uint64_t timestamp)
 {
   report_string_ = "";
-  external_request_status_ = fragment_receiver_ptr_->resume();
+  external_request_status_ = fragment_receiver_ptr_->resume(timeout, timestamp);
   if (! external_request_status_) {
     report_string_ = "Error resuming the BoardReaderCore.";
   }
@@ -107,20 +107,20 @@ bool artdaq::BoardReaderApp::do_resume()
   return external_request_status_;
 }
 
-bool artdaq::BoardReaderApp::do_shutdown()
+bool artdaq::BoardReaderApp::do_shutdown(uint64_t timeout )
 {
   report_string_ = "";
-  external_request_status_ = fragment_receiver_ptr_->shutdown();
+  external_request_status_ = fragment_receiver_ptr_->shutdown(timeout);
   if (! external_request_status_) {
     report_string_ = "Error shutting down the BoardReaderCore.";
   }
   return external_request_status_;
 }
 
-bool artdaq::BoardReaderApp::do_soft_initialize(fhicl::ParameterSet const& pset)
+bool artdaq::BoardReaderApp::do_soft_initialize(fhicl::ParameterSet const& pset, uint64_t timeout, uint64_t timestamp)
 {
   report_string_ = "";
-  external_request_status_ = fragment_receiver_ptr_->soft_initialize(pset);
+  external_request_status_ = fragment_receiver_ptr_->soft_initialize(pset, timeout, timestamp);
   if (! external_request_status_) {
     report_string_ = "Error soft-initializing the BoardReaderCore with ";
     report_string_.append("ParameterSet = \"" + pset.to_string() + "\".");
@@ -128,9 +128,9 @@ bool artdaq::BoardReaderApp::do_soft_initialize(fhicl::ParameterSet const& pset)
   return external_request_status_;
 }
 
-bool artdaq::BoardReaderApp::do_reinitialize(fhicl::ParameterSet const& pset)
+bool artdaq::BoardReaderApp::do_reinitialize(fhicl::ParameterSet const& pset, uint64_t timeout, uint64_t timestamp)
 {
-  external_request_status_ = fragment_receiver_ptr_->reinitialize(pset);
+  external_request_status_ = fragment_receiver_ptr_->reinitialize(pset, timeout, timestamp);
   if (! external_request_status_) {
     report_string_ = "Error reinitializing the BoardReaderCore with ";
     report_string_.append("ParameterSet = \"" + pset.to_string() + "\".");

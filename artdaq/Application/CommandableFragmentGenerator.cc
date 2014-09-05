@@ -99,21 +99,32 @@ void artdaq::CommandableFragmentGenerator::StartCmd(int run, uint64_t timeout, u
   start();
 }
 
-void artdaq::CommandableFragmentGenerator::StopCmd() {
+void artdaq::CommandableFragmentGenerator::StopCmd(uint64_t timeout, uint64_t timestamp) {
+
+  timeout_ = timeout;
+  timestamp_ = timestamp;
+
   should_stop_.store (true);
   std::unique_lock<std::mutex> lk(mutex_);
 
   stop();
 }
 
-void artdaq::CommandableFragmentGenerator::PauseCmd() {
+void artdaq::CommandableFragmentGenerator::PauseCmd(uint64_t timeout, uint64_t timestamp) {
+
+  timeout_ = timeout;
+  timestamp_ = timestamp;
+
   should_stop_.store (true);
   std::unique_lock<std::mutex> lk(mutex_);
 
   pause();
 }
 
-void artdaq::CommandableFragmentGenerator::ResumeCmd() {
+void artdaq::CommandableFragmentGenerator::ResumeCmd(uint64_t timeout, uint64_t timestamp) {
+
+  timeout_ = timeout;
+  timestamp_ = timestamp;
 
   subrun_number_ += 1;
   should_stop_ = false; 
