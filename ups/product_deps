@@ -1,6 +1,6 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent artdaq	v1_11_01
+parent artdaq	v1_12_00
 defaultqual	e5:ib
 
 # These optional lines define the installed directories where
@@ -17,18 +17,17 @@ bindir      fq_dir      bin
 
 #
 product			version		optional
-artdaq_core 		v1_03_03
+artdaq_core 		v1_04_00
 mvapich2		v1_9_0
 mpich			v3_1
 xmlrpc_c		v1_25_28
 TRACE			v3_03_03
-cetbuildtools		v4_01_03	-	only_for_build
+cetbuildtools		v4_01_04	-	only_for_build
 smc_compiler		v6_1_0		-	only_for_build
 end_product_list
 
 
 # e5 - with gcc 4.8.2 and -std=c++11
-# e6 - with gcc 4.9.1 and -std=c++1y
 # s3 - with art v1_10_00b
 # s4 - with art v1_11_02
 # -nq- means there is no qualifier
@@ -58,18 +57,6 @@ nu:e5:s4:eth:debug	nu:e5:s4:debug		-		e5:debug	e5:debug	-nq-	-std=c++11
 nu:e5:s4:eth:prof	nu:e5:s4:prof		-		e5:prof		e5:prof		-nq-	-std=c++11
 mu2e:e5:s4:eth:debug	mu2e:e5:s4:debug	-		e5:debug	e5:debug	-nq-	-std=c++11
 mu2e:e5:s4:eth:prof	mu2e:e5:s4:prof		-		e5:prof		e5:prof		-nq-	-std=c++11
-e6:ib:debug		e6:s4:debug		-nq-		-		e6:debug	-nq-	-std=c++11
-e6:ib:prof		e6:s4:prof		-nq-		-		e6:prof		-nq-	-std=c++11
-nu:e6:ib:debug		nu:e6:s4:debug		-nq-		-		e6:debug	-nq-	-std=c++11
-nu:e6:ib:prof		nu:e6:s4:prof		-nq-		-		e6:prof		-nq-	-std=c++11
-mu2e:e6:ib:debug	mu2e:e6:s4:debug	-nq-		-		e6:debug	-nq-	-std=c++11
-mu2e:e6:ib:prof		mu2e:e6:s4:prof		-nq-		-		e6:prof		-nq-	-std=c++11
-e6:eth:debug		e6:s4:debug		-		e6:debug	e6:debug	-nq-	-std=c++11
-e6:eth:prof		e6:s4:prof		-		e6:prof		e6:prof		-nq-	-std=c++11
-nu:e6:eth:debug		nu:e6:s4:debug		-		e6:debug	e6:debug	-nq-	-std=c++11
-nu:e6:eth:prof		nu:e6:s4:prof		-		e6:prof		e6:prof		-nq-	-std=c++11
-mu2e:e6:eth:debug	mu2e:e6:s4:debug	-		e6:debug	e6:debug	-nq-	-std=c++11
-mu2e:e6:eth:prof	mu2e:e6:s4:prof		-		e6:prof		e6:prof		-nq-	-std=c++11
 end_qualifier_list
 
 # Preserve tabs and formatting in emacs and vi / vim:
