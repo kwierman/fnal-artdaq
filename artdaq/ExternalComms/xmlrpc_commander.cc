@@ -53,25 +53,26 @@ namespace {
     return msg;
   }
 
-  class cmd_: public xmlrpc_c::method {
-    public:
-      cmd_ (xmlrpc_commander& c, const std::string& signature, const std::string& description): _c(c) { _signature = signature; _help = description; }
-      void execute (xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const retvalP) {
-	std::unique_lock<std::mutex> lk(_c.mutex_, std::try_to_lock);
-	if (lk.owns_lock ()) execute_ (paramList, retvalP);
-	else *retvalP = xmlrpc_c::value_string ("busy");
-      }
-    protected:
-      xmlrpc_commander& _c;
-      virtual void execute_ (const xmlrpc_c::paramList& paramList, xmlrpc_c::value* const retvalP) = 0;
-  };
+  // JCF, 9/5/14
 
-  class john_: public xmlrpc_c::method {
+  // The "cmd_" class serves as the base class for all artdaq's
+  // XML-RPC commands, all of which use the code in the "execute()"
+  // function; each specific command type deriving from cmd_ is
+  // implemented in the execute_() function which execute() calls
+  // (notice the underscore), and optionally sets the retvalP
+  // parameter
+
+  // cmd_ contains a set of template functions, getParam<T>(), which
+  // are designed to prevent implementors of derived classes from
+  // having to worry about interfacing directly with xmlrpc_c's
+  // parameter-getting functionality
+
+  class cmd_: public xmlrpc_c::method {
 
     public:
 
     // Can't seem to initialize "_signature" and "_help" in the initialization list...
-    john_ (xmlrpc_commander& c, 
+    cmd_ (xmlrpc_commander& c, 
 	   const std::string& signature, 
 	   const std::string& description): 
       _c(c) { _signature = signature; _help = description; }
@@ -80,11 +81,10 @@ namespace {
 
   protected:
 
-    // Can I make this private??
     xmlrpc_commander& _c;
   
     // "execute_" is a wrapper function around the call to the
-    // commandable object's transition function
+    // commandable object's function
 
     virtual bool execute_ (const xmlrpc_c::paramList& , xmlrpc_c::value* const retvalP ) = 0;
 
@@ -98,22 +98,22 @@ namespace {
   // template specializations below this default function
 
   template <typename T>
-  T john_::getParam(const xmlrpc_c::paramList&, int ) {
-    throw cet::exception("john_") << "Error in john_::getParam(): value type not supported" << std::endl;
+  T cmd_::getParam(const xmlrpc_c::paramList&, int ) {
+    throw cet::exception("cmd_") << "Error in cmd_::getParam(): value type not supported" << std::endl;
   }
 
   template <>
-  uint64_t john_::getParam<uint64_t>(const xmlrpc_c::paramList& paramList, int index) {
+  uint64_t cmd_::getParam<uint64_t>(const xmlrpc_c::paramList& paramList, int index) {
     return boost::lexical_cast<uint64_t>(paramList.getInt(index));
   }
 
   template <>
-  std::string john_::getParam<std::string>(const xmlrpc_c::paramList& paramList, int index) {
+  std::string cmd_::getParam<std::string>(const xmlrpc_c::paramList& paramList, int index) {
     return static_cast<std::string>( paramList.getString(index) );
   }
 
   template <>
-  art::RunID john_::getParam<art::RunID>(const xmlrpc_c::paramList& paramList, int index) {
+  art::RunID cmd_::getParam<art::RunID>(const xmlrpc_c::paramList& paramList, int index) {
 
     std::string run_number_string = paramList.getString(index);
     art::RunNumber_t run_number =
@@ -124,7 +124,7 @@ namespace {
   }
 
   template <>
-  fhicl::ParameterSet john_::getParam<fhicl::ParameterSet>(const xmlrpc_c::paramList& paramList, int index) {
+  fhicl::ParameterSet cmd_::getParam<fhicl::ParameterSet>(const xmlrpc_c::paramList& paramList, int index) {
 
     std::string configString = paramList.getString(index);
     fhicl::ParameterSet pset;
@@ -133,29 +133,36 @@ namespace {
     return pset;
   }
 
+  // JCF, 9/5/14
+
   // Here, if getParam throws an exception due to a lack of an
   // existing parameter, swallow the exception and return the
   // default value passed to the function
 
-  // Surpringly, if an invalid index is supplied, although getParam
+  // Surprisingly, if an invalid index is supplied, although getParam
   // throws an exception that exception is neither xmlrpc_c's
-  // girerr:error nor boost::bad_lexical_cast. Although it's less
-  // than ideal, we'll swallow all exceptions in the call to
-  // getParam, as an invalid index value simply means the user wishes to employ the default_value
+  // girerr:error nor boost::bad_lexical_cast. Although it's less than
+  // ideal, we'll swallow almost all exceptions in the call to
+  // getParam, as an invalid index value simply means the user wishes
+  // to employ the default_value. I say "almost" because the only
+  // exception we don't swallow here is if an invalid parameter type
+  // "T" was supplied
 
-  template <typename T> T john_::getParam(const xmlrpc_c::paramList& paramList, int index,
+  template <typename T> T cmd_::getParam(const xmlrpc_c::paramList& paramList, int index,
 					  T default_value ) {
     T val = default_value;
-      
+ 
     try {
       val = getParam<T>(paramList, index);
-    } catch (...) {
+    } catch (const cet::exception& exception) {
+      throw exception;
+    } catch(...) {
     }
     
     return val;
   }
 
-  void john_::execute(const xmlrpc_c::paramList& paramList, xmlrpc_c::value* const retvalP) {
+  void cmd_::execute(const xmlrpc_c::paramList& paramList, xmlrpc_c::value* const retvalP) {
 
     std::unique_lock<std::mutex> lk(_c.mutex_, std::try_to_lock);
     if (lk.owns_lock ()) {
@@ -205,73 +212,51 @@ namespace {
     }
 
   }
-
-  class init_: public john_ {
-
-  public:
-    init_(xmlrpc_commander& c):
-      john_(c, "s:sii", "initialize the program") {}
-
-    static const uint64_t defaultTimeout = 45;
-    static const uint64_t defaultTimestamp = std::numeric_limits<const uint64_t>::max();
-
-  private:
-    bool execute_(const xmlrpc_c::paramList& paramList, xmlrpc_c::value* const  ) {
-
-      std::cout << "In init, passing: " << getParam<fhicl::ParameterSet>(paramList, 0) << ", " \
-		<< getParam<uint64_t>(paramList, 1, defaultTimeout) << ", " \
-		<< getParam<uint64_t>(paramList, 2, defaultTimestamp) << std::endl;
-	
-	
-
-      return _c._commandable.initialize( getParam<fhicl::ParameterSet>(paramList, 0),
-					 getParam<uint64_t>(paramList, 1, defaultTimeout),
-					 getParam<uint64_t>(paramList, 2, defaultTimestamp)
-					 );
-    }
-  };
-
-  class soft_init_: public john_ {
-
-  public:
-    soft_init_ (xmlrpc_commander& c):
-      john_(c, "s:sii", "initialize software components in the program") {}
-
-    static const uint64_t defaultTimeout = 45;
-    static const uint64_t defaultTimestamp = std::numeric_limits<const uint64_t>::max();
-
-  private:
-      bool execute_ (xmlrpc_c::paramList const& paramList, xmlrpc_c::value* const  )  {
-	return _c._commandable.soft_initialize( getParam<fhicl::ParameterSet>(paramList, 0),
-						getParam<uint64_t>(paramList, 1, defaultTimeout),
-						getParam<uint64_t>(paramList, 2, defaultTimestamp)
-						); 
-      }
-  };
-
-  class reinit_: public john_ {
   
-  public:
-      reinit_ (xmlrpc_commander& c):
-        john_(c, "s:sii", "re-initialize the program") {}
 
-    static const uint64_t defaultTimeout = 45;
-    static const uint64_t defaultTimestamp = std::numeric_limits<const uint64_t>::max();
+//////////////////////////////////////////////////////////////////////
 
-  private:
-    bool execute_ (xmlrpc_c::paramList const& paramList, xmlrpc_c::value* const  ) {
-      return _c._commandable.reinitialize(getParam<fhicl::ParameterSet>(paramList, 0),
-					  getParam<uint64_t>(paramList, 1, defaultTimeout),
-					  getParam<uint64_t>(paramList, 2, defaultTimestamp)
-					  );
-    }
+// JCF, 9/5/14
+
+// The three "init" transitions all take a FHiCL parameter list, and
+// optionally a timeout and a timestamp; thus we can kill three birds
+// with one stone in the GENERATE_INIT_TRANSITION macro
+
+#define GENERATE_INIT_TRANSITION(NAME, CALL, DESCRIPTION)			\
+									\
+  class NAME ## _: public cmd_ {				\
+								\
+  public:							\
+  NAME ## _(xmlrpc_commander& c):				\
+  cmd_(c, "s:sii", DESCRIPTION) {}				\
+									\
+  static const uint64_t defaultTimeout = 45;				\
+  static const uint64_t defaultTimestamp = std::numeric_limits<const uint64_t>::max(); \
+									\
+  private:								\
+  bool execute_(const xmlrpc_c::paramList& paramList, xmlrpc_c::value* const  ) { \
+									\
+    return _c._commandable.CALL( getParam<fhicl::ParameterSet>(paramList, 0), \
+				 getParam<uint64_t>(paramList, 1, defaultTimeout), \
+				 getParam<uint64_t>(paramList, 2, defaultTimestamp) \
+				 );					\
+  }									\
   };
+ 
+  GENERATE_INIT_TRANSITION(init, initialize, "initialize the program")
+  GENERATE_INIT_TRANSITION(soft_init, soft_initialize, "initialize software components in the program")
+  GENERATE_INIT_TRANSITION(reinit, reinitialize, "re-initialize the program")
 
-  class start_: public john_ {
+#undef GENERATE_INIT_TRANSITION
+
+//////////////////////////////////////////////////////////////////////
+
+  
+  class start_: public cmd_ {
 
   public:
     start_ (xmlrpc_commander& c):
-      john_(c, "s:iii", "start the run") {}
+      cmd_(c, "s:iii", "start the run") {}
     
     static const uint64_t defaultTimeout = 45;
     static const uint64_t defaultTimestamp = std::numeric_limits<const uint64_t>::max();
@@ -287,11 +272,63 @@ namespace {
     }
   };
 
-  class status_ : public john_ {
+
+//////////////////////////////////////////////////////////////////////
+
+// JCF, 9/5/14
+
+// "pause", "resume" and "stop" all take an optional timeout and
+// timestamp parameter, so we can generate them all with the
+// GENERATE_TIMEOUT_TIMESTAMP_TRANSITION macro
+
+#define GENERATE_TIMEOUT_TIMESTAMP_TRANSITION(NAME, CALL, DESCRIPTION, TIMEOUT)	\
+									\
+  class NAME ## _: public cmd_ {					\
+									\
+public:									\
+ NAME ## _(xmlrpc_commander& c):					\
+ cmd_(c, "s:ii", DESCRIPTION) {}					\
+									\
+ static const uint64_t defaultTimeout = TIMEOUT ;			\
+ static const uint64_t defaultTimestamp = std::numeric_limits<const uint64_t>::max(); \
+									\
+private:								\
+									\
+ bool execute_ (const xmlrpc_c::paramList& paramList , xmlrpc_c::value* const  ) { \
+   return _c._commandable.CALL( getParam<uint64_t>(paramList, 0, defaultTimeout), \
+				getParam<uint64_t>(paramList, 1, defaultTimestamp) \
+				);					\
+ }									\
+  };  
+ 
+  GENERATE_TIMEOUT_TIMESTAMP_TRANSITION(pause, pause, "pause the program", 45)
+  GENERATE_TIMEOUT_TIMESTAMP_TRANSITION(resume, resume, "resume the program", 45)
+  GENERATE_TIMEOUT_TIMESTAMP_TRANSITION(stop, stop, "stop the program", 45)
+
+#undef GENERATE_TIMEOUT_TIMESTAMP_TRANSITION
+
+  
+  class shutdown_: public cmd_ {
+
+  public:
+    shutdown_(xmlrpc_commander& c):
+      cmd_(c, "s:i", "shutdown the program") {}
+
+    static const uint64_t defaultTimeout = 45;
+
+  private:
+    
+    bool execute_ (const xmlrpc_c::paramList& paramList, xmlrpc_c::value* const ) {
+      return _c._commandable.shutdown( getParam<uint64_t>(paramList, 0, defaultTimeout) );
+    }
+  };
+
+  
+  class status_ : public cmd_ {
 
   public:
     status_ (xmlrpc_commander& c):
-      john_(c, "s:s", "report the current state") {}
+      cmd_(c, "s:n", "report the current state") {}
 
   private:
 
@@ -302,25 +339,27 @@ namespace {
     }
   };
 
-  class report_ : public john_ {
+
+  class report_ : public cmd_ {
 
   public:
     report_ (xmlrpc_commander& c):
-      john_(c, "s:s", "report statistics") {}
-
+      cmd_(c, "s:s", "report statistics") {}
+    
   private:
     bool execute_ (xmlrpc_c::paramList const& paramList, xmlrpc_c::value* const retvalP ) {
-
+      
       *retvalP = xmlrpc_c::value_string( _c._commandable.report( getParam<std::string>(paramList, 0) ) );
       return true;
     }
   };
 
-  class reset_stats_ : public john_ {
+
+  class reset_stats_ : public cmd_ {
 
   public:
     reset_stats_ (xmlrpc_commander& c):
-      john_(c, "s:s", "reset statistics") {}
+      cmd_(c, "s:s", "reset statistics") {}
 
   private:
     bool execute_ (xmlrpc_c::paramList const& paramList, xmlrpc_c::value* const  ) {
@@ -329,11 +368,11 @@ namespace {
     }
   };
 
-  class legal_commands_: public john_ {
+  class legal_commands_: public cmd_ {
 
   public:
     legal_commands_ (xmlrpc_commander& c):
-      john_(c, "s:n", "return the currently legal commands") {}
+      cmd_(c, "s:n", "return the currently legal commands") {}
 
   private:
     bool execute_ (xmlrpc_c::paramList const&, xmlrpc_c::value* const retvalP) {
@@ -354,83 +393,11 @@ namespace {
   };
 
 
-  class stop_: public john_ {
-
-  public:
-    stop_(xmlrpc_commander& c):
-      john_(c, "s:ii", "stop the program") {}
-
-    static const uint64_t defaultTimeout = 45;
-    static const uint64_t defaultTimestamp = std::numeric_limits<const uint64_t>::max();
-
-  private:
-
-    bool execute_ (const xmlrpc_c::paramList& paramList , xmlrpc_c::value* const  ) {
-      return _c._commandable.stop( getParam<uint64_t>(paramList, 0, defaultTimeout),
-				   getParam<uint64_t>(paramList, 1, defaultTimestamp)
-				   );
-    }
-  };
-
-
-
-  class pause_: public john_ {
-
-  public:
-    pause_(xmlrpc_commander& c):
-      john_(c, "s:ii", "pause the program") {}
-
-    static const uint64_t defaultTimeout = 45;
-    static const uint64_t defaultTimestamp = std::numeric_limits<const uint64_t>::max();
-
-  private:
-
-    bool execute_ (const xmlrpc_c::paramList& paramList, xmlrpc_c::value* const  ) {
-      return _c._commandable.pause( getParam<uint64_t>(paramList, 0, defaultTimeout),
-				   getParam<uint64_t>(paramList, 1, defaultTimestamp)
-				   );
-    }
-  };
-
-
-  class resume_: public john_ {
-
-  public:
-    resume_(xmlrpc_commander& c):
-      john_(c, "s:ii", "resume the program") {}
-
-    static const uint64_t defaultTimeout = 45;
-    static const uint64_t defaultTimestamp = std::numeric_limits<const uint64_t>::max();
-
-  private:
-
-    bool execute_ (const xmlrpc_c::paramList& paramList, xmlrpc_c::value* const  ) {
-      return _c._commandable.resume( getParam<uint64_t>(paramList, 0, defaultTimeout),
-				   getParam<uint64_t>(paramList, 1, defaultTimestamp)
-				   );
-    }
-  };
-
-  class shutdown_: public john_ {
-
-  public:
-    shutdown_(xmlrpc_commander& c):
-      john_(c, "s:i", "shutdown the program") {}
-
-    static const uint64_t defaultTimeout = 45;
-
-  private:
-    
-    bool execute_ (const xmlrpc_c::paramList& paramList, xmlrpc_c::value* const ) {
-      return _c._commandable.shutdown( getParam<uint64_t>(paramList, 0, defaultTimeout) );
-    }
-  };
-
 
 // JCF, 9/4/14
 
 // Not sure if anyone was planning to resurrect this code by changing
-// the preprocessor decision; as such, I'll leave it in...
+// the preprocessor decision; as such, I'll leave it in for now...
 
 #if 0
   class shutdown_: public xmlrpc_c::registry::shutdown {

@@ -80,26 +80,21 @@ namespace artdaq {
     // subrun number 1. Calling start also resets the event number to 1.
     // After a call to start(), and until a call to stop, getNext() will
     // always return true, even if it returns no fragments.
-    virtual void StartCmd(int run, 
-			  uint64_t timeout = std::numeric_limits<uint64_t>::max(), 
-			  uint64_t timestamp = std::numeric_limits<uint64_t>::max()) final;
+    virtual void StartCmd(int run, uint64_t timeout, uint64_t timestamp) final;
 
     // After a call to stop(), getNext() will eventually return
     // false. This may not happen for several calls, if the
     // implementation has data to be 'drained' from the system.
-    virtual void StopCmd(uint64_t timeout = std::numeric_limits<uint64_t>::max(), 
-			 uint64_t timestamp = std::numeric_limits<uint64_t>::max()) final;
+    virtual void StopCmd(uint64_t timeout, uint64_t timestamp) final;
 
     // A call to pause() is advisory. It is an indication that the
     // BoardReader should stop the incoming flow of data, if it can
     // do so.
-    virtual void PauseCmd(uint64_t timeout = std::numeric_limits<uint64_t>::max(), 
-			  uint64_t timestamp = std::numeric_limits<uint64_t>::max()) final;
+    virtual void PauseCmd(uint64_t timeout, uint64_t timestamp) final;
 
     // After a call to resume(), the next Fragments returned from
     // getNext() will be part of a new SubRun.
-    virtual void ResumeCmd(uint64_t timeout = std::numeric_limits<uint64_t>::max(), 
-			   uint64_t timestamp = std::numeric_limits<uint64_t>::max()) final;
+    virtual void ResumeCmd(uint64_t timeout, uint64_t timestamp) final;
 
     virtual std::string ReportCmd() final;
 

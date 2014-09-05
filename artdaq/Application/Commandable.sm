@@ -41,7 +41,6 @@ Default
 
 Booted
 Entry { BootedEnter(); }
-//Exit  { BootedExit(); }
 {
   init(pset: fhicl::ParameterSet const&, timeout: uint64_t, timestamp: uint64_t)  [ctxt.do_initialize(pset, timeout, timestamp)]
       Initialized/push(InitializedMap::Ready)  {}
@@ -50,8 +49,6 @@ Entry { BootedEnter(); }
 }
 
 Initialized
-//Entry { InitializedEnter(); }
-//Exit  { InitializedExit(); }
 {
   init(pset: fhicl::ParameterSet const&, timeout: uint64_t, timestamp: uint64_t)  [ctxt.do_initialize(pset, timeout, timestamp)]
       Initialized/push(InitializedMap::Ready)  {}
@@ -78,8 +75,6 @@ Default
 }
 
 Ready
-//Entry { ReadyEnter(); }
-//Exit  { ReadyExit(); }
 {
   start(id: art::RunID, timeout: uint64_t, timestamp: uint64_t)  [ctxt.do_start(id,timeout, timestamp)]  InRun/push(InRunMap::Running)  {}
   start(id: art::RunID, timeout: uint64_t, timestamp: uint64_t)  nil  {}
@@ -89,21 +84,11 @@ Ready
 }
 
 InRun
-//Entry { InRunEnter(); }
+
 Exit  { InRunExit(); }
 {
   stop(timeout: uint64_t, timestamp: uint64_t)  [ctxt.do_stop(timeout, timestamp)]  Ready  {}
-  //stop  Error  {}
-  //init(pset: fhicl::ParameterSet const&)  [ctxt.do_stop()]  pop(init, pset)  {}
-  //init(pset: fhicl::ParameterSet const&)  Error  {}
-  //shutdown  [ctxt.do_stop()]  pop(shutdown)  {}
-  //shutdown  pop(shutdown)  {}
 }
-
-//Error
-//{
-//  init(pset: fhicl::ParameterSet const&)  pop(init, pset)  {}
-//}
 
 %%
 
@@ -124,18 +109,13 @@ Default
 }
 
 Running
-//Entry { RunningEnter(); }
-//Exit  { RunningExit(); }
 {
   pause(timeout: uint64_t, timestamp: uint64_t)  [ctxt.do_pause(timeout, timestamp)]  Paused  {}
   pause(timeout: uint64_t, timestamp: uint64_t)  nil        {}
-//  stop   pop(stop)  {}
-    stop(timeout: uint64_t, timestamp: uint64_t) pop(stop, timeout, timestamp) {}
+  stop(timeout: uint64_t, timestamp: uint64_t) pop(stop, timeout, timestamp) {}
 }
 
 Paused
-//Entry { PausedEnter(); }
-//Exit  { PausedExit(); }
 {
   resume(timeout: uint64_t, timestamp: uint64_t)  [ctxt.do_resume(timeout, timestamp)]  Running  {}
   resume(timeout: uint64_t, timestamp: uint64_t)  nil        {}
