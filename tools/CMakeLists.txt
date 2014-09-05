@@ -14,7 +14,7 @@ art_make_exec(genToArt
   artdaq_Application_MPI2
   artdaq_DAQrate
   artdaq_DAQdata
-  artdaq_Utilities
+  ${ARTDAQ-CORE_UTILITIES}
   ${ART_FRAMEWORK_ART}
   ${FHICLCPP}
   ${CETLIB}
