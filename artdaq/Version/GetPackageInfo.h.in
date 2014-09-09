@@ -1,0 +1,17 @@
+#ifndef artdaq_Version_GetPackageInfo_h
+#define artdaq_Version_GetPackageInfo_h
+
+#include <string>
+
+namespace artdaq {
+
+  struct PackageInfo {
+
+    static std::string getPackageName() { return "artdaq"; }
+    static std::string getPackageVersion() { return "@version@"; }
+    static std::string getBuildTimestamp() { return "@utcDateTime@"; }
+  };
+
+}
+
+#endif /* artdaq_Version_GetPackageInfo_h */

@@ -9,6 +9,9 @@ string( STRIP ${rawUTCDate} utcDateTime )
 configure_file ( ${CMAKE_CURRENT_SOURCE_DIR}/GetReleaseVersion.cc.in
   ${CMAKE_CURRENT_BINARY_DIR}/GetReleaseVersion.cc @ONLY )
 
+configure_file ( ${CMAKE_CURRENT_SOURCE_DIR}/GetPackageInfo.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/GetPackageInfo.h @ONLY )
+
 art_make_library( LIBRARY_NAME artdaq_Version
                   SOURCE ${CMAKE_CURRENT_BINARY_DIR}/GetReleaseVersion.cc
                  )
