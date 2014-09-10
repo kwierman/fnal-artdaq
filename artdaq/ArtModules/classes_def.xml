@@ -1,4 +1,8 @@
 <lcgdict>
  <class name="std::pair<art::ParentageID, art::Parentage>"/>
  <class name="art::ParentageMap"/>
+ <class name="artdaq::pkginfo"/>
+  <class name="std::vector<artdaq::pkginfo>"/>
+  <class name="art::Wrapper<std::vector<artdaq::pkginfo>>"/>
+
 </lcgdict>

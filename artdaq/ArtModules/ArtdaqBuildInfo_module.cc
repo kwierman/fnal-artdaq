@@ -2,8 +2,14 @@
 
 #include "artdaq/Version/GetPackageInfo.h"
 
+#include <string>
+
 namespace artdaq {
 
-  typedef artdaq::BuildInfo<artdaq::PackageInfo> ArtdaqBuildInfo;
+  //static const char* instanceName = "ArtdaqBuildInfo";
+
+  //  static std::string* instanceName = new std::string( "ArtdaqBuildInfo" );
+  static std::string instanceName = "ArtdaqBuildInfo";
+  typedef artdaq::BuildInfo< &instanceName, artdaq::PackageInfo> ArtdaqBuildInfo;
   DEFINE_ART_MODULE(ArtdaqBuildInfo)
 }
