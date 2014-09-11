@@ -76,7 +76,7 @@ endif()
 simple_plugin(ArtdaqBuildInfo "module"
   artdaq_DAQdata
   artdaq_BuildInfo
-  artdaq-core_Version
+  artdaq-core_BuildInfo
   ${MF_MESSAGELOGGER}
   ${FHICLCPP}
   ${CETLIB}
