@@ -4,7 +4,7 @@
 #include "artdaq/Application/configureMessageFacility.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 #include "artdaq/ExternalComms/xmlrpc_commander.hh"
-#include "artdaq/Version/GetReleaseVersion.h"
+#include "artdaq/BuildInfo/GetReleaseVersion.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "cetlib/exception.h"
 

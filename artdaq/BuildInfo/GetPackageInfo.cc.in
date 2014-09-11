@@ -1,0 +1,12 @@
+#include "artdaq/BuildInfo/GetPackageInfo.h"
+
+#include <string>
+
+namespace artdaq {
+
+  std::string PackageInfo::getPackageName() { return "artdaq"; }
+  std::string PackageInfo::getPackageVersion() { return "@version@"; }
+  std::string PackageInfo::getBuildTimestamp() { return "@utcDateTime@"; }
+
+}
+

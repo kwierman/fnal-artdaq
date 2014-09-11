@@ -1,4 +1,4 @@
-#include "artdaq/Version/GetReleaseVersion.h"
+#include "artdaq/BuildInfo/GetReleaseVersion.h"
 
 namespace artdaq {
 
