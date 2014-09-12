@@ -8,7 +8,7 @@
 #include "artdaq/ExternalComms/xmlrpc_commander.hh"
 #include "artdaq/Application/MPI2/MPISentry.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
-#include "artdaq/BuildInfo/GetReleaseVersion.h"
+#include "artdaq/BuildInfo/GetPackageInfo.h"
 #include "cetlib/exception.h"
 
 int main(int argc, char *argv[])
@@ -61,8 +61,8 @@ int main(int argc, char *argv[])
   }
 
   artdaq::setMsgFacAppName("Aggregator", vm["port"].as<unsigned short> ()); 
-  mf::LogDebug("AggregatorMain") << "artdaq version " << artdaq::getReleaseVersion()
-                                << ", built " << artdaq::getBuildDateTime();
+  mf::LogDebug("AggregatorMain") << "artdaq version " << artdaq::PackageInfo::getPackageVersion()
+				 << ", built " << artdaq::PackageInfo::getBuildTimestamp();
 
   // create the AggregatorApp
   artdaq::AggregatorApp agg_app(mpiSentry->rank(), local_group_comm );

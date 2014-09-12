@@ -4,9 +4,16 @@
 
 namespace artdaq {
 
-  std::string PackageInfo::getPackageName() { return "artdaq"; }
-  std::string PackageInfo::getPackageVersion() { return "@version@"; }
-  std::string PackageInfo::getBuildTimestamp() { return "@utcDateTime@"; }
+  artdaq::PackageBuildInfo PackageInfo::getPackageBuildInfo() {
+
+    artdaq::PackageBuildInfo pkg;
+
+    pkg.setPackageName("artdaq");
+    pkg.setPackageVersion("@version@");
+    pkg.setBuildTimestamp("@utcDateTime@");
+
+    return pkg;
+  }
 
 }
 
