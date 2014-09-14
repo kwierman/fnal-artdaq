@@ -1,10 +1,10 @@
-#include "artdaq/BuildInfo/GetPackageInfo.h"
+#include "artdaq/BuildInfo/GetPackageBuildInfo.hh"
 
 #include <string>
 
 namespace artdaq {
 
-  artdaq::PackageBuildInfo PackageInfo::getPackageBuildInfo() {
+  artdaq::PackageBuildInfo GetPackageBuildInfo::getPackageBuildInfo() {
 
     artdaq::PackageBuildInfo pkg;
 
