@@ -2,9 +2,13 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "tracelib.h"		// TRACE
 
+#include <limits>
+
 artdaq::CommandableFragmentGenerator::CommandableFragmentGenerator() :
   mutex_(),
   run_number_(-1), subrun_number_(-1),
+  timeout_( std::numeric_limits<uint64_t>::max() ), 
+  timestamp_( std::numeric_limits<uint64_t>::max() ), 
   should_stop_(false), exception_(false),
   ev_counter_(1),
   board_id_(-1), 
@@ -16,6 +20,8 @@ artdaq::CommandableFragmentGenerator::CommandableFragmentGenerator() :
 artdaq::CommandableFragmentGenerator::CommandableFragmentGenerator(const fhicl::ParameterSet &ps) :
   mutex_(),
   run_number_(-1), subrun_number_(-1),
+  timeout_( std::numeric_limits<uint64_t>::max() ), 
+  timestamp_( std::numeric_limits<uint64_t>::max() ), 
   should_stop_(false), exception_(false),
   ev_counter_(1),
   board_id_(-1), 
@@ -77,10 +83,12 @@ int artdaq::CommandableFragmentGenerator::fragment_id () const {
   }
 }
 
-void artdaq::CommandableFragmentGenerator::StartCmd(int run) {
+void artdaq::CommandableFragmentGenerator::StartCmd(int run, uint64_t timeout, uint64_t timestamp) {
 
   if (run < 0) throw cet::exception("CommandableFragmentGenerator") << "negative run number";
 
+  timeout_ = timeout;
+  timestamp_ = timestamp;
   ev_counter_.store (1);
   should_stop_.store (false);
   exception_.store(false);
@@ -91,21 +99,32 @@ void artdaq::CommandableFragmentGenerator::StartCmd(int run) {
   start();
 }
 
-void artdaq::CommandableFragmentGenerator::StopCmd() {
+void artdaq::CommandableFragmentGenerator::StopCmd(uint64_t timeout, uint64_t timestamp) {
+
+  timeout_ = timeout;
+  timestamp_ = timestamp;
+
   should_stop_.store (true);
   std::unique_lock<std::mutex> lk(mutex_);
 
   stop();
 }
 
-void artdaq::CommandableFragmentGenerator::PauseCmd() {
+void artdaq::CommandableFragmentGenerator::PauseCmd(uint64_t timeout, uint64_t timestamp) {
+
+  timeout_ = timeout;
+  timestamp_ = timestamp;
+
   should_stop_.store (true);
   std::unique_lock<std::mutex> lk(mutex_);
 
   pause();
 }
 
-void artdaq::CommandableFragmentGenerator::ResumeCmd() {
+void artdaq::CommandableFragmentGenerator::ResumeCmd(uint64_t timeout, uint64_t timestamp) {
+
+  timeout_ = timeout;
+  timestamp_ = timestamp;
 
   subrun_number_ += 1;
   should_stop_ = false; 

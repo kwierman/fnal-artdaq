@@ -29,34 +29,31 @@
 
 Default
 {
-  init(pset: fhicl::ParameterSet const&) nil  {badTransition(__func__);}
-  start(id: art::RunID)                  nil  {badTransition(__func__);}
-  stop      nil  {badTransition(__func__);}
-  pause     nil  {badTransition(__func__);}
-  resume    nil  {badTransition(__func__);}
-  shutdown  nil  {badTransition(__func__);}
-  soft_init(pset: fhicl::ParameterSet const&) nil  {badTransition(__func__);}
-  reinit(pset: fhicl::ParameterSet const&)    nil  {badTransition(__func__);}
+  init(pset: fhicl::ParameterSet const&, timeout: uint64_t, timestamp: uint64_t) nil  {badTransition(__func__);}
+  start(id: art::RunID, timeout: uint64_t, timestamp: uint64_t)                  nil  {badTransition(__func__);}
+  stop(timeout: uint64_t, timestamp: uint64_t)      nil  {badTransition(__func__);}
+  pause(timeout: uint64_t, timestamp: uint64_t)     nil  {badTransition(__func__);}
+  resume(timeout: uint64_t, timestamp: uint64_t)    nil  {badTransition(__func__);}
+  shutdown(timeout: uint64_t)  nil  {badTransition(__func__);}
+  soft_init(pset: fhicl::ParameterSet const&, timeout: uint64_t, timestamp: uint64_t) nil  {badTransition(__func__);}
+  reinit(pset: fhicl::ParameterSet const&, timeout: uint64_t, timestamp: uint64_t)    nil  {badTransition(__func__);}
 }
 
 Booted
 Entry { BootedEnter(); }
-//Exit  { BootedExit(); }
 {
-  init(pset: fhicl::ParameterSet const&)  [ctxt.do_initialize(pset)]
+  init(pset: fhicl::ParameterSet const&, timeout: uint64_t, timestamp: uint64_t)  [ctxt.do_initialize(pset, timeout, timestamp)]
       Initialized/push(InitializedMap::Ready)  {}
-  init(pset: fhicl::ParameterSet const&)  nil  {}
-  shutdown  Booted  {}
+  init(pset: fhicl::ParameterSet const&, timeout: uint64_t, timestamp: uint64_t)  nil  {}
+  shutdown(timeout: uint64_t)  Booted  {}
 }
 
 Initialized
-//Entry { InitializedEnter(); }
-//Exit  { InitializedExit(); }
 {
-  init(pset: fhicl::ParameterSet const&)  [ctxt.do_initialize(pset)]
+  init(pset: fhicl::ParameterSet const&, timeout: uint64_t, timestamp: uint64_t)  [ctxt.do_initialize(pset, timeout, timestamp)]
       Initialized/push(InitializedMap::Ready)  {}
-  init(pset: fhicl::ParameterSet const&)  Booted  {}
-  shutdown [ctxt.do_shutdown()] Booted  { }
+  init(pset: fhicl::ParameterSet const&, timeout: uint64_t, timestamp: uint64_t)  Booted  {}
+  shutdown(timeout: uint64_t) [ctxt.do_shutdown(timeout)] Booted  { }
 }
 
 %%
@@ -67,43 +64,31 @@ Initialized
 
 Default
 {
-  init(pset: fhicl::ParameterSet const&)  nil  {badTransition(__func__);}
-  start(id: art::RunID)                   nil  {badTransition(__func__);}
-  stop      nil  {badTransition(__func__);}
-  pause     nil  {badTransition(__func__);}
-  resume    nil  {badTransition(__func__);}
-  shutdown  nil  {badTransition(__func__);}
-  soft_init(pset: fhicl::ParameterSet const&) nil  {badTransition(__func__);}
-  reinit(pset: fhicl::ParameterSet const&)    nil  {badTransition(__func__);}
+  init(pset: fhicl::ParameterSet const&, timeout: uint64_t, timestamp: uint64_t)  nil  {badTransition(__func__);}
+  start(id: art::RunID, timeout: uint64_t, timestamp: uint64_t)                   nil  {badTransition(__func__);}
+  stop(timeout: uint64_t, timestamp: uint64_t)      nil  {badTransition(__func__);}
+  pause(timeout: uint64_t, timestamp: uint64_t)     nil  {badTransition(__func__);}
+  resume(timeout: uint64_t, timestamp: uint64_t)    nil  {badTransition(__func__);}
+  shutdown(timeout: uint64_t)  nil  {badTransition(__func__);}
+  soft_init(pset: fhicl::ParameterSet const&, timeout: uint64_t, timestamp: uint64_t) nil  {badTransition(__func__);}
+  reinit(pset: fhicl::ParameterSet const&, timeout: uint64_t, timestamp: uint64_t)    nil  {badTransition(__func__);}
 }
 
 Ready
-//Entry { ReadyEnter(); }
-//Exit  { ReadyExit(); }
 {
-  start(id: art::RunID)  [ctxt.do_start(id)]  InRun/push(InRunMap::Running)  {}
-  start(id: art::RunID)  nil  {}
-  init(pset: fhicl::ParameterSet const&)  pop(init, pset)  {}
-  soft_init(pset: fhicl::ParameterSet const&)  nil  {do_soft_initialize(pset);}
-  shutdown  pop(shutdown)  {}
+  start(id: art::RunID, timeout: uint64_t, timestamp: uint64_t)  [ctxt.do_start(id,timeout, timestamp)]  InRun/push(InRunMap::Running)  {}
+  start(id: art::RunID, timeout: uint64_t, timestamp: uint64_t)  nil  {}
+  init(pset: fhicl::ParameterSet const&, timeout: uint64_t, timestamp: uint64_t)  pop(init, pset, timeout, timestamp)  {}
+  soft_init(pset: fhicl::ParameterSet const&, timeout: uint64_t, timestamp: uint64_t)  nil  {do_soft_initialize(pset, timeout, timestamp);}
+  shutdown(timeout: uint64_t)  pop(shutdown, timeout)  {}
 }
 
 InRun
-//Entry { InRunEnter(); }
+
 Exit  { InRunExit(); }
 {
-  stop  [ctxt.do_stop()]  Ready  {}
-  //stop  Error  {}
-  //init(pset: fhicl::ParameterSet const&)  [ctxt.do_stop()]  pop(init, pset)  {}
-  //init(pset: fhicl::ParameterSet const&)  Error  {}
-  //shutdown  [ctxt.do_stop()]  pop(shutdown)  {}
-  //shutdown  pop(shutdown)  {}
+  stop(timeout: uint64_t, timestamp: uint64_t)  [ctxt.do_stop(timeout, timestamp)]  Ready  {}
 }
-
-//Error
-//{
-//  init(pset: fhicl::ParameterSet const&)  pop(init, pset)  {}
-//}
 
 %%
 
@@ -113,32 +98,28 @@ Exit  { InRunExit(); }
 
 Default
 {
-  init(pset: fhicl::ParameterSet const&)  nil  {badTransition(__func__);}
-  start(id: art::RunID)                   nil  {badTransition(__func__);}
-  stop      nil  {badTransition(__func__);}
-  pause     nil  {badTransition(__func__);}
-  resume    nil  {badTransition(__func__);}
-  shutdown  nil  {badTransition(__func__);}
-  soft_init(pset: fhicl::ParameterSet const&) nil  {badTransition(__func__);}
-  reinit(pset: fhicl::ParameterSet const&)    nil  {badTransition(__func__);}
+  init(pset: fhicl::ParameterSet const&, timeout: uint64_t, timestamp: uint64_t)  nil  {badTransition(__func__);}
+  start(id: art::RunID, timeout: uint64_t, timestamp: uint64_t)                   nil  {badTransition(__func__);}
+  stop(timeout: uint64_t, timestamp: uint64_t)      nil  {badTransition(__func__);}
+  pause(timeout: uint64_t, timestamp: uint64_t)     nil  {badTransition(__func__);}
+  resume(timeout: uint64_t, timestamp: uint64_t)    nil  {badTransition(__func__);}
+  shutdown(timeout: uint64_t)  nil  {badTransition(__func__);}
+  soft_init(pset: fhicl::ParameterSet const&, timeout: uint64_t, timestamp: uint64_t) nil  {badTransition(__func__);}
+  reinit(pset: fhicl::ParameterSet const&, timeout: uint64_t, timestamp: uint64_t)    nil  {badTransition(__func__);}
 }
 
 Running
-//Entry { RunningEnter(); }
-//Exit  { RunningExit(); }
 {
-  pause  [ctxt.do_pause()]  Paused  {}
-  pause  nil        {}
-  stop   pop(stop)  {}
+  pause(timeout: uint64_t, timestamp: uint64_t)  [ctxt.do_pause(timeout, timestamp)]  Paused  {}
+  pause(timeout: uint64_t, timestamp: uint64_t)  nil        {}
+  stop(timeout: uint64_t, timestamp: uint64_t) pop(stop, timeout, timestamp) {}
 }
 
 Paused
-//Entry { PausedEnter(); }
-//Exit  { PausedExit(); }
 {
-  resume  [ctxt.do_resume()]  Running  {}
-  resume  nil        {}
-  stop    pop(stop)  {}
+  resume(timeout: uint64_t, timestamp: uint64_t)  [ctxt.do_resume(timeout, timestamp)]  Running  {}
+  resume(timeout: uint64_t, timestamp: uint64_t)  nil        {}
+  stop(timeout: uint64_t, timestamp: uint64_t) pop(stop, timeout, timestamp) {}
 }
 
 %%
