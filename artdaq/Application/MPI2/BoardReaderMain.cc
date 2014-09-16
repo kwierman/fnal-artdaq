@@ -4,7 +4,7 @@
 #include "artdaq/Application/configureMessageFacility.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
 #include "artdaq/ExternalComms/xmlrpc_commander.hh"
-#include "artdaq/Version/GetReleaseVersion.h"
+#include "artdaq/BuildInfo/GetPackageBuildInfo.hh"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "cetlib/exception.h"
 
@@ -63,8 +63,10 @@ int main(int argc, char *argv[])
   }
 
   artdaq::setMsgFacAppName("BoardReader", vm["port"].as<unsigned short> ()); 
-  mf::LogDebug("BoardReaderMain") << "artdaq version " << artdaq::getReleaseVersion()
-                                  << ", built " << artdaq::getBuildDateTime();
+  mf::LogDebug("BoardReaderMain") << "artdaq version " << 
+    artdaq::GetPackageBuildInfo::getPackageBuildInfo().getPackageVersion()
+				   << ", built " << 
+    artdaq::GetPackageBuildInfo::getPackageBuildInfo().getBuildTimestamp();
 
   // create the BoardReaderApp
   artdaq::BoardReaderApp br_app(local_group_comm );
