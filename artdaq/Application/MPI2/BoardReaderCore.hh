@@ -30,14 +30,14 @@ public:
   ~BoardReaderCore();
   BoardReaderCore& operator=(BoardReaderCore const&) = delete;
 
-  bool initialize(fhicl::ParameterSet const&);
-  bool start(art::RunID);
-  bool stop();
-  bool pause();
-  bool resume();
-  bool shutdown();
-  bool soft_initialize(fhicl::ParameterSet const&);
-  bool reinitialize(fhicl::ParameterSet const&);
+  bool initialize(fhicl::ParameterSet const&, uint64_t, uint64_t);
+  bool start(art::RunID, uint64_t, uint64_t);
+  bool stop(uint64_t, uint64_t);
+  bool pause(uint64_t, uint64_t);
+  bool resume(uint64_t, uint64_t);
+  bool shutdown(uint64_t);
+  bool soft_initialize(fhicl::ParameterSet const&, uint64_t, uint64_t);
+  bool reinitialize(fhicl::ParameterSet const&, uint64_t, uint64_t);
 
   size_t process_fragments();
 

@@ -80,21 +80,21 @@ namespace artdaq {
     // subrun number 1. Calling start also resets the event number to 1.
     // After a call to start(), and until a call to stop, getNext() will
     // always return true, even if it returns no fragments.
-    virtual void StartCmd(int run) final;
+    virtual void StartCmd(int run, uint64_t timeout, uint64_t timestamp) final;
 
     // After a call to stop(), getNext() will eventually return
     // false. This may not happen for several calls, if the
     // implementation has data to be 'drained' from the system.
-    virtual void StopCmd() final;
+    virtual void StopCmd(uint64_t timeout, uint64_t timestamp) final;
 
     // A call to pause() is advisory. It is an indication that the
     // BoardReader should stop the incoming flow of data, if it can
     // do so.
-    virtual void PauseCmd() final;
+    virtual void PauseCmd(uint64_t timeout, uint64_t timestamp) final;
 
     // After a call to resume(), the next Fragments returned from
     // getNext() will be part of a new SubRun.
-    virtual void ResumeCmd() final;
+    virtual void ResumeCmd(uint64_t timeout, uint64_t timestamp) final;
 
     virtual std::string ReportCmd() final;
 
@@ -121,6 +121,8 @@ namespace artdaq {
 
     int run_number() const { return run_number_; }
     int subrun_number() const { return subrun_number_; }
+    uint64_t timeout() const { return timeout_; }
+    uint64_t timestamp() const { return timestamp_; }
     bool should_stop() const { return should_stop_.load(); }
     bool exception() const { return exception_.load(); }
 
@@ -146,6 +148,19 @@ namespace artdaq {
     // CommandableFragmentGenerators must be able to remember a run number and a
     // subrun number.
     int run_number_, subrun_number_;
+
+    // JCF, 8/28/14
+
+    // Provide a user-adjustable timeout for the start transition
+    uint64_t timeout_;
+
+    // JCF, 8/21/14
+
+    // In response to a need to synchronize various components using
+    // different fragment generators in an experiment, keep a record
+    // of a timestamp (see Redmine Issue #6783 for more)
+
+    uint64_t timestamp_;
 
     std::atomic<bool> should_stop_, exception_;
     std::atomic<size_t> ev_counter_;

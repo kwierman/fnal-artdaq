@@ -9,7 +9,7 @@
 #include "artdaq/ExternalComms/xmlrpc_commander.hh"
 #include "artdaq/Application/MPI2/MPISentry.hh"
 #include "artdaq/DAQrate/quiet_mpi.hh"
-#include "artdaq/Version/GetReleaseVersion.h"
+#include "artdaq/BuildInfo/GetPackageBuildInfo.hh"
 #include "cetlib/exception.h"
 
 int main(int argc, char *argv[])
@@ -60,8 +60,10 @@ int main(int argc, char *argv[])
   }
 
   artdaq::setMsgFacAppName("EventBuilder", vm["port"].as<unsigned short> ()); 
-  mf::LogDebug("EventBuilderMain") << "artdaq version " << artdaq::getReleaseVersion()
-                                   << ", built " << artdaq::getBuildDateTime();
+  mf::LogDebug("EventBuilderMain") << "artdaq version " << 
+    artdaq::GetPackageBuildInfo::getPackageBuildInfo().getPackageVersion()
+				   << ", built " << 
+    artdaq::GetPackageBuildInfo::getPackageBuildInfo().getBuildTimestamp();
 
   // create the EventBuilderApp
   artdaq::EventBuilderApp evb_app(mpiSentry->rank(), local_group_comm );
