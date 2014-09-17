@@ -15,13 +15,13 @@ artdaq::Commandable::Commandable() : fsm_(*this)
 /**
  * Processes the initialize request.
  */
-bool artdaq::Commandable::initialize(fhicl::ParameterSet const& pset)
+bool artdaq::Commandable::initialize(fhicl::ParameterSet const& pset, uint64_t timeout, uint64_t timestamp)
 {
   external_request_status_ = true;
   report_string_ = "All is OK.";
 
   std::string initialState = fsm_.getState().getName();
-  fsm_.init(pset);
+  fsm_.init(pset, timeout, timestamp);
   if (external_request_status_) {
     std::string finalState = fsm_.getState().getName();
     mf::LogDebug("CommandableInterface")
@@ -35,13 +35,13 @@ bool artdaq::Commandable::initialize(fhicl::ParameterSet const& pset)
 /**
  * Processes the start request.
  */
-bool artdaq::Commandable::start(art::RunID id)
+bool artdaq::Commandable::start(art::RunID id, uint64_t timeout, uint64_t timestamp)
 {
   external_request_status_ = true;
   report_string_ = "All is OK.";
 
   std::string initialState = fsm_.getState().getName();
-  fsm_.start(id);
+  fsm_.start(id, timeout, timestamp);
   if (external_request_status_) {
     std::string finalState = fsm_.getState().getName();
     mf::LogDebug("CommandableInterface")
@@ -55,13 +55,13 @@ bool artdaq::Commandable::start(art::RunID id)
 /**
  * Processes the stop request.
  */
-bool artdaq::Commandable::stop()
+bool artdaq::Commandable::stop(uint64_t timeout, uint64_t timestamp)
 {
   external_request_status_ = true;
   report_string_ = "All is OK.";
 
   std::string initialState = fsm_.getState().getName();
-  fsm_.stop();
+  fsm_.stop(timeout, timestamp);
   if (external_request_status_) {
     std::string finalState = fsm_.getState().getName();
     mf::LogDebug("CommandableInterface")
@@ -75,13 +75,13 @@ bool artdaq::Commandable::stop()
 /**
  * Processes the pause request.
  */
-bool artdaq::Commandable::pause()
+bool artdaq::Commandable::pause(uint64_t timeout, uint64_t timestamp)
 {
   external_request_status_ = true;
   report_string_ = "All is OK.";
 
   std::string initialState = fsm_.getState().getName();
-  fsm_.pause();
+  fsm_.pause(timeout, timestamp);
   if (external_request_status_) {
     std::string finalState = fsm_.getState().getName();
     mf::LogDebug("CommandableInterface")
@@ -95,13 +95,13 @@ bool artdaq::Commandable::pause()
 /**
  * Processes the resume request.
  */
-bool artdaq::Commandable::resume()
+bool artdaq::Commandable::resume(uint64_t timeout, uint64_t timestamp)
 {
   external_request_status_ = true;
   report_string_ = "All is OK.";
 
   std::string initialState = fsm_.getState().getName();
-  fsm_.resume();
+  fsm_.resume(timeout, timestamp);
   if (external_request_status_) {
     std::string finalState = fsm_.getState().getName();
     mf::LogDebug("CommandableInterface")
@@ -115,13 +115,13 @@ bool artdaq::Commandable::resume()
 /**
  * Processes the shutdown request.
  */
-bool artdaq::Commandable::shutdown()
+bool artdaq::Commandable::shutdown(uint64_t timeout)
 {
   external_request_status_ = true;
   report_string_ = "All is OK.";
 
   std::string initialState = fsm_.getState().getName();
-  fsm_.shutdown();
+  fsm_.shutdown(timeout);
   if (external_request_status_) {
     std::string finalState = fsm_.getState().getName();
     mf::LogDebug("CommandableInterface")
@@ -135,13 +135,13 @@ bool artdaq::Commandable::shutdown()
 /**
  * Processes the soft_initialize request.
  */
-bool artdaq::Commandable::soft_initialize(fhicl::ParameterSet const& pset)
+bool artdaq::Commandable::soft_initialize(fhicl::ParameterSet const& pset, uint64_t timeout, uint64_t timestamp)
 {
   external_request_status_ = true;
   report_string_ = "All is OK.";
 
   std::string initialState = fsm_.getState().getName();
-  fsm_.soft_init(pset);
+  fsm_.soft_init(pset, timeout, timestamp);
   if (external_request_status_) {
     std::string finalState = fsm_.getState().getName();
     mf::LogDebug("CommandableInterface")
@@ -155,13 +155,13 @@ bool artdaq::Commandable::soft_initialize(fhicl::ParameterSet const& pset)
 /**
  * Processes the reinitialize request.
  */
-bool artdaq::Commandable::reinitialize(fhicl::ParameterSet const& pset)
+bool artdaq::Commandable::reinitialize(fhicl::ParameterSet const& pset, uint64_t timeout, uint64_t timestamp)
 {
   external_request_status_ = true;
   report_string_ = "All is OK.";
 
   std::string initialState = fsm_.getState().getName();
-  fsm_.reinit(pset);
+  fsm_.reinit(pset, timeout, timestamp);
   if (external_request_status_) {
     std::string finalState = fsm_.getState().getName();
     mf::LogDebug("CommandableInterface")
@@ -211,56 +211,56 @@ std::vector<std::string> artdaq::Commandable::legal_commands() const
 // *** The following methods implement the state machine operations.
 // *******************************************************************
 
-bool artdaq::Commandable::do_initialize(fhicl::ParameterSet const&)
+bool artdaq::Commandable::do_initialize(fhicl::ParameterSet const&, uint64_t, uint64_t)
 {
   mf::LogDebug("CommandableInterface") << "do_initialize called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
-bool artdaq::Commandable::do_start(art::RunID)
+bool artdaq::Commandable::do_start(art::RunID, uint64_t, uint64_t)
 {
   mf::LogDebug("CommandableInterface") << "do_start called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
-bool artdaq::Commandable::do_stop()
+bool artdaq::Commandable::do_stop(uint64_t, uint64_t)
 {
   mf::LogDebug("CommandableInterface") << "do_stop called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
-bool artdaq::Commandable::do_pause()
+bool artdaq::Commandable::do_pause(uint64_t, uint64_t)
 {
   mf::LogDebug("CommandableInterface") << "do_pause called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
-bool artdaq::Commandable::do_resume()
+bool artdaq::Commandable::do_resume(uint64_t, uint64_t)
 {
   mf::LogDebug("CommandableInterface") << "do_resume called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
-bool artdaq::Commandable::do_shutdown()
+bool artdaq::Commandable::do_shutdown(uint64_t)
 {
   mf::LogDebug("CommandableInterface") << "do_shutdown called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
-bool artdaq::Commandable::do_reinitialize(fhicl::ParameterSet const&)
+bool artdaq::Commandable::do_reinitialize(fhicl::ParameterSet const&, uint64_t, uint64_t)
 {
   mf::LogDebug("CommandableInterface") << "do_reinitialize called.";
   external_request_status_ = true;
   return external_request_status_;
 }
 
-bool artdaq::Commandable::do_soft_initialize(fhicl::ParameterSet const&)
+bool artdaq::Commandable::do_soft_initialize(fhicl::ParameterSet const&, uint64_t, uint64_t)
 {
   mf::LogDebug("CommandableInterface") << "do_soft_initialize called.";
   external_request_status_ = true;
