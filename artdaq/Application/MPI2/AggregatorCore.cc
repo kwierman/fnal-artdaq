@@ -622,25 +622,37 @@ size_t artdaq::AggregatorCore::process_fragments()
     // 27-Sep-2013, KAB - added automatic file closing
     startTime = artdaq::MonitoredQuantity::getCurrentTime();
     if (is_data_logger_ && disk_writing_directory_.size() > 0 &&
-        ! stop_requested_.load() && ! system_pause_requested_.load() &&
-        (event_count_in_run_ % 50) == 0) {
-      time_t now = time(0);
-      if ((now - subrun_start_time_) >= 30) {
-        if ((file_close_event_count_ > 0 &&
-             event_count_in_subrun_ >= file_close_event_count_) ||
-            (file_close_timeout_secs_ > 0 &&
-             (now - subrun_start_time_) >= file_close_timeout_secs_) ||
-            (file_close_threshold_bytes_ > 0 &&
-             getLatestFileSize_() >= file_close_threshold_bytes_)) {
-          system_pause_requested_.store(true);
-          if (pause_thread_.get() != 0) {
-            pause_thread_->join();
-          }
-          mf::LogDebug("AggregatorCore") << "Starting sendPauseAndResume thread "
-                                         << ", event count in subrun = "
-                                         << event_count_in_subrun_;
-          pause_thread_.reset(new std::thread(&AggregatorCore::sendPauseAndResume_, this));
+        ! stop_requested_.load() && ! system_pause_requested_.load()) {
+      bool threshold_reached = false;
+      if (file_close_event_count_ > 0 &&
+          event_count_in_subrun_ >= file_close_event_count_) {
+        threshold_reached = true;
+      }
+      else {
+        time_t now = time(0);
+        if (file_close_timeout_secs_ > 0 &&
+            (now - subrun_start_time_) >= file_close_timeout_secs_) {
+          threshold_reached = true;
         }
+        else {
+          if ((now - subrun_start_time_) >= 30 &&
+              (event_count_in_run_ % 20) == 0) {
+            if (file_close_threshold_bytes_ > 0 &&
+                getLatestFileSize_() >= file_close_threshold_bytes_) {
+              threshold_reached = true;
+            }
+          }
+        }
+      }
+      if (threshold_reached) {
+        system_pause_requested_.store(true);
+        if (pause_thread_.get() != 0) {
+          pause_thread_->join();
+        }
+        mf::LogDebug("AggregatorCore") << "Starting sendPauseAndResume thread "
+                                       << ", event count in subrun = "
+                                       << event_count_in_subrun_;
+        pause_thread_.reset(new std::thread(&AggregatorCore::sendPauseAndResume_, this));
       }
     }
     stats_helper_.addSample(FILE_CHECK_TIME_STAT_KEY,
