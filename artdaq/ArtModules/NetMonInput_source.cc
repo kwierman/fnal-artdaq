@@ -133,7 +133,7 @@ NetMonInputDetail(const fhicl::ParameterSet& ps,
     //       should use the type_info version so that we do not have
     //       to hard-code the enumerator value into the Hash<..> name.
     static TClass* parentage_map_class = TClass::GetClass(
-        "std::map<art::Hash<5>,art::Parentage>");
+        "std::map<const art::Hash<5>,art::Parentage>");
     if (parentage_map_class == nullptr) {
         throw art::Exception(art::errors::DictionaryNotFound) <<
             "NetMonInputDetail: "
