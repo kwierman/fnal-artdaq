@@ -82,6 +82,15 @@ bool artdaq::AggregatorCore::initialize(fhicl::ParameterSet const& pset)
       << "initialization ParameterSet: \"" + daq_pset.to_string() + "\".";
     return false;
   }
+  // pull out the Metric part of the ParameterSet
+  fhicl::ParameterSet metric_pset;
+  try {
+    metric_pset = pset.get<fhicl::ParameterSet>("metrics");
+    stats_helper_.initialize(metric_pset);
+  }
+  catch (...) {
+    //Okay if no metrics defined
+  }
 
   // determine the data receiver parameters
   try {

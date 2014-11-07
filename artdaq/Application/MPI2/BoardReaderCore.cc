@@ -71,6 +71,16 @@ bool artdaq::BoardReaderCore::initialize(fhicl::ParameterSet const& pset, uint64
     return false;
   }
 
+  // pull out the Metric part of the ParameterSet
+  fhicl::ParameterSet metric_pset;
+  try {
+    metric_pset = pset.get<fhicl::ParameterSet>("metrics");
+    statsHelper_.initialize(metric_pset);
+  }
+  catch (...) {
+    //Okay if no metrics defined
+  }
+
   // create the requested CommandableFragmentGenerator
   std::string frag_gen_name = fr_pset.get<std::string>("generator", "");
   if (frag_gen_name.length() == 0) {

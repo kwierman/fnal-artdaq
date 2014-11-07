@@ -1,3 +1,4 @@
+add_subdirectory(Plugins)
 add_subdirectory(DAQdata)
 add_subdirectory(DAQrate)
 add_subdirectory(Application)

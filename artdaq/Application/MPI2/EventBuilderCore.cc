@@ -85,7 +85,15 @@ bool artdaq::EventBuilderCore::initialize(fhicl::ParameterSet const& pset)
       << "initialization ParameterSet: \"" + daq_pset.to_string() + "\".";
     return false;
   }
-
+  // pull out the Metric part of the ParameterSet
+  fhicl::ParameterSet metric_pset;
+  try {
+    metric_pset = pset.get<fhicl::ParameterSet>("metrics");
+    statsHelper_.initialize(metric_pset);
+  }
+  catch (...) {
+    //Okay if no metrics have been defined...
+  }
   // determine the data receiver parameters
   try {
     max_fragment_size_words_ = daq_pset.get<uint64_t>("max_fragment_size_words");

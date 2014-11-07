@@ -1,12 +1,39 @@
 #include "artdaq/Application/MPI2/StatisticsHelper.hh"
+#include "artdaq/Plugins/makeMetricPlugin.hh"
+#include "messagefacility/MessageLogger/MessageLogger.h"
 
 artdaq::StatisticsHelper::
-StatisticsHelper() : monitored_quantity_name_list_(0)
+StatisticsHelper() : monitored_quantity_name_list_(0), metric_plugins_(0)
 {
 }
 
 artdaq::StatisticsHelper::~StatisticsHelper()
 {
+  for(auto & i : metric_plugins_)
+    {
+      i.reset(nullptr);
+    }
+}
+
+void artdaq::StatisticsHelper::
+initialize(fhicl::ParameterSet const& pset)
+{
+  fhicl::ParameterSet metric_pset;
+  try{
+    metric_pset = pset.get<fhicl::ParameterSet>("metrics");
+  }
+  catch(...) {
+    mf::LogWarning("StatisticsHelper")
+      << "No metric plugins defined. Will summarize statistics at end of run. "
+      << "Initialization ParameterSet is: \"" + pset.to_string() + "\".";
+  }
+
+  std::vector<std::string> names = metric_pset.get<std::vector<std::string>>("names");
+  for(auto name : names)
+    {
+      fhicl::ParameterSet plugin_pset = metric_pset.get<fhicl::ParameterSet>(name);
+      metric_plugins_.push_back(makeMetricPlugin(name, plugin_pset));
+    }
 }
 
 void artdaq::StatisticsHelper::
@@ -16,11 +43,17 @@ addMonitoredQuantityName(std::string const& statKey)
 }
 
 void artdaq::StatisticsHelper::addSample(std::string const& statKey,
-                                       double value)
+					 double value,std::string unit, int level)
 {
   artdaq::MonitoredQuantityPtr mqPtr =
     artdaq::StatisticsCollection::getInstance().getMonitoredQuantity(statKey);
   if (mqPtr.get() != 0) {mqPtr->addSample(value);}
+
+  for(auto & metric : metric_plugins_)
+    {
+      if(metric->getRunLevel() >= level)
+      metric->sendMetric(statKey, value, unit);
+    }
 }
 
 void artdaq::StatisticsHelper::

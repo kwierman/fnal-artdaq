@@ -11,6 +11,7 @@ art_make_library(SOURCE
   MPISentry.cc
   LIBRARIES
   artdaq_DAQrate
+  artdaq_Plugins
   artdaq_Application
   ${ART_FRAMEWORK_ART}
   ${MPI_C_LIBRARIES}
