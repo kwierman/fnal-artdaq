@@ -8,7 +8,9 @@ art_make(
   ${MF_UTILITIES}
   )
 
-simple_plugin("file" "metric")
+simple_plugin("file" "metric"
+  artdaq_Plugins
+)
 
 install_headers()
 install_source()

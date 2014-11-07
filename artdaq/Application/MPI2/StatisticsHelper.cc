@@ -18,20 +18,10 @@ artdaq::StatisticsHelper::~StatisticsHelper()
 void artdaq::StatisticsHelper::
 initialize(fhicl::ParameterSet const& pset)
 {
-  fhicl::ParameterSet metric_pset;
-  try{
-    metric_pset = pset.get<fhicl::ParameterSet>("metrics");
-  }
-  catch(...) {
-    mf::LogWarning("StatisticsHelper")
-      << "No metric plugins defined. Will summarize statistics at end of run. "
-      << "Initialization ParameterSet is: \"" + pset.to_string() + "\".";
-  }
-
-  std::vector<std::string> names = metric_pset.get<std::vector<std::string>>("names");
+  std::vector<std::string> names = pset.get<std::vector<std::string>>("names");
   for(auto name : names)
     {
-      fhicl::ParameterSet plugin_pset = metric_pset.get<fhicl::ParameterSet>(name);
+      fhicl::ParameterSet plugin_pset = pset.get<fhicl::ParameterSet>(name);
       metric_plugins_.push_back(makeMetricPlugin(name, plugin_pset));
     }
 }

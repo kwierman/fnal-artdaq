@@ -88,11 +88,12 @@ bool artdaq::EventBuilderCore::initialize(fhicl::ParameterSet const& pset)
   // pull out the Metric part of the ParameterSet
   fhicl::ParameterSet metric_pset;
   try {
-    metric_pset = pset.get<fhicl::ParameterSet>("metrics");
+    metric_pset = daq_pset.get<fhicl::ParameterSet>("metrics");
     statsHelper_.initialize(metric_pset);
   }
   catch (...) {
     //Okay if no metrics have been defined...
+    mf::LogDebug("EventBuilderCore") << "Error loading metrics or no metric plugins defined.";
   }
   // determine the data receiver parameters
   try {

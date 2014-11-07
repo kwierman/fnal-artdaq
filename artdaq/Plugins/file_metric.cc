@@ -4,7 +4,8 @@
 //
 // An implementation of the MetricPlugin for Log Files
 
-#include "MetricPlugin.hh"
+#include "artdaq/Plugins/MetricMacros.hh"
+#include "fhiclcpp/ParameterSet.h"
 
 #include <fstream>
 #include <ctime>
@@ -17,7 +18,7 @@ namespace artdaq {
     std::ofstream outputStream_;
   public:
     FileMetric(fhicl::ParameterSet config) : MetricPlugin(config),
-				     outputFile_(pset.get<std::string>("file","FileMetric.out"))
+				     outputFile_(pset.get<std::string>("fileName","FileMetric.out"))
     {
       std::string modeString = pset.get<std::string>("fileMode", "append");
       
@@ -56,3 +57,5 @@ namespace artdaq {
   };
 
 } //End namespace artdaq
+
+DEFINE_ARTDAQ_METRIC(artdaq::FileMetric)
