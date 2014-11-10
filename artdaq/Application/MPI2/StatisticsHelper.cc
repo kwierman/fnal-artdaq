@@ -18,11 +18,11 @@ artdaq::StatisticsHelper::~StatisticsHelper()
 void artdaq::StatisticsHelper::
 initialize(fhicl::ParameterSet const& pset)
 {
-  std::vector<std::string> names = pset.get<std::vector<std::string>>("names");
+  std::vector<std::string> names = pset.get_pset_keys();
   for(auto name : names)
     {
       fhicl::ParameterSet plugin_pset = pset.get<fhicl::ParameterSet>(name);
-      metric_plugins_.push_back(makeMetricPlugin(name, plugin_pset));
+      metric_plugins_.push_back(makeMetricPlugin(plugin_pset.get<std::string>("metricPluginType",""), plugin_pset));
     }
 }
 
