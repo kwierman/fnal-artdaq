@@ -1,4 +1,5 @@
-art_make(
+art_make( BASENAME_ONLY
+  LIBRARY_NAME artdaq_DAQdata
   EXCLUDE GenericFragmentSimulator_generator.cc
   LIB_LIBRARIES
   ${ARTDAQ-CORE_DATA}
@@ -12,7 +13,9 @@ art_make(
   )
 
 simple_plugin(GenericFragmentSimulator "generator"
-  artdaq_DAQdata ${ARTDAQ-CORE_DATA} ${ARTDAQ-CORE_GENERATORS}
+  artdaq_DAQdata 
+  artdaq-core_Data
+  ${ARTDAQ-CORE_GENERATORS}
   )
 
 install_headers()
