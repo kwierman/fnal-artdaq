@@ -86,7 +86,7 @@ bool artdaq::AggregatorCore::initialize(fhicl::ParameterSet const& pset)
   fhicl::ParameterSet metric_pset;
   try {
     metric_pset = daq_pset.get<fhicl::ParameterSet>("metrics");
-    stats_helper_.initialize(metric_pset);
+    metricMan_.initialize(metric_pset);
   }
   catch (...) {
     //Okay if no metrics defined
@@ -278,6 +278,8 @@ bool artdaq::AggregatorCore::start(art::RunID id)
   run_id_ = id;
   event_store_ptr_->startRun(run_id_.run());
 
+  metricMan_.do_start();
+
   logMessage_("Started run " + boost::lexical_cast<std::string>(run_id_.run()));
   return true;
 }
@@ -292,6 +294,7 @@ bool artdaq::AggregatorCore::stop()
      received all of the EOD fragments it expects.  Higher level code will block
      until the process_fragments() thread exits. */
   stop_requested_.store(true);
+  metricMan_.do_stop();
   return true;
 }
 
@@ -305,6 +308,7 @@ bool artdaq::AggregatorCore::pause()
      received all of the EOD fragments it expects.  Higher level code will block
      until the process_fragments() thread exits. */
   local_pause_requested_.store(true);
+  metricMan_.do_pause();
   return true;
 }
 
@@ -316,6 +320,7 @@ bool artdaq::AggregatorCore::resume()
 
   logMessage_("Resuming run " + boost::lexical_cast<std::string>(run_id_.run()));
   event_store_ptr_->startSubrun();
+  metricMan_.do_resume();
   return true;
 }
 
@@ -330,6 +335,7 @@ bool artdaq::AggregatorCore::shutdown()
     mf::LogDebug("AggregatorCore") << "Retrying EventStore::endOfData()";
     endSucceeded = event_store_ptr_->endOfData(readerReturnValue);
   }
+  metricMan_.shutdown();
   return endSucceeded;
 }
 
@@ -399,6 +405,8 @@ size_t artdaq::AggregatorCore::process_fragments()
     }
     stats_helper_.addSample(INPUT_WAIT_STAT_KEY,
                             (artdaq::MonitoredQuantity::getCurrentTime() - startTime));
+    metricMan_.sendMetric(INPUT_WAIT_STAT_KEY,
+			  (artdaq::MonitoredQuantity::getCurrentTime() - startTime), "seconds", 5);
     if (senderSlot == (size_t) MPI_ANY_SOURCE) {
       if (endSubRunMsg != nullptr) {
         mf::LogInfo("AggregatorCore")
@@ -510,6 +518,7 @@ size_t artdaq::AggregatorCore::process_fragments()
                     ".");
       }
       stats_helper_.addSample(INPUT_EVENTS_STAT_KEY, fragmentPtr->size());
+      metricMan_.sendMetric(INPUT_EVENTS_STAT_KEY, fragmentPtr->size(), "fragments", 3);
       if (stats_helper_.readyToReport(INPUT_EVENTS_STAT_KEY,
                                       event_count_in_run_)) {
         std::string statString = buildStatisticsString_();
@@ -535,6 +544,8 @@ size_t artdaq::AggregatorCore::process_fragments()
     }
     stats_helper_.addSample(SHM_COPY_TIME_STAT_KEY,
                             (artdaq::MonitoredQuantity::getCurrentTime() - startTime));
+    metricMan_.sendMetric(SHM_COPY_TIME_STAT_KEY,
+			  (artdaq::MonitoredQuantity::getCurrentTime() - startTime), "seconds", 5);
 
 
     //----------------------------------------------------------------------------
@@ -626,6 +637,7 @@ size_t artdaq::AggregatorCore::process_fragments()
     }
     float delta=artdaq::MonitoredQuantity::getCurrentTime() - startTime;
     stats_helper_.addSample(STORE_EVENT_WAIT_STAT_KEY, delta );
+    metricMan_.sendMetric(STORE_EVENT_WAIT_STAT_KEY, delta, "seconds", 5 );
     TRACE( (delta>3.0)?0:22, "AggregatorCore::process_fragments seq=%lu isLogger=%d delta=%f start=%f"
           , seq, is_data_logger_, delta, startTime );
 
@@ -667,6 +679,8 @@ size_t artdaq::AggregatorCore::process_fragments()
     }
     stats_helper_.addSample(FILE_CHECK_TIME_STAT_KEY,
                             (artdaq::MonitoredQuantity::getCurrentTime() - startTime));
+    metricMan_.sendMetric(FILE_CHECK_TIME_STAT_KEY,
+			  (artdaq::MonitoredQuantity::getCurrentTime() - startTime), "seconds", 5);
 
     /* If we've received EOD fragments from all of the EventBuilders we can
        verify that we've also received every fragment that they have sent.  If

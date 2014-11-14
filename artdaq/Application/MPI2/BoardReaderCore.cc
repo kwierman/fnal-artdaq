@@ -74,7 +74,7 @@ bool artdaq::BoardReaderCore::initialize(fhicl::ParameterSet const& pset, uint64
   // pull out the Metric part of the ParameterSet
   fhicl::ParameterSet metric_pset;
   metric_pset = daq_pset.get<fhicl::ParameterSet>("metrics");
-  statsHelper_.initialize(metric_pset);
+  metricMan_.initialize(metric_pset);
 
   // create the requested CommandableFragmentGenerator
   std::string frag_gen_name = fr_pset.get<std::string>("generator", "");
@@ -166,6 +166,7 @@ bool artdaq::BoardReaderCore::start(art::RunID id, uint64_t timeout, uint64_t ti
 
   generator_ptr_->StartCmd(id.run(), timeout, timestamp);
   run_id_ = id;
+  metricMan_.do_start();
 
   mf::LogDebug("BoardReaderCore") << "Started run " << run_id_.run() << 
     ", timeout = " << timeout <<  ", timestamp = " << timestamp << std::endl;
@@ -178,6 +179,7 @@ bool artdaq::BoardReaderCore::stop(uint64_t timeout, uint64_t timestamp)
                                    << " after " << fragment_count_
                                    << " fragments.";
   generator_ptr_->StopCmd(timeout, timestamp);
+  metricMan_.do_stop();
   return true;
 }
 
@@ -187,6 +189,7 @@ bool artdaq::BoardReaderCore::pause(uint64_t timeout, uint64_t timestamp)
                                    << " after " << fragment_count_
                                    << " fragments.";
   generator_ptr_->PauseCmd(timeout, timestamp);
+  metricMan_.do_pause();
   return true;
 }
 
@@ -194,12 +197,14 @@ bool artdaq::BoardReaderCore::resume(uint64_t timeout, uint64_t timestamp)
 {
   mf::LogDebug("BoardReaderCore") << "Resuming run " << run_id_.run();
   generator_ptr_->ResumeCmd(timeout, timestamp);
+  metricMan_.do_resume();
   return true;
 }
 
 bool artdaq::BoardReaderCore::shutdown(uint64_t )
 {
   generator_ptr_.reset(nullptr);
+  metricMan_.shutdown();
   return true;
 }
 
@@ -269,15 +274,18 @@ size_t artdaq::BoardReaderCore::process_fragments()
 
     delta_time=artdaq::MonitoredQuantity::getCurrentTime() - startTime;
     statsHelper_.addSample(INPUT_WAIT_STAT_KEY,delta_time);
+    metricMan_.sendMetric(INPUT_WAIT_STAT_KEY,delta_time,"seconds",5);
     TRACE( 16, "BoardReaderCore::process_fragments INPUT_WAIT=%f", delta_time );
 
     if (! active) {break;}
     statsHelper_.addSample(FRAGMENTS_PER_READ_STAT_KEY, frags.size());
+    metricMan_.sendMetric(FRAGMENTS_PER_READ_STAT_KEY, frags.size(),"fragments",3);
 
     startTime = artdaq::MonitoredQuantity::getCurrentTime();
     for (auto & fragPtr : frags) {
       artdaq::Fragment::sequence_id_t sequence_id = fragPtr->sequenceID();
       statsHelper_.addSample(FRAGMENTS_PROCESSED_STAT_KEY, fragPtr->size());
+      metricMan_.sendMetric(FRAGMENTS_PROCESSED_STAT_KEY, fragPtr->size(), "fragments", 5);
 
       if ((fragment_count_ % 250) == 0) {
         mf::LogDebug("BoardReaderCore")
@@ -313,6 +321,8 @@ size_t artdaq::BoardReaderCore::process_fragments()
     }
     statsHelper_.addSample(OUTPUT_WAIT_STAT_KEY,
                            artdaq::MonitoredQuantity::getCurrentTime() - startTime);
+    metricMan_.sendMetric(OUTPUT_WAIT_STAT_KEY,
+			  artdaq::MonitoredQuantity::getCurrentTime() - startTime,"seconds",5);
     frags.clear();
   }
 

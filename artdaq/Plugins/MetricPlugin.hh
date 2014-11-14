@@ -27,7 +27,7 @@ namespace artdaq {
   virtual void sendMetric(std::string name, int value, std::string unit) =0;
   virtual void sendMetric(std::string name, double value, std::string unit) =0;
   virtual void sendMetric(std::string name, float value, std::string unit) =0;
-  virtual void sendMetric(std::string name, uint32_t value, std::string unit) =0;
+  virtual void sendMetric(std::string name, long unsigned int value, std::string unit) =0;
   virtual void startMetrics() =0;
   virtual void stopMetrics() =0;
 

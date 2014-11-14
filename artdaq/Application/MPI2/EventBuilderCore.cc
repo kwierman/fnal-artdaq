@@ -89,7 +89,7 @@ bool artdaq::EventBuilderCore::initialize(fhicl::ParameterSet const& pset)
   fhicl::ParameterSet metric_pset;
   try {
     metric_pset = daq_pset.get<fhicl::ParameterSet>("metrics");
-    statsHelper_.initialize(metric_pset);
+    metricMan_.initialize(metric_pset);
   }
   catch (...) {
     //Okay if no metrics have been defined...
@@ -200,6 +200,7 @@ bool artdaq::EventBuilderCore::start(art::RunID id)
   statsHelper_.resetStatistics();
   flush_mutex_.lock();
   event_store_ptr_->startRun(id.run());
+  metricMan_.do_start();
 
   logMessage_("Started run " + boost::lexical_cast<std::string>(run_id_.run()));
   return true;
@@ -211,6 +212,10 @@ bool artdaq::EventBuilderCore::stop()
               ", subrun " + boost::lexical_cast<std::string>(event_store_ptr_->subrunID()));
   bool endSucceeded;
   int attemptsToEnd;
+
+  // 14-Nov-2014, ELF - Stop the MetricManager
+  metricMan_.do_stop();
+
 
   // 21-Jun-2013, KAB - the stop_requested_ variable must be set
   // before the flush lock so that the processFragments loop will
@@ -261,6 +266,9 @@ bool artdaq::EventBuilderCore::pause()
 
   bool endSucceeded = false;
   int attemptsToEnd = 1;
+
+  metricMan_.do_pause();
+    
   endSucceeded = event_store_ptr_->endSubrun();
   while (! endSucceeded && attemptsToEnd < 3) {
     ++attemptsToEnd;
@@ -284,6 +292,7 @@ bool artdaq::EventBuilderCore::resume()
   pause_requested_.store(false);
   flush_mutex_.lock();
   event_store_ptr_->startSubrun();
+  metricMan_.do_resume();
   run_is_paused_.store(false);
   return true;
 }
@@ -303,6 +312,7 @@ bool artdaq::EventBuilderCore::shutdown()
     mf::LogDebug("EventBuilderCore") << "Retrying EventStore::endOfData()";
     endSucceeded = event_store_ptr_->endOfData(readerReturnValue);
   }
+  metricMan_.shutdown();
   return endSucceeded;
 }
 
@@ -348,6 +358,8 @@ size_t artdaq::EventBuilderCore::process_fragments()
     senderSlot = receiver_ptr_->recvFragment(*pfragment, recvTimeout);
     statsHelper_.addSample(INPUT_WAIT_STAT_KEY,
                            (artdaq::MonitoredQuantity::getCurrentTime() - startTime));
+    metricMan_.sendMetric(INPUT_WAIT_STAT_KEY,
+			  (artdaq::MonitoredQuantity::getCurrentTime() - startTime), "seconds", 5);
     if (senderSlot == (size_t) MPI_ANY_SOURCE) {
       mf::LogInfo("EventBuilderCore")
         << "The receiving of data has stopped - ending the run.";
@@ -391,6 +403,7 @@ size_t artdaq::EventBuilderCore::process_fragments()
 
     ++fragment_count_in_run_;
     statsHelper_.addSample(INPUT_FRAGMENTS_STAT_KEY, pfragment->size());
+    metricMan_.sendMetric(INPUT_FRAGMENTS_STAT_KEY, pfragment->size(), "fragments", 0);
     if (statsHelper_.readyToReport(INPUT_FRAGMENTS_STAT_KEY,
                                    fragment_count_in_run_)) {
       std::string statString = buildStatisticsString_();
@@ -451,6 +464,8 @@ size_t artdaq::EventBuilderCore::process_fragments()
     }
     statsHelper_.addSample(STORE_EVENT_WAIT_STAT_KEY,
                            artdaq::MonitoredQuantity::getCurrentTime() - startTime);
+    metricMan_.sendMetric(STORE_EVENT_WAIT_STAT_KEY, artdaq::MonitoredQuantity::getCurrentTime() - startTime,
+			  "seconds", 5);
 
     /* If we've received EOD fragments from all of the BoardReaders we can
        verify that we've also received every fragment that they have sent.  If

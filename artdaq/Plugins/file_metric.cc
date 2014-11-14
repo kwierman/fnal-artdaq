@@ -50,7 +50,7 @@ namespace artdaq {
     {
       sendMetric(name, std::to_string(value), unit);
     }
-    virtual void sendMetric(std::string name, uint32_t value, std::string unit ) 
+    virtual void sendMetric(std::string name, unsigned long int value, std::string unit ) 
     { 
       sendMetric(name, std::to_string(value), unit);
     }

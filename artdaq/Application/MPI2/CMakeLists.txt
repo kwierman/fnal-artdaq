@@ -11,7 +11,6 @@ art_make_library(SOURCE
   MPISentry.cc
   LIBRARIES
   artdaq_DAQrate
-  artdaq_Plugins
   artdaq_Application
   ${ART_FRAMEWORK_ART}
   ${MPI_C_LIBRARIES}
@@ -25,6 +24,8 @@ art_make_library(SOURCE
 
 art_make_exec(EventBuilderMain
   LIBRARIES
+  artdaq_Plugins
+  artdaq_DAQrate
   artdaq_Application_MPI2
   artdaq_ExternalComms
   artdaq_BuildInfo
@@ -32,6 +33,8 @@ art_make_exec(EventBuilderMain
 
 art_make_exec(BoardReaderMain
   LIBRARIES
+  artdaq_Plugins
+  artdaq_DAQrate
   artdaq_Application_MPI2
   artdaq_ExternalComms
   artdaq_BuildInfo
@@ -39,6 +42,8 @@ art_make_exec(BoardReaderMain
 
 art_make_exec(AggregatorMain
   LIBRARIES
+  artdaq_Plugins
+  artdaq_DAQrate
   artdaq_Application_MPI2
   artdaq_ExternalComms
   artdaq_BuildInfo

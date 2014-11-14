@@ -12,6 +12,7 @@ include_directories(${MPI_INCLUDE_PATH})
 art_make(SUBDIRS detail
   LIB_LIBRARIES
   artdaq_DAQdata
+  artdaq_Plugins
   ${ARTDAQ-CORE_CORE}
   ${ARTDAQ-CORE_DATA}
   ${FHICLCPP}

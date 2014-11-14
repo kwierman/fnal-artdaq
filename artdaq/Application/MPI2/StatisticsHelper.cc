@@ -1,36 +1,12 @@
 #include "artdaq/Application/MPI2/StatisticsHelper.hh"
-#include "artdaq/Plugins/makeMetricPlugin.hh"
-#include "messagefacility/MessageLogger/MessageLogger.h"
 
 artdaq::StatisticsHelper::
-StatisticsHelper() : monitored_quantity_name_list_(0), metric_plugins_(0)
+StatisticsHelper() : monitored_quantity_name_list_(0)
 {
 }
 
 artdaq::StatisticsHelper::~StatisticsHelper()
 {
-  for(auto & i : metric_plugins_)
-    {
-      i.reset(nullptr);
-    }
-}
-
-void artdaq::StatisticsHelper::
-initialize(fhicl::ParameterSet const& pset)
-{
-  mf::LogInfo("StatisticsHelper") << "Confiugring metrics with parameter set:\n" << pset.to_string();
-  std::vector<std::string> names = pset.get_pset_keys();
-  for(auto name : names)
-    {
-      try{
-      mf::LogInfo("StatisticsHelper") << "Constructing metric plugin with name " << name;
-      fhicl::ParameterSet plugin_pset = pset.get<fhicl::ParameterSet>(name);
-      metric_plugins_.push_back(makeMetricPlugin(plugin_pset.get<std::string>("metricPluginType",""), plugin_pset));
-}
-catch(...) {
-     mf::LogWarning("StatisticsHelper") << "Error loading plugin with name " << name;
-}
-    }
 }
 
 void artdaq::StatisticsHelper::
@@ -40,23 +16,11 @@ addMonitoredQuantityName(std::string const& statKey)
 }
 
 void artdaq::StatisticsHelper::addSample(std::string const& statKey,
-					 double value,std::string unit, int level)
+			                double value)
 {
   artdaq::MonitoredQuantityPtr mqPtr =
     artdaq::StatisticsCollection::getInstance().getMonitoredQuantity(statKey);
   if (mqPtr.get() != 0) {mqPtr->addSample(value);}
-
-  for(auto & metric : metric_plugins_)
-    {
-      if(metric->getRunLevel() >= level) {
-      try{
-      metric->sendMetric(statKey, value, unit);
-      }
-      catch (...) {
-      mf::LogWarning("StatisticsHelper") << "Error sending value to metric plugin with name " << metric->getLibName();
-      }
-      }
-    }
 }
 
 void artdaq::StatisticsHelper::

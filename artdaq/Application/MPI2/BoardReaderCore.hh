@@ -11,6 +11,7 @@
 #include "artdaq/DAQrate/quiet_mpi.hh"
 #include "artdaq/DAQrate/SHandles.hh"
 #include "artdaq/Application/MPI2/StatisticsHelper.hh"
+#include "artdaq/DAQrate/MetricManager.hh"
 
 namespace artdaq
 {
@@ -65,6 +66,7 @@ private:
   // attributes and methods for statistics gathering & reporting
   artdaq::StatisticsHelper statsHelper_;
   std::string buildStatisticsString_();
+  artdaq::MetricManager metricMan_;
 };
 
 #endif /* artdaq_Application_MPI2_BoardReaderCore_hh */

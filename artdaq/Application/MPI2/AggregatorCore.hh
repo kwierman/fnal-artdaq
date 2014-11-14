@@ -13,6 +13,7 @@
 #include "artdaq-core/Core/GlobalQueue.hh"
 #include "artdaq/DAQrate/EventStore.hh"
 #include "artdaq/Application/MPI2/StatisticsHelper.hh"
+#include "artdaq/DAQrate/MetricManager.hh"
 
 #include <sys/shm.h> 
 
@@ -94,6 +95,7 @@ private:
   artdaq::StatisticsHelper stats_helper_;
   std::string buildStatisticsString_();
   double previous_run_duration_;
+  artdaq::MetricManager metricMan_;
 
   // *** Shared memory declarations ***
   struct ShmStruct {
