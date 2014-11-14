@@ -28,10 +28,13 @@ namespace artdaq {
   virtual void sendMetric(std::string name, double value, std::string unit) =0;
   virtual void sendMetric(std::string name, float value, std::string unit) =0;
   virtual void sendMetric(std::string name, uint32_t value, std::string unit) =0;
+  virtual void startMetrics() =0;
+  virtual void stopMetrics() =0;
 
   void setRunLevel(int level) { runLevel_ = level; }
   int getRunLevel() { return runLevel_; }
 
+  virtual std::string getLibName() { return "ERROR"; }
 };
 
 } //End namespace artdaq

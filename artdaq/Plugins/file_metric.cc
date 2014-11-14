@@ -16,21 +16,21 @@ namespace artdaq {
   private:
     std::string outputFile_;
     std::ofstream outputStream_;
+    std::ios_base::openmode mode_;
   public:
     FileMetric(fhicl::ParameterSet config) : MetricPlugin(config),
 				     outputFile_(pset.get<std::string>("fileName","FileMetric.out"))
     {
       std::string modeString = pset.get<std::string>("fileMode", "append");
       
-      std::ios_base::openmode mode = std::ofstream::out | std::ofstream::app;
+      mode_ = std::ofstream::out | std::ofstream::app;
       if(modeString == "Overwrite" || modeString == "Create" || modeString == "Write") {
-          mode = std::ofstream::out | std::ofstream::trunc;
+          mode_ = std::ofstream::out | std::ofstream::trunc;
       }
-
-      outputStream_.open(outputFile_.c_str(),mode);
+      startMetrics();
     }
     ~FileMetric() {
-      outputStream_.close();
+      stopMetrics();
     }
     virtual std::string getLibName() { return "file"; }
     virtual void sendMetric(std::string name, std::string value, std::string unit ) 
@@ -53,6 +53,18 @@ namespace artdaq {
     virtual void sendMetric(std::string name, uint32_t value, std::string unit ) 
     { 
       sendMetric(name, std::to_string(value), unit);
+    }
+virtual void startMetrics()
+{
+      outputStream_.open(outputFile_.c_str(),mode_);
+      const std::time_t result = std::time(NULL);
+      outputStream_ << std::ctime(&result) << "FileMetric plugin started." << std::endl;
+}
+    virtual void stopMetrics()
+    {
+    const std::time_t result = std::time(NULL);
+      outputStream_ << std::ctime(&result) << "FileMetric plugin has been stopped!" << std::endl;
+      outputStream_.close();
     }
   };
 

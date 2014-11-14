@@ -1,4 +1,5 @@
 art_make(
+  EXCLUDE graphite_metric.cc file_metric.cc
   LIB_LIBRARIES
   ${ART_PERSISTENCY_COMMON}
   ${ART_UTILITIES}
@@ -9,7 +10,16 @@ art_make(
   )
 
 simple_plugin("file" "metric"
-  artdaq_Plugins
+  ${FHICLCPP}
+  ${CETLIB}
+)
+
+simple_plugin("graphite" "metric"
+  ${Boost_SYSTEM_LIBRARY}
+  ${Boost_THREAD_LIBRARY}
+  ${FHICLCPP}
+  ${CETLIB}
+  pthread
 )
 
 install_headers()
