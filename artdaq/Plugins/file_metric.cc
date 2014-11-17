@@ -17,9 +17,11 @@ namespace artdaq {
     std::string outputFile_;
     std::ofstream outputStream_;
     std::ios_base::openmode mode_;
+    bool stopped_;
   public:
     FileMetric(fhicl::ParameterSet config) : MetricPlugin(config),
-				     outputFile_(pset.get<std::string>("fileName","FileMetric.out"))
+				     outputFile_(pset.get<std::string>("fileName","FileMetric.out")),
+                                     stopped_(true)
     {
       std::string modeString = pset.get<std::string>("fileMode", "append");
       
@@ -35,8 +37,10 @@ namespace artdaq {
     virtual std::string getLibName() { return "file"; }
     virtual void sendMetric(std::string name, std::string value, std::string unit ) 
     {
-      const std::time_t result = std::time(NULL);
-      outputStream_ << std::ctime(&result) << "FileMetric: " << name << ": " << value << " " << unit << "." << std::endl;
+      if(!stopped_) {
+        const std::time_t result = std::time(NULL);
+        outputStream_ << std::ctime(&result) << "FileMetric: " << name << ": " << value << " " << unit << "." << std::endl;
+      }
     }
     virtual void sendMetric(std::string name, int value, std::string unit ) 
     { 
@@ -54,17 +58,23 @@ namespace artdaq {
     { 
       sendMetric(name, std::to_string(value), unit);
     }
-virtual void startMetrics()
-{
-      outputStream_.open(outputFile_.c_str(),mode_);
-      const std::time_t result = std::time(NULL);
-      outputStream_ << std::ctime(&result) << "FileMetric plugin started." << std::endl;
-}
+    virtual void startMetrics()
+    {
+      if(stopped_)
+      {
+        outputStream_.open(outputFile_.c_str(),mode_);
+        const std::time_t result = std::time(NULL);
+        outputStream_ << std::ctime(&result) << "FileMetric plugin started." << std::endl;
+        stopped_ = false;
+      }
+    }
     virtual void stopMetrics()
     {
-    const std::time_t result = std::time(NULL);
-      outputStream_ << std::ctime(&result) << "FileMetric plugin has been stopped!" << std::endl;
-      outputStream_.close();
+      if(!stopped_) {
+        const std::time_t result = std::time(NULL);
+        outputStream_ << std::ctime(&result) << "FileMetric plugin has been stopped!" << std::endl;
+        outputStream_.close();
+      }
     }
   };
 

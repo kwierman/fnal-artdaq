@@ -21,6 +21,10 @@ artdaq::MetricManager::~MetricManager()
 
 void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset)
 {
+  if(initialized_)
+  {
+    shutdown();
+  }
   mf::LogDebug("MetricManager") << "Confiugring metrics with parameter set:\n" << pset.to_string();
   std::vector<std::string> names = pset.get_pset_keys();
   for(auto name : names)
@@ -32,7 +36,7 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset)
           plugin_pset.get<std::string>("metricPluginType",""), plugin_pset));
       }
       catch(...) {
-        mf::LogWarning("StatisticsHelper") << "Error loading plugin with name " << name;
+        mf::LogWarning("MetricManager") << "Error loading plugin with name " << name;
       }
     }
   initialized_ = true;
@@ -40,20 +44,38 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset)
 
 void artdaq::MetricManager::do_start()
 {
-  for(auto & metric : metric_plugins_)
+  if(!running_) {
+    mf::LogDebug("MetricManager") << "Starting MetricManager";
+    for(auto & metric : metric_plugins_)
     {
+      try{
       metric->startMetrics();
+        mf::LogDebug("MetricManager") << "Metric Plugin " << metric->getLibName() << " started.";
+      }
+      catch(...) {
+        mf::LogWarning("MetricManager") << "Error starting plugin with name " << metric->getLibName();
+      }
     }
-  running_ = true;
+    running_ = true;
+  }
 }
 
 void artdaq::MetricManager::do_stop()
 {
-  for(auto & metric : metric_plugins_)
+  if(running_) {
+    for(auto & metric : metric_plugins_)
     {
-      metric->stopMetrics();
+      try {
+        metric->stopMetrics();
+        mf::LogDebug("MetricManager") << "Metric Plugin " << metric->getLibName() << " stopped.";
+      }
+      catch(...) {
+        mf::LogWarning("MetricManager") << "Error stopping plugin with name " << metric->getLibName();
+      }
     }
-  running_ = false;
+    running_ = false;
+    mf::LogDebug("MetricManager") << "MetricManager has been stopped.";
+  }
 }
 
 void artdaq::MetricManager::do_pause() { do_stop(); }
@@ -67,10 +89,22 @@ void artdaq::MetricManager::reinitialize(fhicl::ParameterSet const& pset)
 
 void artdaq::MetricManager::shutdown()
 {
+  mf::LogDebug("MetricManager") << "MetricManager is shutting down...";
   do_stop();
-  for(auto & i : metric_plugins_)
+
+  if(initialized_)
+  {
+    for(auto & i : metric_plugins_)
     {
-      i.reset(nullptr);
+      try {
+        std::string name = i->getLibName();
+        i.reset(nullptr);
+        mf::LogDebug("MetricManager") << "Metric Plugin " << name << " shutdown.";
+      }
+      catch(...) {
+        mf::LogError("MetricManager") << "Error Shutting down metric with name " << i->getLibName();
+      }
     }
-  initialized_ = false;
+    initialized_ = false;
+  }
 }

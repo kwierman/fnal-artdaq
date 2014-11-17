@@ -22,13 +22,15 @@ namespace artdaq {
     std::string namespace_;
     boost::asio::io_service io_service_;
     tcp::socket socket_;
+    bool stopped_;
   public:
     GraphiteMetric(fhicl::ParameterSet config) : MetricPlugin(config),
 						 host_(pset.get<std::string>("host","localhost")),
                                                  port_(pset.get<int>("port",2003)),
                                                  namespace_(pset.get<std::string>("namespace","artdaq.")),
                                                  io_service_(),
-                                                 socket_(io_service_)
+                                                 socket_(io_service_),
+                                                 stopped_(true)
     {
       startMetrics();
     }
@@ -37,16 +39,17 @@ namespace artdaq {
 
     virtual void sendMetric(std::string name, std::string value, std::string unit ) 
     {
-      std::string unitWarn = unit;
-      const std::time_t result = std::time(0);
-      boost::asio::streambuf data;
-      std::ostream out(&data);
-      out << namespace_ << name << " "
-          << value << " "
-          << result << std::endl;
+      if(!stopped_) {
+        std::string unitWarn = unit;
+        const std::time_t result = std::time(0);
+        boost::asio::streambuf data;
+        std::ostream out(&data);
+        out << namespace_ << name << " "
+            << value << " "
+            << result << std::endl;
    
-      boost::asio::write(socket_, data);
-          
+        boost::asio::write(socket_, data);
+      }
     }
     virtual void sendMetric(std::string name, int value, std::string unit ) 
     { 
@@ -65,13 +68,21 @@ namespace artdaq {
       sendMetric(name, std::to_string(value), unit);
     }
     virtual void startMetrics() {
-      tcp::resolver resolver(io_service_);
-      tcp::resolver::query query(host_, std::to_string(port_));
-      boost::asio::connect(socket_, resolver.resolve(query));
+      if(stopped_)
+      {
+        tcp::resolver resolver(io_service_);
+        tcp::resolver::query query(host_, std::to_string(port_));
+        boost::asio::connect(socket_, resolver.resolve(query));
+        stopped_ = false;
+      }
     }
     virtual void stopMetrics() {
-      socket_.shutdown(boost::asio::socket_base::shutdown_both);
-      socket_.close();
+      if(!stopped_)
+      {
+        socket_.shutdown(boost::asio::socket_base::shutdown_send);
+        socket_.close();
+        stopped_ = true;
+      }
     }
   };
 
