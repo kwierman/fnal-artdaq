@@ -54,10 +54,10 @@ public:
       }
     }
     else if(initialized_) {
-      //mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager stopped!";
+      mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager stopped!";
     }
     else {
-      mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager uninitialized!";
+      //mf::LogDebug("MetricManager") << "Attempted to send metric when MetricManager uninitialized!";
     }
   }
 
