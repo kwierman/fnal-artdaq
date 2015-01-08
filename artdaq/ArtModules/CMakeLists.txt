@@ -1,6 +1,8 @@
 include_directories(${MPI_INCLUDE_PATH})
 
-art_make(SUBDIRS detail
+art_make( BASENAME_ONLY
+  LIBRARY_NAME artdaq_ArtModules
+  SUBDIRS detail
   NO_PLUGINS
   DICT_DICTIONARIES
   ${ART_PERSISTENCY_PROVENANCE}
