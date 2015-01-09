@@ -98,6 +98,10 @@ namespace artdaq {
 
     virtual std::string ReportCmd() final;
 
+    virtual std::string metricsReportingInstanceName() const {
+      return instance_name_for_metrics_;
+    }
+
     // The following functions are not yet implemented, and their
     // signatures may be subject to change.
 
@@ -166,7 +170,7 @@ namespace artdaq {
     std::atomic<size_t> ev_counter_;
 
     int board_id_;
-
+    std::string instance_name_for_metrics_;
 
     // Depending on what sleep_on_stop_us_ is set to, this gives the
     // stopping thread the chance to gather the required lock
