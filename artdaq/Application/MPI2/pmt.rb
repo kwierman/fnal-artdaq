@@ -400,8 +400,8 @@ class PMT
 
     if parameterFile != nil
       IO.foreach(parameterFile) { |definition|
-        program, host, port = definition.split(" ")
-        @mpiHandler.addExecutable(program, host, port)
+        program, host, *port = definition.split(" ")
+        @mpiHandler.addExecutable(program, host, port.join(" "))
       }
     end
     
