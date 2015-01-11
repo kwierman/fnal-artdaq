@@ -9,12 +9,14 @@
 
 include_directories(${MPI_INCLUDE_PATH})
 
-art_make(SUBDIRS detail
+art_make(BASENAME_ONLY
+  LIBRARY_NAME artdaq_DAQrate
+  SUBDIRS detail
   LIB_LIBRARIES
   artdaq_DAQdata
   artdaq_Plugins
-  ${ARTDAQ-CORE_CORE}
-  ${ARTDAQ-CORE_DATA}
+  artdaq-core_Core
+  artdaq-core_Data
   ${FHICLCPP}
   ${MF_MESSAGELOGGER}
   ${MF_UTILITIES}

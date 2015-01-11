@@ -1,4 +1,6 @@
-art_make(LIB_LIBRARIES artdaq_Application
+art_make( BASENAME_ONLY
+  LIBRARY_NAME artdaq_ExternalComms
+  LIB_LIBRARIES artdaq_Application
   ${ART_UTILITIES}
   ${FHICLCPP}
   ${CETLIB}
