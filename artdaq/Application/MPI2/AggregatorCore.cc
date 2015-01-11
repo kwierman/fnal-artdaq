@@ -233,7 +233,7 @@ bool artdaq::AggregatorCore::initialize(fhicl::ParameterSet const& pset)
   onmon_event_prescale_ = agg_pset.get<size_t>("onmon_event_prescale", 1);
 
   // fetch the monitoring parameters and create the MonitoredQuantity instances
-  stats_helper_.createCollectors(agg_pset, 100, 20.0, 60.0);
+  stats_helper_.createCollectors(agg_pset, 50, 20.0, 60.0, INPUT_EVENTS_STAT_KEY);
 
   if (event_store_ptr_ == nullptr) {
     artdaq::EventStore::ART_CFGSTRING_FCN * reader = &artapp_string_config;
@@ -519,8 +519,7 @@ size_t artdaq::AggregatorCore::process_fragments()
       }
       stats_helper_.addSample(INPUT_EVENTS_STAT_KEY, fragmentPtr->size());
       metricMan_.sendMetric(INPUT_EVENTS_STAT_KEY, fragmentPtr->size(), "fragments", 3);
-      if (stats_helper_.readyToReport(INPUT_EVENTS_STAT_KEY,
-                                      event_count_in_run_)) {
+      if (stats_helper_.readyToReport(event_count_in_run_)) {
         std::string statString = buildStatisticsString_();
         logMessage_(statString);
         logMessage_("Received event " +
@@ -750,9 +749,7 @@ std::string artdaq::AggregatorCore::report(std::string const& which) const
     artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
       getMonitoredQuantity(INPUT_EVENTS_STAT_KEY);
     if (mqPtr.get() != 0) {
-      artdaq::MonitoredQuantity::Stats stats;
-      mqPtr->getStats(stats);
-      return boost::lexical_cast<std::string>(stats.fullSampleCount);
+      return boost::lexical_cast<std::string>(mqPtr->fullSampleCount());
     }
     else {
       return "-1";
@@ -767,9 +764,7 @@ std::string artdaq::AggregatorCore::report(std::string const& which) const
       artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
         getMonitoredQuantity(INPUT_EVENTS_STAT_KEY);
       if (mqPtr.get() != 0) {
-        artdaq::MonitoredQuantity::Stats stats;
-        mqPtr->getStats(stats);
-        duration = stats.fullDuration;
+        duration = mqPtr->fullDuration();
       }
     }
     std::ostringstream oss;
@@ -924,10 +919,8 @@ std::string artdaq::AggregatorCore::buildStatisticsString_()
   mqPtr = artdaq::StatisticsCollection::getInstance().
     getMonitoredQuantity(INPUT_WAIT_STAT_KEY);
   if (mqPtr.get() != 0) {
-    artdaq::MonitoredQuantity::Stats stats;
-    mqPtr->getStats(stats);
     oss << ", input wait time = "
-        << (stats.recentValueSum / eventCount) << " sec";
+        << (mqPtr->recentValueSum() / eventCount) << " sec";
   }
 
   mqPtr = artdaq::StatisticsCollection::getInstance().
@@ -944,19 +937,15 @@ std::string artdaq::AggregatorCore::buildStatisticsString_()
   mqPtr = artdaq::StatisticsCollection::getInstance().
     getMonitoredQuantity(SHM_COPY_TIME_STAT_KEY);
   if (mqPtr.get() != 0) {
-    artdaq::MonitoredQuantity::Stats stats;
-    mqPtr->getStats(stats);
     oss << ", shared memory copy time = "
-        << (stats.recentValueSum / eventCount) << " sec";
+        << (mqPtr->recentValueSum() / eventCount) << " sec";
   }
 
   mqPtr = artdaq::StatisticsCollection::getInstance().
     getMonitoredQuantity(FILE_CHECK_TIME_STAT_KEY);
   if (mqPtr.get() != 0) {
-    artdaq::MonitoredQuantity::Stats stats;
-    mqPtr->getStats(stats);
     oss << ", file size test time = "
-        << (stats.recentValueSum / eventCount) << " sec";
+        << (mqPtr->recentValueSum() / eventCount) << " sec";
   }
 
   return oss.str();
