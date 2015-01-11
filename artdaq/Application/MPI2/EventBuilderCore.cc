@@ -162,7 +162,7 @@ bool artdaq::EventBuilderCore::initialize(fhicl::ParameterSet const& pset)
   double event_queue_wait_time = evb_pset.get<double>("event_queue_wait_time", 5.0);
 
   // fetch the monitoring parameters and create the MonitoredQuantity instances
-  statsHelper_.createCollectors(evb_pset, 100, 20.0, 60.0);
+  statsHelper_.createCollectors(evb_pset, 100, 20.0, 60.0, INPUT_FRAGMENTS_STAT_KEY);
 
   /* Once art has been initialized we can't tear it down or change it's
      configuration.  We'll keep track of when we have initialized it.  Once it
@@ -404,8 +404,7 @@ size_t artdaq::EventBuilderCore::process_fragments()
     ++fragment_count_in_run_;
     statsHelper_.addSample(INPUT_FRAGMENTS_STAT_KEY, pfragment->size());
     metricMan_.sendMetric(INPUT_FRAGMENTS_STAT_KEY, pfragment->size(), "fragments", 0);
-    if (statsHelper_.readyToReport(INPUT_FRAGMENTS_STAT_KEY,
-                                   fragment_count_in_run_)) {
+    if (statsHelper_.readyToReport(fragment_count_in_run_)) {
       std::string statString = buildStatisticsString_();
       logMessage_(statString);
       logMessage_("Received fragment " +
@@ -508,6 +507,7 @@ std::string artdaq::EventBuilderCore::report(std::string const&) const
 std::string artdaq::EventBuilderCore::buildStatisticsString_()
 {
   std::ostringstream oss;
+  double eventCount = 1.0;
   artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
     getMonitoredQuantity(INPUT_FRAGMENTS_STAT_KEY);
   if (mqPtr.get() != 0) {
@@ -526,6 +526,7 @@ std::string artdaq::EventBuilderCore::buildStatisticsString_()
         << (stats.recentValueMax * sizeof(artdaq::RawDataType)
             / 1024.0 / 1024.0)
         << " MB" << std::endl;
+    eventCount = std::max(double(stats.recentSampleCount), 1.0);
     oss << "Average times per fragment: ";
     if (stats.recentSampleRate > 0.0) {
       oss << " elapsed time = "
@@ -536,19 +537,15 @@ std::string artdaq::EventBuilderCore::buildStatisticsString_()
   mqPtr = artdaq::StatisticsCollection::getInstance().
     getMonitoredQuantity(INPUT_WAIT_STAT_KEY);
   if (mqPtr.get() != 0) {
-    artdaq::MonitoredQuantity::Stats stats;
-    mqPtr->getStats(stats);
     oss << ", input wait time = "
-        << stats.recentValueAverage << " sec";
+        << (mqPtr->recentValueSum() / eventCount) << " sec";
   }
 
   mqPtr = artdaq::StatisticsCollection::getInstance().
     getMonitoredQuantity(STORE_EVENT_WAIT_STAT_KEY);
   if (mqPtr.get() != 0) {
-    artdaq::MonitoredQuantity::Stats stats;
-    mqPtr->getStats(stats);
     oss << ", event store wait time = "
-        << stats.recentValueAverage << " sec";
+        << (mqPtr->recentValueSum() / eventCount) << " sec";
   }
 
   return oss.str();
