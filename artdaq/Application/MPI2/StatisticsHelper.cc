@@ -1,7 +1,13 @@
 #include "artdaq/Application/MPI2/StatisticsHelper.hh"
 
+// This class is really nothing more than a collection of code that
+// would be repeated throughout artdaq "application" classes if it
+// weren't centralized here.  So, we should be careful not to put
+// too much intelligence in this class.  (KAB, 07-Jan-2015)
+
 artdaq::StatisticsHelper::
-StatisticsHelper() : monitored_quantity_name_list_(0)
+StatisticsHelper() : monitored_quantity_name_list_(0), primary_stat_ptr_(0),
+                     previous_reporting_index_(0), previous_stats_calc_time_(0.0)
 {
 }
 
@@ -16,16 +22,17 @@ addMonitoredQuantityName(std::string const& statKey)
 }
 
 void artdaq::StatisticsHelper::addSample(std::string const& statKey,
-			                double value)
+                                         double value) const
 {
   artdaq::MonitoredQuantityPtr mqPtr =
     artdaq::StatisticsCollection::getInstance().getMonitoredQuantity(statKey);
   if (mqPtr.get() != 0) {mqPtr->addSample(value);}
 }
 
-void artdaq::StatisticsHelper::
+bool artdaq::StatisticsHelper::
 createCollectors(fhicl::ParameterSet const& pset, int defaultReportIntervalFragments,
-                 double defaultReportIntervalSeconds, double defaultMonitorWindow)
+                 double defaultReportIntervalSeconds, double defaultMonitorWindow,
+                 std::string const& primaryStatKeyName)
 {
   reporting_interval_fragments_ =
     pset.get<int>("reporting_interval_fragments", defaultReportIntervalFragments);
@@ -47,11 +54,16 @@ createCollectors(fhicl::ParameterSet const& pset, int defaultReportIntervalFragm
         addMonitoredQuantity(monitored_quantity_name_list_[idx], mqPtr);
     }
   }
+
+  primary_stat_ptr_ = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(primaryStatKeyName);
+  return (primary_stat_ptr.get() != 0);
 }
 
 void artdaq::StatisticsHelper::resetStatistics()
 {
   previous_reporting_index_ = 0;
+  previous_stats_calc_time_ = 0.0;
   for (size_t idx = 0; idx < monitored_quantity_name_list_.size(); ++idx) {
     artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
       getMonitoredQuantity(monitored_quantity_name_list_[idx]);
@@ -60,17 +72,27 @@ void artdaq::StatisticsHelper::resetStatistics()
 }
 
 bool artdaq::StatisticsHelper::
-readyToReport(std::string const& primaryStatKeyName, size_t currentCount)
+readyToReport(size_t currentCount)
 {
-  artdaq::MonitoredQuantityPtr mqPtr =
-    artdaq::StatisticsCollection::getInstance().getMonitoredQuantity(primaryStatKeyName);
-
-  if (mqPtr.get() != 0 && (currentCount % reporting_interval_fragments_) == 0) {
-    artdaq::MonitoredQuantity::Stats stats;
-    mqPtr->getStats(stats);
-    size_t reportIndex = (size_t) (stats.fullDuration / reporting_interval_seconds_);
+  if (primary_stat_ptr_.get() != 0 &&
+      (currentCount % reporting_interval_fragments_) == 0) {
+    double fullDuration = primary_stat_ptr_->fullDuration();
+    size_t reportIndex = (size_t) (fullDuration / reporting_interval_seconds_);
     if (reportIndex > previous_reporting_index_) {
       previous_reporting_index_ = reportIndex;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool artdaq::StatisticsHelper::statsRollingWindowHasMoved()
+{
+  if (primary_stat_ptr_.get() != 0) {
+    double lastCalcTime = primary_stat_ptr_->lastCalculationTime();
+    if (lastCalcTime > previous_stats_calc_time_) {
+      previous_stats_calc_time_ = lastCalcTime;
       return true;
     }
   }
