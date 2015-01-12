@@ -62,6 +62,8 @@ private:
 
   size_t fragment_count_;
   artdaq::Fragment::sequence_id_t prev_seq_id_;
+  std::atomic<bool> stop_requested_;
+  std::atomic<bool> pause_requested_;
 
   // attributes and methods for statistics gathering & reporting
   artdaq::StatisticsHelper statsHelper_;
