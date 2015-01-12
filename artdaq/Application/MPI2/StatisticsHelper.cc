@@ -57,7 +57,7 @@ createCollectors(fhicl::ParameterSet const& pset, int defaultReportIntervalFragm
 
   primary_stat_ptr_ = artdaq::StatisticsCollection::getInstance().
     getMonitoredQuantity(primaryStatKeyName);
-  return (primary_stat_ptr.get() != 0);
+  return (primary_stat_ptr_.get() != 0);
 }
 
 void artdaq::StatisticsHelper::resetStatistics()
