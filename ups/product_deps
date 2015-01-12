@@ -17,7 +17,7 @@ bindir      fq_dir      bin
 
 #
 product			version		optional
-artdaq_core 		v1_04_08
+artdaq_core 		v1_04_09
 mvapich2		v1_9_0
 mpich			v3_1_2
 xmlrpc_c		v1_25_30
