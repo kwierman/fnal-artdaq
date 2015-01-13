@@ -336,8 +336,8 @@ size_t artdaq::BoardReaderCore::process_fragments()
           << "Sending fragment " << fragment_count_
           << " with sequence id " << sequence_id << ".";
       }
-      if (statsHelper_.statsRollingWindowHasMoved()) {sendMetrics_();}
     }
+    if (statsHelper_.statsRollingWindowHasMoved()) {sendMetrics_();}
     statsHelper_.addSample(OUTPUT_WAIT_STAT_KEY,
                            artdaq::MonitoredQuantity::getCurrentTime() - startTime);
     frags.clear();
@@ -349,7 +349,7 @@ size_t artdaq::BoardReaderCore::process_fragments()
   //MPI_Barrier(local_group_comm_);
 
   // 12-Jan-2015, KAB: moved MetricManager stop and pause commands here so
-  // that they don't get called while stats generation is still going on.
+  // that they don't get called while metrics reporting is still going on.
   if (stop_requested_.load()) {metricMan_.do_stop();}
   else if (pause_requested_.load()) {metricMan_.do_pause();}
 
@@ -474,6 +474,6 @@ void artdaq::BoardReaderCore::sendMetrics_()
     getMonitoredQuantity(FRAGMENTS_PER_READ_STAT_KEY);
   if (mqPtr.get() != 0) {
     metricMan_.sendMetric(FRAGMENTS_PER_READ_METRIC_NAME_,
-                          mqPtr->recentValueAverage(), "fragments", 3);  // 4
+                          mqPtr->recentValueAverage(), "fragments", 4);
   }
 }
