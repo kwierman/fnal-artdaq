@@ -36,7 +36,7 @@ private:
   int reporting_interval_fragments_;
   double reporting_interval_seconds_;
   size_t previous_reporting_index_;
-  double previous_stats_calc_time_;
+  MonitoredQuantity::TIME_POINT_T previous_stats_calc_time_;
 
 };
 

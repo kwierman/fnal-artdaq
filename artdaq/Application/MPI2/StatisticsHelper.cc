@@ -92,7 +92,8 @@ bool artdaq::StatisticsHelper::statsRollingWindowHasMoved()
   if (primary_stat_ptr_.get() != 0) {
     double lastCalcTime = primary_stat_ptr_->lastCalculationTime();
     if (lastCalcTime > previous_stats_calc_time_) {
-      previous_stats_calc_time_ = lastCalcTime;
+      MonitoredQuantity::TIME_POINT_T now = MonitoredQuantity::getCurrentTime();
+      previous_stats_calc_time_ = std::min(lastCalcTime, now);
       return true;
     }
   }
