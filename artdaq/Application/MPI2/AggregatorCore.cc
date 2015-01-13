@@ -90,7 +90,7 @@ bool artdaq::AggregatorCore::initialize(fhicl::ParameterSet const& pset)
   }
   catch (...) {
     //Okay if no metrics defined
- mf::LogDebug("AggregatorCore") << "Error loading metrics or no metric plugins defined.";
+    mf::LogDebug("AggregatorCore") << "Error loading metrics or no metric plugins defined.";
   }
 
   // determine the data receiver parameters
@@ -261,6 +261,25 @@ bool artdaq::AggregatorCore::initialize(fhicl::ParameterSet const& pset)
     }
   }
 
+  if (is_data_logger_) {
+    EVENT_RATE_METRIC_NAME_ = "Data Logger Event Rate";
+    EVENT_SIZE_METRIC_NAME_ = "Data Logger Event Size";
+    DATA_RATE_METRIC_NAME_ = "Data Logger Data Rate";
+    INPUT_WAIT_METRIC_NAME_ = "Data Logger Input Wait Time";
+    EVENT_STORE_WAIT_METRIC_NAME_ = "Data Logger Event Queue Wait Time";
+    SHM_COPY_TIME_METRIC_NAME_ = "Data Logger Shared Memory Copy Time";
+    FILE_CHECK_TIME_METRIC_NAME_ = "Data Logger File Check Time";
+  }
+  else {
+    EVENT_RATE_METRIC_NAME_ = "Online Monitor Event Rate";
+    EVENT_SIZE_METRIC_NAME_ = "Online Monitor Event Size";
+    DATA_RATE_METRIC_NAME_ = "Online Monitor Data Rate";
+    INPUT_WAIT_METRIC_NAME_ = "Online Monitor Input Wait Time";
+    EVENT_STORE_WAIT_METRIC_NAME_ = "Online Monitor Event Queue Wait Time";
+    SHM_COPY_TIME_METRIC_NAME_ = "Online Monitor Shared Memory Copy Time";
+    FILE_CHECK_TIME_METRIC_NAME_ = "Online Monitor File Check Time";
+  }
+
   return true;
 }
 
@@ -294,7 +313,6 @@ bool artdaq::AggregatorCore::stop()
      received all of the EOD fragments it expects.  Higher level code will block
      until the process_fragments() thread exits. */
   stop_requested_.store(true);
-  metricMan_.do_stop();
   return true;
 }
 
@@ -308,7 +326,6 @@ bool artdaq::AggregatorCore::pause()
      received all of the EOD fragments it expects.  Higher level code will block
      until the process_fragments() thread exits. */
   local_pause_requested_.store(true);
-  metricMan_.do_pause();
   return true;
 }
 
@@ -405,8 +422,6 @@ size_t artdaq::AggregatorCore::process_fragments()
     }
     stats_helper_.addSample(INPUT_WAIT_STAT_KEY,
                             (artdaq::MonitoredQuantity::getCurrentTime() - startTime));
-    metricMan_.sendMetric(INPUT_WAIT_STAT_KEY,
-			  (artdaq::MonitoredQuantity::getCurrentTime() - startTime), "seconds", 5);
     if (senderSlot == (size_t) MPI_ANY_SOURCE) {
       if (endSubRunMsg != nullptr) {
         mf::LogInfo("AggregatorCore")
@@ -518,7 +533,6 @@ size_t artdaq::AggregatorCore::process_fragments()
                     ".");
       }
       stats_helper_.addSample(INPUT_EVENTS_STAT_KEY, fragmentPtr->size());
-      metricMan_.sendMetric(INPUT_EVENTS_STAT_KEY, fragmentPtr->size(), "fragments", 3);
       if (stats_helper_.readyToReport(event_count_in_run_)) {
         std::string statString = buildStatisticsString_();
         logMessage_(statString);
@@ -533,6 +547,7 @@ size_t artdaq::AggregatorCore::process_fragments()
                     ").");
       }
     }
+    if (stats_helper_.statsRollingWindowHasMoved()) {sendMetrics_();}
 
     startTime = artdaq::MonitoredQuantity::getCurrentTime();
     bool fragmentWasCopied = false;
@@ -543,9 +558,6 @@ size_t artdaq::AggregatorCore::process_fragments()
     }
     stats_helper_.addSample(SHM_COPY_TIME_STAT_KEY,
                             (artdaq::MonitoredQuantity::getCurrentTime() - startTime));
-    metricMan_.sendMetric(SHM_COPY_TIME_STAT_KEY,
-			  (artdaq::MonitoredQuantity::getCurrentTime() - startTime), "seconds", 5);
-
 
     //----------------------------------------------------------------------------
 
@@ -636,7 +648,6 @@ size_t artdaq::AggregatorCore::process_fragments()
     }
     float delta=artdaq::MonitoredQuantity::getCurrentTime() - startTime;
     stats_helper_.addSample(STORE_EVENT_WAIT_STAT_KEY, delta );
-    metricMan_.sendMetric(STORE_EVENT_WAIT_STAT_KEY, delta, "seconds", 5 );
     TRACE( (delta>3.0)?0:22, "AggregatorCore::process_fragments seq=%lu isLogger=%d delta=%f start=%f"
           , seq, is_data_logger_, delta, startTime );
 
@@ -678,8 +689,6 @@ size_t artdaq::AggregatorCore::process_fragments()
     }
     stats_helper_.addSample(FILE_CHECK_TIME_STAT_KEY,
                             (artdaq::MonitoredQuantity::getCurrentTime() - startTime));
-    metricMan_.sendMetric(FILE_CHECK_TIME_STAT_KEY,
-			  (artdaq::MonitoredQuantity::getCurrentTime() - startTime), "seconds", 5);
 
     /* If we've received EOD fragments from all of the EventBuilders we can
        verify that we've also received every fragment that they have sent.  If
@@ -731,6 +740,11 @@ size_t artdaq::AggregatorCore::process_fragments()
     logMessage_(oss.str());
     previous_run_duration_ = stats.fullDuration;
   }
+
+  // 13-Jan-2015, KAB: moved MetricManager stop and pause commands here so
+  // that they don't get called while metrics reporting is still going on.
+  if (stop_requested_.load()) {metricMan_.do_stop();}
+  else if (local_pause_requested_.load()) {metricMan_.do_pause();}
 
   receiver_ptr_.reset(nullptr);
   if (is_online_monitor_) {
@@ -916,6 +930,12 @@ std::string artdaq::AggregatorCore::buildStatisticsString_()
     }
   }
 
+  // 13-Jan-2015, KAB - Just a reminder that using "eventCount" in the
+  // denominator of the calculations below is important so that the sum
+  // of the different "average" times adds up to the overall average time
+  // per event.  In some (but not all) cases, using recentValueAverage()
+  // would be equivalent.
+
   mqPtr = artdaq::StatisticsCollection::getInstance().
     getMonitoredQuantity(INPUT_WAIT_STAT_KEY);
   if (mqPtr.get() != 0) {
@@ -949,6 +969,65 @@ std::string artdaq::AggregatorCore::buildStatisticsString_()
   }
 
   return oss.str();
+}
+
+void artdaq::AggregatorCore::sendMetrics_()
+{
+  mf::LogDebug("AggregatorCore") << "Sending metrics ";
+  double eventCount = 1.0;
+  artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(INPUT_EVENTS_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    artdaq::MonitoredQuantity::Stats stats;
+    mqPtr->getStats(stats);
+    eventCount = std::max(double(stats.recentSampleCount), 1.0);
+    metricMan_.sendMetric(EVENT_RATE_METRIC_NAME_,
+                          stats.recentSampleRate, "events/sec", 1);
+    metricMan_.sendMetric(EVENT_SIZE_METRIC_NAME_,
+                          (stats.recentValueAverage * sizeof(artdaq::RawDataType)
+                           / 1024.0 / 1024.0), "MB", 2);
+    metricMan_.sendMetric(DATA_RATE_METRIC_NAME_,
+                          (stats.recentValueRate * sizeof(artdaq::RawDataType)
+                           / 1024.0 / 1024.0), "MB/sec", 2);
+  }
+
+  // 13-Jan-2015, KAB - Just a reminder that using "eventCount" in the
+  // denominator of the calculations below is important so that the sum
+  // of the different "average" times adds up to the overall average time
+  // per event.  In some (but not all) cases, using recentValueAverage()
+  // would be equivalent.
+
+  mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(INPUT_WAIT_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    metricMan_.sendMetric(INPUT_WAIT_METRIC_NAME_,
+                          (mqPtr->recentValueSum() / eventCount),
+                          "seconds", 3);
+  }
+
+  mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(STORE_EVENT_WAIT_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    metricMan_.sendMetric(EVENT_STORE_WAIT_METRIC_NAME_,
+                          (mqPtr->recentValueSum() / eventCount),
+                          "seconds", 3);
+  }
+
+  mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(SHM_COPY_TIME_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    metricMan_.sendMetric(SHM_COPY_TIME_METRIC_NAME_,
+                          (mqPtr->recentValueSum() / eventCount),
+                          "seconds", 4);
+  }
+
+  mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(FILE_CHECK_TIME_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    metricMan_.sendMetric(FILE_CHECK_TIME_METRIC_NAME_,
+                          (mqPtr->recentValueSum() / eventCount),
+                          "seconds", 4);
+  }
 }
 
 void artdaq::AggregatorCore::attachToSharedMemory_(bool initialize)
