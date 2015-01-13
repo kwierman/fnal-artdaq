@@ -104,6 +104,7 @@ void artdaq::CommandableFragmentGenerator::StopCmd(uint64_t timeout, uint64_t ti
   timeout_ = timeout;
   timestamp_ = timestamp;
 
+  stopNoMutex();
   should_stop_.store (true);
   std::unique_lock<std::mutex> lk(mutex_);
 
@@ -115,6 +116,7 @@ void artdaq::CommandableFragmentGenerator::PauseCmd(uint64_t timeout, uint64_t t
   timeout_ = timeout;
   timestamp_ = timestamp;
 
+  pauseNoMutex();
   should_stop_.store (true);
   std::unique_lock<std::mutex> lk(mutex_);
 
