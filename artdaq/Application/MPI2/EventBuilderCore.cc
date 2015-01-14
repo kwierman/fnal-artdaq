@@ -185,6 +185,14 @@ bool artdaq::EventBuilderCore::initialize(fhicl::ParameterSet const& pset)
       return false;
     }
   }
+  
+  std::string metricsReportingInstanceName = "EventBuilder " +
+    boost::lexical_cast<std::string>(1+mpi_rank_-first_data_sender_rank_-data_sender_count_);
+  FRAGMENT_RATE_METRIC_NAME_ = metricsReportingInstanceName + " Fragment Rate";
+  FRAGMENT_SIZE_METRIC_NAME_ = metricsReportingInstanceName + " Average Fragment Size";
+  DATA_RATE_METRIC_NAME_ = metricsReportingInstanceName + " Data Rate";
+  INPUT_WAIT_METRIC_NAME_ = metricsReportingInstanceName + " Avg Input Wait Time";
+  EVENT_STORE_WAIT_METRIC_NAME_ = metricsReportingInstanceName + " Avg art Queue Wait Time";
 
   return true;
 }
@@ -212,10 +220,6 @@ bool artdaq::EventBuilderCore::stop()
               ", subrun " + boost::lexical_cast<std::string>(event_store_ptr_->subrunID()));
   bool endSucceeded;
   int attemptsToEnd;
-
-  // 14-Nov-2014, ELF - Stop the MetricManager
-  metricMan_.do_stop();
-
 
   // 21-Jun-2013, KAB - the stop_requested_ variable must be set
   // before the flush lock so that the processFragments loop will
@@ -266,9 +270,6 @@ bool artdaq::EventBuilderCore::pause()
 
   bool endSucceeded = false;
   int attemptsToEnd = 1;
-
-  metricMan_.do_pause();
-    
   endSucceeded = event_store_ptr_->endSubrun();
   while (! endSucceeded && attemptsToEnd < 3) {
     ++attemptsToEnd;
@@ -358,8 +359,6 @@ size_t artdaq::EventBuilderCore::process_fragments()
     senderSlot = receiver_ptr_->recvFragment(*pfragment, recvTimeout);
     statsHelper_.addSample(INPUT_WAIT_STAT_KEY,
                            (artdaq::MonitoredQuantity::getCurrentTime() - startTime));
-    metricMan_.sendMetric(INPUT_WAIT_STAT_KEY,
-			  (artdaq::MonitoredQuantity::getCurrentTime() - startTime), "seconds", 5);
     if (senderSlot == (size_t) MPI_ANY_SOURCE) {
       mf::LogInfo("EventBuilderCore")
         << "The receiving of data has stopped - ending the run.";
@@ -403,7 +402,6 @@ size_t artdaq::EventBuilderCore::process_fragments()
 
     ++fragment_count_in_run_;
     statsHelper_.addSample(INPUT_FRAGMENTS_STAT_KEY, pfragment->size());
-    metricMan_.sendMetric(INPUT_FRAGMENTS_STAT_KEY, pfragment->size(), "fragments", 0);
     if (statsHelper_.readyToReport(fragment_count_in_run_)) {
       std::string statString = buildStatisticsString_();
       logMessage_(statString);
@@ -417,6 +415,7 @@ size_t artdaq::EventBuilderCore::process_fragments()
                   boost::lexical_cast<std::string>(event_store_ptr_->subrunID()) +
                   ").");
     }
+    if (statsHelper_.statsRollingWindowHasMoved()) {sendMetrics_();}
 
     startTime = artdaq::MonitoredQuantity::getCurrentTime();
     if (pfragment->type() != artdaq::Fragment::EndOfDataFragmentType) {
@@ -463,8 +462,6 @@ size_t artdaq::EventBuilderCore::process_fragments()
     }
     statsHelper_.addSample(STORE_EVENT_WAIT_STAT_KEY,
                            artdaq::MonitoredQuantity::getCurrentTime() - startTime);
-    metricMan_.sendMetric(STORE_EVENT_WAIT_STAT_KEY, artdaq::MonitoredQuantity::getCurrentTime() - startTime,
-			  "seconds", 5);
 
     /* If we've received EOD fragments from all of the BoardReaders we can
        verify that we've also received every fragment that they have sent.  If
@@ -486,6 +483,11 @@ size_t artdaq::EventBuilderCore::process_fragments()
       }
     }
   }
+
+  // 13-Jan-2015, KAB: moved MetricManager stop and pause commands here so
+  // that they don't get called while metrics reporting is still going on.
+  if (stop_requested_.load()) {metricMan_.do_stop();}
+  else if (pause_requested_.load()) {metricMan_.do_pause();}
 
   receiver_ptr_.reset(nullptr);
   return 0;
@@ -534,6 +536,12 @@ std::string artdaq::EventBuilderCore::buildStatisticsString_()
     }
   }
 
+  // 13-Jan-2015, KAB - Just a reminder that using "fragmentCount" in the
+  // denominator of the calculations below is important so that the sum
+  // of the different "average" times adds up to the overall average time
+  // per fragment.  In some (but not all) cases, using recentValueAverage()
+  // would be equivalent.
+
   mqPtr = artdaq::StatisticsCollection::getInstance().
     getMonitoredQuantity(INPUT_WAIT_STAT_KEY);
   if (mqPtr.get() != 0) {
@@ -549,6 +557,49 @@ std::string artdaq::EventBuilderCore::buildStatisticsString_()
   }
 
   return oss.str();
+}
+
+void artdaq::EventBuilderCore::sendMetrics_()
+{
+  //mf::LogDebug("EventBuilderCore") << "Sending metrics ";
+  double fragmentCount = 1.0;
+  artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(INPUT_FRAGMENTS_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    artdaq::MonitoredQuantity::Stats stats;
+    mqPtr->getStats(stats);
+    fragmentCount = std::max(double(stats.recentSampleCount), 1.0);
+    metricMan_.sendMetric(FRAGMENT_RATE_METRIC_NAME_,
+                          stats.recentSampleRate, "fragments/sec", 1);
+    metricMan_.sendMetric(FRAGMENT_SIZE_METRIC_NAME_,
+                          (stats.recentValueAverage * sizeof(artdaq::RawDataType)
+                           / 1024.0 / 1024.0), "MB", 2);
+    metricMan_.sendMetric(DATA_RATE_METRIC_NAME_,
+                          (stats.recentValueRate * sizeof(artdaq::RawDataType)
+                           / 1024.0 / 1024.0), "MB/sec", 2);
+  }
+
+  // 13-Jan-2015, KAB - Just a reminder that using "fragmentCount" in the
+  // denominator of the calculations below is important so that the sum
+  // of the different "average" times adds up to the overall average time
+  // per fragment.  In some (but not all) cases, using recentValueAverage()
+  // would be equivalent.
+
+  mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(INPUT_WAIT_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    metricMan_.sendMetric(INPUT_WAIT_METRIC_NAME_,
+                          (mqPtr->recentValueSum() / fragmentCount),
+                          "seconds", 3);
+  }
+
+  mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(STORE_EVENT_WAIT_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    metricMan_.sendMetric(EVENT_STORE_WAIT_METRIC_NAME_,
+                          (mqPtr->recentValueSum() / fragmentCount),
+                          "seconds", 3);
+  }
 }
 
 void artdaq::EventBuilderCore::logMessage_(std::string const& text)
