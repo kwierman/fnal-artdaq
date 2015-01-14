@@ -263,21 +263,21 @@ bool artdaq::AggregatorCore::initialize(fhicl::ParameterSet const& pset)
 
   if (is_data_logger_) {
     EVENT_RATE_METRIC_NAME_ = "Data Logger Event Rate";
-    EVENT_SIZE_METRIC_NAME_ = "Data Logger Event Size";
+    EVENT_SIZE_METRIC_NAME_ = "Data Logger Average Event Size";
     DATA_RATE_METRIC_NAME_ = "Data Logger Data Rate";
-    INPUT_WAIT_METRIC_NAME_ = "Data Logger Input Wait Time";
-    EVENT_STORE_WAIT_METRIC_NAME_ = "Data Logger Event Queue Wait Time";
-    SHM_COPY_TIME_METRIC_NAME_ = "Data Logger Shared Memory Copy Time";
-    FILE_CHECK_TIME_METRIC_NAME_ = "Data Logger File Check Time";
+    INPUT_WAIT_METRIC_NAME_ = "Data Logger Average Input Wait Time";
+    EVENT_STORE_WAIT_METRIC_NAME_ = "Data Logger Avg art Queue Wait Time";
+    SHM_COPY_TIME_METRIC_NAME_ = "Data Logger Avg Shared Memory Copy Time";
+    FILE_CHECK_TIME_METRIC_NAME_ = "Data Logger Average File Check Time";
   }
   else {
     EVENT_RATE_METRIC_NAME_ = "Online Monitor Event Rate";
-    EVENT_SIZE_METRIC_NAME_ = "Online Monitor Event Size";
+    EVENT_SIZE_METRIC_NAME_ = "Online Monitor Average Event Size";
     DATA_RATE_METRIC_NAME_ = "Online Monitor Data Rate";
-    INPUT_WAIT_METRIC_NAME_ = "Online Monitor Input Wait Time";
-    EVENT_STORE_WAIT_METRIC_NAME_ = "Online Monitor Event Queue Wait Time";
-    SHM_COPY_TIME_METRIC_NAME_ = "Online Monitor Shared Memory Copy Time";
-    FILE_CHECK_TIME_METRIC_NAME_ = "Online Monitor File Check Time";
+    INPUT_WAIT_METRIC_NAME_ = "Online Monitor Average Input Wait Time";
+    EVENT_STORE_WAIT_METRIC_NAME_ = "Online Monitor Avg art Queue Wait Time";
+    SHM_COPY_TIME_METRIC_NAME_ = "Online Monitor Avg Shared Memory Copy Time";
+    FILE_CHECK_TIME_METRIC_NAME_ = "Online Monitor Average File Check Time";
   }
 
   return true;
@@ -973,7 +973,7 @@ std::string artdaq::AggregatorCore::buildStatisticsString_()
 
 void artdaq::AggregatorCore::sendMetrics_()
 {
-  mf::LogDebug("AggregatorCore") << "Sending metrics ";
+  //mf::LogDebug("AggregatorCore") << "Sending metrics ";
   double eventCount = 1.0;
   artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
     getMonitoredQuantity(INPUT_EVENTS_STAT_KEY);
