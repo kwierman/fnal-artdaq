@@ -443,7 +443,7 @@ void artdaq::BoardReaderCore::sendMetrics_()
                           stats.recentSampleRate, "fragments/sec", 1);
     metricMan_.sendMetric(FRAGMENT_SIZE_METRIC_NAME_,
                           (stats.recentValueAverage * sizeof(artdaq::RawDataType)
-                           / 1024.0 / 1024.0), "MB", 2);
+                           / 1024.0 / 1024.0), "MB/fragment", 2);
     metricMan_.sendMetric(DATA_RATE_METRIC_NAME_,
                           (stats.recentValueRate * sizeof(artdaq::RawDataType)
                            / 1024.0 / 1024.0), "MB/sec", 2);
@@ -459,7 +459,7 @@ void artdaq::BoardReaderCore::sendMetrics_()
   if (mqPtr.get() != 0) {
     metricMan_.sendMetric(INPUT_WAIT_METRIC_NAME_,
                           (mqPtr->recentValueSum() / fragmentCount),
-                          "seconds", 3);
+                          "seconds/fragment", 3);
   }
 
   mqPtr = artdaq::StatisticsCollection::getInstance().
@@ -467,13 +467,13 @@ void artdaq::BoardReaderCore::sendMetrics_()
   if (mqPtr.get() != 0) {
     metricMan_.sendMetric(OUTPUT_WAIT_METRIC_NAME_,
                           (mqPtr->recentValueSum() / fragmentCount),
-                          "seconds", 3);
+                          "seconds/fragment", 3);
   }
 
   mqPtr = artdaq::StatisticsCollection::getInstance().
     getMonitoredQuantity(FRAGMENTS_PER_READ_STAT_KEY);
   if (mqPtr.get() != 0) {
     metricMan_.sendMetric(FRAGMENTS_PER_READ_METRIC_NAME_,
-                          mqPtr->recentValueAverage(), "fragments", 4);
+                          mqPtr->recentValueAverage(), "fragments/read", 4);
   }
 }

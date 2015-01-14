@@ -985,7 +985,7 @@ void artdaq::AggregatorCore::sendMetrics_()
                           stats.recentSampleRate, "events/sec", 1);
     metricMan_.sendMetric(EVENT_SIZE_METRIC_NAME_,
                           (stats.recentValueAverage * sizeof(artdaq::RawDataType)
-                           / 1024.0 / 1024.0), "MB", 2);
+                           / 1024.0 / 1024.0), "MB/event", 2);
     metricMan_.sendMetric(DATA_RATE_METRIC_NAME_,
                           (stats.recentValueRate * sizeof(artdaq::RawDataType)
                            / 1024.0 / 1024.0), "MB/sec", 2);
@@ -1002,7 +1002,7 @@ void artdaq::AggregatorCore::sendMetrics_()
   if (mqPtr.get() != 0) {
     metricMan_.sendMetric(INPUT_WAIT_METRIC_NAME_,
                           (mqPtr->recentValueSum() / eventCount),
-                          "seconds", 3);
+                          "seconds/event", 3);
   }
 
   mqPtr = artdaq::StatisticsCollection::getInstance().
@@ -1010,7 +1010,7 @@ void artdaq::AggregatorCore::sendMetrics_()
   if (mqPtr.get() != 0) {
     metricMan_.sendMetric(EVENT_STORE_WAIT_METRIC_NAME_,
                           (mqPtr->recentValueSum() / eventCount),
-                          "seconds", 3);
+                          "seconds/event", 3);
   }
 
   mqPtr = artdaq::StatisticsCollection::getInstance().
@@ -1018,7 +1018,7 @@ void artdaq::AggregatorCore::sendMetrics_()
   if (mqPtr.get() != 0) {
     metricMan_.sendMetric(SHM_COPY_TIME_METRIC_NAME_,
                           (mqPtr->recentValueSum() / eventCount),
-                          "seconds", 4);
+                          "seconds/event", 4);
   }
 
   mqPtr = artdaq::StatisticsCollection::getInstance().
@@ -1026,7 +1026,7 @@ void artdaq::AggregatorCore::sendMetrics_()
   if (mqPtr.get() != 0) {
     metricMan_.sendMetric(FILE_CHECK_TIME_METRIC_NAME_,
                           (mqPtr->recentValueSum() / eventCount),
-                          "seconds", 4);
+                          "seconds/event", 4);
   }
 }
 
