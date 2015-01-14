@@ -120,15 +120,15 @@ bool artdaq::BoardReaderCore::initialize(fhicl::ParameterSet const& pset, uint64
   FRAGMENT_RATE_METRIC_NAME_ =
     generator_ptr_->metricsReportingInstanceName() + " Fragment Rate";
   FRAGMENT_SIZE_METRIC_NAME_ =
-    generator_ptr_->metricsReportingInstanceName() + " Fragment Size";
+    generator_ptr_->metricsReportingInstanceName() + " Average Fragment Size";
   DATA_RATE_METRIC_NAME_ =
     generator_ptr_->metricsReportingInstanceName() + " Data Rate";
   INPUT_WAIT_METRIC_NAME_ =
-    generator_ptr_->metricsReportingInstanceName() + " Input Wait Time";
+    generator_ptr_->metricsReportingInstanceName() + " Avg Input Wait Time";
   OUTPUT_WAIT_METRIC_NAME_ =
-    generator_ptr_->metricsReportingInstanceName() + " Output Wait Time";
+    generator_ptr_->metricsReportingInstanceName() + " Avg Output Wait Time";
   FRAGMENTS_PER_READ_METRIC_NAME_ =
-    generator_ptr_->metricsReportingInstanceName() + " Frags Per Read";
+    generator_ptr_->metricsReportingInstanceName() + " Avg Frags Per Read";
 
   // determine the data sending parameters
   try {
