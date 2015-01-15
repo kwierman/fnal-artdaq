@@ -25,6 +25,8 @@ art_make_library( LIBRARY_NAME artdaq_Application_MPI2
 
 art_make_exec(EventBuilderMain
   LIBRARIES
+  artdaq_Plugins
+  artdaq_DAQrate
   artdaq_Application_MPI2
   artdaq_ExternalComms
   artdaq_BuildInfo
@@ -32,6 +34,8 @@ art_make_exec(EventBuilderMain
 
 art_make_exec(BoardReaderMain
   LIBRARIES
+  artdaq_Plugins
+  artdaq_DAQrate
   artdaq_Application_MPI2
   artdaq_ExternalComms
   artdaq_BuildInfo
@@ -39,6 +43,8 @@ art_make_exec(BoardReaderMain
 
 art_make_exec(AggregatorMain
   LIBRARIES
+  artdaq_Plugins
+  artdaq_DAQrate
   artdaq_Application_MPI2
   artdaq_ExternalComms
   artdaq_BuildInfo

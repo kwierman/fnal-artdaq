@@ -75,28 +75,35 @@ namespace artdaq {
     //
 
 
-    // After a call to 'start', all Fragments returned by getNext() will
-    // be marked as part of a Run with the given run number, and with
-    // subrun number 1. Calling start also resets the event number to 1.
-    // After a call to start(), and until a call to stop, getNext() will
-    // always return true, even if it returns no fragments.
+    // After a call to 'StartCmd', all Fragments returned by getNext()
+    // will be marked as part of a Run with the given run number, and
+    // with subrun number 1. Calling StartCmd also resets the event
+    // number to 1.  After a call to StartCmd(), and until a call to
+    // StopCmd, getNext() -- and hence the virtual function it calls,
+    // getNext_() -- should return true as long as datataking is meant
+    // to take place, even if a particular call returns no fragments.
+
     virtual void StartCmd(int run, uint64_t timeout, uint64_t timestamp) final;
 
-    // After a call to stop(), getNext() will eventually return
+    // After a call to StopCmd(), getNext() will eventually return
     // false. This may not happen for several calls, if the
     // implementation has data to be 'drained' from the system.
     virtual void StopCmd(uint64_t timeout, uint64_t timestamp) final;
 
-    // A call to pause() is advisory. It is an indication that the
-    // BoardReader should stop the incoming flow of data, if it can
-    // do so.
+    // A call to PauseCmd() is advisory. It is an indication that the
+    // BoardReader should stop the incoming flow of data, if it can do
+    // so.
     virtual void PauseCmd(uint64_t timeout, uint64_t timestamp) final;
 
-    // After a call to resume(), the next Fragments returned from
+    // After a call to ResumeCmd(), the next Fragments returned from
     // getNext() will be part of a new SubRun.
     virtual void ResumeCmd(uint64_t timeout, uint64_t timestamp) final;
 
     virtual std::string ReportCmd() final;
+
+    virtual std::string metricsReportingInstanceName() const {
+      return instance_name_for_metrics_;
+    }
 
     // The following functions are not yet implemented, and their
     // signatures may be subject to change.
@@ -166,7 +173,7 @@ namespace artdaq {
     std::atomic<size_t> ev_counter_;
 
     int board_id_;
-
+    std::string instance_name_for_metrics_;
 
     // Depending on what sleep_on_stop_us_ is set to, this gives the
     // stopping thread the chance to gather the required lock
@@ -183,21 +190,32 @@ namespace artdaq {
     // State-machine related implementor interface below.
     //
 
-    // If a CommandableFragmentGenerator subclass is reading from a file, and
-    // start() is called, any run-, subrun-, and event-numbers in the
-    // data read from the file must be over-written by the specified run
-    // number, etc. After a call to start_(), and until a call to
-    // stop_(), getNext_() is expected to return true.
+    // If a CommandableFragmentGenerator subclass is reading from a
+    // file, and start() is called, any run-, subrun-, and
+    // event-numbers in the data read from the file must be
+    // over-written by the specified run number, etc. After a call to
+    // StartCmd(), and until a call to StopCmd(), getNext_() is
+    // expected to return true as long as datataking is intended.
     virtual void start() {}
 
+    // On call to StopCmd, stopNoMutex() is called prior to StopCmd
+    // acquiring the mutex
+
+    virtual void stopNoMutex() {}
+
     // If a CommandableFragmentGenerator subclass is reading from a file, calling
-    // stop_() should arrange that the next call to getNext_() returns
+    // stop() should arrange that the next call to getNext_() returns
     // false, rather than allowing getNext_() to read to the end of the
     // file.
     virtual void stop() {}
 
+    // On call to PauseCmd, pauseNoMutex() is called prior to PauseCmd
+    // acquiring the mutex
+
+    virtual void pauseNoMutex() {}
+
     // If a CommandableFragmentGenerator subclass is reading from hardware, the
-    // implementation of pause_() should tell the hardware to stop
+    // implementation of pause() should tell the hardware to stop
     // sending data.
     virtual void pause() {}
 

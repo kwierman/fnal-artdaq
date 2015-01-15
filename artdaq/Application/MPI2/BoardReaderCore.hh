@@ -11,6 +11,7 @@
 #include "artdaq/DAQrate/quiet_mpi.hh"
 #include "artdaq/DAQrate/SHandles.hh"
 #include "artdaq/Application/MPI2/StatisticsHelper.hh"
+#include "artdaq/DAQrate/MetricManager.hh"
 
 namespace artdaq
 {
@@ -61,10 +62,21 @@ private:
 
   size_t fragment_count_;
   artdaq::Fragment::sequence_id_t prev_seq_id_;
+  std::atomic<bool> stop_requested_;
+  std::atomic<bool> pause_requested_;
 
   // attributes and methods for statistics gathering & reporting
   artdaq::StatisticsHelper statsHelper_;
   std::string buildStatisticsString_();
+  artdaq::MetricManager metricMan_;
+  void sendMetrics_();
+
+  std::string FRAGMENT_RATE_METRIC_NAME_;
+  std::string FRAGMENT_SIZE_METRIC_NAME_;
+  std::string DATA_RATE_METRIC_NAME_;
+  std::string INPUT_WAIT_METRIC_NAME_;
+  std::string OUTPUT_WAIT_METRIC_NAME_;
+  std::string FRAGMENTS_PER_READ_METRIC_NAME_;
 };
 
 #endif /* artdaq_Application_MPI2_BoardReaderCore_hh */
