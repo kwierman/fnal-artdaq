@@ -23,7 +23,8 @@ const std::string artdaq::BoardReaderCore::
  * Default constructor.
  */
 artdaq::BoardReaderCore::BoardReaderCore(MPI_Comm local_group_comm) :
-  local_group_comm_(local_group_comm), generator_ptr_(nullptr)
+  local_group_comm_(local_group_comm), generator_ptr_(nullptr),
+  stop_requested_(false), pause_requested_(false)
 {
   mf::LogDebug("BoardReaderCore") << "Constructor";
   statsHelper_.addMonitoredQuantityName(FRAGMENTS_PROCESSED_STAT_KEY);
@@ -71,6 +72,17 @@ bool artdaq::BoardReaderCore::initialize(fhicl::ParameterSet const& pset, uint64
     return false;
   }
 
+  // pull out the Metric part of the ParameterSet
+  fhicl::ParameterSet metric_pset;
+  try {
+    metric_pset = daq_pset.get<fhicl::ParameterSet>("metrics");
+    metricMan_.initialize(metric_pset);
+  }
+  catch (...) {
+    //Okay if no metrics have been defined...
+    mf::LogDebug("BoardReaderCore") << "Error loading metrics or no metric plugins defined.";
+  }
+
   // create the requested CommandableFragmentGenerator
   std::string frag_gen_name = fr_pset.get<std::string>("generator", "");
   if (frag_gen_name.length() == 0) {
@@ -105,6 +117,18 @@ bool artdaq::BoardReaderCore::initialize(fhicl::ParameterSet const& pset, uint64
       << "\".";
     return false;
   }
+  FRAGMENT_RATE_METRIC_NAME_ =
+    generator_ptr_->metricsReportingInstanceName() + " Fragment Rate";
+  FRAGMENT_SIZE_METRIC_NAME_ =
+    generator_ptr_->metricsReportingInstanceName() + " Average Fragment Size";
+  DATA_RATE_METRIC_NAME_ =
+    generator_ptr_->metricsReportingInstanceName() + " Data Rate";
+  INPUT_WAIT_METRIC_NAME_ =
+    generator_ptr_->metricsReportingInstanceName() + " Avg Input Wait Time";
+  OUTPUT_WAIT_METRIC_NAME_ =
+    generator_ptr_->metricsReportingInstanceName() + " Avg Output Wait Time";
+  FRAGMENTS_PER_READ_METRIC_NAME_ =
+    generator_ptr_->metricsReportingInstanceName() + " Avg Frags Per Read";
 
   // determine the data sending parameters
   try {
@@ -145,7 +169,7 @@ bool artdaq::BoardReaderCore::initialize(fhicl::ParameterSet const& pset, uint64
   synchronous_sends_ = fr_pset.get<bool>("synchronous_sends", true);
 
   // fetch the monitoring parameters and create the MonitoredQuantity instances
-  statsHelper_.createCollectors(fr_pset, 100, 30.0, 180.0);
+  statsHelper_.createCollectors(fr_pset, 100, 30.0, 60.0, FRAGMENTS_PROCESSED_STAT_KEY);
 
   // check if we should skip the sequence ID test...
   skip_seqId_test_ = (generator_ptr_->fragmentIDs().size() > 1);
@@ -155,12 +179,16 @@ bool artdaq::BoardReaderCore::initialize(fhicl::ParameterSet const& pset, uint64
 
 bool artdaq::BoardReaderCore::start(art::RunID id, uint64_t timeout, uint64_t timestamp)
 {
+  stop_requested_.store(false);
+  pause_requested_.store(false);
+
   fragment_count_ = 0;
   prev_seq_id_ = 0;
   statsHelper_.resetStatistics();
 
   generator_ptr_->StartCmd(id.run(), timeout, timestamp);
   run_id_ = id;
+  metricMan_.do_start();
 
   mf::LogDebug("BoardReaderCore") << "Started run " << run_id_.run() << 
     ", timeout = " << timeout <<  ", timestamp = " << timestamp << std::endl;
@@ -172,6 +200,7 @@ bool artdaq::BoardReaderCore::stop(uint64_t timeout, uint64_t timestamp)
   mf::LogDebug("BoardReaderCore") << "Stopping run " << run_id_.run()
                                    << " after " << fragment_count_
                                    << " fragments.";
+  stop_requested_.store(true);
   generator_ptr_->StopCmd(timeout, timestamp);
   return true;
 }
@@ -181,6 +210,7 @@ bool artdaq::BoardReaderCore::pause(uint64_t timeout, uint64_t timestamp)
   mf::LogDebug("BoardReaderCore") << "Pausing run " << run_id_.run()
                                    << " after " << fragment_count_
                                    << " fragments.";
+  pause_requested_.store(true);
   generator_ptr_->PauseCmd(timeout, timestamp);
   return true;
 }
@@ -188,13 +218,16 @@ bool artdaq::BoardReaderCore::pause(uint64_t timeout, uint64_t timestamp)
 bool artdaq::BoardReaderCore::resume(uint64_t timeout, uint64_t timestamp)
 {
   mf::LogDebug("BoardReaderCore") << "Resuming run " << run_id_.run();
+  pause_requested_.store(false);
   generator_ptr_->ResumeCmd(timeout, timestamp);
+  metricMan_.do_resume();
   return true;
 }
 
 bool artdaq::BoardReaderCore::shutdown(uint64_t )
 {
   generator_ptr_.reset(nullptr);
+  metricMan_.shutdown();
   return true;
 }
 
@@ -254,7 +287,7 @@ size_t artdaq::BoardReaderCore::process_fragments()
 
   mf::LogDebug("BoardReaderCore") << "Waiting for first fragment.";
   artdaq::MonitoredQuantity::TIME_POINT_T startTime;
-  float delta_time;
+  double delta_time;
   artdaq::FragmentPtrs frags;
   bool active = true;
   while (active) {
@@ -293,9 +326,7 @@ size_t artdaq::BoardReaderCore::process_fragments()
       sender_ptr_->sendFragment(std::move(*fragPtr));
       TRACE( 17, "BoardReaderCore::process_fragments seq=%lu sendFragment done", sequence_id );
       ++fragment_count_;
-      bool readyToReport =
-        statsHelper_.readyToReport(FRAGMENTS_PROCESSED_STAT_KEY,
-                                   fragment_count_);
+      bool readyToReport = statsHelper_.readyToReport(fragment_count_);
       if (readyToReport) {
         std::string statString = buildStatisticsString_();
         mf::LogDebug("BoardReaderCore") << statString;
@@ -306,6 +337,7 @@ size_t artdaq::BoardReaderCore::process_fragments()
           << " with sequence id " << sequence_id << ".";
       }
     }
+    if (statsHelper_.statsRollingWindowHasMoved()) {sendMetrics_();}
     statsHelper_.addSample(OUTPUT_WAIT_STAT_KEY,
                            artdaq::MonitoredQuantity::getCurrentTime() - startTime);
     frags.clear();
@@ -315,6 +347,11 @@ size_t artdaq::BoardReaderCore::process_fragments()
   // removing this barrier so that we can stop the trigger (V1495)
   // generation and readout before stopping the readout of the other cards
   //MPI_Barrier(local_group_comm_);
+
+  // 12-Jan-2015, KAB: moved MetricManager stop and pause commands here so
+  // that they don't get called while metrics reporting is still going on.
+  if (stop_requested_.load()) {metricMan_.do_stop();}
+  else if (pause_requested_.load()) {metricMan_.do_pause();}
 
   sender_ptr_.reset(nullptr);
   return fragment_count_;
@@ -356,22 +393,23 @@ std::string artdaq::BoardReaderCore::buildStatisticsString_()
     }
   }
 
+  // 31-Dec-2014, KAB - Just a reminder that using "fragmentCount" in the
+  // denominator of the calculations below is important because the way that
+  // the accumulation of these statistics is done is not fragment-by-fragment
+  // but read-by-read (where each read can contain multiple fragments).
+
   mqPtr = artdaq::StatisticsCollection::getInstance().
     getMonitoredQuantity(INPUT_WAIT_STAT_KEY);
   if (mqPtr.get() != 0) {
-    artdaq::MonitoredQuantity::Stats stats;
-    mqPtr->getStats(stats);
     oss << ", input wait time = "
-        << (stats.recentValueSum / fragmentCount) << " sec";
+        << (mqPtr->recentValueSum() / fragmentCount) << " sec";
   }
 
   mqPtr = artdaq::StatisticsCollection::getInstance().
     getMonitoredQuantity(OUTPUT_WAIT_STAT_KEY);
   if (mqPtr.get() != 0) {
-    artdaq::MonitoredQuantity::Stats stats;
-    mqPtr->getStats(stats);
     oss << ", output wait time = "
-        << (stats.recentValueSum / fragmentCount) << " sec";
+        << (mqPtr->recentValueSum() / fragmentCount) << " sec";
   }
 
   oss << std::endl << "  Fragments per read: ";
@@ -389,4 +427,53 @@ std::string artdaq::BoardReaderCore::buildStatisticsString_()
   }
 
   return oss.str();
+}
+
+void artdaq::BoardReaderCore::sendMetrics_()
+{
+  //mf::LogDebug("BoardReaderCore") << "Sending metrics " << __LINE__;
+  double fragmentCount = 1.0;
+  artdaq::MonitoredQuantityPtr mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(FRAGMENTS_PROCESSED_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    artdaq::MonitoredQuantity::Stats stats;
+    mqPtr->getStats(stats);
+    fragmentCount = std::max(double(stats.recentSampleCount), 1.0);
+    metricMan_.sendMetric(FRAGMENT_RATE_METRIC_NAME_,
+                          stats.recentSampleRate, "fragments/sec", 1);
+    metricMan_.sendMetric(FRAGMENT_SIZE_METRIC_NAME_,
+                          (stats.recentValueAverage * sizeof(artdaq::RawDataType)
+                           / 1024.0 / 1024.0), "MB/fragment", 2);
+    metricMan_.sendMetric(DATA_RATE_METRIC_NAME_,
+                          (stats.recentValueRate * sizeof(artdaq::RawDataType)
+                           / 1024.0 / 1024.0), "MB/sec", 2);
+  }
+
+  // 31-Dec-2014, KAB - Just a reminder that using "fragmentCount" in the
+  // denominator of the calculations below is important because the way that
+  // the accumulation of these statistics is done is not fragment-by-fragment
+  // but read-by-read (where each read can contain multiple fragments).
+
+  mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(INPUT_WAIT_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    metricMan_.sendMetric(INPUT_WAIT_METRIC_NAME_,
+                          (mqPtr->recentValueSum() / fragmentCount),
+                          "seconds/fragment", 3);
+  }
+
+  mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(OUTPUT_WAIT_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    metricMan_.sendMetric(OUTPUT_WAIT_METRIC_NAME_,
+                          (mqPtr->recentValueSum() / fragmentCount),
+                          "seconds/fragment", 3);
+  }
+
+  mqPtr = artdaq::StatisticsCollection::getInstance().
+    getMonitoredQuantity(FRAGMENTS_PER_READ_STAT_KEY);
+  if (mqPtr.get() != 0) {
+    metricMan_.sendMetric(FRAGMENTS_PER_READ_METRIC_NAME_,
+                          mqPtr->recentValueAverage(), "fragments/read", 4);
+  }
 }
