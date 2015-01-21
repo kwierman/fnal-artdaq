@@ -83,23 +83,23 @@ namespace artdaq {
     // getNext_() -- should return true as long as datataking is meant
     // to take place, even if a particular call returns no fragments.
 
-    virtual void StartCmd(int run, uint64_t timeout, uint64_t timestamp) final;
+    void StartCmd(int run, uint64_t timeout, uint64_t timestamp);
 
     // After a call to StopCmd(), getNext() will eventually return
     // false. This may not happen for several calls, if the
     // implementation has data to be 'drained' from the system.
-    virtual void StopCmd(uint64_t timeout, uint64_t timestamp) final;
+    void StopCmd(uint64_t timeout, uint64_t timestamp);
 
     // A call to PauseCmd() is advisory. It is an indication that the
     // BoardReader should stop the incoming flow of data, if it can do
     // so.
-    virtual void PauseCmd(uint64_t timeout, uint64_t timestamp) final;
+    void PauseCmd(uint64_t timeout, uint64_t timestamp);
 
     // After a call to ResumeCmd(), the next Fragments returned from
     // getNext() will be part of a new SubRun.
-    virtual void ResumeCmd(uint64_t timeout, uint64_t timestamp) final;
+    void ResumeCmd(uint64_t timeout, uint64_t timestamp);
 
-    virtual std::string ReportCmd() final;
+    std::string ReportCmd();
 
     virtual std::string metricsReportingInstanceName() const {
       return instance_name_for_metrics_;
@@ -126,6 +126,11 @@ namespace artdaq {
     // John F., 12/6/13 -- need to figure out which of these getter
     // functions should be promoted to "public"
 
+    // John F., 1/21/15 -- after more than a year, there hasn't been a
+    // single complaint that a CommandableFragmentGenerator-derived
+    // class hasn't allowed its users to access these quantities, so
+    // they're probably fine as is
+
     int run_number() const { return run_number_; }
     int subrun_number() const { return subrun_number_; }
     uint64_t timeout() const { return timeout_; }
@@ -145,6 +150,12 @@ namespace artdaq {
 
     // John F., 12/10/13 
     // Is there a better way to handle mutex_ than leaving it a protected variable?
+
+    // John F., 1/21/15
+    // Translation above is "should mutex_ be a private variable,
+    // accessible via a getter function". Probably, but at this point
+    // it's not worth breaking code by implementing this. 
+
     std::mutex mutex_;
 
   private:
