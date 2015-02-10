@@ -10,6 +10,7 @@ require "logger"
 require "optparse"
 require "ostruct"
 require "socket"
+require "rexml/document"
 
 class LoggerIO
   # The standard ruby logger doesn't really support writing to both STDOUT and
@@ -392,8 +393,15 @@ class PMTRPCHandler
 end
 
 class PMT
+  def initResource(element, appName, port)
+    hostname = element.elements["hostname"].text
+    name = element.elements["name"].text
+
+    @mpiHandler.addExecutable(appName, hostname, port.to_s + " " + name);
+  end
+
   def initialize(parameterFile, portNumber, logToStdout, logPath,
-                 onmonDisplay, preloadLib)
+                 onmonDisplay, preloadLib, configFile)
     @rpcThread = nil
     @mpiHandler = MPIHandler.new(logToStdout, logPath, onmonDisplay,
                                  portNumber, preloadLib)
@@ -403,6 +411,47 @@ class PMT
         program, host, *port = definition.split(" ")
         @mpiHandler.addExecutable(program, host, port.join(" "))
       }
+    end
+
+    if configFile != nil
+      file = File.new(configFile)
+      doc = REXML::Document.new file
+      root = doc.root
+      
+      # Aggregators
+      ## DataLogger
+      initResource(root.elements["dataLogger"], "AggregatorMain", portNumber + 1)
+      ## OnlineMonitor
+      initResource(root.elements["onlineMonitor"], "AggregatorMain", portNumber + 2)
+ 
+      # Event Builders
+      currentPort = portNumber + 3
+      numEvbs = root.elements["eventBuilders/count"].text
+      baseName = root.elements["eventBuilders/basename"].text
+      *hosts = root.elements["eventBuilders/hostnames/hostname"]
+      puts "Hosts are: "
+      puts hosts
+
+      it = 0
+      while it < numEvbs.to_i do
+        host = hosts.at(it % hosts.size).text
+        port = currentPort
+        currentPort += 1
+        name = baseName + it.to_s
+        puts "EventBuilderMain, " + host + ":" + port.to_s + ": " + name
+        @mpiHandler.addExecutable("EventBuilderMain", host, port.to_s + " " + name)
+        it += 1
+      end
+
+      # Board Readers
+      if(root.elements["boardReaders/boardReader"] != nil)
+      root.elements["boardReaders/boardReader"].each() { |element| 
+        if(element.elements["enabled"].text == "true")
+          initResource(element, "BoardReaderMain", currentPort)
+          currentPort += 1
+        end
+      }
+      end
     end
     
     # Instantiate the RPC handler and then create the RPC server.
@@ -447,6 +496,7 @@ if __FILE__ == $0
   options.onmonDisplay = nil
   options.logPath = ""
   options.preload = ""
+  options.configFile = nil
 
   optParser = OptionParser.new do |opts|
     opts.banner = "Usage: pmt.rb [options]"
@@ -467,6 +517,11 @@ if __FILE__ == $0
       options.doCleanup = true
     end
     
+    opts.on("-C", "--config-file [configuration file]",
+            "An ARTDAQ-configuration file") do |config|
+      options.configFile = config
+    end    
+
     opts.on("-d", "--definitions [definition file]",
             "The list of programs and port numbers PMT will manage.") do |defs|
       options.parameterFile = defs
@@ -501,7 +556,8 @@ if __FILE__ == $0
 
   pmt = PMT.new(options.parameterFile, options.portNumber,
                 options.logToStdout, options.logPath,
-                options.onmonDisplay, options.preload)
+                options.onmonDisplay, options.preload,
+                options.configFile)
 
   if options.doCleanup and options.parameterFile == nil
     puts "A program definition file needs to be specified for the cleanup"

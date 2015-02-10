@@ -11,7 +11,8 @@ artdaq::CommandableFragmentGenerator::CommandableFragmentGenerator() :
   timestamp_( std::numeric_limits<uint64_t>::max() ), 
   should_stop_(false), exception_(false),
   ev_counter_(1),
-  board_id_(-1), 
+  board_id_(-1),
+  instance_name_for_metrics_("FragmentGenerator"),
   sleep_on_stop_us_(0)
 {
 }
@@ -28,6 +29,7 @@ artdaq::CommandableFragmentGenerator::CommandableFragmentGenerator(const fhicl::
   sleep_on_stop_us_(0)
 {
   board_id_ = ps.get<int> ("board_id");
+  instance_name_for_metrics_ = "Board " + board_id_;
 
   fragment_ids_ = ps.get< std::vector< artdaq::Fragment::fragment_id_t > >( "fragment_ids", std::vector< artdaq::Fragment::fragment_id_t >() );
 
@@ -104,6 +106,7 @@ void artdaq::CommandableFragmentGenerator::StopCmd(uint64_t timeout, uint64_t ti
   timeout_ = timeout;
   timestamp_ = timestamp;
 
+  stopNoMutex();
   should_stop_.store (true);
   std::unique_lock<std::mutex> lk(mutex_);
 
@@ -115,6 +118,7 @@ void artdaq::CommandableFragmentGenerator::PauseCmd(uint64_t timeout, uint64_t t
   timeout_ = timeout;
   timestamp_ = timestamp;
 
+  pauseNoMutex();
   should_stop_.store (true);
   std::unique_lock<std::mutex> lk(mutex_);
 

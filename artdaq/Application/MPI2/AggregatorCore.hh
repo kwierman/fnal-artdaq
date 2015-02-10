@@ -97,6 +97,15 @@ private:
   std::string buildStatisticsString_();
   double previous_run_duration_;
   artdaq::MetricManager metricMan_;
+  void sendMetrics_();
+
+  std::string EVENT_RATE_METRIC_NAME_;
+  std::string EVENT_SIZE_METRIC_NAME_;
+  std::string DATA_RATE_METRIC_NAME_;
+  std::string INPUT_WAIT_METRIC_NAME_;
+  std::string EVENT_STORE_WAIT_METRIC_NAME_;
+  std::string SHM_COPY_TIME_METRIC_NAME_;
+  std::string FILE_CHECK_TIME_METRIC_NAME_;
 
   // *** Shared memory declarations ***
   struct ShmStruct {

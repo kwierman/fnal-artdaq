@@ -1,6 +1,9 @@
 process_smc(SMC_LIB_SOURCE Commandable.sm)
 
-art_make_library(SOURCE
+include_directories("${CMAKE_BINARY_DIR}")
+
+art_make_library( LIBRARY_NAME artdaq_Application
+  SOURCE
   ${SMC_LIB_SOURCE}
   Commandable.cc
   configureMessageFacility
