@@ -421,15 +421,23 @@ class PMT
       file = File.new(configFile)
       doc = REXML::Document.new file
       root = doc.root
-      
-      # Aggregators
-      ## DataLogger
-      initResource(root.elements["dataLogger"], "AggregatorMain", portNumber + 1)
-      ## OnlineMonitor
-      initResource(root.elements["onlineMonitor"], "AggregatorMain", portNumber + 2)
- 
-      # Event Builders
+
+
       currentPort = portNumber + 3
+      # Board Readers
+      if(root.elements["boardReaders"] != nil)
+      root.elements["boardReaders"].each() { |element| 
+        begin
+        if element.elements["enabled"].text == "true"
+          initResource(element, "BoardReaderMain", currentPort)
+          currentPort += 1
+        end
+        rescue
+        end
+      }
+      end
+
+      # Event Builders
       numEvbs = root.elements["eventBuilders/count"].text
       baseName = root.elements["eventBuilders/basename"].text
       *hosts = root.elements["eventBuilders/hostnames/hostname"]
@@ -444,18 +452,13 @@ class PMT
         it += 1
       end
 
-      # Board Readers
-      if(root.elements["boardReaders"] != nil)
-      root.elements["boardReaders"].each() { |element| 
-        begin
-        if element.elements["enabled"].text == "true"
-          initResource(element, "BoardReaderMain", currentPort)
-          currentPort += 1
-        end
-        rescue
-        end
-      }
-      end
+      # Aggregators
+      ## DataLogger
+      initResource(root.elements["dataLogger"], "AggregatorMain", portNumber + 1)
+      
+      ## OnlineMonitor
+      initResource(root.elements["onlineMonitor"], "AggregatorMain", portNumber + 2)
+ 
     end
     
     # Instantiate the RPC handler and then create the RPC server.
