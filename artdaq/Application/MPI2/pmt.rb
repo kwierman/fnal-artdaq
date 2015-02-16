@@ -396,8 +396,12 @@ class PMT
   def initResource(element, appName, port)
     hostname = element.elements["hostname"].text
     name = element.elements["name"].text
-
-    @mpiHandler.addExecutable(appName, hostname, port.to_s + " " + name);
+    puts name + " at " + hostname + " is a " + appName
+    if name != nil
+    @mpiHandler.addExecutable(appName, hostname, port.to_s + " " + name)
+    else
+    @mpiHandler.addExecutable(appName, hostname, port.to_s)
+    end
   end
 
   def initialize(parameterFile, portNumber, logToStdout, logPath,
@@ -429,8 +433,6 @@ class PMT
       numEvbs = root.elements["eventBuilders/count"].text
       baseName = root.elements["eventBuilders/basename"].text
       *hosts = root.elements["eventBuilders/hostnames/hostname"]
-      puts "Hosts are: "
-      puts hosts
 
       it = 0
       while it < numEvbs.to_i do
@@ -438,17 +440,19 @@ class PMT
         port = currentPort
         currentPort += 1
         name = baseName + it.to_s
-        puts "EventBuilderMain, " + host + ":" + port.to_s + ": " + name
         @mpiHandler.addExecutable("EventBuilderMain", host, port.to_s + " " + name)
         it += 1
       end
 
       # Board Readers
-      if(root.elements["boardReaders/boardReader"] != nil)
-      root.elements["boardReaders/boardReader"].each() { |element| 
-        if(element.elements["enabled"].text == "true")
+      if(root.elements["boardReaders"] != nil)
+      root.elements["boardReaders"].each() { |element| 
+        begin
+        if element.elements["enabled"].text == "true"
           initResource(element, "BoardReaderMain", currentPort)
           currentPort += 1
+        end
+        rescue
         end
       }
       end
