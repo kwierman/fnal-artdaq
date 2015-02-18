@@ -222,8 +222,11 @@ namespace artdaq {
     // it, and it completes an event, then we want to be sure that it
     // can be pushed onto the event queue.  If not, we return it and
     // let the caller know that we didn't accept it.
+    TRACE(12, "EventStore: Testing if queue is full");
     if (queue_.full()) {
-      size_t sleepTime = 1000000 * (enq_timeout_.count() / 10.0);
+      size_t fragSize = pfrag->size();
+      size_t sleepTime = 10 * fragSize * (enq_timeout_.count() / 10.0);
+      TRACE(12, "EventStore: sleepTime is %lu and pfrag->size() is %lu.",sleepTime, fragSize);
       int loopCount = 0;
       while (loopCount < 10 && queue_.full()) {
         ++loopCount;
@@ -235,6 +238,7 @@ namespace artdaq {
       }
     }
 
+    TRACE(12, "EventStore: Performing insert");
     insert(std::move(pfrag));
     return true;
   }
