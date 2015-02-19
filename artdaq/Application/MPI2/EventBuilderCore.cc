@@ -160,7 +160,7 @@ bool artdaq::EventBuilderCore::initialize(fhicl::ParameterSet const& pset)
 
   size_t event_queue_depth = evb_pset.get<size_t>("event_queue_depth", 20);
   double event_queue_wait_time = evb_pset.get<double>("event_queue_wait_time", 5.0);
-  size_t event_queue_check_count = evb_pset.get<size_t>("event_queue_check_count", 500);
+  size_t event_queue_check_count = evb_pset.get<size_t>("event_queue_check_count", 5000);
 
   // fetch the monitoring parameters and create the MonitoredQuantity instances
   statsHelper_.createCollectors(evb_pset, 100, 20.0, 60.0, INPUT_FRAGMENTS_STAT_KEY);

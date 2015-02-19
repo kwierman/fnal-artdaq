@@ -48,7 +48,7 @@ namespace artdaq {
     lastFlushedSeqID_(0),
     highestSeqIDSeen_(0),
     enq_timeout_(5.0),
-    enq_check_count_(500),
+    enq_check_count_(5000),
     printSummaryStats_(printSummaryStats)
   {
     initStatistics_();
@@ -73,7 +73,7 @@ namespace artdaq {
     lastFlushedSeqID_(0),
     highestSeqIDSeen_(0),
     enq_timeout_(5.0),
-    enq_check_count_(500),
+    enq_check_count_(5000),
     printSummaryStats_(printSummaryStats)
   {
     initStatistics_();
@@ -230,7 +230,7 @@ namespace artdaq {
     // let the caller know that we didn't accept it.
     TRACE(12, "EventStore: Testing if queue is full");
     if (queue_.full()) {
-      size_t sleepTime = 100000 * (enq_timeout_.count() / enq_check_count_);
+      size_t sleepTime = 1000000 * (enq_timeout_.count() / enq_check_count_);
       TRACE(12, "EventStore: sleepTime is %lu.",sleepTime);
       size_t loopCount = 0;
       while (loopCount < enq_check_count_ && queue_.full()) {
