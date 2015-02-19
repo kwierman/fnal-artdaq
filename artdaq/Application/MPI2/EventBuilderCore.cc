@@ -32,13 +32,13 @@ artdaq::EventBuilderCore::~EventBuilderCore()
   mf::LogDebug("EventBuilderCore") << "Destructor";
 }
 
-void artdaq::EventBuilderCore::initializeEventStore(size_t depth, double wait_time)
+void artdaq::EventBuilderCore::initializeEventStore(size_t depth, double wait_time, size_t check_count)
 {
   if (use_art_) {
     artdaq::EventStore::ART_CFGSTRING_FCN * reader = &artapp_string_config;
     event_store_ptr_.reset(new artdaq::EventStore(expected_fragments_per_event_, 1,
 						  mpi_rank_, init_string_,
-						  reader, depth, wait_time,
+						  reader, depth, wait_time, check_count,
                                                   print_event_store_stats_));
     art_initialized_ = true;
   }
@@ -50,7 +50,7 @@ void artdaq::EventBuilderCore::initializeEventStore(size_t depth, double wait_ti
     artdaq::EventStore::ART_CMDLINE_FCN * reader = &artdaq::simpleQueueReaderApp;
     event_store_ptr_.reset(new artdaq::EventStore(expected_fragments_per_event_, 1,
 						  mpi_rank_, 1, dummyArgs,
-						  reader, depth, wait_time,
+						  reader, depth, wait_time, check_count,
                                                   print_event_store_stats_));
   }
 }
@@ -160,6 +160,7 @@ bool artdaq::EventBuilderCore::initialize(fhicl::ParameterSet const& pset)
 
   size_t event_queue_depth = evb_pset.get<size_t>("event_queue_depth", 20);
   double event_queue_wait_time = evb_pset.get<double>("event_queue_wait_time", 5.0);
+  size_t event_queue_check_count = evb_pset.get<size_t>("event_queue_check_count", 500);
 
   // fetch the monitoring parameters and create the MonitoredQuantity instances
   statsHelper_.createCollectors(evb_pset, 100, 20.0, 60.0, INPUT_FRAGMENTS_STAT_KEY);
@@ -171,7 +172,7 @@ bool artdaq::EventBuilderCore::initialize(fhicl::ParameterSet const& pset)
      config changes we have to throw up our hands and bail out.
   */
   if (art_initialized_ == false) {
-    this->initializeEventStore(event_queue_depth, event_queue_wait_time);
+    this->initializeEventStore(event_queue_depth, event_queue_wait_time, event_queue_check_count);
     fhicl::ParameterSet tmp = pset;
     tmp.erase("daq");
     previous_pset_ = tmp;
