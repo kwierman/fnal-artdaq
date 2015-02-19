@@ -48,6 +48,7 @@ namespace artdaq {
     lastFlushedSeqID_(0),
     highestSeqIDSeen_(0),
     enq_timeout_(5.0),
+    enq_check_count_(500),
     printSummaryStats_(printSummaryStats)
   {
     initStatistics_();
@@ -72,6 +73,7 @@ namespace artdaq {
     lastFlushedSeqID_(0),
     highestSeqIDSeen_(0),
     enq_timeout_(5.0),
+    enq_check_count_(500),
     printSummaryStats_(printSummaryStats)
   {
     initStatistics_();
@@ -85,6 +87,7 @@ namespace artdaq {
                          ART_CMDLINE_FCN * reader,
                          size_t max_art_queue_size,
                          double enq_timeout_sec,
+                         size_t enq_check_count,
                          bool printSummaryStats) :
     id_(store_id),
     num_fragments_per_event_(num_fragments_per_event),
@@ -98,6 +101,7 @@ namespace artdaq {
     lastFlushedSeqID_(0),
     highestSeqIDSeen_(0),
     enq_timeout_(enq_timeout_sec),
+    enq_check_count_(enq_check_count),
     printSummaryStats_(printSummaryStats)
   {
     initStatistics_();
@@ -110,6 +114,7 @@ namespace artdaq {
                          ART_CFGSTRING_FCN * reader,
                          size_t max_art_queue_size,
                          double enq_timeout_sec,
+                         size_t enq_check_count,
                          bool printSummaryStats) :
     id_(store_id),
     num_fragments_per_event_(num_fragments_per_event),
@@ -123,6 +128,7 @@ namespace artdaq {
     lastFlushedSeqID_(0),
     highestSeqIDSeen_(0),
     enq_timeout_(enq_timeout_sec),
+    enq_check_count_(enq_check_count),
     printSummaryStats_(printSummaryStats)
   {
     initStatistics_();
@@ -224,11 +230,10 @@ namespace artdaq {
     // let the caller know that we didn't accept it.
     TRACE(12, "EventStore: Testing if queue is full");
     if (queue_.full()) {
-      size_t fragSize = pfrag->size();
-      size_t sleepTime = 10 * fragSize * (enq_timeout_.count() / 10.0);
-      TRACE(12, "EventStore: sleepTime is %lu and pfrag->size() is %lu.",sleepTime, fragSize);
-      int loopCount = 0;
-      while (loopCount < 10 && queue_.full()) {
+      size_t sleepTime = 100000 * (enq_timeout_.count() / enq_check_count_);
+      TRACE(12, "EventStore: sleepTime is %lu.",sleepTime);
+      size_t loopCount = 0;
+      while (loopCount < enq_check_count_ && queue_.full()) {
         ++loopCount;
         usleep(sleepTime);
       }

@@ -59,11 +59,13 @@ namespace artdaq {
     EventStore(size_t num_fragments_per_event, run_id_t run,
                int store_id, int argc, char * argv[],
                ART_CMDLINE_FCN * reader, size_t max_art_queue_size,
-               double enq_timeout_sec, bool printSummaryStats = false);
+               double enq_timeout_sec, size_t enq_check_count,
+                bool printSummaryStats = false);
     EventStore(size_t num_fragments_per_event, run_id_t run,
                int store_id, const std::string& configString,
                ART_CFGSTRING_FCN * reader, size_t max_art_queue_size,
-               double enq_timeout_sec, bool printSummaryStats = false);
+               double enq_timeout_sec,  size_t enq_check_count,
+               bool printSummaryStats = false);
 
     ~EventStore();
 
@@ -128,6 +130,7 @@ namespace artdaq {
     sequence_id_t highestSeqIDSeen_;
 
     daqrate::seconds const enq_timeout_;
+    size_t        enq_check_count_;
     bool const     printSummaryStats_;
 
     void initStatistics_();
