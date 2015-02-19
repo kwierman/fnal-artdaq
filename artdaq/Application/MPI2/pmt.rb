@@ -395,12 +395,17 @@ end
 class PMT
   def initResource(element, appName, port)
     hostname = element.elements["hostname"].text
-    name = element.elements["name"].text
-    puts name + " at " + hostname + " is a " + appName
+    begin
+      name = element.elements["name"].text
+    rescue
+      name = nil
+    end
     if name != nil
+      puts name + " at " + hostname + " is a " + appName
     @mpiHandler.addExecutable(appName, hostname, port.to_s + " " + name)
     else
-    @mpiHandler.addExecutable(appName, hostname, port.to_s)
+      puts "Configured " + appName + " at " + hostname + ":" + port.to_s
+      @mpiHandler.addExecutable(appName, hostname, port.to_s)
     end
   end
 
