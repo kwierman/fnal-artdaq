@@ -10,17 +10,21 @@
 #include <fstream>
 #include <ctime>
 #include <string>
+#include <sys/types.h>
+#include <unistd.h>
 
 namespace artdaq {
   class FileMetric : public MetricPlugin {
   private:
     std::string outputFile_;
+    bool uniquify_file_name_;
     std::ofstream outputStream_;
     std::ios_base::openmode mode_;
     bool stopped_;
   public:
     FileMetric(fhicl::ParameterSet config) : MetricPlugin(config),
 				     outputFile_(pset.get<std::string>("fileName","FileMetric.out")),
+					     uniquify_file_name_(pset.get<bool>("uniquify", false)),
                                      stopped_(true)
     {
       std::string modeString = pset.get<std::string>("fileMode", "append");
@@ -28,6 +32,21 @@ namespace artdaq {
       mode_ = std::ofstream::out | std::ofstream::app;
       if(modeString == "Overwrite" || modeString == "Create" || modeString == "Write") {
           mode_ = std::ofstream::out | std::ofstream::trunc;
+      }
+
+      if(uniquify_file_name_) {
+	std::string unique_id = std::to_string(getpid());
+        if(outputFile_.find("%UID%") != std::string::npos) {
+	  outputFile_ = outputFile_.replace(outputFile_.find("%UID%"), 5, unique_id);
+        }
+        else {
+	  if(outputFile_.rfind(".") != std::string::npos) {
+            outputFile_ = outputFile_.insert(outputFile_.rfind("."), "_" + unique_id);
+          }
+          else {
+	    outputFile_ = outputFile_.append("_" + unique_id);
+          }
+        }
       }
       startMetrics();
     }
