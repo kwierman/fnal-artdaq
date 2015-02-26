@@ -277,7 +277,7 @@ class MPIHandler
       script += "pids+=\" $child\";done;"
      
       # And tear down everything we've built.
-      script += "kill $pids;sleep 1;kill -9 $pids"
+      script += "kill $pids"#;sleep 1;kill -9 $pids" # We may not want to do this...think of the multi-node systems!
 
       #puts "Running script: " + script
       Open3.popen3(script) { |stdin, stdout, stderr|
