@@ -19,7 +19,7 @@ bindir      fq_dir      bin
 product			version		optional
 artdaq_core 		v1_04_10
 mvapich2		v1_9_0
-mpich			v3_1_2
+mpich			v3_1_2a
 xmlrpc_c		v1_25_30
 TRACE			v3_03_03
 cetbuildtools		v4_07_03	-	only_for_build
@@ -37,6 +37,10 @@ e7:s7:ib:debug		e7:s7:debug		-nq-		-		e7:debug	-nq-	-std=c++1y
 e7:s7:ib:prof		e7:s7:prof		-nq-		-		e7:prof		-nq-	-std=c++1y
 e7:s7:eth:debug		e7:s7:debug		-		e7:debug	e7:debug	-nq-	-std=c++1y
 e7:s7:eth:prof		e7:s7:prof		-		e7:prof		e7:prof		-nq-	-std=c++1y
+e6:s7:ib:debug		e6:s7:debug		-nq-		-		e6:debug	-nq-	-std=c++1y
+e6:s7:ib:prof		e6:s7:prof		-nq-		-		e6:prof		-nq-	-std=c++1y
+e6:s7:eth:debug		e6:s7:debug		-		e6:debug	e6:debug	-nq-	-std=c++1y
+e6:s7:eth:prof		e6:s7:prof		-		e6:prof		e6:prof		-nq-	-std=c++1y
 e6:s6:ib:debug		e6:s6:debug		-nq-		-		e6:debug	-nq-	-std=c++1y
 e6:s6:ib:prof		e6:s6:prof		-nq-		-		e6:prof		-nq-	-std=c++1y
 e6:s6:eth:debug		e6:s6:debug		-		e6:debug	e6:debug	-nq-	-std=c++1y
